@@ -1,4 +1,4 @@
-# EcoSmart Market Platform
+# Energy Efficient Store Market Platform
 
 Energy-efficient product marketplace platform built with React, TypeScript, and Vite.
 
