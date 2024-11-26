@@ -1,70 +1,122 @@
-// src/App.tsx
 import React from 'react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import ProductsPage from './pages/ProductsPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import EnergyAuditPage from './pages/EnergyAuditPage';
+import EducationPage from './pages/EducationPage';
+import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
+import { LineChart, Battery, Users } from 'lucide-react';
 
-const App: React.FC = () => {
+
+// Home component with all the landing page content
+const Home: React.FC = () => {
+  const features = [
+    {
+      title: 'Product Catalog',
+      description: 'Browse our selection of energy-efficient products with detailed specifications and reviews.',
+      icon: <LineChart className="h-6 w-6 text-green-600" />
+    },
+    {
+      title: 'DIY Energy Audit',
+      description: 'Get a personalized energy efficiency report and recommendations for your home.',
+      icon: <Battery className="h-6 w-6 text-green-600" />
+    },
+    {
+      title: 'Community',
+      description: 'Connect with other homeowners and share experiences about energy-saving initiatives.',
+      icon: <Users className="h-6 w-6 text-green-600" />
+    }
+  ];
+
+  const stats = [
+    { stat: '30%', label: 'Average Energy Savings' },
+    { stat: '50k+', label: 'Products Available' },
+    { stat: '10k+', label: 'Happy Customers' }
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-2xl font-bold text-green-600">EcoSmart Market</h1>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <a href="#" className="border-transparent text-gray-500 hover:border-green-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                  Products
-                </a>
-                <a href="#" className="border-transparent text-gray-500 hover:border-green-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                  Energy Audit
-                </a>
-                <a href="#" className="border-transparent text-gray-500 hover:border-green-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                  Community
-                </a>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <button className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium">
-                Sign In
+    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      {/* Hero Section */}
+      <Alert className="mb-8">
+        <AlertTitle className="text-lg font-semibold">Welcome to Energy Efficient Store!</AlertTitle>
+        <AlertDescription>
+          Your one-stop shop for energy-efficient products. Start with a DIY energy audit to get personalized recommendations.
+        </AlertDescription>
+      </Alert>
+
+      {/* Feature Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {features.map((feature) => (
+          <div
+            key={feature.title}
+            className="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow duration-200"
+          >
+            <div className="p-6">
+              <div className="mb-4">{feature.icon}</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{feature.title}</h3>
+              <p className="text-sm text-gray-500">{feature.description}</p>
+              <button className="mt-4 text-green-600 hover:text-green-700 text-sm font-medium">
+                Learn more →
               </button>
             </div>
           </div>
-        </nav>
-      </header>
+        ))}
+      </div>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <Alert className="mb-6">
-          <AlertTitle className="text-lg font-semibold">Welcome to Energy Efficient Shop!</AlertTitle>
-          <AlertDescription>
-            Your one-stop shop for energy-efficient products. Start with a DIY energy audit to get personalized recommendations.
-          </AlertDescription>
-        </Alert>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-6">
-              <h3 className="text-lg font-medium text-gray-900">Product Catalog</h3>
-              <p className="mt-1 text-sm text-gray-500">Browse our selection of energy-efficient products.</p>
+      {/* Energy Savings Stats */}
+      <div className="bg-green-50 rounded-lg p-8 mb-12">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">
+          Make an Impact with Energy Efficiency
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {stats.map((item) => (
+            <div key={item.label} className="text-center">
+              <p className="text-4xl font-bold text-green-600 mb-2">{item.stat}</p>
+              <p className="text-sm text-gray-600">{item.label}</p>
             </div>
-          </div>
-          
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-6">
-              <h3 className="text-lg font-medium text-gray-900">DIY Energy Audit</h3>
-              <p className="mt-1 text-sm text-gray-500">Get personalized recommendations for your home.</p>
-            </div>
-          </div>
-          
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-6">
-              <h3 className="text-lg font-medium text-gray-900">Community</h3>
-              <p className="mt-1 text-sm text-gray-500">Connect with other energy-conscious homeowners.</p>
-            </div>
-          </div>
+          ))}
         </div>
-      </main>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-green-600 rounded-lg p-8 text-center">
+        <h2 className="text-2xl font-bold text-white mb-4">
+          Ready to Start Saving?
+        </h2>
+        <p className="text-green-100 mb-6 max-w-2xl mx-auto">
+          Take our DIY energy audit today and discover personalized recommendations for your home's energy efficiency.
+        </p>
+        <button className="bg-white text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition-colors duration-200">
+          Start Energy Audit
+        </button>
+      </div>
     </div>
+  );
+};
+
+// Main App component with routing
+const App: React.FC = () => {
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/products/:id" element={<ProductDetailPage />} />
+            <Route path="/energy-audit" element={<EnergyAuditPage />} />
+            <Route path="/education" element={<EducationPage />} />
+            {/* Add more routes as needed:
+            <Route path="/community" element={<CommunityPage />} />
+            */}
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
   );
 };
 
