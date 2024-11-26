@@ -25,7 +25,7 @@ Ensure you have the following installed:
 
 3. **Install required packages:**
    ```bash
-   npm install @radix-ui/react-alert-dialog class-variance-authority clsx lucide-react tailwind-merge react-router-dom @types/node
+   npm install @radix-ui/react-alert-dialog class-variance-authority clsx lucide-react tailwind-merge react-router-dom @types/node class-validator class-transformer papaparse @types/papaparse
    ```
 
 4. **Install dev dependencies:**
