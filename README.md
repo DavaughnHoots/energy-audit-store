@@ -1,50 +1,113 @@
-# React + TypeScript + Vite
+# Energy Efficient Store Market Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Energy-efficient product marketplace platform built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 18.x or later
+- npm 9.x or later
+- Git
 
-## Expanding the ESLint configuration
+## Setup Instructions
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. Clone repository:
+```bash
+git clone [repository-url]
+cd energy-audit-store
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+2. Install dependencies:
+```bash
+npm install
 ```
+
+3. Required packages:
+```bash
+npm install @radix-ui/react-alert-dialog class-variance-authority clsx lucide-react tailwind-merge react-router-dom @types/node
+```
+
+4. Install dev dependencies:
+```bash
+npm install -D tailwindcss postcss autoprefixer
+```
+
+5. Initialize Tailwind:
+```bash
+npx tailwindcss init -p
+```
+
+## Development
+
+Start development server:
+```bash
+npm run dev
+```
+
+Access the application at: http://localhost:5173
+
+## Project Structure
+
+```
+src/
+├── components/         # Reusable UI components
+│   ├── ui/            # Basic UI components
+│   └── layout/        # Layout components
+├── pages/             # Page components
+├── services/          # API services
+├── types/             # TypeScript types
+└── lib/              # Utilities
+```
+
+## Git Workflow
+
+1. Create feature branch:
+```bash
+git checkout -b feature/[feature-name]
+```
+
+2. Commit changes:
+```bash
+git add .
+git commit -m "feat: description"
+```
+
+3. Push changes:
+```bash
+git push origin feature/[feature-name]
+```
+
+## Common Issues
+
+- If facing CORS issues, ensure the API endpoint is correct in `.env`
+- For style issues, check Tailwind configuration
+- For TypeScript errors, verify imports and type definitions
+
+## Team Conventions
+
+- Use TypeScript for all new files
+- Follow existing component patterns
+- Include component documentation
+- Write clear commit messages
+
+## Available Commands
+
+```bash
+npm run dev           # Start development server
+npm run build         # Build for production
+npm run lint          # Run ESLint
+npm run preview       # Preview production build
+```
+
+## Contributing
+
+1. Follow Git workflow
+2. Ensure tests pass
+3. Update documentation
+4. Create pull request
+
+## Resources
+
+- [React Documentation](https://react.dev)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Vite Documentation](https://vitejs.dev/guide)
