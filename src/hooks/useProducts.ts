@@ -1,7 +1,7 @@
 // src/hooks/useProducts.ts
 import { useState, useEffect } from 'react';
-import { Product, ProductFilters } from '../types/product';
-import ProductDataService from '../services/productDataService';
+import { Product, ProductFilters } from '../../backend/src/types/product';
+import ProductDataService from '../../backend/src/services/productDataService';
 
 const productService = new ProductDataService();
 
@@ -24,13 +24,13 @@ export function useProducts() {
         if (!success) {
           throw new Error('Failed to load CSV data');
         }
-        
+
         const prods = await productService.getProducts();
         console.log('Loaded products count:', prods.length);
 
         const cats = await productService.getCategories();
         console.log('Categories:', cats);
-        
+
         setProducts(prods);
         setCategories(cats);
         setError(null);

@@ -1,3 +1,5 @@
+// src/pages/EnergyAuditPage.tsx
+
 import React from 'react';
 import EnergyAuditForm from '../components/audit/EnergyAuditForm';
 
