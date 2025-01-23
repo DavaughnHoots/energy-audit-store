@@ -7,7 +7,7 @@ import { ProductDetailHeader } from '../components/products/ProductDetailHeader'
 import { ProductSpecifications } from '../components/products/ProductSpecifications';
 import { EnergySavingsCard } from '../components/products/EnergySavingsCard';
 import { useProducts } from '../hooks/useProducts';
-import { Product } from '../types/product';
+import { Product } from '../../backend/src/types/product';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

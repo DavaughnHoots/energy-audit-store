@@ -1,6 +1,6 @@
 // src/components/products/ProductDetailHeader.tsx
 import React from 'react';
-import { Product } from '../../types/product';
+import { Product } from '../../../backend/src/types/product';
 import { Badge } from '../ui/badge';
 
 interface ProductDetailHeaderProps {
@@ -11,8 +11,8 @@ export const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({ produc
   return (
     <div className="flex flex-col md:flex-row gap-8">
       <div className="w-full md:w-1/2">
-        <img 
-          src={product.imageUrl} 
+        <img
+          src={product.imageUrl}
           alt={product.name}
           className="w-full h-96 object-cover rounded-lg shadow-md"
         />

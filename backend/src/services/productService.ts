@@ -1,3 +1,5 @@
+// src/services/productService.ts
+
 import { Product, ProductFilters } from '../types/product';
 
 // Mock data - replace with actual API calls later
@@ -75,7 +77,7 @@ export const productService = {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         filteredProducts = filteredProducts.filter(
-          p => p.name.toLowerCase().includes(searchLower) || 
+          p => p.name.toLowerCase().includes(searchLower) ||
                p.description.toLowerCase().includes(searchLower) ||
                p.brand?.toLowerCase().includes(searchLower)
         );

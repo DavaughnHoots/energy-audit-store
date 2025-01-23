@@ -1,3 +1,5 @@
+// src/pages/EducationPage.tsx
+
 import React, { useState } from 'react';
 import { Search, BookOpen, Video, PieChart, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

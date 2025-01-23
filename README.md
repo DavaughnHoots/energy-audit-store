@@ -23,7 +23,7 @@ npm install
 
 3. Required packages:
 ```bash
-npm install @radix-ui/react-alert-dialog class-variance-authority clsx lucide-react tailwind-merge react-router-dom @types/node
+npm install @radix-ui/react-alert-dialog class-variance-authority clsx lucide-react tailwind-merge react-router-dom node pg bcrypt jsonwebtoken uuid express express-session cors cookie helmet nodemailer handlebars @types/node @types/pg @types/bcrypt @types/jsonwebtoken @types/uuid @types/express @types/express-session @types/cors @types/cookie-parser @types/helmet @types/nodemailer @types/handlebars
 ```
 
 4. Install dev dependencies:

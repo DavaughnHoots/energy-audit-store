@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Sliders } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
-import { Product, ProductFilters } from '../types/product';
+import { Product, ProductFilters } from '../../backend/src/types/product';
 import { Badge } from '../components/ui/badge';
 
 const ProductsPage: React.FC = () => {
