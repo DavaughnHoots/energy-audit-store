@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Energy Efficient Store</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Energy Efficient Shop</h3>
             <p className="text-sm text-gray-600">
               Making energy efficiency accessible and affordable for everyone.
             </p>
@@ -63,7 +63,7 @@ const Footer: React.FC = () => {
 
         <div className="mt-8 pt-8 border-t border-gray-200">
           <p className="text-sm text-gray-400 text-center">
-            © {new Date().getFullYear()} Energy Efficient Store. All rights reserved.
+            © {new Date().getFullYear()} Energy Efficient Shop. All rights reserved.
           </p>
         </div>
       </div>

@@ -1,4 +1,4 @@
-# Energy Efficient Store Market Platform
+# Energy Efficient Shop Market Platform
 
 An energy-efficient product marketplace platform built with React, TypeScript, and Vite.
 
