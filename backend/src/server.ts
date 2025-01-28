@@ -1,53 +1,40 @@
 // backend/src/server.ts
+
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import { pool } from './config/database';
-import { rateLimiter } from './middleware/auth';
-import authRoutes from './routes/auth';
-import emailVerificationRoutes from './routes/emailVerification';
+import { authService } from './services/auth/AuthService';
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(cookieParser());
 app.use(express.json());
-app.use(rateLimiter());
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/email', emailVerificationRoutes);
-
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// Startup
-const PORT = process.env.PORT || 5000;
-
-const startServer = async () => {
+// Auth routes with updated cookie settings
+app.post('/auth/login', async (req, res) => {
   try {
-    // Test database connection
-    await pool.query('SELECT NOW()');
-    console.log('Database connected successfully');
+    const { token, user } = await authService.loginUser(req.body.email, req.body.password);
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/'
     });
-  } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
+
+    res.json({ user });
+  } catch (error) {
+    res.status(401).json({ error: error.message });
   }
-};
-
-startServer();
-
-export default app;
+});

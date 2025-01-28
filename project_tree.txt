@@ -1,0 +1,115 @@
+energy-audit-store
+├── backend
+│   ├── src
+│   │   ├── config
+│   │   │   ├── cache.ts
+│   │   │   ├── database.ts
+│   │   │   ├── email.ts
+│   │   │   └── logger.ts
+│   │   ├── middleware
+│   │   │   ├── auth.ts
+│   │   │   ├── security.ts
+│   │   │   ├── tokenValidation.ts
+│   │   │   └── validators.ts
+│   │   ├── routes
+│   │   │   ├── auth
+│   │   │   │   └── passwordReset.ts
+│   │   │   ├── analytics.ts
+│   │   │   ├── auth.ts
+│   │   │   ├── emailVerification.ts
+│   │   │   ├── energyAudit.ts
+│   │   │   ├── products.ts
+│   │   │   ├── recommendations.ts
+│   │   │   └── userSettings.ts
+│   │   ├── services
+│   │   │   ├── auth
+│   │   │   │   ├── AuthService.ts
+│   │   │   │   ├── PasswordResetService.ts
+│   │   │   │   └── SignUpService.ts
+│   │   │   ├── analyticsService.ts
+│   │   │   ├── emailService.ts
+│   │   │   ├── EnergyAuditService.ts
+│   │   │   ├── notificationsService.ts
+│   │   │   ├── productDataService.ts
+│   │   │   ├── productService.ts
+│   │   │   ├── recommendationService.ts
+│   │   │   ├── searchService.ts
+│   │   │   ├── userAuthService.ts
+│   │   │   └── userService.ts
+│   │   ├── types
+│   │   │   ├── analytics.ts
+│   │   │   ├── energyAudit.ts
+│   │   │   ├── notifications.ts
+│   │   │   └── product.ts
+│   │   ├── validators
+│   │   │   ├── homeAudit.validator.ts
+│   │   │   └── product.validator.ts
+│   │   └── server.ts
+│   ├── .env
+│   ├── package-lock.json
+│   └── package.json
+├── public
+│   ├── data
+│   │   └── products.csv
+│   └── vite.svg
+├── src
+│   ├── assets
+│   │   └── react.svg
+│   ├── components
+│   │   ├── audit
+│   │   │   └── EnergyAuditForm.tsx
+│   │   ├── auth
+│   │   │   ├── AuthService.ts
+│   │   │   ├── PasswordReset.tsx
+│   │   │   ├── SignIn.tsx
+│   │   │   └── SignUp.tsx
+│   │   ├── layout
+│   │   │   ├── Footer.tsx
+│   │   │   └── Header.tsx
+│   │   ├── products
+│   │   │   ├── EnergySavingsCard.tsx
+│   │   │   ├── ProductDetailHeader.tsx
+│   │   │   └── ProductSpecifications.tsx
+│   │   └── ui
+│   │       ├── alert.tsx
+│   │       └── badge.tsx
+│   ├── config
+│   │   └── api.ts
+│   ├── context
+│   │   └── SettingsContext.tsx
+│   ├── hooks
+│   │   └── useProducts.ts
+│   ├── lib
+│   │   └── utils.ts
+│   ├── pages
+│   │   ├── EducationPage.tsx
+│   │   ├── EnergyAuditPage.tsx
+│   │   ├── ProductDetailPage.tsx
+│   │   ├── ProductsPage.tsx
+│   │   └── UserSettingsPage.tsx
+│   ├── templates
+│   │   └── email-verification.html
+│   ├── App.css
+│   ├── App.tsx
+│   ├── file_tree.txt
+│   ├── index.css
+│   ├── main.tsx
+│   └── vite-env.d.ts
+├── .env
+├── .gitignore
+├── concatenated_project.txt
+├── database_setup.sql
+├── eslint.config.js
+├── filesgather.py
+├── filetreegenerator.py
+├── index.html
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── project_tree.txt
+├── README.md
+├── tailwind.config.js
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
