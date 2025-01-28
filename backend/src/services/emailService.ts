@@ -1,11 +1,11 @@
-// src/services/emailService.ts
+// backend/src/services/emailService.ts
 
 import nodemailer from 'nodemailer';
 import { readFileSync } from 'fs';
 import handlebars from 'handlebars';
 import path from 'path';
 
-export interface EmailConfig {
+interface EmailConfig {
   host: string;
   port: number;
   secure: boolean;
@@ -16,16 +16,10 @@ export interface EmailConfig {
   from: string;
 }
 
-export interface EmailTemplate {
+interface EmailTemplate {
   subject: string;
-  text: string;
-  html: string;
-}
-
-export interface EmailOptions {
-  to: string;
-  template: string;
-  data: Record<string, any>;
+  text: (data: any) => string;
+  html: (data: any) => string;
 }
 
 export class EmailService {
@@ -38,7 +32,14 @@ export class EmailService {
       host: config.host,
       port: config.port,
       secure: config.secure,
-      auth: config.auth
+      auth: config.auth,
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
+      tls: {
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2'
+      }
     });
 
     this.templates = new Map();
@@ -47,7 +48,6 @@ export class EmailService {
   }
 
   private loadTemplates(): void {
-    // Define available templates and their files
     const templateList = {
       'verification': 'email-verification',
       'password-reset': 'password-reset',
@@ -57,7 +57,6 @@ export class EmailService {
 
     for (const [key, fileName] of Object.entries(templateList)) {
       try {
-        // Load template files
         const htmlTemplate = readFileSync(
           path.join(this.templateDir, `${fileName}.html`),
           'utf-8'
@@ -68,7 +67,6 @@ export class EmailService {
         );
         const configFile = require(path.join(this.templateDir, `${fileName}.json`));
 
-        // Compile templates
         const compiledHtml = handlebars.compile(htmlTemplate);
         const compiledText = handlebars.compile(textTemplate);
 
@@ -79,109 +77,97 @@ export class EmailService {
         });
       } catch (error) {
         console.error(`Failed to load template ${key}:`, error);
-        throw new Error(`Email template ${key} could not be loaded`);
+        throw new EmailError(`Email template ${key} could not be loaded`);
       }
     }
   }
 
-  public async sendVerificationEmail(email: string, token: string, name: string): Promise<void> {
+  public async sendVerificationEmail({
+    to,
+    token,
+    name
+  }: {
+    to: string;
+    token: string;
+    name: string;
+  }): Promise<void> {
     const template = this.templates.get('verification');
     if (!template) {
-      throw new Error('Verification email template not found');
+      throw new EmailError('Verification email template not found');
     }
 
     const data = {
       name,
       verificationLink: `${process.env.APP_URL}/verify-email/${token}`,
-      expiryHours: 24
+      expiryHours: 24,
+      year: new Date().getFullYear()
     };
 
     await this.sendEmail({
-      to: email,
+      to,
       template: 'verification',
       data
     });
   }
 
-  public async sendPasswordResetEmail(email: string, token: string): Promise<void> {
+  public async sendPasswordResetEmail({
+    to,
+    token
+  }: {
+    to: string;
+    token: string;
+  }): Promise<void> {
     const template = this.templates.get('password-reset');
     if (!template) {
-      throw new Error('Password reset email template not found');
+      throw new EmailError('Password reset template not found');
     }
 
     const data = {
       resetLink: `${process.env.APP_URL}/reset-password/${token}`,
-      expiryHours: 1
+      expiryHours: 1,
+      year: new Date().getFullYear()
     };
 
     await this.sendEmail({
-      to: email,
+      to,
       template: 'password-reset',
       data
     });
   }
 
-  public async sendWelcomeEmail(email: string, name: string): Promise<void> {
-    const template = this.templates.get('welcome');
+  private async sendEmail({
+    to,
+    template: templateName,
+    data
+  }: {
+    to: string;
+    template: string;
+    data: Record<string, any>;
+  }): Promise<void> {
+    const template = this.templates.get(templateName);
     if (!template) {
-      throw new Error('Welcome email template not found');
-    }
-
-    const data = {
-      name,
-      loginUrl: `${process.env.APP_URL}/login`,
-      supportEmail: process.env.SUPPORT_EMAIL
-    };
-
-    await this.sendEmail({
-      to: email,
-      template: 'welcome',
-      data
-    });
-  }
-
-  public async sendAuditCompleteEmail(email: string, auditId: string, recommendations: any[]): Promise<void> {
-    const template = this.templates.get('audit-complete');
-    if (!template) {
-      throw new Error('Audit complete email template not found');
-    }
-
-    const data = {
-      auditUrl: `${process.env.APP_URL}/audits/${auditId}`,
-      recommendations,
-      supportEmail: process.env.SUPPORT_EMAIL
-    };
-
-    await this.sendEmail({
-      to: email,
-      template: 'audit-complete',
-      data
-    });
-  }
-
-  private async sendEmail(options: EmailOptions): Promise<void> {
-    const template = this.templates.get(options.template);
-    if (!template) {
-      throw new Error(`Email template ${options.template} not found`);
+      throw new EmailError(`Email template ${templateName} not found`);
     }
 
     try {
-      // Apply template data
-      const html = template.html(options.data);
-      const text = template.text(options.data);
-      const subject = handlebars.compile(template.subject)(options.data);
+      const html = template.html(data);
+      const text = template.text(data);
+      const subject = handlebars.compile(template.subject)(data);
 
-      // Send email
       await this.transporter.sendMail({
         from: process.env.EMAIL_FROM,
-        to: options.to,
+        to,
         subject,
         text,
-        html
+        html,
+        headers: {
+          'X-Priority': '1',
+          'X-MSMail-Priority': 'High'
+        }
       });
     } catch (error) {
       console.error('Failed to send email:', error);
-      throw new Error('Failed to send email');
+      throw new EmailError('Failed to send email');
     }
   }
 
@@ -196,7 +182,6 @@ export class EmailService {
   }
 }
 
-// Error handling class
 export class EmailError extends Error {
   constructor(message: string) {
     super(message);
@@ -204,7 +189,6 @@ export class EmailError extends Error {
   }
 }
 
-// Create and export singleton instance
 const emailConfig: EmailConfig = {
   host: process.env.EMAIL_HOST || 'smtp.example.com',
   port: parseInt(process.env.EMAIL_PORT || '587'),
