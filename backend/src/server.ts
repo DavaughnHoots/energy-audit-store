@@ -21,9 +21,9 @@ app.use(cookieParser());
 app.use(express.json());
 
 // Auth routes with updated cookie settings
-app.post('/auth/login', async (req, res) => {
+app.post('/api/auth/signin', async (req, res) => {
   try {
-    const { token, user } = await authService.loginUser(req.body.email, req.body.password);
+    const { token, user } = await authService.signIn(req.body.email, req.body.password);
 
     res.cookie('token', token, {
       httpOnly: true,
@@ -37,4 +37,9 @@ app.post('/auth/login', async (req, res) => {
   } catch (error) {
     res.status(401).json({ error: error.message });
   }
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
