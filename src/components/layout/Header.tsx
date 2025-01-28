@@ -33,9 +33,12 @@ const Header: React.FC = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
-            <button className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">
+            <Link
+              to="/sign-in"
+              className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+            >
               Sign In
-            </button>
+            </Link>
             <button className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600">
               Get Started
             </button>
