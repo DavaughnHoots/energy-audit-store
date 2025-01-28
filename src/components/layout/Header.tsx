@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import logo from '../../assets/website logo.png';
 
 const Header: React.FC = () => {
   return (
@@ -10,9 +12,10 @@ const Header: React.FC = () => {
         <div className="flex justify-between h-16">
           {/* Logo and Brand */}
           <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <h1 className="text-2xl font-bold text-green-600">Energy Efficient Store</h1>
-            </div>
+            <Link to="/" className="flex-shrink-0 flex items-center gap-2">
+              <img src={logo} alt="Energy Efficient Shop Logo" className="h-8 w-auto" />
+              <h1 className="text-2xl font-bold text-green-600">Energy Efficient Shop</h1>
+            </Link>
             
             {/* Desktop Navigation */}
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

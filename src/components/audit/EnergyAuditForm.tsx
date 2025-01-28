@@ -14,36 +14,39 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Form section configuration
-const FORM_SECTIONS = {
-  BASIC_INFO: {
-    id: 'basicInfo',
+type FormSectionKey = 'basicInfo' | 'homeDetails' | 'currentConditions' | 'hvac' | 'energyUsage';
+
+interface FormSection {
+  title: string;
+  icon: JSX.Element;
+  required: string[];
+}
+
+const FORM_SECTIONS: Record<FormSectionKey, FormSection> = {
+  basicInfo: {
     title: 'Basic Information',
     icon: <Home className="h-6 w-6 text-green-600" />,
     required: ['fullName', 'email', 'address']
   },
-  HOME_DETAILS: {
-    id: 'homeDetails',
+  homeDetails: {
     title: 'Home Details',
     icon: <Home className="h-6 w-6 text-green-600" />,
     required: ['yearBuilt', 'homeSize', 'homeType']
   },
-  CURRENT_CONDITIONS: {
-    id: 'currentConditions',
+  currentConditions: {
     title: 'Current Conditions',
     icon: <Thermometer className="h-6 w-6 text-green-600" />,
     required: ['insulation', 'windowType', 'windowCondition']
   },
-  HVAC: {
-    id: 'hvac',
+  hvac: {
     title: 'HVAC Systems',
     icon: <Sun className="h-6 w-6 text-green-600" />,
-    required: ['heatingSystem', 'coolingSystem']
+    required: ['heatingType', 'coolingType']
   },
-  ENERGY_USAGE: {
-    id: 'energyUsage',
+  energyUsage: {
     title: 'Energy Usage',
     icon: <DollarSign className="h-6 w-6 text-green-600" />,
-    required: ['monthlyBill', 'peakUsageTimes']
+    required: ['monthlyBill']
   }
 };
 
@@ -89,7 +92,7 @@ interface FormData {
 }
 
 const EnergyAuditForm: React.FC = () => {
-  const [currentSection, setCurrentSection] = useState(FORM_SECTIONS.BASIC_INFO.id);
+  const [currentSection, setCurrentSection] = useState<FormSectionKey>('basicInfo');
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(() => {
     // Try to load saved form data from localStorage
@@ -141,19 +144,37 @@ const EnergyAuditForm: React.FC = () => {
     localStorage.setItem('energyAuditForm', JSON.stringify(formData));
   }, [formData]);
 
-  const validateSection = (sectionId: string): boolean => {
-    const section = FORM_SECTIONS[sectionId as keyof typeof FORM_SECTIONS];
-    const sectionData = formData[sectionId as keyof FormData];
+  const validateSection = (sectionId: FormSectionKey): boolean => {
+    const section = FORM_SECTIONS[sectionId];
+    const sectionData = formData[sectionId];
 
     return section.required.every(field => {
-      if (typeof sectionData[field] === 'object') {
-        return Object.values(sectionData[field]).every(value => value !== '');
+      const fieldValue = sectionData[field as keyof typeof sectionData];
+
+      if (fieldValue === undefined) {
+        return false;
       }
-      return sectionData[field] !== '';
+
+      // Handle nested objects (like insulation)
+      if (typeof fieldValue === 'object' && fieldValue !== null) {
+        // For arrays, check if not empty
+        if (Array.isArray(fieldValue)) {
+          return (fieldValue as string[]).length > 0;
+        }
+        // For objects, check if all required values are filled
+        if (field === 'insulation') {
+          const insulationValues = fieldValue as Record<string, string>;
+          return Object.values(insulationValues).some(value => value !== '');
+        }
+        return false;
+      }
+
+      // For simple fields, check if not empty
+      return fieldValue !== '';
     });
   };
 
-  const handleInputChange = (section: string, field: string, value: any) => {
+  const handleInputChange = (section: FormSectionKey, field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [section]: {
@@ -170,18 +191,24 @@ const EnergyAuditForm: React.FC = () => {
       return;
     }
 
-    const sections = Object.values(FORM_SECTIONS);
-    const currentIndex = sections.findIndex(section => section.id === currentSection);
-    if (currentIndex < sections.length - 1) {
-      setCurrentSection(sections[currentIndex + 1].id);
+    const sections = Object.keys(FORM_SECTIONS) as FormSectionKey[];
+    const currentIndex = sections.indexOf(currentSection);
+    if (currentIndex >= 0 && currentIndex < sections.length - 1) {
+      const nextSection = sections[currentIndex + 1];
+      if (nextSection) {
+        setCurrentSection(nextSection);
+      }
     }
   };
 
   const handlePrevious = () => {
-    const sections = Object.values(FORM_SECTIONS);
-    const currentIndex = sections.findIndex(section => section.id === currentSection);
+    const sections = Object.keys(FORM_SECTIONS) as FormSectionKey[];
+    const currentIndex = sections.indexOf(currentSection);
     if (currentIndex > 0) {
-      setCurrentSection(sections[currentIndex - 1].id);
+      const prevSection = sections[currentIndex - 1];
+      if (prevSection) {
+        setCurrentSection(prevSection);
+      }
     }
   };
 
@@ -189,10 +216,11 @@ const EnergyAuditForm: React.FC = () => {
     e.preventDefault();
 
     // Validate all sections
-    for (const section of Object.values(FORM_SECTIONS)) {
-      if (!validateSection(section.id)) {
-        setError(`Please complete all required fields in ${section.title}`);
-        setCurrentSection(section.id);
+    const sections = Object.keys(FORM_SECTIONS) as FormSectionKey[];
+    for (const sectionId of sections) {
+      if (!validateSection(sectionId)) {
+        setError(`Please complete all required fields in ${FORM_SECTIONS[sectionId].title}`);
+        setCurrentSection(sectionId);
         return;
       }
     }
@@ -222,8 +250,8 @@ const EnergyAuditForm: React.FC = () => {
   };
 
   const renderProgressBar = () => {
-    const sections = Object.values(FORM_SECTIONS);
-    const currentIndex = sections.findIndex(section => section.id === currentSection);
+    const sections = Object.keys(FORM_SECTIONS) as FormSectionKey[];
+    const currentIndex = sections.indexOf(currentSection);
     const progress = ((currentIndex + 1) / sections.length) * 100;
 
     return (
@@ -356,7 +384,7 @@ const EnergyAuditForm: React.FC = () => {
     </div>
   );
 
-    const renderCurrentConditionsSection = () => (
+  const renderCurrentConditionsSection = () => (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900">Current Conditions</h3>
       <div className="space-y-4">
@@ -553,20 +581,15 @@ const EnergyAuditForm: React.FC = () => {
   );
 
   const renderCurrentSection = () => {
-    switch (currentSection) {
-      case FORM_SECTIONS.BASIC_INFO.id:
-        return renderBasicInfoSection();
-      case FORM_SECTIONS.HOME_DETAILS.id:
-        return renderHomeDetailsSection();
-      case FORM_SECTIONS.CURRENT_CONDITIONS.id:
-        return renderCurrentConditionsSection();
-      case FORM_SECTIONS.HVAC.id:
-        return renderHVACSection();
-      case FORM_SECTIONS.ENERGY_USAGE.id:
-        return renderEnergyUsageSection();
-      default:
-        return null;
-    }
+    const sectionRenderers: Record<FormSectionKey, () => JSX.Element> = {
+      basicInfo: renderBasicInfoSection,
+      homeDetails: renderHomeDetailsSection,
+      currentConditions: renderCurrentConditionsSection,
+      hvac: renderHVACSection,
+      energyUsage: renderEnergyUsageSection
+    };
+
+    return sectionRenderers[currentSection]();
   };
 
   return (
@@ -594,14 +617,14 @@ const EnergyAuditForm: React.FC = () => {
         <button
           type="button"
           onClick={handlePrevious}
-          disabled={currentSection === FORM_SECTIONS.BASIC_INFO.id}
+          disabled={currentSection === 'basicInfo'}
           className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Previous
         </button>
 
-        {currentSection === FORM_SECTIONS.ENERGY_USAGE.id ? (
+        {currentSection === 'energyUsage' ? (
           <button
             type="submit"
             className="flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"

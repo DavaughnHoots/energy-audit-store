@@ -1,14 +1,14 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import EnergyAuditPage from './pages/EnergyAuditPage';
 import EducationPage from './pages/EducationPage';
+import CommunityPage from './pages/CommunityPage';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 import { LineChart, Battery, Users } from 'lucide-react';
-
 
 // Home component with all the landing page content
 const Home: React.FC = () => {
@@ -40,9 +40,9 @@ const Home: React.FC = () => {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       {/* Hero Section */}
       <Alert className="mb-8">
-        <AlertTitle className="text-lg font-semibold">Welcome to Energy Efficient Store!</AlertTitle>
+        <AlertTitle className="text-lg font-semibold">Welcome to Energy Efficient Shop!</AlertTitle>
         <AlertDescription>
-          Your one-stop shop for energy-efficient products. Start with a DIY energy audit to get personalized recommendations.
+          Where Efficiency meets Sustainability! It is your one-stop shop for energy-efficient products. Start with a DIY energy audit to get personalized recommendations.
         </AlertDescription>
       </Alert>
 
@@ -57,9 +57,16 @@ const Home: React.FC = () => {
               <div className="mb-4">{feature.icon}</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">{feature.title}</h3>
               <p className="text-sm text-gray-500">{feature.description}</p>
-              <button className="mt-4 text-green-600 hover:text-green-700 text-sm font-medium">
+              <Link
+                to={
+                  feature.title === 'Product Catalog' ? '/products' :
+                  feature.title === 'DIY Energy Audit' ? '/energy-audit' :
+                  feature.title === 'Community' ? '/community' : '/'
+                }
+                className="mt-4 text-green-600 hover:text-green-700 text-sm font-medium inline-block"
+              >
                 Learn more →
-              </button>
+              </Link>
             </div>
           </div>
         ))}
@@ -88,9 +95,11 @@ const Home: React.FC = () => {
         <p className="text-green-100 mb-6 max-w-2xl mx-auto">
           Take our DIY energy audit today and discover personalized recommendations for your home's energy efficiency.
         </p>
-        <button className="bg-white text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition-colors duration-200">
-          Start Energy Audit
-        </button>
+        <Link to="/energy-audit">
+          <button className="bg-white text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition-colors duration-200">
+            Start Energy Audit
+          </button>
+        </Link>
       </div>
     </div>
   );
@@ -109,9 +118,7 @@ const App: React.FC = () => {
             <Route path="/products/:id" element={<ProductDetailPage />} />
             <Route path="/energy-audit" element={<EnergyAuditPage />} />
             <Route path="/education" element={<EducationPage />} />
-            {/* Add more routes as needed:
             <Route path="/community" element={<CommunityPage />} />
-            */}
           </Routes>
         </main>
         <Footer />
