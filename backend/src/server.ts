@@ -5,6 +5,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import authRouter from './routes/auth';
+import hvacRouter from './routes/hvac';
 import userPropertySettings from './routes/userPropertySettings';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.json());
 // Mount routes
 app.use('/api/auth', authRouter);
 app.use('/api/user-settings', userPropertySettings);
+app.use('/api/hvac', hvacRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
