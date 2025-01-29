@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
 import Header from './components/layout/Header';
@@ -112,8 +113,9 @@ const Home: React.FC = () => {
 // Main App component with routing
 const App: React.FC = () => {
   return (
-    <Router>
-      <AuthProvider>
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
         <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
         <main className="flex-grow">
@@ -137,8 +139,9 @@ const App: React.FC = () => {
         </main>
         <Footer />
         </div>
-      </AuthProvider>
-    </Router>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   );
 };
 
