@@ -31,12 +31,12 @@ export class UserAuthService {
       // Hash password
       const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-      // Insert new user
+      // Insert new user with default role
       const result = await this.pool.query(
-        `INSERT INTO users (id, email, password_hash, full_name, phone, address)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING id, email, full_name, created_at`,
-        [uuidv4(), email, passwordHash, fullName, phone, address]
+        `INSERT INTO users (id, email, password_hash, full_name, phone, address, role)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id, email, full_name, role, created_at`,
+        [uuidv4(), email, passwordHash, fullName, phone, address, 'user']
       );
 
       // Generate JWT token
@@ -56,6 +56,7 @@ export class UserAuthService {
 
   async loginUser(email: string, password: string) {
     try {
+      console.log('Attempting to find user:', email);
       // Get user by email
       const result = await this.pool.query(
         'SELECT * FROM users WHERE email = $1',
@@ -63,13 +64,16 @@ export class UserAuthService {
       );
 
       const user = result.rows[0];
+      console.log('User found:', user ? 'yes' : 'no');
 
       if (!user) {
         throw new Error('User not found');
       }
 
       // Verify password
+      console.log('Verifying password...');
       const isValid = await bcrypt.compare(password, user.password_hash);
+      console.log('Password valid:', isValid);
 
       if (!isValid) {
         throw new Error('Invalid password');

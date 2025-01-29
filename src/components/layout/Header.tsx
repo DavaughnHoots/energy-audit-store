@@ -1,11 +1,13 @@
 // src/components/layout/Header.tsx
 
 import React from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import logo from '../../assets/website logo.png';
 
 const Header: React.FC = () => {
+  const { isAuthenticated, logout } = useAuth();
   return (
     <header className="bg-white shadow-sm">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,15 +35,38 @@ const Header: React.FC = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
-            <Link
-              to="/sign-in"
-              className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Sign In
-            </Link>
-            <button className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600">
-              Get Started
-            </button>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  <User className="h-5 w-5" />
+                  <span>Dashboard</span>
+                </Link>
+                <button
+                  onClick={logout}
+                  className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/sign-in"
+                  className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/sign-in"
+                  className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
             
             {/* Mobile menu button */}
             <button className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100">

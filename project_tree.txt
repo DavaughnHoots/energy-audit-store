@@ -1,4 +1,219 @@
 energy-audit-store
+├── .claudesync
+│   └── config.local.json
+├── .git
+│   ├── hooks
+│   ├── info
+│   │   └── exclude
+│   ├── objects
+│   │   ├── 05
+│   │   │   ├── 02ceb50ba2ee3d680111ce6cd6e530e999290a
+│   │   │   └── 6a1492720ab54ac11336931b040d9237b1d4b4
+│   │   ├── 06
+│   │   │   └── bd726fb3e65d61b18b99814c9decc0e4fb96ae
+│   │   ├── 07
+│   │   │   └── 000910baa3118eb55ce5e9d63c097889e19671
+│   │   ├── 09
+│   │   │   └── 68a8e4b514356a3863a2e15a9745ac69f79d48
+│   │   ├── 0f
+│   │   │   └── 7148d8114ab200991bca2b3718bc8e9a5def12
+│   │   ├── 10
+│   │   │   └── f5868c023cca87e7dc81a5e49861db75ec1774
+│   │   ├── 12
+│   │   │   ├── 28ecc73cf573dfad03fba911577b40be4c2fb1
+│   │   │   └── e3073513014668cdbb69ee16abfb1ed11fe61a
+│   │   ├── 14
+│   │   │   └── 77b527ab3cc859801e2b750def588b922d7676
+│   │   ├── 1e
+│   │   │   ├── 88ec6b6b16cc322e88c8789f2ab9309985bfc7
+│   │   │   └── 8a6de388aab6033bb578c80cc9d2e3662b07a4
+│   │   ├── 29
+│   │   │   └── 673637434c067a84b2ab759eca5ba9332e3060
+│   │   ├── 2a
+│   │   │   └── f8111a51fad06b836fb43e91727d66f9015074
+│   │   ├── 30
+│   │   │   └── 2262c988c5fd8ecb65d9aa213f5a11930000e4
+│   │   ├── 38
+│   │   │   └── 3f66365a58dec4c1e6e39af71a88962cb9f830
+│   │   ├── 39
+│   │   │   └── c49f3e55764ef4871cd758bd3afc22c4e7b345
+│   │   ├── 3c
+│   │   │   └── 91d60472497b56c77850c80811ea47b152029d
+│   │   ├── 3d
+│   │   │   ├── 6925f1a01a8662610b393fddab3d8747827343
+│   │   │   └── e11cb94b51ed187af4ed32b8cd429679eb92c9
+│   │   ├── 41
+│   │   │   └── 299db796ea225a138528dede5475016a645064
+│   │   ├── 42
+│   │   │   ├── 46c7938b5c0814fc5c0fc81191513530ba7a1e
+│   │   │   ├── 6b7d90cf0af2e2b81d9914d7953c74d5c4ad7b
+│   │   │   └── fb231f9e5274af0490217044f5f79e37647aa9
+│   │   ├── 45
+│   │   │   └── e7142ff5e1cffb0420187008cb238d33c7d843
+│   │   ├── 4e
+│   │   │   └── 83093d8a968086082fcc9f855ff9e3705113f8
+│   │   ├── 4f
+│   │   │   └── b72d7c99575f14ead490f03af5ed18361851c0
+│   │   ├── 50
+│   │   │   └── d31400b2cf97f68b63386b4b5f327a4607f188
+│   │   ├── 51
+│   │   │   └── 232652497f037167e850a4879b3c8b9b772fb5
+│   │   ├── 52
+│   │   │   ├── 0a591c44fdd31380bf505496af774d5297fb78
+│   │   │   ├── 0dc1c07c3341b43f3393e598a069d177d7a221
+│   │   │   └── bd5a150cc3f771d092010baa97e3d0966412fc
+│   │   ├── 53
+│   │   │   └── a22d448492af384b0400bf28e7ae5b02b7a0e4
+│   │   ├── 54
+│   │   │   └── 808d2cea46ab9d1a650684441b4ff7d64c3a1c
+│   │   ├── 5a
+│   │   │   ├── 55a585e858dffcef2602eaeda1d4688fe8db31
+│   │   │   └── 89ac3c4cefcfad10e7cfcf2bbc15115299cd6e
+│   │   ├── 5b
+│   │   │   └── a65a8f60cd34e4ec12cdbee30565323c0c8d7d
+│   │   ├── 5d
+│   │   │   ├── 4ba2a74c0d540de4bb5ba7fae1ef3bc358255d
+│   │   │   └── c27acd64e8b1faae2b772246410237ec94a968
+│   │   ├── 63
+│   │   │   ├── 17b277e50b4735217cb10f5b5f774edac02d86
+│   │   │   └── a0259429c2d26b9668e2d9332eb1bbe5f54675
+│   │   ├── 64
+│   │   │   ├── 7b90e438f4c91f23d113dc083127d3c60156bd
+│   │   │   └── c20d0414d6c343e8e334ee666c24276cab31d1
+│   │   ├── 6c
+│   │   │   └── 43c510896bf4857c8f318ee30abbf7752323f9
+│   │   ├── 71
+│   │   │   └── e7d87c344a9f2869cc6c55a5d4f0d1978260ad
+│   │   ├── 74
+│   │   │   └── f897b34aabe8fe4256531ee4713dc1b8331143
+│   │   ├── 77
+│   │   │   └── 91acae4fd8515c692f7851d8baa9d56a835990
+│   │   ├── 7a
+│   │   │   └── f1f4b70b7378b3d2a8c47c39718a22cba9e55a
+│   │   ├── 7c
+│   │   │   ├── 1c95f74e6d02ad5d6fc7079a972dde45a57dea
+│   │   │   └── c777c959893d47721e76b63cc46cb3fef4aa6a
+│   │   ├── 81
+│   │   │   └── 24cc9b32b6c55792a7afb34bc7ad9722262383
+│   │   ├── 86
+│   │   │   └── 0d436925d67b3e3aab96bf204960722ad1ff9d
+│   │   ├── 89
+│   │   │   └── 917d730c59ed2204b77d23f5bcf7ce7a4c44e1
+│   │   ├── 8b
+│   │   │   └── cb190c6cfb2197bb20d33f1ef248297afb2b1a
+│   │   ├── 8d
+│   │   │   └── 7c213bc44bf81b9a7a78c8869126c30802144f
+│   │   ├── 8e
+│   │   │   └── d993eb1171de05350b21a865bf9504c43152a2
+│   │   ├── 92
+│   │   │   ├── 3e93d8e577907d5479ca064c7e373397b847d5
+│   │   │   ├── 9ba5ae0add66e67e63f043d146749ebfaeb836
+│   │   │   └── e27c0e2fa3df9116debce1ab65bf98fc453539
+│   │   ├── 96
+│   │   │   ├── 2dd28d4e87682138e0c5ae60ac3ed7cdb6f93e
+│   │   │   └── 2ef6a025676ff94cf482beb448dbcdfd838676
+│   │   ├── 99
+│   │   │   ├── eb5314b38c5a0d3b83773cbcbe7fbd37ec5581
+│   │   │   └── ec10e7a04eea901d62154f48f6de0caebec342
+│   │   ├── 9a
+│   │   │   └── bdabd5ed32b57d86cd094541ee72420f15394f
+│   │   ├── 9b
+│   │   │   └── 9237c0e917d0fcdd5e06e86930c4cb24dd7d38
+│   │   ├── 9c
+│   │   │   └── b774bdc636dcca0778209ac8d7169b33b5f51c
+│   │   ├── 9d
+│   │   │   └── 1271d627ea6f842153b6c180e2c3689a79f4fb
+│   │   ├── 9f
+│   │   │   └── d977b85556bbe0d0967142dafe16619152b2d8
+│   │   ├── a3
+│   │   │   ├── 2af4a9e248816de046dbf060fab7b2a752bede
+│   │   │   └── 40c2e3cd8242490b022bce20bbe7b2c0ef316a
+│   │   ├── ac
+│   │   │   └── 005ff566807bd2bfafbb9e82e849ba425a894f
+│   │   ├── ad
+│   │   │   └── 904c836a9add079407413b27904269c5a70e3b
+│   │   ├── af
+│   │   │   └── 56693679ac92e0a88b0952b93e4adf6b9f3946
+│   │   ├── b1
+│   │   │   └── 655a32952b2242d9090c3b112db2b9d4c57ff4
+│   │   ├── b5
+│   │   │   └── 0ba8321ca4b196398d36ddf8a8e83185a7a2b7
+│   │   ├── b9
+│   │   │   └── 2173ea529d46c86cffcac30093fbeaec2e6486
+│   │   ├── bb
+│   │   │   └── 2f41b00444d1f7a457ca6c25f97a698260f353
+│   │   ├── be
+│   │   │   └── 100f3d49e7a6ff8ce2bde92ad817122ac26ef3
+│   │   ├── c5
+│   │   │   └── ab64184453c4d1fa1aac3e80c0ec68197355a9
+│   │   ├── cb
+│   │   │   ├── 174b429a1f146c1af7a24a5bf327f14eba88b0
+│   │   │   └── 5383d1ad7021673c9702ce1f6e3e1e8a4393fb
+│   │   ├── cc
+│   │   │   └── 751a6a34ef7621b041b508d4be82cdeefb1e93
+│   │   ├── ce
+│   │   │   └── 36b85d8828c89beb80be14756f4f1502302e37
+│   │   ├── cf
+│   │   │   └── 11de4a260955d6f6952ea22bec6a20428b6d10
+│   │   ├── d4
+│   │   │   └── 4f3ac3e510c790f41cc68c4678e70a8960e26c
+│   │   ├── d5
+│   │   │   └── 6d7f975ca2d6989cc88a62c864257913535d38
+│   │   ├── d6
+│   │   │   └── 30f839798d513abf4d2bf637ffd92f1b4a6902
+│   │   ├── dc
+│   │   │   └── 02240e4651d366cac08d89f6c5a02ff37c3ce8
+│   │   ├── e3
+│   │   │   └── 79735628606826e8ba736db96069880daf0080
+│   │   ├── e4
+│   │   │   └── 60f18efc75472fe3297a4fc31d59d948a8fe27
+│   │   ├── ea
+│   │   │   └── 3de1d6f6da9477c120d270af85381ecc009d9c
+│   │   ├── eb
+│   │   │   └── 196df72862ce7e16519c9070293bce3f3eeb69
+│   │   ├── ef
+│   │   │   └── 4f8a82cb4e55d997379da82db30908f483adab
+│   │   ├── f2
+│   │   │   └── 48b90c61b60503d9ddb7bc73706369441332ae
+│   │   ├── f7
+│   │   │   └── a2efd54b06d35ee81ac2941e2cbe09cd6a6085
+│   │   ├── f8
+│   │   │   └── 5d23a7785c70ac26f24c616a67d4942dcab94a
+│   │   ├── f9
+│   │   │   └── c2953ab6acca1f92f46fa58be3f899a52248ba
+│   │   ├── fd
+│   │   │   └── 4d973a7d76bfe1cd65516fb519052124a01627
+│   │   ├── info
+│   │   └── pack
+│   │       └── pack-54ba542e1e3fcccf997ea45f5d0cd8da616010c3.rev
+│   ├── refs
+│   │   ├── heads
+│   │   │   └── main
+│   │   ├── remotes
+│   │   │   └── origin
+│   │   │       ├── HEAD
+│   │   │       └── main
+│   │   └── tags
+│   ├── COMMIT_EDITMSG
+│   ├── config
+│   ├── description
+│   ├── FETCH_HEAD
+│   ├── HEAD
+│   ├── index
+│   └── packed-refs
+├── .trunk
+│   ├── actions
+│   │   ├── trunk-cache-prune
+│   │   ├── trunk-share-with-everyone
+│   │   ├── trunk-single-player-auto-on-upgrade
+│   │   ├── trunk-single-player-auto-upgrade
+│   │   └── trunk-whoami
+│   ├── notifications
+│   ├── out
+│   ├── plugins
+│   ├── tools
+│   ├── .claudeignore
+│   └── .gitignore
 ├── backend
 │   ├── src
 │   │   ├── config
@@ -54,7 +269,9 @@ energy-audit-store
 │   └── vite.svg
 ├── src
 │   ├── assets
-│   │   └── react.svg
+│   │   ├── Energy-Efficient-Shop-(1).png
+│   │   ├── react.svg
+│   │   └── website logo.png
 │   ├── components
 │   │   ├── audit
 │   │   │   └── EnergyAuditForm.tsx
@@ -82,6 +299,7 @@ energy-audit-store
 │   ├── lib
 │   │   └── utils.ts
 │   ├── pages
+│   │   ├── CommunityPage.tsx
 │   │   ├── EducationPage.tsx
 │   │   ├── EnergyAuditPage.tsx
 │   │   ├── ProductDetailPage.tsx

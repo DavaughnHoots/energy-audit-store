@@ -1,9 +1,27 @@
 // src/components/auth/SignIn.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { API_BASE_URL, API_ENDPOINTS } from '@/config/api';
+import { useAuth } from '@/context/AuthContext';
 
-const SignIn = () => {
+interface FormData {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
+
+const SignIn: React.FC = () => {
+  const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    // Redirect to dashboard if authenticated
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -23,7 +41,7 @@ const SignIn = () => {
     }
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -47,7 +65,7 @@ const SignIn = () => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
@@ -58,7 +76,7 @@ const SignIn = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/signin', {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.SIGNIN}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,6 +92,8 @@ const SignIn = () => {
         throw new Error(data.error || 'Sign in failed');
       }
 
+      const data = await response.json();
+
       // Handle successful sign in
       if (formData.rememberMe) {
         localStorage.setItem('savedEmail', formData.email);
@@ -81,11 +101,11 @@ const SignIn = () => {
         localStorage.removeItem('savedEmail');
       }
 
-      // Redirect to dashboard or home page
-      window.location.href = '/dashboard';
+      // Use AuthContext login without immediate navigation
+      login(data.token, data.user);
       
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
