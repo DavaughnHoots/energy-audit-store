@@ -5,6 +5,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import authRouter from './routes/auth';
+import userPropertySettings from './routes/userPropertySettings';
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(express.json());
 
 // Mount routes
 app.use('/api/auth', authRouter);
+app.use('/api/user-settings', userPropertySettings);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
