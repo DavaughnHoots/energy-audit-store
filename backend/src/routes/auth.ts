@@ -1,14 +1,21 @@
 // src/routes/auth.ts
-import express from 'express';
+import express, { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { UserAuthService } from '../services/userAuthService';
 import { pool } from '../config/database';
-import { authenticate, rateLimiter, csrfProtection } from '../middleware/auth';
+import { authenticate, csrfProtection } from '../middleware/auth';
+
+interface AuthRequest extends Request {
+  user?: {
+    userId: string;
+  };
+}
 
 const router = express.Router();
 const authService = new UserAuthService(pool);
 
 // Register new user
-router.post('/register', rateLimiter(60 * 1000, 5), async (req, res) => {
+router.post('/register', async (req: Request, res: Response) => {
   try {
     const { email, password, fullName, phone, address } = req.body;
 
@@ -28,8 +35,9 @@ router.post('/register', rateLimiter(60 * 1000, 5), async (req, res) => {
 });
 
 // Login user
-router.post('/login', rateLimiter(60 * 1000, 5), async (req, res) => {
+router.post('/signin', async (req: Request, res: Response) => {
   try {
+    console.log('Signin attempt:', { email: req.body.email });
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -48,6 +56,7 @@ router.post('/login', rateLimiter(60 * 1000, 5), async (req, res) => {
 
     res.json(result);
   } catch (error) {
+    console.error('Signin error:', error);
     if (error instanceof Error) {
       res.status(401).json({ error: error.message });
     } else {
@@ -57,13 +66,13 @@ router.post('/login', rateLimiter(60 * 1000, 5), async (req, res) => {
 });
 
 // Logout user
-router.post('/logout', (req, res) => {
+router.post('/logout', (req: Request, res: Response) => {
   res.clearCookie('token');
   res.json({ message: 'Logged out successfully' });
 });
 
 // Get current user profile
-router.get('/profile', authenticate, async (req, res) => {
+router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
     const result = await pool.query(
@@ -82,7 +91,7 @@ router.get('/profile', authenticate, async (req, res) => {
 });
 
 // Update user profile
-router.put('/profile', authenticate, csrfProtection, async (req, res) => {
+router.put('/profile', authenticate, csrfProtection, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
     const { fullName, phone, address } = req.body;
@@ -104,7 +113,7 @@ router.put('/profile', authenticate, csrfProtection, async (req, res) => {
 });
 
 // Request password reset
-router.post('/password-reset-request', rateLimiter(60 * 1000, 3), async (req, res) => {
+router.post('/password-reset-request', async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
@@ -137,7 +146,7 @@ router.post('/password-reset-request', rateLimiter(60 * 1000, 3), async (req, re
 });
 
 // Reset password
-router.post('/password-reset', rateLimiter(60 * 1000, 3), async (req, res) => {
+router.post('/password-reset', async (req: Request, res: Response) => {
   try {
     const { token, newPassword } = req.body;
 

@@ -1,5 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import UserDashboardPage from './pages/UserDashboardPage';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ProductsPage from './pages/ProductsPage';
@@ -110,7 +113,8 @@ const Home: React.FC = () => {
 const App: React.FC = () => {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
         <main className="flex-grow">
           <Routes>
@@ -121,10 +125,19 @@ const App: React.FC = () => {
             <Route path="/education" element={<EducationPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/sign-in" element={<SignIn />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <UserDashboardPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </main>
         <Footer />
-      </div>
+        </div>
+      </AuthProvider>
     </Router>
   );
 };

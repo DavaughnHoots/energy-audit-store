@@ -2,6 +2,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { pool } from '../config/database';
 
 interface AuthenticatedRequest extends Request {
@@ -64,10 +65,10 @@ export const requireRole = (roles: string[]) => {
   };
 };
 
-// Rate limiting for auth endpoints
-export const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
+// Rate limiting middleware
+export const rateLimiter = (windowMs: number, max: number) => rateLimit({
+  windowMs,
+  max,
   message: { error: 'Too many login attempts. Please try again later.' }
 });
 
