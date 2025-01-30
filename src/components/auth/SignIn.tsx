@@ -4,7 +4,7 @@ import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { API_BASE_URL, API_ENDPOINTS } from '@/config/api';
-import { useAuth } from '@/context/AuthContext';
+import useAuth from '@/context/AuthContext';
 
 interface FormData {
   email: string;
@@ -81,6 +81,7 @@ const SignIn: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -101,8 +102,8 @@ const SignIn: React.FC = () => {
         localStorage.removeItem('savedEmail');
       }
 
-      // Use AuthContext login without immediate navigation
-      login(data.token, data.user);
+      // Use AuthContext login with user data (token is handled by cookies)
+      login(data.user);
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

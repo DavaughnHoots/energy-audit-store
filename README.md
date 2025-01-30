@@ -1,164 +1,193 @@
-# Energy Efficient Shop Market Platform
+# Energy Efficient Store Platform
 
-An energy-efficient product marketplace platform built with React, TypeScript, and Vite.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.2.0-blue)](https://reactjs.org/)
+[![Node](https://img.shields.io/badge/Node-18.x-green)](https://nodejs.org/)
 
-## Prerequisites
+A marketplace platform that helps homeowners find energy-efficient products, perform DIY energy audits, and monitor their energy savings. The platform combines **product recommendations** with **__personalized__** energy analysis to provide a seamless experience for improving home energy efficiency.
 
-Ensure you have the following installed:
+![Platform Preview](./src/assets/website%20logo.png)
 
-- **Node.js** 18.x or later ([Download Node.js](https://nodejs.org/))
-- **npm** 9.x or later (comes with Node.js)
-- **Git** ([Download Git](https://git-scm.com/))
+## 🌟 Features
 
-## Setup Instructions
+- **Smart Product Discovery**
+  - Advanced search and filtering for energy-efficient products
+  - Detailed product specifications and energy ratings
+  - Price and savings comparisons
 
-1. **Clone the repository:**
+- **DIY Energy Audit Tools**
+  - Step-by-step home energy assessment
+  - Personalized efficiency recommendations
+  - Energy savings calculator
+
+- **User Dashboard**
+  - Track energy savings progress
+  - Manage property settings
+  - View personalized recommendations
+
+- **Community Features**
+  - Share energy-saving success stories
+  - Discussion forums
+  - Energy-saving tips and guides
+
+## 🚀 Tech Stack
+
+### Frontend
+- React 18 with TypeScript
+- Vite for build tooling
+- Tailwind CSS for styling
+- Recharts for data visualization
+- Lucide React for icons
+- ShadCN UI components
+
+### Backend
+- Node.js with Express
+- PostgreSQL database
+- JWT authentication
+- Winston for logging
+- Zod for validation
+
+## 📋 Prerequisites
+
+- Node.js 18.x or later
+- PostgreSQL 14.x or later
+- npm 9.x or later
+- Git
+
+## 🛠️ Installation
+
+1. **Clone the repository**
    ```bash
-   git clone [repository-url]
+   git clone https://github.com/yourusername/energy-audit-store.git
    cd energy-audit-store
    ```
 
-2. **Install dependencies:**
+2. **Set up the database**
+   ```bash
+   # Create PostgreSQL database
+   psql -U postgres
+   CREATE DATABASE energy_efficient_store;
+   \c energy_efficient_store
+   \i database_setup.sql
+   ```
+
+3. **Install frontend dependencies**
    ```bash
    npm install
    ```
 
-
-3. **Install required packages:**
+4. **Install backend dependencies**
    ```bash
-   npm install @radix-ui/react-alert-dialog class-variance-authority clsx lucide-react tailwind-merge react-router-dom node pg bcrypt jsonwebtoken uuid express express-session cors cookie helmet nodemailer handlebars express-rate-limit zod winston winston-daily-rotate-file @types/node @types/pg @types/bcrypt @types/jsonwebtoken @types/uuid @types/express @types/express-session @types/cors @types/cookie-parser @types/helmet @types/nodemailer @types/handlebars @types/express-rate-limit
+   cd backend
+   npm install
    ```
 
-4. **Install dev dependencies:**
+5. **Configure environment variables**
+
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_URL=http://localhost:5000/api
+   ```
+
+   Create a `.env` file in the backend directory:
+   ```env
+   PORT=5000
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=energy_efficient_store
+   DB_USER=postgres
+   DB_PASSWORD=your_password
+   JWT_SECRET=your_secret_key
+   ```
+
+6. **Start development servers**
+
+   Frontend (root directory):
    ```bash
-   npm install -D tailwindcss postcss autoprefixer
-   ```
-
-5. **Initialize Tailwind CSS:**
-   ```bash
-   npx tailwindcss init -p
-   ```
-
-6. **Set up `.env` file:**
-   - Create a `.env` file in the root directory.
-   - Add the following environment variables (update values as needed):
-     ```
-     VITE_API_URL=http://localhost:3000/api
-     ```
-
-## Development
-
-1. **Start the development server:**
-   ```
    npm run dev
    ```
 
-2. **Access the application:**
-   - Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-3. **Check for any linting errors:**
-   ```
-   npm run lint
+   Backend (backend directory):
+   ```bash
+   npm run dev
    ```
 
-## Build & Deployment
-
-1. **Build the project for production:**
-   ```
-   npm run build
-   ```
-
-2. **Preview the production build:**
-   ```
-   npm run preview
-   ```
-
-3. Ensure the `dist/` folder is ready for deployment.
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-src/
-├── components/         # Reusable UI components
-│   ├── ui/            # Basic UI components
-│   └── layout/        # Layout components
-├── pages/             # Page components
-├── services/          # API services
-├── types/             # TypeScript types
-└── lib/               # Utilities
+├── backend/                # Backend Express application
+│   ├── src/
+│   │   ├── config/        # Configuration files
+│   │   ├── middleware/    # Express middleware
+│   │   ├── routes/        # API routes
+│   │   ├── services/      # Business logic
+│   │   └── types/         # TypeScript types
+├── src/                   # Frontend React application
+│   ├── components/        # React components
+│   ├── pages/            # Page components
+│   ├── services/         # API services
+│   └── types/            # TypeScript types
+└── public/               # Static assets
 ```
 
-## Git Workflow
+## 🔨 Available Scripts
 
-1. **Create a feature branch:**
-   ```
-   git checkout -b feature/[feature-name]
-   ```
+### Frontend
 
-2. **Commit your changes:**
-   ```
-   git add .
-   git commit -m "feat: [short description of changes]"
-   ```
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
 
-3. **Push your branch to the repository:**
-   ```
-   git push origin feature/[feature-name]
-   ```
+### Backend
 
-4. **Create a pull request** and request a review.
+```bash
+npm run dev          # Start development server
+npm start           # Start production server
+npm run build       # Build TypeScript files
+npm test            # Run tests
+```
 
-## Troubleshooting
+## 🧪 Running Tests
 
-1. **CORS Issues:**
-   - Verify the API URL in `.env`.
-   - Ensure the backend server allows requests from the front-end origin.
+```bash
+# Frontend tests
+npm test
 
-2. **Style Issues:**
-   - Check the Tailwind CSS configuration (`tailwind.config.js`).
+# Backend tests
+cd backend
+npm test
+```
 
-3. **TypeScript Errors:**
-   - Verify your imports.
-   - Ensure all TypeScript types are properly defined and imported.
+## 🤝 Contributing
 
-4. **Development Server Fails to Start:**
-   - Clear `node_modules` and reinstall dependencies:
-     ```
-     rm -rf node_modules
-     npm install
-     ```
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Available Commands
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-Here’s a list of available commands for managing the project:
+## 📚 API Documentation
 
-- **Start development server:** `npm run dev`
-- **Build for production:** `npm run build`
-- **Preview production build:** `npm run preview`
-- **Run ESLint:** `npm run lint`
+API documentation is available at `/api-docs` when running the development server. Please take a look at our [API Documentation](./backend/README.md) for detailed API specifications.
 
-## Team Conventions
+## 📄 License
 
-1. **Coding Standards:**
-   - Use TypeScript for all new files.
-   - Follow the component structure and patterns in `src/components/`.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-2. **Documentation:**
-   - Include JSDoc comments for all utility functions and services.
-   - Update the README if you add new features or commands.
+## 🙏 Acknowledgments
 
-3. **Testing:**
-   - Write and verify tests for new features.
+- [React](https://reactjs.org/)
+- [Vite](https://vitejs.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [ShadCN UI](https://ui.shadcn.com/)
+- [Express](https://expressjs.com/)
 
-4. **Commit Messages:**
-   - Follow this convention: `feat: [short description]`.
+## 📧 Contact
 
-5. **Pull Requests:**
-   - Ensure all tests pass before creating a pull request.
-
-## Additional Resources
-
-- [React Documentation](https://react.dev)
-- [TypeScript Documentation](https://www.typescriptlang.org/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [Vite Documentation](https://vitejs.dev/guide)
+Project Link: [https://github.com/DavaughnHoots/energy-audit-store](https://github.com/DavaughnHoots/energy-audit-store)

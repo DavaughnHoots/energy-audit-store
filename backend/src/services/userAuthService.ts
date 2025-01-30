@@ -6,7 +6,10 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
 const SALT_ROUNDS = 12;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+const JWT_SECRET: string = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '24h';
 
 export class UserAuthService {
@@ -55,38 +58,48 @@ export class UserAuthService {
   }
 
   async loginUser(email: string, password: string) {
+    const client = await this.pool.connect();
     try {
-      console.log('Attempting to find user:', email);
+      await client.query('BEGIN');
+
       // Get user by email
-      const result = await this.pool.query(
+      const userResult = await client.query(
         'SELECT * FROM users WHERE email = $1',
         [email]
       );
 
-      const user = result.rows[0];
-      console.log('User found:', user ? 'yes' : 'no');
-
+      const user = userResult.rows[0];
       if (!user) {
         throw new Error('User not found');
       }
 
       // Verify password
-      console.log('Verifying password...');
       const isValid = await bcrypt.compare(password, user.password_hash);
-      console.log('Password valid:', isValid);
-
       if (!isValid) {
         throw new Error('Invalid password');
       }
 
       // Update last login
-      await this.pool.query(
+      await client.query(
         'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1',
         [user.id]
       );
 
       // Generate token
       const token = this.generateToken(user);
+
+      // Calculate token expiration (24 hours from now)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      // Create new session
+      await client.query(
+        `INSERT INTO sessions (token, user_id, created_at, expires_at)
+         VALUES ($1, $2, CURRENT_TIMESTAMP, $3)`,
+        [token, user.id, expiresAt]
+      );
+
+      await client.query('COMMIT');
 
       return {
         user: {
@@ -180,6 +193,77 @@ export class UserAuthService {
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
+  }
+
+  async cleanupExpiredSessions() {
+    try {
+      await this.pool.query(
+        'DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP'
+      );
+    } catch (error) {
+      console.error('Failed to cleanup expired sessions:', error);
+    }
+  }
+
+  async refreshToken(oldToken: string) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Verify the old token
+      const decoded = await this.verifyToken(oldToken) as { userId: string };
+
+      // Check if token exists in valid sessions
+      const sessionResult = await client.query(
+        'SELECT * FROM sessions WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP',
+        [oldToken]
+      );
+
+      if (sessionResult.rows.length === 0) {
+        throw new Error('Invalid or expired session');
+      }
+
+      // Get user data
+      const userResult = await client.query(
+        'SELECT * FROM users WHERE id = $1',
+        [decoded.userId]
+      );
+
+      if (userResult.rows.length === 0) {
+        throw new Error('User not found');
+      }
+
+      const user = userResult.rows[0];
+
+      // Generate new token
+      const newToken = this.generateToken(user);
+
+      // Calculate new expiration (24 hours from now)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      // Remove old session
+      await client.query('DELETE FROM sessions WHERE token = $1', [oldToken]);
+
+      // Create new session
+      await client.query(
+        `INSERT INTO sessions (token, user_id, created_at, expires_at)
+         VALUES ($1, $2, CURRENT_TIMESTAMP, $3)`,
+        [newToken, user.id, expiresAt]
+      );
+
+      await client.query('COMMIT');
+
+      return { token: newToken };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      if (error instanceof Error) {
+        throw new Error(`Token refresh failed: ${error.message}`);
+      }
+      throw new Error('Token refresh failed');
+    } finally {
+      client.release();
+    }
   }
 }
 

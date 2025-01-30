@@ -1,7 +1,8 @@
 // src/pages/UserDashboardPage.tsx
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import React, { useState, useEffect, ReactNode } from 'react';
+import useAuth from '@/context/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Battery, Calendar, DollarSign, Leaf, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,11 +16,13 @@ interface DashboardStats {
     month: string;
     savings: number;
   }[];
+  lastUpdated?: string;
+  refreshInterval?: number;
 }
 
-const UserDashboardPage = () => {
+const UserDashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReactNode | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     totalSavings: 0,
     completedAudits: 0,
@@ -28,32 +31,99 @@ const UserDashboardPage = () => {
     monthlySavings: []
   });
 
-  const { token, logout } = useAuth();
+  const { logout } = useAuth();
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [token]);
+    let refreshTimeout: NodeJS.Timeout;
 
-  const fetchDashboardData = async () => {
+    const refresh = () => {
+      fetchDashboardData().then(interval => {
+        if (interval) {
+          refreshTimeout = setTimeout(refresh, interval);
+        }
+      });
+    };
+
+    refresh();
+
+    return () => {
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+    };
+  }, []);
+
+  const fetchDashboardData = async (): Promise<number | undefined> => {
     try {
-      const response = await fetch('/api/dashboard/stats', {
+      const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${document.cookie.split('token=')[1]?.split(';')[0]}`
         }
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        if (response.status === 401) {
-          logout(); // Token expired or invalid
-          return;
+        switch (data.code) {
+          case 'AUTH_REQUIRED':
+            console.error('Authentication error:', data.error);
+            logout();
+            return undefined;
+
+          case 'SETUP_REQUIRED':
+            setError(
+              <div className="space-y-4">
+                <p>{data.details}</p>
+                <a
+                  href={data.setupUrl}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                >
+                  Complete Setup
+                </a>
+              </div>
+            );
+            return undefined;
+
+          case 'SERVICE_UNAVAILABLE':
+            setError(
+              <div>
+                <p>{data.details}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Retrying in {data.retryAfter} seconds...
+                </p>
+              </div>
+            );
+            return data.retryAfter * 1000;
+
+          default:
+            throw new Error(data.error || 'Failed to fetch dashboard data');
         }
-        throw new Error('Failed to fetch dashboard data');
       }
 
-      const data = await response.json();
       setStats(data);
+      setError(null);
+      return data.refreshInterval;
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Dashboard data fetch error:', err);
+      setError(
+        <div>
+          <p>Unable to load dashboard data.</p>
+          <button
+            onClick={() => {
+              setError(null);
+              setIsLoading(true);
+              fetchDashboardData();
+            }}
+            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+          >
+            Retry Now
+          </button>
+        </div>
+      );
+      return undefined;
     } finally {
       setIsLoading(false);
     }
@@ -109,9 +179,16 @@ const UserDashboardPage = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">
-            Track your energy savings and efficiency improvements
-          </p>
+          <div className="flex justify-between items-center">
+            <p className="mt-2 text-gray-600">
+              Track your energy savings and efficiency improvements
+            </p>
+            {stats.lastUpdated && (
+              <p className="text-sm text-gray-500">
+                Last updated: {new Date(stats.lastUpdated).toLocaleTimeString()}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Stats Grid */}
