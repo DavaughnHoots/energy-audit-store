@@ -1,7 +1,7 @@
 // src/components/auth/SignIn.tsx
 
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { API_BASE_URL, API_ENDPOINTS } from '@/config/api';
 import useAuth from '@/context/AuthContext';
@@ -213,12 +213,12 @@ const SignIn: React.FC = () => {
             </div>
 
             <div className="mt-6">
-              <a
-                href="/signup"
+              <Link
+                to="/sign-up"
                 className="w-full flex justify-center py-2 px-4 border border-green-600 rounded-md shadow-sm text-sm font-medium text-green-600 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
                 Create an account
-              </a>
+              </Link>
             </div>
           </div>
         </div>

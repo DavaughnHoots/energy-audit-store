@@ -1,10 +1,21 @@
 // src/components/auth/SignUp.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const SignUp = () => {
-  const [formData, setFormData] = useState({
+interface FormData {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  phone: string;
+  address: string;
+  termsAccepted: boolean;
+}
+
+const SignUp: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
     password: '',
@@ -14,9 +25,9 @@ const SignUp = () => {
     termsAccepted: false
   });
   
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState(1);
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [step, setStep] = useState<number>(1);
 
   // Load saved form data from localStorage
   useEffect(() => {
@@ -32,18 +43,23 @@ const SignUp = () => {
 
   // Save form progress
   useEffect(() => {
-    const dataToSave = { ...formData };
-    delete dataToSave.password;
-    delete dataToSave.confirmPassword;
+    const { password, confirmPassword, ...dataToSave } = formData;
     localStorage.setItem('signupFormData', JSON.stringify(dataToSave));
   }, [formData]);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    if ((e.target as HTMLInputElement).type === 'checkbox') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -80,7 +96,7 @@ const SignUp = () => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
@@ -121,8 +137,8 @@ const SignUp = () => {
       // Redirect to verification page
       window.location.href = '/verify-email';
       
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred');
       setIsLoading(false);
     }
   };
@@ -234,7 +250,7 @@ const SignUp = () => {
             onChange={handleInputChange}
           />
           <label htmlFor="termsAccepted" className="ml-2 block text-sm text-gray-900">
-            I accept the <a href="/terms" className="text-green-600 hover:text-green-500">terms and conditions</a>
+            I accept the <Link to="/terms" className="text-green-600 hover:text-green-500">terms and conditions</Link>
           </label>
         </div>
       </div>
@@ -297,9 +313,9 @@ const SignUp = () => {
           <div className="mt-6 text-center">
             <span className="text-sm text-gray-600">
               Already have an account?{' '}
-              <a href="/signin" className="text-green-600 hover:text-green-500 font-medium">
+              <Link to="/sign-in" className="text-green-600 hover:text-green-500 font-medium">
                 Sign in
-              </a>
+              </Link>
             </span>
           </div>
         </div>
