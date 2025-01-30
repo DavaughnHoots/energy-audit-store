@@ -12,6 +12,7 @@ import EnergyAuditPage from './pages/EnergyAuditPage';
 import EducationPage from './pages/EducationPage';
 import CommunityPage from './pages/CommunityPage';
 import SignIn from './components/auth/SignIn';
+import SignUp from './components/auth/SignUp';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 import { LineChart, Battery, Users } from 'lucide-react';
 
@@ -127,6 +128,7 @@ const App: React.FC = () => {
             <Route path="/education" element={<EducationPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/sign-up" element={<SignUp />} />
             <Route
               path="/dashboard"
               element={
