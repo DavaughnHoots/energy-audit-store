@@ -9,8 +9,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
     // Exclude problematic Node.js modules
-    mainFields: ['browser', 'module', 'main'],
-    modules: ['node_modules'],
+    mainFields: ['browser', 'module', 'main']
   },
   build: {
     rollupOptions: {
@@ -33,6 +32,7 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path
       },
     },
   },

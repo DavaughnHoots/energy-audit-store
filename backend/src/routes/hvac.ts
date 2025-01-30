@@ -1,5 +1,6 @@
 import express from 'express';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types/auth';
 import { validateHVACData } from '../middleware/hvacValidators';
 import { pool } from '../config/database';
 import { appLogger } from '../config/logger';
@@ -30,7 +31,7 @@ router.put('/', authenticate, validateHVACData, async (req: AuthenticatedRequest
         updated_at = CURRENT_TIMESTAMP
       RETURNING *`,
       [
-        req.user!.userId,
+        req.user!.id,
         req.body.heating,
         req.body.cooling,
         req.body.ventilation,
@@ -47,7 +48,7 @@ router.put('/', authenticate, validateHVACData, async (req: AuthenticatedRequest
         created_at
       ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
       [
-        req.user!.userId,
+        req.user!.id,
         'hvac_settings_update',
         { newSettings: req.body }
       ]
@@ -75,7 +76,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res) => {
         updated_at
       FROM user_hvac_settings
       WHERE user_id = $1`,
-      [req.user!.userId]
+      [req.user!.id]
     );
 
     res.json(result.rows[0] || null);

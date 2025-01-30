@@ -38,7 +38,7 @@ const CommunityPage = () => {
       likes: 45,
       comments: 12,
       datePosted: '2024-01-20',
-      avatar: '/api/placeholder/40/40'
+      avatar: 'https://placehold.co/40x40'
     },
     {
       id: '2',
@@ -50,8 +50,8 @@ const CommunityPage = () => {
       likes: 32,
       comments: 28,
       datePosted: '2024-01-22',
-      avatar: '/api/placeholder/40/40'
-    },
+      avatar: 'https://placehold.co/40x40'
+    }
     // Additional posts would be loaded from backend
   ];
 

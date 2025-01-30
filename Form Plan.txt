@@ -1,0 +1,2860 @@
+﻿FORM BREAKDOWN AND PLAN
+
+
+Data Point Classification Based on Formulas:
+
+
+1. CRITICAL VALUES (Required for basic calculations):
+
+
+- Power consumption (P)
+- Time duration (t)
+- Surface area (A)
+- Temperature differences (∆T)
+- Volume of space (V)
+- Current energy consumption (Ebefore)
+
+
+2. DERIVED VALUES (Can be calculated/estimated):
+
+
+- Heat transfer coefficient (U)
+- Air density (ρ)
+- Specific heat capacity (Cp)
+- HVAC efficiency (η)
+- Performance ratio (PR)
+- Emission factor (EF)
+
+
+3. OBSERVABLE VALUES (Can be gathered through inspection):
+
+
+- Number and type of lighting fixtures
+- Solar panel array area potential
+- Basic temperature readings
+- Visible surface areas
+
+
+4. DOCUMENTED VALUES (From bills/documentation):
+
+
+- Current energy consumption
+- Cost of upgrades
+- Annual savings
+
+
+1. Initial User Classification Questions We should start with a brief pre-questionnaire to determine:
+
+
+- Property Access Level (owner, renter, property manager)
+- Technical Knowledge Level (basic, intermediate, expert)
+- Physical Access Capabilities (full access, limited access)
+- Data Access Level (has bills/documentation, limited documentation)
+
+
+2. Section Classification Strategy:
+
+
+TIER 1 - Universal Access
+
+
+- Basic property information
+- Observable features
+- Bill information they have access to
+- Usage patterns they can describe
+
+
+TIER 2 - Limited Technical
+
+
+- Basic measurements
+- Simple observations about systems
+- General condition assessments
+- Basic energy usage patterns
+
+
+TIER 3 - Advanced Technical
+
+
+- Detailed measurements
+- Technical specifications
+- Professional-level assessments
+- Complex calculations
+
+
+1. SECTION 1: Property Information
+[SCREENING QUESTION] 
+
+
+[BASIC - Required]
+
+
+1.1 Property Type
+□ Single-family detached
+□ Townhouse/Rowhome
+□ Duplex/Condo
+□ Mobile home
+[Used for: Basic calculations and defaults]
+
+
+1.2 Construction Period
+□ Before 1980
+□ 1980-2000
+□ After 2000
+[Used for: Default values and construction standards]
+
+
+1.3 Size Category
+□ Small (under 1,500 sq ft)
+□ Medium (1,500-2,500 sq ft)
+□ Large (over 2,500 sq ft)
+[Used for: Volume and area estimates]
+
+
+[ADVANCED]
+
+
+1. What type of homeowner are you?
+□ Homeowner 
+□ Renter 
+□ Property Manager 
+□ Other: _____
+
+
+2. Property Type: 
+□ Single-family detached 
+□ Townhouse/Rowhome 
+□ Duplex 
+□ Condominium 
+□ Mobile home 
+□ Other: _____ 
+[Used for: Default U-values, standard volume calculations]
+
+
+3. Construction Period:
+When was your home built? (Best estimate) 
+□ Before 1940 
+□ 1940-1959 
+□ 1960-1979 
+□ 1980-1999 
+□ 2000-2019 
+□ 2020 or newer 
+[Used for: Default U-values, construction material assumptions]
+
+
+4. Basic Dimensions:
+Number of Stories: 
+□ One 
+□ Two 
+□ Three 
+□ Split-level 
+[Used for: Volume (V) calculations]
+
+
+Ceiling Height (if known):
+□ 8 feet (standard)
+□ 9 feet
+□ 10 feet or higher
+□ Not sure
+[Used for: Volume (V) calculations]
+
+
+5. Living Space:
+Approximate Square Footage:
+□ Under 1,000 sq ft
+□ 1,000-1,499 sq ft
+□ 1,500-1,999 sq ft
+□ 2,000-2,499 sq ft
+□ 2,500-2,999 sq ft
+□ 3,000+ sq ft
+[Used for: Area (A) calculations, Volume (V) calculations]
+
+
+[ADVANCED - Optional]
+
+
+6. Detailed Measurements (if available):
+Length of home: _____ feet
+Width of home: _____ feet
+[Used for: Precise A and V calculations]
+
+
+7. Foundation Configuration:
+□ Full Basement
+□ Partial Basement
+□ Crawl Space
+□ Slab on Grade
+[Used for: Heat transfer calculations, volume adjustments]
+
+
+8. Attic Configuration:
+□ Full attic
+□ Partial attic
+□ Cathedral ceiling
+□ Flat roof
+[Used for: Heat transfer calculations, volume adjustments]
+BACKEND INFORMATION:
+Derived Values:
+
+
+1. Default U-values based on:
+
+
+   * Construction period
+   * Building type
+   * Region Formula: Standard U-value × Age Factor × Regional Factor
+
+
+2. Standard volume ratios for different home types:
+
+
+   * Single-family: Length: Width ratio = 1.5:1
+   * Townhouse: Length: Width ratio = 2.5:1
+   * Duplex: Length: Width ratio = 1.2:1
+Reference Tables Needed:
+1. Standard U-values by construction period and building type
+2. Regional building code requirements by year
+3. Standard ceiling heights by construction period
+4. Typical floor area ratios by home type
+
+
+Calculations:
+1. Volume (V): 
+V = Floor Area × Height × Stories
+
+
+   * Include basement if heated
+   * Adjust for cathedral ceilings: V + (Peak Height - Standard Height) × Floor Area/2
+
+
+2. Surface Area (A): 
+A = (2 × L × W) + (2 × L × H) + (2 × W × H) 
+
+
+Where: 
+* L = Length W = Width H = Height
+
+
+   * Reduce by shared wall area for attached homes
+
+
+3. Heat Transfer Coefficient (U): 
+U = Base U-value × Age Factor × Regional Factor 
+
+Where:
+   * Base U-value from reference table
+   * Age Factor from construction period
+   * Regional Factor based on location
+
+
+2. SECTION 2: Current Home Conditions
+[Purpose: Establish ∆T (temperature difference) patterns and refine U-values through observable conditions]
+[BASIC - Required] 
+
+
+2.1 Temperature Consistency
+□ Very consistent throughout home
+□ Some noticeable variations
+□ Large variations between areas
+[Used for: Comfort assessment and system efficiency]
+
+
+2.2 Window Assessment
+□ Few windows (less than 10)
+□ Average number (10-20)
+□ Many windows (more than 20)
+[Used for: Heat loss estimates]
+
+
+2.3 Comfort Issues (select all)
+□ Cold/hot spots
+□ Drafty areas
+□ Humidity issues
+□ No major issues
+[Used for: Problem identification]
+
+
+[ADVANCED]
+
+
+2.1 Temperature Consistency Do you notice temperature differences between:
+
+
+Floors: 
+□ No difference 
+□ 1-3 degrees 
+□ 4-7 degrees 
+□ More than 7 degrees 
+□ Not sure 
+[Used for: ∆T calculations, heat stratification analysis]
+
+
+Rooms on same floor: 
+□ No difference 
+□ 1-3 degrees 
+□ 4-7 degrees 
+□ More than 7 degrees 
+□ Not sure 
+[Used for: ∆T calculations, heat distribution analysis]
+
+
+[ADVANCED - Optional] 
+
+
+2.2 Window Assessment Approximate number of windows: 
+□ Small (1-6) 
+□ Medium (7-12) 
+□ Large (13-18) 
+□ Very Large (19+) 
+[Used for: Surface area (A) adjustments]
+
+
+Observable window issues (select all): 
+□ Condensation between panes 
+□ Visible drafts (curtain movement) 
+□ Ice or frost in winter 
+□ Excessive heat gain in summer 
+□ No issues 
+[Used for: U-value adjustments]
+
+
+2.3 Insulation Indicators Observable signs (select all): 
+□ Snow melts quickly from roof 
+□ Icicles form on roof edges 
+□ Walls cold to touch in winter 
+□ Rooms heat up quickly in summer 
+□ None of these issues 
+[Used for: U-value adjustments]
+
+
+2.4 If known, window types: 
+□ Single pane 
+□ Double pane 
+□ Triple pane 
+□ Low-E coating 
+□ Not sure 
+[Used for: Precise U-value calculations]
+
+
+2.5 If accessible, insulation type: 
+□ Fiberglass batts 
+□ Blown-in cellulose 
+□ Spray foam 
+□ No visible insulation 
+□ Not sure 
+[Used for: Precise U-value calculations]
+BACKEND INFORMATION:
+Derived Values:
+
+
+1. Window U-value adjustments:
+
+
+   * Based on observed issues
+   * Window type (if known)
+   * Installation period Formula: Standard Window U-value × Condition Factor
+
+
+2. Wall U-value adjustments:
+
+
+   * Based on observed temperature issues
+   * Insulation type (if known)
+   * Observable signs Formula: Base Wall U-value × Condition Factor
+Reference Tables Needed:
+
+
+1. Standard U-values for window types:
+
+
+   * Single pane: 5.8 W/m²K
+   * Double pane: 2.8 W/m²K
+   * Triple pane: 1.8 W/m²K
+   * With Low-E: Multiply by 0.8
+
+
+2. Condition Factors:
+
+
+   * No issues: 1.0
+   * Minor issues: 1.2
+   * Major issues: 1.5
+   * Severe issues: 2.0
+
+
+3. Temperature Difference Multipliers:
+
+
+   * Based on observed temperature variations
+   * Adjusts heat transfer calculations
+Calculations:
+
+
+1. Adjusted Heat Transfer (Q): 
+Q = (U × A × ∆T) × Condition Factor 
+
+
+Where:
+   * U = Base U-value from Section 1
+   * A = Surface area from Section 1
+   * ∆T = Observed temperature differences
+   * Condition Factor from observed issues
+
+
+2. Temperature Difference (∆T): 
+∆T = Base Temperature Difference × Stratification Factor 
+
+
+Where:
+   * Base Temperature = Thermostat setting - Outside temperature
+   * Stratification Factor based on observed floor-to-floor differences
+
+
+3. Total Window Heat Loss: 
+Qwindows = (Uwindow × Awindow × ∆T) × Number of Windows × Window Condition Factor
+
+
+SECTION 3: HVAC Systems 
+[Purpose: Establish η (system efficiency), refine ∆T calculations, and determine system characteristics for HVAC energy consumption]
+
+
+[BASIC - Required] 
+
+3.1 Heating/Cooling Type
+□ Central system (heats/cools whole house)
+□ Individual units (window/portable units)
+□ Mixed system
+[Used for: System efficiency baseline]
+
+
+3.2 System Performance
+□ Works well (no issues)
+□ Some problems (occasional issues)
+□ Needs attention (frequent issues)
+[Used for: Improvement priorities]
+
+
+3.3 Temperature Control
+□ Manual thermostat
+□ Programmable thermostat
+□ Smart/WiFi thermostat
+[Used for: Control capabilities]
+
+
+[ADVANCED] 
+
+
+3.1 Heating System Type: 
+
+
+Primary heating method: 
+□ Forced air (vents in floors/walls) 
+□ Radiators or baseboards 
+□ Heat pump 
+□ Portable heaters 
+□ Not sure 
+[Used for: System efficiency (η) baseline]
+
+
+3.2 Cooling System Type: 
+
+
+Primary cooling method: 
+□ Central air conditioning 
+□ Window units 
+□ Portable units 
+□ None 
+□ Not sure 
+[Used for: System efficiency (η) baseline]
+
+
+3.3 System Performance Indicators Heating issues (select all): 
+□ Takes long time to heat up 
+□ Frequent on/off cycling 
+□ Some rooms never reach desired temperature 
+□ System runs constantly 
+□ No issues 
+[Used for: η adjustments]
+
+
+Cooling issues (select all): 
+□ Takes long time to cool 
+□ Frequent on/off cycling 
+□ Some rooms never reach desired temperature 
+□ System runs constantly 
+□ No issues 
+[Used for: η adjustments]
+
+
+3.4 Temperature Settings Winter thermostat setting: 
+□ Below 65°F 
+□ 65-68°F 
+□ 69-72°F 
+□ Above 72°F 
+[Used for: ∆T calculations]
+
+
+Summer thermostat setting: 
+□ Above 78°F 
+□ 75-78°F 
+□ 72-74°F 
+□ Below 72°F 
+[Used for: ∆T calculations]
+
+
+[ADVANCED - Optional] 
+
+
+3.5 System Details (if known):
+System age: _____ years 
+Last maintenance: _____ months ago 
+SEER rating (if known): _____ 
+AFUE rating (if known): _____ 
+[Used for: Precise η calculations]
+BACKEND INFORMATION:
+Derived Values:
+
+
+1. System Efficiency (η): Base efficiency adjusted by:
+
+
+   * System type
+   * Observed issues
+   * Age (if known)
+   * Maintenance status Formula: Base Efficiency × Age Factor × Maintenance Factor × Performance Factor
+
+
+2. Air Distribution Efficiency: Based on:
+
+
+   * System type
+   * Reported temperature consistency
+   * Home layout (from Section 1)
+Reference Tables Needed:
+
+
+1. Base Efficiency Values: Heating Systems:
+
+
+   * Forced air: 0.85
+   * Radiators: 0.80
+   * Heat pump: 0.95
+   * Portable: 0.99
+
+
+Cooling Systems:
+
+
+   * Central air: 0.85
+   * Window units: 0.75
+   * Portable: 0.70
+
+
+2. Performance Adjustment Factors:
+
+
+   * No issues: 1.0
+   * Minor issues: 0.9
+   * Major issues: 0.7
+   * Severe issues: 0.5
+Calculations:
+
+
+1. HVAC Energy Consumption (EHVAC): 
+EHVAC = (V × ρ × Cp × ∆T)/η 
+
+
+Where:
+   * V = Volume from Section 1
+   * ρ = 1.225 kg/m³ (standard air density)
+   * Cp = 1.005 kJ/kg·K (specific heat capacity of air)
+   * ∆T = Temperature difference from settings
+   * η = Calculated system efficiency
+
+
+2. Seasonal Energy Efficiency: 
+Winter: EHVAC-winter = EHVAC × HDDs × Usage Factor 
+Summer: EHVAC-summer = EHVAC × CDDs × Usage Factor 
+
+
+Where:
+   * HDDs = Heating Degree Days
+   * CDDs = Cooling Degree Days
+   * Usage Factor based on thermostat settings
+
+
+3. System Performance Score: 
+SPS = η × Distribution Efficiency × Usage Pattern Factor
+
+
+SECTION 4: Water Heating System 
+[Purpose: Calculate water heater energy consumption and heat loss, establish usage patterns for time (t)]
+
+
+[BASIC - Required] 
+
+
+4.1 Water Heater Type
+□ Standard tank
+□ Tankless
+□ Don't know
+[Used for: Efficiency baseline]
+
+
+4.2 Hot Water Usage
+□ Low (1-2 people)
+□ Medium (3-4 people)
+□ High (5+ people)
+[Used for: Consumption estimates]
+
+
+4.3 System Performance
+□ Works well
+□ Some issues
+□ Frequent problems
+[Used for: Improvement needs]
+
+
+[ADVANCED] 
+
+
+4.1 Water Heater Type: 
+□ Standard tank 
+□ Tankless (on-demand) 
+□ Heat pump water heater 
+□ Part of boiler system 
+□ Not sure 
+[Used for: Power (P) baseline, efficiency factors]
+
+
+4.2 Hot Water Usage Patterns Daily shower usage: 
+□ 1-2 showers 
+□ 3-4 showers 
+□ 5+ showers 
+□ Not sure 
+[Used for: Time (t) calculations]
+
+
+Weekly laundry loads: 
+□ 1-3 loads 
+□ 4-7 loads 
+□ 8+ loads 
+□ Not sure 
+[Used for: Time (t) calculations]
+
+
+Dishwasher usage: 
+□ Daily 
+□ Every other day 
+□ Weekly 
+□ Never/No dishwasher 
+[Used for: Time (t) calculations]
+
+
+4.3 Temperature Settings (if known): 
+□ Low (120°F or less) 
+□ Medium (121-130°F) 
+□ High (131-140°F) 
+□ Very High (above 140°F) 
+□ Not sure 
+[Used for: ∆T calculations]
+
+
+[ADVANCED - Optional] 
+
+
+4.4 System Details (if known): 
+Tank size: _____ gallons 
+System age: _____ years 
+Energy Factor (EF): _____ 
+First Hour Rating: _____ gallons 
+[Used for: Precise power calculations]
+
+
+4.5 Tank Location: 
+□ Conditioned space (living area) 
+□ Unconditioned space (garage/basement) 
+□ Outside 
+[Used for: Heat loss calculations]
+BACKEND INFORMATION:
+Derived Values:
+
+
+1. Daily Hot Water Demand: Based on:
+
+
+   * Number of showers
+   * Laundry frequency
+   * Dishwasher usage Formula: Base Usage × Activity Factors
+
+
+2. System Power Rating: Based on:
+
+
+   * System type
+   * Tank size (if known)
+   * Usage patterns
+Reference Tables Needed:
+
+
+1. Standard Power Ratings:
+
+
+   * Tank (40 gal): 4500W
+   * Tank (50 gal): 5500W
+   * Tankless: 18000W
+   * Heat Pump: 2500W
+
+
+2. Usage Multipliers: Shower:
+
+
+   * 1-2 per day: 1.0
+   * 3-4 per day: 1.5
+   * 5+ per day: 2.0
+
+
+Laundry:
+
+
+   * 1-3 loads: 1.0
+   * 4-7 loads: 1.3
+   * 8+ loads: 1.6
+Calculations:
+
+
+1. Daily Energy Consumption: 
+E = P × t 
+
+
+Where:
+   * P = Rated power × Efficiency factor
+   * t = Daily runtime based on usage patterns
+
+
+2. Heat Loss (for storage tanks): 
+Q = U × A × ∆T 
+
+
+Where:
+   * U = Tank insulation value
+   * A = Tank surface area
+   * ∆T = Tank temp - Ambient temp
+
+
+3. Total Water Heating Energy: 
+Etotal = (Daily Consumption × Usage Factor) + Standby Loss 
+
+
+Where:
+   * Usage Factor from activity patterns
+   * Standby Loss from heat loss calculation
+
+
+4. Annual Energy Cost: 
+Cost = Etotal × 365 × Energy Rate
+
+
+SECTION 5: Heat Transfer Analysis 
+[Purpose: Detailed analysis of heat transfer through building envelope, refining U, A, and ∆T values]
+
+
+[BASIC - Required] 
+
+
+5.1 Temperature Balance
+□ Home heats/cools evenly
+□ Some areas heat/cool differently
+□ Very uneven heating/cooling
+[Used for: Distribution assessment]
+
+
+5.2 Problem Areas (select all)
+□ Windows feel drafty
+□ Walls feel cold/hot
+□ Floors feel cold
+□ Rooms heat/cool slowly
+□ No major issues
+[Used for: Heat loss identification]
+
+
+5.3 Sun Exposure
+□ Strong sun exposure
+□ Moderate sun exposure
+□ Limited sun exposure
+[Used for: Solar heat gain]
+
+
+5.4 Weather Impact
+□ Home stays comfortable in extreme weather
+□ Somewhat affected by weather
+□ Significantly affected by weather
+[Used for: Envelope performance]
+
+
+[ADVANCED] 
+
+
+5.1 Room Temperature Variations 
+
+During heating season: 
+Warmest room typically: _____°F 
+Coldest room typically: _____°F 
+□ Not sure 
+[Used for: ∆T calculations, heat distribution analysis]
+
+
+5.2 Surface Temperature Indicators 
+Cold surfaces in winter (select all): 
+□ Exterior walls 
+□ Windows 
+□ Floors 
+□ Ceilings 
+□ None noticed 
+[Used for: U-value adjustments]
+
+
+5.3 Sun Exposure 
+Which sides get direct sunlight: 
+
+
+Morning: 
+□ Front 
+□ Back 
+□ Left 
+□ Right 
+□ Not sure
+
+
+Afternoon: 
+□ Front 
+□ Back 
+□ Left 
+□ Right 
+□ Not sure 
+[Used for: Solar heat gain calculations]
+
+
+5.4 Wind Exposure 
+Which walls experience strongest winds: 
+□ Front 
+□ Back 
+□ Left 
+□ Right 
+□ Not sure 
+[Used for: Heat transfer coefficient adjustments]
+
+
+[ADVANCED - Optional] 
+
+5.5 Wall Construction (if known): 
+□ Brick 
+□ Wood frame with siding 
+□ Stone 
+□ Stucco 
+□ Other: _____ 
+[Used for: Precise U-value calculations]
+
+
+5.6 Detailed Measurements: 
+Wall heights: _____ feet 
+Wall lengths: _____ feet 
+Window areas: _____ sq ft 
+Door areas: _____ sq ft 
+[Used for: Precise area calculations]
+
+
+BACKEND INFORMATION:
+
+
+Derived Values:
+
+
+1. Effective U-values: Based on:
+
+
+   * Construction type
+   * Observed temperature patterns
+   * Wind exposure Formula: Base U-value × Exposure Factor × Condition Factor
+
+
+2. Solar Heat Gain: Based on:
+
+
+   * Orientation
+   * Window area
+   * Sun exposure patterns Formula: Solar Factor × Window Area × Exposure Time
+Reference Tables Needed:
+
+
+1. U-values by Construction:
+
+
+   * Brick: 0.7-2.0 W/m²K
+   * Wood frame: 0.3-0.5 W/m²K
+   * Stone: 1.5-2.5 W/m²K
+   * Stucco: 0.4-0.7 W/m²K
+
+
+2. Solar Heat Gain Coefficients:
+
+
+   * By orientation
+   * By time of day
+   * By season
+
+
+3. Wind Exposure Factors:
+
+
+   * Sheltered: 0.8
+   * Normal: 1.0
+   * Exposed: 1.2
+Calculations:
+
+
+1. Total Heat Transfer: 
+Qtotal = Σ(U × A × ∆T) for each surface type 
+
+
+Where:
+   * U = Effective U-value by surface
+   * A = Surface area
+   * ∆T = Temperature difference
+
+
+2. Solar Heat Gain: 
+Qsolar = SHGC × A × Solar Radiation 
+
+
+Where:
+   * SHGC = Solar Heat Gain Coefficient
+   * A = Window area
+   * Solar Radiation from local weather data
+
+
+3. Net Heat Transfer: 
+Qnet = Qtotal - Qsolar + Qinfiltration 
+
+
+Where:
+   * Qinfiltration based on air leakage assessment
+
+
+4. Surface-Specific Heat Loss: 
+
+
+For each surface: 
+Qsurface = U × A × ∆T × Exposure Factor
+
+
+ 
+SECTION 6: Lighting Assessment 
+[Purpose: Calculate lighting efficiency and energy consumption, establish usage patterns]
+
+
+[BASIC - Required] 
+
+
+6.1 Light Bulb Types
+□ Mostly LED/Efficient bulbs
+□ Mix of bulb types
+□ Mostly older bulb types
+[Used for: Efficiency baseline]
+
+
+6.2 Natural Light
+□ Good natural light
+□ Moderate natural light
+□ Limited natural light
+[Used for: Lighting needs]
+
+
+6.3 Lighting Controls
+□ Basic switches only
+□ Some advanced controls
+□ Smart/automated lighting
+[Used for: Usage patterns]
+
+
+[ADVANCED] 
+
+
+6.1 Primary Light Bulb Types 
+
+
+Estimate percentage of each: 
+□ LED: ____% 
+□ CFL: ____% 
+□ Incandescent: ____% 
+□ Not sure 
+[Used for: Power (P) calculations, efficiency baseline]
+
+
+6.2 Lighting Usage Patterns 
+
+
+Weekday lights typically on: 
+Morning (5am-9am): 
+□ Most lights 
+□ Some lights 
+□ Few lights 
+□ No lights
+
+
+Day (9am-5pm): 
+□ Most lights 
+□ Some lights 
+□ Few lights 
+□ No lights
+
+
+Evening (5pm-10pm): 
+□ Most lights 
+□ Some lights 
+□ Few lights 
+□ No lights
+
+
+Night (10pm-5am): 
+□ Most lights 
+□ Some lights 
+□ Few lights 
+□ No lights 
+[Used for: Time (t) calculations]
+
+
+6.3 Natural Light Availability 
+
+
+Rooms with good natural light: 
+□ Living Room 
+□ Kitchen 
+□ Bedrooms 
+□ Bathroom 
+□ Office 
+□ None 
+[Used for: Usage pattern adjustments]
+
+
+[ADVANCED - Optional] 
+
+
+6.4 Fixture Details (if known): 
+
+
+Total number of: 
+Fixed ceiling fixtures: _____ 
+Wall fixtures: _____ 
+Lamps/portable lights: _____ 
+[Used for: Precise power calculations]
+
+
+6.5 Control Types: 
+□ Standard switches 
+□ Dimmer switches 
+□ Motion sensors 
+□ Smart controls/timers 
+□ None of above 
+[Used for: Usage pattern adjustments]
+
+
+BACKEND INFORMATION:
+Derived Values:
+
+
+1. Average Luminous Efficiency: Based on:
+
+
+   * Bulb type distribution
+   * Fixture types Formula: Weighted average of bulb efficiencies
+
+
+2. Daily Usage Hours: Based on:
+
+
+   * Reported patterns
+   * Natural light availability
+   * Control types
+Reference Tables Needed:
+1. Bulb Efficiency Values:
+
+
+   * LED: 80-100 lm/W
+   * CFL: 60-70 lm/W
+   * Incandescent: 10-17 lm/W
+
+
+2. Standard Wattage by Bulb Type: LED:
+
+
+   * 60W equivalent: 9W
+   * 75W equivalent: 11W
+   * 100W equivalent: 15W
+
+
+CFL:
+
+
+   * 60W equivalent: 14W
+   * 75W equivalent: 19W
+   * 100W equivalent: 23W
+
+
+3. Usage Pattern Multipliers:
+
+
+   * Most lights: 1.0
+   * Some lights: 0.6
+   * Few lights: 0.3
+   * No lights: 0
+
+
+Calculations:
+
+
+1. Daily Energy Consumption: 
+E = Σ(P × t) 
+
+
+Where:
+   * P = Bulb wattage × number of fixtures
+   * t = Usage hours per period For each usage period
+
+
+2. Lighting Efficiency: 
+Elighting = Σ(Luminous flux)/Σ(Wattage) 
+
+
+Where:
+   * Luminous flux from bulb specifications
+   * Wattage from actual power consumption
+
+
+3. Annual Energy Usage: 
+Eannual = (Weekday total × 260) + (Weekend total × 105) 
+
+
+Where:
+   * Weekend usage typically 15% higher
+
+
+4. Potential Savings: 
+Savings = Current Usage - LED Equivalent Usage
+
+
+Where:
+   * LED Equivalent = Current lumens ÷ LED efficiency
+
+
+SECTION 7: Appliance Inventory 
+[Purpose: Calculate total appliance energy consumption and establish usage patterns]
+
+
+[BASIC - Required] 
+
+
+7.1 Major Appliances Age
+□ Mostly newer (under 5 years)
+□ Mix of ages
+□ Mostly older (over 10 years)
+[Used for: Efficiency estimates]
+
+
+7.2 Key Energy Users (select all)
+□ Extra refrigerator/freezer
+□ Pool/spa equipment
+□ Large entertainment systems
+□ Home office equipment
+[Used for: Usage assessment]
+
+
+7.3 Usage Patterns
+□ Heavy daily use
+□ Moderate use
+□ Light/occasional use
+[Used for: Consumption estimates]
+
+
+[ADVANCED]
+
+
+7.1 Major Appliances Present 
+
+
+Select all that apply: 
+□ Refrigerator 
+□ Washing Machine 
+□ Dryer 
+□ Dishwasher 
+□ Range/Oven 
+□ Microwave 
+[Used for: Base power load calculations]
+
+
+7.2 Usage Patterns Laundry: 
+□ Daily 
+□ 2-3 times per week 
+□ Weekly 
+□ Less than weekly 
+[Used for: Time (t) calculations]
+
+
+Dishwasher: 
+□ Daily 
+□ 2-3 times per week 
+□ Weekly 
+□ Less than weekly 
+□ Never 
+[Used for: Time (t) calculations]
+
+
+Cooking: 
+□ Multiple times daily 
+□ Once daily 
+□ Few times per week 
+□ Rarely 
+[Used for: Time (t) calculations]
+
+
+7.3 Additional Appliances 
+
+
+Select all that apply: 
+□ Second Refrigerator 
+□ Freezer (separate unit) 
+□ Dehumidifier 
+□ Space Heater 
+□ Window AC 
+□ Pool Pump 
+□ Hot Tub 
+[Used for: Additional power load calculations]
+
+
+[ADVANCED - Optional] 
+
+
+7.4 Appliance Details (if known): 
+
+
+For each major appliance: 
+Age: _____ years 
+
+
+Energy Star rated? 
+□ Yes 
+□ No 
+□ Not sure 
+
+
+Size/Capacity: _____ (cu.ft/loads) 
+[Used for: Precise power calculations]
+
+
+BACKEND INFORMATION:
+
+
+Derived Values:
+
+
+1. Base Power Consumption: Based on:
+
+
+   * Appliance type
+   * Age (if known)
+   * Energy Star status
+   * Usage patterns Formula: Standard Power × Age Factor × Efficiency Factor
+
+
+2. Operating Time: Based on:
+
+
+   * Reported usage patterns
+   * Household size (from earlier sections)
+   * Typical cycle durations
+
+
+Reference Tables Needed:
+
+
+1. Standard Power Ratings: Refrigerator:
+
+
+   * Standard: 150-200W
+   * Energy Star: 100-150W
+
+
+Washer:
+
+
+   * Standard: 500W
+   * Energy Star: 400W
+
+
+Dryer:
+
+
+   * Electric: 3000W
+   * Gas: 200W + gas
+
+
+Dishwasher:
+
+
+   * Standard: 1800W
+   * Energy Star: 1300W
+
+
+2. Usage Duration Standards:
+
+
+   * Dishwasher cycle: 45-60 mins
+   * Washer cycle: 30-60 mins
+   * Dryer cycle: 45-60 mins
+   * Cooking: 20-40 mins/meal
+
+
+3. Age Adjustment Factors:
+
+
+   * 0-2 years: 1.0
+   * 3-5 years: 1.1
+   * 6-10 years: 1.2
+   * 10+ years: 1.3
+
+
+Calculations:
+
+
+1. Daily Energy Consumption: 
+For each appliance: 
+E = P × t × Usage Factor 
+
+
+Where:
+   * P = Rated power × Age factor
+   * t = Operating time
+   * Usage Factor based on frequency
+
+
+2. Standby Power: 
+Estandby = Base standby × 24 hours 
+
+
+Where:
+   * Base standby from reference tables
+
+
+3. Monthly Consumption: 
+Emonthly = Σ(Daily consumption × Days of use) + (Standby × Days in month)
+
+
+1. Annual Operating Cost: 
+Cost = Eannual × Energy Rate 
+
+
+Where:
+   * Eannual = Monthly consumption × 12
+   * Energy Rate from utility data
+
+
+
+
+SECTION 8: Baseline Energy Consumption
+[Purpose: Establish baseline energy usage and patterns for comparison and savings calculations]
+
+
+[BASIC - Required]
+
+
+8.1 Typical Energy Bills
+□ Low ($100 or less/month)
+□ Medium ($101-250/month)
+□ High (over $250/month)
+[Used for: Cost baseline]
+
+
+8.2 Seasonal Patterns
+□ Highest in summer
+□ Highest in winter
+□ Fairly consistent
+[Used for: Usage patterns]
+
+
+8.3 Energy Types Used
+□ Electricity only
+□ Electricity + Gas
+□ Multiple fuel types
+[Used for: Energy source analysis]
+
+
+
+
+[ADVANCED]
+
+
+8.1 Energy Bill Access
+
+
+Do you have access to your energy bills?
+□ Yes, full year of bills
+□ Yes, partial year
+□ No access to bills
+[Used for: Baseline consumption data]
+
+
+8.2 Monthly Electricity Usage
+
+
+If bills available, enter monthly kWh:
+□ Winter (Dec-Feb): _____ kWh/month
+□ Spring (Mar-May): _____ kWh/month
+□ Summer (Jun-Aug): _____ kWh/month
+□ Fall (Sep-Nov): _____ kWh/month
+□ Not sure
+[Used for: Seasonal consumption patterns]
+
+
+8.3 Additional Energy Sources
+
+
+Select all used:
+□ Natural Gas
+□ Propane
+□ Heating Oil
+□ Wood
+□ None
+[Used for: Total energy calculations]
+
+
+8.4 Peak Usage Periods
+
+
+Highest energy usage typically occurs:
+□ Morning (5am-9am)
+□ Midday (9am-3pm)
+□ Evening (3pm-8pm)
+□ Night (8pm-5am)
+□ Not sure
+[Used for: Usage pattern analysis]
+
+
+[ADVANCED - Optional]
+
+
+8.5 Detailed Usage Data
+
+
+If smart meter/monitoring system:
+Peak demand: _____ kW
+Average daily usage: _____ kWh
+Power factor: _____ (if known)
+[Used for: Precise consumption calculations]
+BACKEND INFORMATION:
+Derived Values:
+
+
+1. Baseline Energy Profile:
+   Based on:
+   - Reported consumption
+   - Home characteristics
+   - Occupancy patterns
+   Formula: Base Load + Variable Load × Usage Factors
+
+
+2. Seasonal Adjustment Factors:
+   Based on:
+   - Climate zone
+   - Reported seasonal usage
+   - HVAC system type
+
+
+Reference Tables Needed:
+
+
+1. Regional Average Consumption:
+   By home type and size:
+   - Small (< 1500 sq ft): X kWh/month
+   - Medium (1500-2500 sq ft): Y kWh/month
+   - Large (> 2500 sq ft): Z kWh/month
+
+
+2. Seasonal Multipliers:
+   - Winter: 1.2-1.8
+   - Spring: 0.8-1.0
+   - Summer: 1.3-1.6
+   - Fall: 0.8-1.0
+
+
+3. Energy Source Conversion Factors:
+   - Natural Gas: 29.3 kWh/therm
+   - Propane: 7.1 kWh/gallon
+   - Heating Oil: 43.5 kWh/gallon
+   - Wood: 3,000 kWh/cord
+
+
+Calculations:
+
+
+1. Total Annual Energy Consumption:
+           Etotal = Σ(Monthly Electric × 12) + Σ(Other Sources × Conversion Factors)
+  
+ Where:
+   - Monthly Electric = Reported or estimated kWh
+   - Other Sources converted to kWh equivalent
+
+
+2. Baseline Load:
+           Ebaseline = Minimum monthly usage × 12
+  
+Where:
+   - Minimum typically spring/fall months
+
+
+3. Variable Load:
+           Evariable = Etotal - Ebaseline
+   
+Categorized by:
+   - HVAC
+   - Water Heating
+   - Other seasonal loads
+
+
+4. Energy Use Intensity (EUI):
+           EUI = Etotal ÷ Conditioned Floor Area
+   
+Where:
+   - EUI in kWh/sq ft/year
+   - Used for benchmarking
+
+
+5. Cost Analysis:
+           Annual Cost = Σ(Monthly Usage × Rate)
+   
+Where:
+   - Rate includes tiered pricing if applicable
+   - Separate calculations for each energy source
+ 
+SECTION 9: Energy Consumption Analysis
+[Purpose: Analyze consumption patterns and identify efficiency opportunities]
+
+
+[BASIC - Required]
+
+
+9.1 Peak Usage Time
+□ Morning peak
+□ Evening peak
+□ Consistent all day
+[Used for: Usage patterns]
+
+
+9.2 Biggest Energy Users
+□ Heating/Cooling
+□ Water Heating
+□ Appliances/Other
+[Used for: Consumption focus]
+
+
+9.3 Recent Changes
+□ Usage increasing
+□ Usage decreasing
+□ Staying about the same
+[Used for: Trend analysis]
+
+
+[ADVANCED]
+
+
+9.1 Occupancy Patterns
+
+
+Weekday home occupancy:
+□ All day (20-24 hours)
+□ Most of day (13-19 hours)
+□ Half day (7-12 hours)
+□ Limited (<6 hours)
+[Used for: Occupancy Factor calculations]
+
+
+9.2 Peak Usage Activities
+
+
+Select typical high-energy activities:
+
+
+Morning (5am-9am):
+□ Shower/Bath
+□ Cooking
+□ Laundry
+□ Space Heating/Cooling
+□ None
+
+
+Evening (5pm-10pm):
+□ Cooking
+□ Laundry
+□ Entertainment
+□ Space Heating/Cooling
+□ None
+[Used for: Peak load calculations]
+
+
+9.3 Seasonal Variations
+
+
+Energy usage increases notably during:
+□ Very cold days
+□ Very hot days
+□ Rainy/cloudy days
+□ No notable change
+□ Not sure
+[Used for: Weather normalization]
+
+
+[ADVANCED - Optional]
+
+
+9.4 Load Distribution
+
+
+If known, percentage of total energy used by:
+HVAC: _____%
+Water Heating: _____%
+Appliances: _____%
+Lighting: _____%
+Other: _____%
+[Used for: Detailed consumption analysis]
+
+
+9.5 Smart Meter Data
+
+
+If available:
+Average daily minimum: _____ kW
+Average daily maximum: _____ kW
+Time of peak usage: _____
+[Used for: Load profile analysis]
+
+
+BACKEND INFORMATION:
+Derived Values:
+
+
+1. Occupancy Factor:
+   Based on:
+   - Reported occupancy hours
+   - Activity patterns
+   - Number of occupants
+   Formula: Base Factor × Activity Multiplier × Occupancy Hours
+
+
+2. Load Factor:
+   Based on:
+   - Peak to average ratio
+   - Usage distribution
+   - Seasonal patterns
+
+
+Reference Tables Needed:
+
+
+1. Activity Power Requirements:
+   Morning Activities:
+   - Shower: 4.5 kWh/hour
+   - Cooking: 2.3 kWh/hour
+   - Laundry: 3.8 kWh/hour
+   
+   Evening Activities:
+   - Cooking: 2.3 kWh/hour
+   - Entertainment: 0.5 kWh/hour
+   - Laundry: 3.8 kWh/hour
+
+
+2. Occupancy Multipliers:
+   - All day: 1.0
+   - Most of day: 0.8
+   - Half day: 0.5
+   - Limited: 0.3
+
+
+3. Seasonal Adjustment Factors:
+   By climate zone and season:
+   - Heating season
+   - Cooling season
+   - Shoulder season
+Calculations:
+1. Energy Efficiency Score (EES):
+           EES = Total Consumption/(Intervention Savings × Occupancy Factor)
+   
+Where:
+   - Total Consumption from Section 8
+   - Intervention Savings = Potential savings identified
+   - Occupancy Factor from occupancy patterns
+
+
+2. Peak Load Analysis:
+           Peak Load Ratio = Peak Demand/Average Demand
+   
+Where:
+   - Peak Demand = Highest recorded kW
+   - Average Demand = Total kWh/hours in period
+
+
+3. Weather Normalized Usage:
+           Enorm = Eactual × (HDDnorm/HDDactual + CDDnorm/CDDactual)
+   
+Where:
+   - HDD = Heating Degree Days
+   - CDD = Cooling Degree Days
+
+
+4. Usage Pattern Score:
+          UPS = (Off-Peak Usage/Total Usage) × Efficiency Factor
+   
+Where:
+   - Off-Peak Usage = Non-peak hour consumption
+   - Efficiency Factor based on load distribution
+
+
+5. Potential Savings Analysis:
+   
+For each end use:
+           Potential Savings = Current Usage × (1 - Efficiency Factor)
+   
+Where:
+   - Efficiency Factor from reference standards
+
+
+SECTION 10: Energy Provider Information
+[Purpose: Establish utility rates, emission factors, and available programs for savings calculations]
+
+
+[BASIC - Required]
+
+
+10.1 Utility Type
+□ Single provider (electric only)
+□ Dual fuel (electric + gas)
+□ Multiple providers
+[Used for: Rate analysis]
+
+
+10.2 Rate Structure
+□ Standard flat rate
+□ Time-of-use rate
+□ Don't know
+[Used for: Cost calculations]
+
+
+10.3 Utility Programs
+□ Currently participating
+□ Interested in programs
+□ Not participating
+[Used for: Program opportunities]
+
+
+[ADVANCED]
+
+
+10.1 Primary Utility Provider
+
+
+Select your electric utility:
+[Dropdown of local providers]
+□ Not listed/Not sure
+[Used for: Rate structure and EF calculations]
+
+
+10.2 Rate Structure
+
+
+Current electricity rate plan:
+□ Fixed rate
+□ Time-of-use
+□ Tiered pricing
+□ Not sure
+[Used for: Cost calculations]
+
+
+10.3 Average Monthly Cost
+
+
+Electric bill typically ranges:
+□ Under $100
+□ $100-200
+□ $201-300
+□ Over $300
+□ Not sure
+[Used for: Cost baseline]
+
+
+10.4 Additional Energy Providers
+
+
+Select all that apply:
+□ Natural Gas: [Provider name]
+□ Propane: [Provider name]
+□ Heating Oil: [Provider name]
+□ None
+[Used for: Total energy cost calculations]
+
+
+[ADVANCED - Optional]
+
+
+10.5 Rate Details (if known):
+Base rate: $_____/kWh
+Peak rate: $_____/kWh
+Off-peak rate: $_____/kWh
+Demand charges: $_____/kW
+[Used for: Precise cost calculations]
+
+
+10.6 Utility Programs
+
+
+Currently enrolled in:
+□ Budget billing
+□ Demand response
+□ Time-of-use
+□ Green power
+□ None/Not sure
+[Used for: Program savings calculations]
+
+
+BACKEND INFORMATION:
+
+
+Derived Values:
+1. Effective Rate:
+   Based on:
+   - Provider base rates
+   - Usage patterns
+   - Program participation
+   Formula: Base Rate × Time Factor × Program Adjustments
+
+
+2. Emission Factor:
+   Based on:
+   - Utility generation mix
+   - Regional grid factors
+   - Green power participation
+
+
+Reference Tables Needed:
+1. Utility Rate Structures:
+   By provider:
+   - Base rates
+   - Time-of-use periods
+   - Tier thresholds
+   - Demand charges
+
+
+2. Emission Factors:
+   By generation source:
+   - Coal: 0.94 kg CO2/kWh
+   - Natural Gas: 0.44 kg CO2/kWh
+   - Nuclear: 0.012 kg CO2/kWh
+   - Renewable: 0 kg CO2/kWh
+
+
+3. Program Savings Factors:
+   - Demand response: 5-15%
+   - Time-of-use: 10-20%
+   - Green power: Varies by program
+
+
+Calculations:
+1. Monthly Cost Analysis:
+   Cost = (Base Usage × Base Rate) + 
+          (Peak Usage × Peak Rate) +
+          (Demand × Demand Rate)
+   
+Where:
+   - Usage from Section 8
+   - Rates from utility data
+
+
+2. Carbon Emissions:
+           Creduced = S × EF
+   
+Where:
+   - S = Energy savings (kWh)
+   - EF = Weighted emission factor
+
+
+3. Program Savings:
+           Annual Savings = Base Cost × Program Factor
+   
+Where:
+   - Program Factor from enrollment type
+
+
+4. Total Energy Cost:
+   For all energy sources:
+           Total Cost = Σ(Usage × Rate × Conversion Factor)
+   
+Where:
+   - Conversion Factor for non-electric sources
+
+
+5. Cost Projection:
+   Future Cost = Current Cost × 
+                 (1 + Rate Escalation) ^ Years
+   
+Where:
+   - Rate Escalation from utility forecasts
+
+
+SECTION 11: Renewable Energy Potential 
+[Purpose: Calculate solar potential and evaluate renewable energy opportunities]
+
+
+[BASIC - Required] 
+
+
+11.1 Solar Access
+□ Good sun exposure
+□ Partial sun exposure
+□ Limited sun exposure
+[Used for: Solar potential]
+
+
+11.2 Installation Interest
+□ Actively interested
+□ Maybe in future
+□ Not interested
+[Used for: Planning purposes]
+
+
+11.3 Property Suitability
+□ No major barriers
+□ Some possible issues
+□ Significant barriers
+[Used for: Feasibility assessment]
+
+
+[ADVANCED]
+
+
+11.1 Roof Characteristics 
+
+
+Roof condition:
+ □ New (0-5 years) 
+□ Good (6-10 years) 
+□ Fair (11-15 years)
+□ Poor (15+ years) 
+□ Not sure 
+[Used for: Installation feasibility]
+
+
+11.2 Solar Access Shade on roof 
+
+
+during day: 
+□ No shade 
+□ Partial morning shade 
+□ Partial afternoon shade 
+□ Heavy shade 
+□ Not sure 
+[Used for: Solar radiation calculations]
+
+
+11.3 Tree Coverage 
+
+
+Trees shading roof: 
+□ None 
+□ 1-2 trees 
+□ 3-5 trees 
+□ Heavy tree coverage 
+□ Not sure 
+[Used for: Shading factor calculations]
+
+
+11.4 Current/Planned Systems 
+
+
+Select all that apply: 
+□ Solar PV installed 
+□ Solar thermal installed 
+□ Planning installation 
+□ No current plans 
+[Used for: System integration analysis]
+
+
+[ADVANCED - Optional] 
+
+11.5 Roof Details (if known): 
+Total roof area: _____ sq ft 
+South-facing area: _____ sq ft 
+Roof pitch: _____ degrees 
+Roof material: _____ 
+[Used for: Precise solar calculations]
+
+
+11.6 Existing System Details: 
+
+
+If solar installed: 
+System size: _____ kW 
+Annual production: _____ kWh 
+Installation year: _____ 
+[Used for: System performance analysis]
+
+
+BACKEND INFORMATION:
+Derived Values:
+
+
+1. Available Roof Area: Based on:
+
+
+   * Home size
+   * Roof type
+   * Obstructions Formula: Total Area × Usable Factor × Orientation Factor
+
+
+2. Solar Access Factor: Based on:
+
+
+   * Reported shading
+   * Tree coverage
+   * Orientation Formula: Base Solar × Shade Factor × Seasonal Adjustment
+Reference Tables Needed:
+
+
+1. Solar Radiation Data: By location:
+
+
+   * Annual average (kWh/m²/day)
+   * Seasonal variations
+   * Peak sun hours
+
+
+2. System Performance Ratios:
+
+
+   * Optimal orientation: 0.85
+   * East/West facing: 0.80
+   * Partial shade: 0.75
+   * Heavy shade: 0.60
+
+
+3. Installation Cost Factors: By system size:
+
+
+   * Small (< 6kW): $3.00/W
+   * Medium (6-10kW): $2.80/W
+   * Large (> 10kW): $2.60/W
+Calculations:
+
+
+1. Solar Energy Potential: 
+Esolar = A × r × H × PR Where:
+
+
+   * A = Available roof area (m²)
+   * r = Panel efficiency (typically 0.15-0.22)
+   * H = Annual solar radiation (kWh/m²)
+   * PR = Performance ratio (0.7-0.9)
+
+
+2. Annual Production Estimate: 
+Production = Esolar × System Size × Efficiency Where:
+
+
+   * System Size in kW
+   * Efficiency includes inverter and system losses
+
+
+3. Financial Analysis: 
+Payback Period = Total Cost/(Annual Production × Rate) Where:
+
+
+   * Rate = Current electricity rate
+   * Total Cost includes installation and equipment
+
+
+4. Carbon Reduction: 
+CO2 Reduction = Annual Production × Grid EF Where:
+
+
+   * Grid EF = Local grid emission factor
+
+
+5. Roof Capacity: 
+Maximum System Size = Available Area/Panel Area Where:
+
+
+   * Panel Area ≈ 17.5 sq ft per kW
+   * Adjusted for spacing and setbacks
+
+
+SECTION 12: Usage Patterns and Normalization
+[Purpose: Establish normalized usage patterns and weather impacts for accurate comparisons]
+
+
+[BASIC - Required]
+
+
+12.1 Home Occupancy
+□ Home most of the day
+□ Home evenings/nights only
+□ Varies significantly
+[Used for: Usage pattern baseline]
+
+
+12.2 Temperature Preference
+□ Prefer cooler temperatures
+□ Average comfort range
+□ Prefer warmer temperatures
+[Used for: Comfort settings]
+
+
+12.3 Seasonal Adjustments
+□ Same settings year-round
+□ Adjust for seasons
+□ Use programmable thermostat
+[Used for: Energy usage patterns]
+
+
+[ADVANCED]
+
+
+12.1 Occupancy Schedule
+
+
+Typical weekday occupancy:
+Morning (5am-9am):
+□ Full occupancy
+□ Partial occupancy
+□ Minimal occupancy
+
+
+Daytime (9am-5pm):
+□ Full occupancy
+□ Partial occupancy
+□ Minimal occupancy
+
+
+Evening (5pm-10pm):
+□ Full occupancy
+□ Partial occupancy
+□ Minimal occupancy
+[Used for: Usage pattern calculations]
+
+
+12.2 Weather Sensitivity
+
+
+Energy usage increases with:
+□ Hot weather
+□ Cold weather
+□ Both hot and cold
+□ No notable change
+□ Not sure
+[Used for: Weather normalization]
+
+
+12.3 Seasonal Behaviors
+
+
+Select all that apply:
+□ Change thermostat seasonally
+□ Use windows for cooling
+□ Use ceiling fans
+□ Use space heaters
+□ Use window AC units
+[Used for: Behavior adjustment factors]
+
+
+[ADVANCED - Optional]
+
+
+12.4 Detailed Occupancy
+
+
+If known:
+Number of occupants: _____
+Hours occupied per day: _____
+Days occupied per week: _____
+Weeks vacant per year: _____
+[Used for: Precise usage calculations]
+
+
+12.5 Temperature Preferences
+
+
+Winter thermostat:
+Daytime: _____ °F
+Nighttime: _____ °F
+
+
+Summer thermostat:
+Daytime: _____ °F
+Nighttime: _____ °F
+[Used for: Temperature-based normalization]
+BACKEND INFORMATION:
+Derived Values:
+1. Occupancy Factor:
+   Based on:
+   - Reported schedules
+   - Number of occupants
+   - Vacancy periods
+   Formula: Base Occupancy × Schedule Factor × Seasonal Adjustment
+
+
+2. Weather Sensitivity Factor:
+   Based on:
+   - Reported sensitivity
+   - HVAC system type
+   - Building envelope (from Section 5)
+
+
+Reference Tables Needed:
+1. Occupancy Multipliers:
+   - Full occupancy: 1.0
+   - Partial occupancy: 0.6
+   - Minimal occupancy: 0.2
+
+
+2. Weather Normalization Factors:
+   By climate zone:
+   - Heating degree days (HDD)
+   - Cooling degree days (CDD)
+   - Normal year data
+   - Current year data
+
+
+3. Behavior Adjustment Factors:
+   - Natural ventilation: -5% to -15%
+   - Ceiling fans: -3% to -8%
+   - Space heaters: +10% to +20%
+   - Window AC: +15% to +25%
+
+
+Calculations:
+1. Normalized Annual Consumption:
+           Enorm = Eactual × [(HDDnorm/HDDactual) + (CDDnorm/CDDactual)]
+   
+Where:
+   - HDD = Heating Degree Days
+   - CDD = Cooling Degree Days
+   - norm = Normal year
+   - actual = Current year
+
+
+2. Occupancy-Adjusted Usage:
+           Eadj = Ebase × OF × BF
+   
+Where:
+   - OF = Occupancy Factor
+   - BF = Behavior Factor
+
+
+3. Daily Load Profile:
+   For each time period:
+           Load = Base Load + Variable Load × OF
+   
+Where:
+   - Base Load from minimum usage
+   - Variable Load from occupancy patterns
+
+
+4. Weather Impact Score:
+           WIS = (Peak Weather Usage)/(Average Usage)
+   
+Where:
+   - Peak Weather = Highest seasonal usage
+   - Average = Annual average daily usage
+
+
+5. Behavior Impact:
+           BI = Σ(Behavior Factor × Usage Hours)
+   
+Where:
+   - Behavior Factor from reference table
+   - Usage Hours from schedule
+
+
+SECTION 13: Energy Improvement Planning
+[Purpose: Identify and prioritize energy improvements based on cost-effectiveness and impact]
+
+
+[BASIC - Required]
+
+
+13.1 Primary Goal (choose one)
+□ Reduce energy bills
+□ Improve comfort
+□ Fix specific issues
+□ Environmental impact
+[Used for: Priority setting]
+
+
+13.2 Budget Category
+□ Low (under $2,000)
+□ Medium ($2,000-$10,000)
+□ High (over $10,000)
+□ Not determined yet
+[Used for: Improvement options]
+
+
+13.3 Timeline
+□ Want to start soon (within 6 months)
+□ Planning for future (6+ months)
+□ No specific timeline
+[Used for: Project planning]
+
+
+[ADVANCED]
+
+
+13.1 Improvement Priorities
+
+
+Rank your priorities (1-5):
+__ Lower energy bills
+__ Improve comfort
+__ Reduce carbon footprint
+__ Address specific issues
+__ Increase home value
+[Used for: Strategy prioritization]
+
+
+13.2 Budget Range
+
+
+Available for improvements:
+□ Under $1,000
+□ $1,000-$5,000
+□ $5,001-$10,000
+□ Over $10,000
+□ Not sure yet
+[Used for: Investment planning]
+
+
+13.3 Timeline Preferences
+
+
+Planned implementation:
+□ Immediate (0-3 months)
+□ Short-term (3-12 months)
+□ Long-term (1-3 years)
+□ As needed/No timeline
+[Used for: Project scheduling]
+
+
+13.4 Implementation Constraints
+
+
+Select all that apply:
+□ Limited budget
+□ Need financing
+□ Seasonal restrictions
+□ Occupancy disruption concerns
+□ HOA/Building restrictions
+□ None
+[Used for: Feasibility analysis]
+
+
+[ADVANCED - Optional]
+
+
+13.5 Specific Improvements Interest
+Rate interest (1-5) in:
+__ HVAC upgrade
+__ Insulation
+__ Window replacement
+__ Solar installation
+__ Smart thermostats
+__ LED lighting
+__ Appliance upgrades
+[Used for: Detailed planning]
+
+
+13.6 Financial Preferences
+
+
+Desired payback period:
+□ Under 2 years
+□ 2-5 years
+□ 5-10 years
+□ Over 10 years
+□ No specific requirement
+[Used for: ROI calculations]
+
+
+BACKEND INFORMATION:
+Derived Values:
+1. Improvement Priority Score:
+   Based on:
+   - Ranked priorities
+   - Budget availability
+   - Timeline preferences
+   Formula: Priority Weight × Budget Factor × Timeline Factor
+
+
+2. Project Feasibility Score:
+   Based on:
+   - Constraints
+   - Technical requirements
+   - Implementation complexity
+
+
+Reference Tables Needed:
+1. Improvement Costs:
+   HVAC:
+   - Basic tune-up: $200-500
+   - New system: $5,000-12,000
+   
+   Insulation:
+   - Attic: $1,500-3,000
+   - Walls: $3,000-8,000
+   
+   Windows:
+   - Per window: $500-1,000
+   - Whole house: $8,000-15,000
+
+
+2. Energy Savings Estimates:
+   - HVAC upgrade: 20-40%
+   - Insulation: 15-30%
+   - Windows: 10-20%
+   - LED lighting: 5-10%
+   - Smart thermostats: 10-15%
+
+
+3. Implementation Complexity:
+   - Low: 1-2 days
+   - Medium: 3-5 days
+   - High: 1+ weeks
+
+
+Calculations:
+1. Payback Period:
+   P = C/Sannual
+   Where:
+   - C = Project cost
+   - Sannual = Annual savings
+   For each improvement option
+
+
+2. Return on Investment:
+   ROI = (Lifetime Savings - Cost)/Cost × 100
+   Where:
+   - Lifetime Savings = Annual Savings × Expected Life
+   - Cost includes installation
+
+
+3. Project Priority Score:
+   PPS = (Savings/Cost) × Priority Weight × Feasibility
+   Where:
+   - Priority Weight from user rankings
+   - Feasibility from constraint analysis
+
+
+4. Implementation Schedule:
+   For each project:
+   Start Date = Current + Lead Time + Dependencies
+   Where:
+   - Lead Time from complexity table
+   - Dependencies from project sequencing
+
+
+5. Budget Allocation:
+   For prioritized projects:
+   Available per Project = Total Budget × Priority Score
+   Where:
+   - Priority Score normalized to total 100%
+SECTION 14: Carbon Impact Goals
+[Purpose: Establish carbon reduction targets and track emissions impact]
+
+
+[BASIC - Required]
+
+
+14.1 Environmental Priority
+□ High priority - willing to invest
+□ Medium priority - balance with cost
+□ Low priority - focus on savings
+[Used for: Goal setting]
+
+
+14.2 Reduction Target
+□ Moderate (up to 25%)
+□ Significant (26-50%)
+□ Maximum possible
+[Used for: Planning scope]
+
+
+[ADVANCED]
+
+
+14.1 Carbon Reduction Interest
+
+
+Primary motivation:
+□ Environmental concern
+□ Regulatory compliance
+□ Cost savings
+□ Property value
+□ Not sure
+[Used for: Goal setting approach]
+
+
+14.2 Current Awareness
+
+
+Knowledge of carbon footprint:
+□ Track regularly
+□ General idea
+□ Limited understanding
+□ No knowledge
+[Used for: Education needs]
+
+
+14.3 Reduction Timeline
+
+
+Preferred reduction period:
+□ 1 year
+□ 2-3 years
+□ 4-5 years
+□ 5+ years
+□ No specific timeline
+[Used for: Target setting]
+
+
+14.4 Target Range
+
+
+Desired reduction:
+□ 0-25%
+□ 26-50%
+□ 51-75%
+□ 76-100%
+□ Not sure
+[Used for: Goal calculations]
+
+
+[ADVANCED - Optional]
+
+
+14.5 Specific Targets
+
+
+If known:
+Current emissions: _____ kg CO2/year
+Target emissions: _____ kg CO2/year
+Target date: _____
+[Used for: Precise reduction planning]
+
+
+14.6 Carbon Offset Interest
+
+
+Select all that apply:
+□ Renewable energy credits
+□ Carbon offset purchases
+□ Tree planting
+□ Not interested
+□ Need more information
+[Used for: Offset strategy]
+
+
+BACKEND INFORMATION:
+Derived Values:
+1. Base Carbon Footprint:
+   Based on:
+   - Energy consumption
+   - Fuel mix
+   - Utility emission factors
+   Formula: Energy Use × EF × Fuel Mix Factor
+
+
+2. Reduction Potential:
+   Based on:
+   - Planned improvements
+   - Timeline
+   - Technical feasibility
+
+
+Reference Tables Needed:
+1. Emission Factors (EF):
+   By energy source:
+   - Electricity: [Regional grid factor]
+   - Natural gas: 0.18 kg CO2/kWh
+   - Propane: 0.21 kg CO2/kWh
+   - Heating oil: 0.25 kg CO2/kWh
+
+
+2. Reduction Potential by Improvement:
+   - HVAC upgrade: 20-40%
+   - Insulation: 15-30%
+   - Solar PV: 40-100%
+   - LED lighting: 5-10%
+   - Smart controls: 10-15%
+
+
+3. Carbon Offset Options:
+   - REC cost per ton CO2
+   - Offset program rates
+   - Tree planting impact factors
+
+
+Calculations:
+1. Current Carbon Emissions:
+           CE = Σ(Energy Source × EF)
+   
+Where:
+   - Energy Source in kWh
+   - EF = Source-specific emission factor
+
+
+2. Carbon Reduction Target:
+           CRT = Current Emissions × Target Percentage
+   
+Where:
+   - Target Percentage from user selection
+
+
+3. Annual Reduction Need:
+           ARN = (Current - Target)/Years
+   
+Where:
+   - Years = Timeline selection
+
+
+4. Project Impact Assessment:
+   
+For each improvement:
+           Carbon Reduction = Energy Savings × EF
+   
+Where:
+   - Energy Savings from Section 13
+   - EF from utility data
+
+
+5. Gap Analysis:
+           Remaining Gap = Target - Planned Reductions
+   
+Where:
+   - Planned Reductions = Sum of project impacts
+
+
+6. Offset Requirements:
+   If gap exists:
+           Offset Needed = Remaining Gap × Safety Factor
+   
+Where:
+   - Safety Factor = 1.1 for uncertainty
+
+
+7. Progress Tracking:
+           Reduction Progress = (Initial - Current)/Initial × 100
+   
+Where:
+   - Initial = Baseline emissions
+   - Current = Latest measurement
+
+
+SECTION 15: Energy Monitoring and Verification
+[Purpose: Establish monitoring protocols and verify energy savings]
+
+
+[BASIC - Required]
+
+
+15.1 Preferred Tracking Method
+□ Simple bill comparison
+□ Basic energy monitoring
+□ Professional verification
+[Used for: Monitoring approach]
+
+
+15.2 Success Indicators (select all)
+□ Lower bills
+□ Better comfort
+□ Fewer issues
+□ Environmental impact
+[Used for: Performance metrics]
+
+
+[ADVANCED]
+
+
+15.1 Current Monitoring
+
+
+How do you track energy use:
+□ Monthly bills only
+□ Smart meter readings
+□ Energy monitoring system
+□ Don't currently track
+[Used for: Monitoring protocol selection]
+
+
+15.2 Preferred Tracking Method
+
+
+Interest in monitoring:
+□ Simple monthly comparison
+□ Detailed daily tracking
+□ Real-time monitoring
+□ Annual review only
+□ Not sure
+[Used for: System recommendations]
+
+
+15.3 Verification Preferences
+
+
+Preferred verification method:
+□ Bill comparison
+□ Usage patterns
+□ Temperature comfort
+□ All of the above
+□ Not sure
+[Used for: Success metrics]
+
+
+15.4 Reporting Frequency
+
+
+Preferred updates:
+□ Monthly
+□ Quarterly
+□ Annually
+□ On-demand
+□ Not sure
+[Used for: Reporting schedule]
+
+
+[ADVANCED - Optional]
+
+
+15.5 Monitoring Details
+
+
+If monitoring system present:
+System type: _____
+Data frequency: _____
+Parameters tracked: _____
+[Used for: Advanced monitoring]
+
+
+15.6 Success Metrics
+
+
+Priority metrics (select all):
+□ kWh reduction
+□ Cost savings
+□ Carbon reduction
+□ Comfort improvement
+□ ROI
+[Used for: Performance tracking]
+
+
+BACKEND INFORMATION:
+Derived Values:
+1. Monitoring Protocol:
+   Based on:
+   - Current capabilities
+   - Preferred method
+   - System complexity
+   Formula: Base Protocol × Complexity Factor
+
+
+2. Verification Requirements:
+   Based on:
+   - Improvement types
+   - Investment level
+   - Reporting needs
+
+
+Reference Tables Needed:
+1. Monitoring System Types:
+   - Basic (bills): Monthly data
+   - Smart meter: Hourly data
+   - Real-time: Minute-by-minute
+   - Sub-metering: Circuit-level
+
+
+2. Success Metric Baselines:
+   - Energy use: kWh/month
+   - Cost: $/month
+   - Carbon: kg CO2/month
+   - Temperature: °F variance
+
+
+3. Verification Methods:
+   By improvement type:
+   - HVAC: Runtime + temperature
+   - Insulation: Temperature differential
+   - Solar: Production monitoring
+   - Lighting: Usage patterns
+
+
+Calculations:
+1. Energy Savings Verification:
+           S = Ebefore - Eafter
+   
+Where:
+   - Ebefore = Baseline consumption
+   - Eafter = Post-improvement consumption
+   Normalized for weather and occupancy
+
+
+2. Cost Savings Verification:
+           CS = S × Rate
+   
+Where:
+   - S = Verified energy savings
+   - Rate = Current utility rate
+
+
+3. Performance Index:
+           PI = Actual Savings/Predicted Savings × 100
+   
+Where:
+   - Actual from monitoring
+   - Predicted from Section 13
+
+
+4. Comfort Improvement:
+           CI = (T1 - T2)/T1 × 100
+   
+Where:
+   - T1 = Initial temperature variance
+   - T2 = Current temperature variance
+
+
+5. ROI Verification:
+           Actual ROI = (Verified Savings × Years)/Cost × 100
+   
+Where:
+   - Verified Savings = Annual confirmed savings
+   - Years = Time since implementation
+
+
+6. Monitoring Score:
+           MS = (Data Points × Frequency × Accuracy)/100
+   
+Where:
+   - Data Points = Number of parameters
+   - Frequency = Updates per day
+   - Accuracy = Calibration factor
+
+
+7. Reporting Metrics:
+   
+Monthly Report:
+   - Energy use vs. baseline
+   - Cost savings to date
+   - Carbon reduction
+   - Comfort metrics
+   - ROI status

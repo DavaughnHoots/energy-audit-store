@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/context/AuthContext';
+import useAuth from '@/context/AuthContext';
 
 interface HomeConditionsData {
   insulation: {
@@ -35,7 +35,6 @@ const WINDOW_CONDITIONS = ['excellent', 'good', 'fair', 'poor'];
 const WEATHERSTRIPPING_TYPES = ['door-sweep', 'foam', 'metal', 'none', 'not-sure'];
 
 const HomeConditionsSection: React.FC<Props> = ({ onSave, initialData }) => {
-  const { token } = useAuth();
   const [formData, setFormData] = useState<HomeConditionsData>(() => initialData || {
     insulation: {
       attic: 'not-sure',
@@ -277,7 +276,7 @@ const HomeConditionsSection: React.FC<Props> = ({ onSave, initialData }) => {
                     <input
                       type="checkbox"
                       id={key}
-                      checked={formData.weatherization[key as keyof typeof formData.weatherization]}
+                      checked={formData.weatherization[key as 'drafts' | 'visibleGaps' | 'condensation']}
                       onChange={(e) => handleInputChange('weatherization', key, e.target.checked)}
                       className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                     />

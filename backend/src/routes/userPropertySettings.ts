@@ -1,7 +1,8 @@
 // backend/src/routes/userPropertySettings.ts
 
 import express, { Response, RequestHandler } from 'express';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types/auth';
 import { rateLimiter } from '../middleware/security';
 import { z } from 'zod';
 import { pool } from '../config/database';
@@ -64,7 +65,7 @@ router.get('/property', authenticate, async (req: AuthenticatedRequest, res: Res
       `SELECT property_details 
        FROM user_settings 
        WHERE user_id = $1`,
-      [req.user!.userId]
+      [req.user!.id]
     );
 
     if (result.rows.length === 0) {
@@ -73,7 +74,7 @@ router.get('/property', authenticate, async (req: AuthenticatedRequest, res: Res
 
     res.json({ property_details: result.rows[0].property_details });
   } catch (error) {
-    appLogger.error('Error fetching property settings:', { error, userId: req.user!.userId });
+    appLogger.error('Error fetching property settings:', { error, userId: req.user!.id });
     res.status(500).json({ error: 'Failed to fetch property settings' });
   }
 });
@@ -102,7 +103,7 @@ const updatePropertyHandler: RequestHandler = async (req: AuthenticatedRequest, 
           updated_at = CURRENT_TIMESTAMP
         RETURNING property_details`,
         [
-          req.user!.userId,
+          req.user!.id,
           validatedData
         ]
       );
@@ -116,7 +117,7 @@ const updatePropertyHandler: RequestHandler = async (req: AuthenticatedRequest, 
           created_at
         ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
         [
-          req.user!.userId,
+          req.user!.id,
           'property_settings_update',
           { previous: result.rows[0]?.property_details, new: validatedData }
         ]
@@ -145,7 +146,7 @@ const updatePropertyHandler: RequestHandler = async (req: AuthenticatedRequest, 
     } else {
       appLogger.error('Error updating property settings:', {
         error,
-        userId: req.user!.userId
+        userId: req.user!.id
       });
       res.status(500).json({ error: 'Failed to update property settings' });
     }
@@ -164,7 +165,7 @@ router.delete('/property', authenticate, async (req: AuthenticatedRequest, res: 
       // Get current settings for logging
       const currentSettings = await client.query(
         'SELECT property_details FROM user_settings WHERE user_id = $1',
-        [req.user!.userId]
+        [req.user!.id]
       );
 
       // Remove property details
@@ -173,7 +174,7 @@ router.delete('/property', authenticate, async (req: AuthenticatedRequest, res: 
          SET property_details = NULL,
              updated_at = CURRENT_TIMESTAMP 
          WHERE user_id = $1`,
-        [req.user!.userId]
+        [req.user!.id]
       );
 
       // Log the deletion
@@ -185,7 +186,7 @@ router.delete('/property', authenticate, async (req: AuthenticatedRequest, res: 
           created_at
         ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
         [
-          req.user!.userId,
+          req.user!.id,
           'property_settings_delete',
           { deleted: currentSettings.rows[0]?.property_details }
         ]
@@ -203,7 +204,7 @@ router.delete('/property', authenticate, async (req: AuthenticatedRequest, res: 
   } catch (error) {
     appLogger.error('Error deleting property settings:', {
       error,
-      userId: req.user!.userId
+      userId: req.user!.id
     });
     res.status(500).json({ error: 'Failed to delete property settings' });
   }

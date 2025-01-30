@@ -7,7 +7,9 @@ import { authenticate, csrfProtection } from '../middleware/auth';
 
 interface AuthRequest extends Request {
   user?: {
-    userId: string;
+    id: string;
+    email: string;
+    role: string;
   };
 }
 
@@ -37,12 +39,14 @@ router.post('/register', async (req: Request, res: Response) => {
 // Login user
 router.post('/signin', async (req: Request, res: Response) => {
   try {
-    console.log('Signin attempt:', { email: req.body.email });
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Missing email or password' });
     }
+
+    // Cleanup expired sessions before login
+    await authService.cleanupExpiredSessions();
 
     const result = await authService.loginUser(email, password);
 
@@ -50,13 +54,15 @@ router.post('/signin', async (req: Request, res: Response) => {
     res.cookie('token', result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
+      path: '/',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
 
-    res.json(result);
+    // Send user data without the token (token is handled by cookie)
+    const { token, ...userData } = result;
+    res.json({ user: userData });
   } catch (error) {
-    console.error('Signin error:', error);
     if (error instanceof Error) {
       res.status(401).json({ error: error.message });
     } else {
@@ -71,10 +77,39 @@ router.post('/logout', (req: Request, res: Response) => {
   res.json({ message: 'Logged out successfully' });
 });
 
+// Refresh token
+router.post('/refresh', async (req: Request, res: Response) => {
+  try {
+    const oldToken = req.cookies.token;
+    if (!oldToken) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const result = await authService.refreshToken(oldToken);
+
+    // Set new token in HTTP-only cookie
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    res.json({ message: 'Token refreshed successfully' });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(401).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
 // Get current user profile
 router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     const result = await pool.query(
       'SELECT id, email, full_name, phone, address, role FROM users WHERE id = $1',
       [userId]
@@ -93,7 +128,7 @@ router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => 
 // Update user profile
 router.put('/profile', authenticate, csrfProtection, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     const { fullName, phone, address } = req.body;
 
     const updatedUser = await authService.updateUserProfile(userId!, {

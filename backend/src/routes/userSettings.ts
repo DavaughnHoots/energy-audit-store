@@ -1,17 +1,18 @@
 // src/routes/userSettings.ts
 
-import express from 'express';
-import { authenticate, requireRole, validateRequest } from '../middleware/auth';
-import { AuthService } from '../services/auth/AuthService';
+import express, { Response } from 'express';
+import { authenticate, requireRole } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types/auth';
+import { UserSettingsService } from '../services/userSettingsService';
 import { pool } from '../config/database';
 
 const router = express.Router();
-const authService = new AuthService(pool);
+const settingsService = new UserSettingsService(pool);
 
 // Get user settings
-router.get('/', authenticate, async (req, res) => {
+router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const settings = await authService.getUserSettings(req.user!.userId);
+    const settings = await settingsService.getUserSettings(req.user!.id);
     res.json(settings);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
@@ -19,12 +20,12 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Update user settings
-router.put('/', authenticate, async (req, res) => {
+router.put('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { fullName, phone, address, emailNotifications, theme } = req.body;
     
     // Update user profile
-    const settings = await authService.updateUserSettings(req.user!.userId, {
+    const settings = await settingsService.updateUserSettings(req.user!.id, {
       fullName,
       phone,
       address
@@ -39,7 +40,7 @@ router.put('/', authenticate, async (req, res) => {
          email_notifications = $2,
          theme = $3,
          updated_at = CURRENT_TIMESTAMP`,
-      [req.user!.userId, emailNotifications, theme]
+      [req.user!.id, emailNotifications, theme]
     );
 
     res.json(settings);
@@ -49,7 +50,7 @@ router.put('/', authenticate, async (req, res) => {
 });
 
 // Delete account
-router.delete('/', authenticate, async (req, res) => {
+router.delete('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { password } = req.body;
     
@@ -58,10 +59,13 @@ router.delete('/', authenticate, async (req, res) => {
     }
 
     // Verify password before deletion
-    await authService.verifyPassword(req.user!.userId, password);
+    const isValid = await settingsService.verifyPassword(req.user!.id, password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
 
     // Delete user (cascades to settings due to foreign key)
-    await pool.query('DELETE FROM users WHERE id = $1', [req.user!.userId]);
+    await pool.query('DELETE FROM users WHERE id = $1', [req.user!.id]);
 
     res.json({ message: 'Account deleted successfully' });
   } catch (error) {
@@ -70,20 +74,20 @@ router.delete('/', authenticate, async (req, res) => {
 });
 
 // Export data (GDPR compliance)
-router.get('/export', authenticate, async (req, res) => {
+router.get('/export', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userData = await pool.query(
       `SELECT u.*, s.email_notifications, s.theme, s.notification_preferences
        FROM users u
        LEFT JOIN user_settings s ON u.id = s.user_id
        WHERE u.id = $1`,
-      [req.user!.userId]
+      [req.user!.id]
     );
 
     // Get user's audit history
     const auditHistory = await pool.query(
       'SELECT * FROM audit_history WHERE user_id = $1',
-      [req.user!.userId]
+      [req.user!.id]
     );
 
     res.json({

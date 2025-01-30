@@ -34,7 +34,7 @@ const EducationPage = () => {
       type: 'article',
       topic: 'home-appliances',
       readTime: '5 min read',
-      thumbnail: '/api/placeholder/400/250',
+      thumbnail: 'https://placehold.co/400x250',
       url: '/education/understanding-home-energy-efficiency',
       datePublished: '2024-01-15'
     },
