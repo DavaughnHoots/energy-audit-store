@@ -8,16 +8,18 @@ import getpass
 from tqdm import tqdm
 import logging
 
+
 def setup_logging():
     """
     Configure logging for the script.
     """
     logging.basicConfig(
-        filename='db_structure.log',
-        filemode='w',
+        filename="db_structure.log",
+        filemode="w",
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(levelname)s - %(message)s",
     )
+
 
 def get_connection(host, port, dbname, user, password):
     """
@@ -25,11 +27,7 @@ def get_connection(host, port, dbname, user, password):
     """
     try:
         conn = psycopg2.connect(
-            host=host,
-            port=port,
-            dbname=dbname,
-            user=user,
-            password=password
+            host=host, port=port, dbname=dbname, user=user, password=password
         )
         logging.info("Successfully connected to the database.")
         return conn
@@ -37,6 +35,7 @@ def get_connection(host, port, dbname, user, password):
         logging.error(f"Error connecting to the database: {e}")
         print(f"Error connecting to the database: {e}")
         exit(1)
+
 
 def get_tables(conn):
     """
@@ -55,6 +54,7 @@ def get_tables(conn):
         logging.info(f"Retrieved {len(tables)} tables from the database.")
         return tables
 
+
 def get_columns(conn, schema, table):
     """
     Retrieve column details for a given table.
@@ -71,6 +71,7 @@ def get_columns(conn, schema, table):
         columns = cur.fetchall()
         logging.info(f"Retrieved {len(columns)} columns for table {schema}.{table}.")
         return columns
+
 
 def get_primary_keys(conn, schema, table):
     """
@@ -92,6 +93,7 @@ def get_primary_keys(conn, schema, table):
         pks = [row[0] for row in cur.fetchall()]
         logging.info(f"Primary keys for table {schema}.{table}: {pks}")
         return pks
+
 
 def get_foreign_keys(conn, schema, table):
     """
@@ -120,6 +122,7 @@ def get_foreign_keys(conn, schema, table):
         logging.info(f"Retrieved {len(fks)} foreign keys for table {schema}.{table}.")
         return fks
 
+
 def get_indexes(conn, schema, table):
     """
     Retrieve indexes for a given table.
@@ -139,34 +142,40 @@ def get_indexes(conn, schema, table):
         logging.info(f"Retrieved {len(indexes)} indexes for table {schema}.{table}.")
         return indexes
 
+
 def generate_structure(conn, output_file):
     """
     Generate the database structure report and write it to the output file.
     """
     setup_logging()
     logging.info("Starting database structure generation.")
-    
+
     tables = get_tables(conn)
     if not tables:
         logging.warning("No tables found in the database.")
         print("No tables found in the database.")
         return
-    
-    with open(output_file, 'w', encoding='utf-8') as f:
+
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(f"Database Structure Report\n")
         f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        
+
         for schema, table in tqdm(tables, desc="Processing Tables"):
             logging.info(f"Processing table: {schema}.{table}")
             f.write(f"Schema: {schema}\n")
             f.write(f"Table: {table}\n")
             f.write("-" * 40 + "\n")
-            
+
             # Columns
             columns = get_columns(conn, schema, table)
             if columns:
                 table_columns = PrettyTable()
-                table_columns.field_names = ["Column Name", "Data Type", "Nullable", "Default"]
+                table_columns.field_names = [
+                    "Column Name",
+                    "Data Type",
+                    "Nullable",
+                    "Default",
+                ]
                 for col in columns:
                     table_columns.add_row(col)
                 f.write("Columns:\n")
@@ -174,41 +183,45 @@ def generate_structure(conn, output_file):
                 f.write("\n\n")
             else:
                 f.write("No columns found.\n\n")
-            
+
             # Primary Keys
             pks = get_primary_keys(conn, schema, table)
             if pks:
                 f.write(f"Primary Key: {', '.join(pks)}\n\n")
             else:
                 f.write("Primary Key: None\n\n")
-            
+
             # Foreign Keys
             fks = get_foreign_keys(conn, schema, table)
             if fks:
                 f.write("Foreign Keys:\n")
                 fk_table = PrettyTable()
-                fk_table.field_names = ["Column", "Foreign Schema", "Foreign Table", "Foreign Column"]
+                fk_table.field_names = [
+                    "Column",
+                    "Foreign Schema",
+                    "Foreign Table",
+                    "Foreign Column",
+                ]
                 for fk in fks:
                     fk_table.add_row(fk)
                 f.write(str(fk_table))
                 f.write("\n\n")
             else:
                 f.write("Foreign Keys: None\n\n")
-            
-            # Indexes
-            indexes = get_indexes(conn, schema, table)
-            if indexes:
+
+            if indexes := get_indexes(conn, schema, table):
                 f.write("Indexes:\n")
                 for index_name, index_def in indexes:
                     f.write(f"- `{index_name}`: {index_def}\n")
                 f.write("\n")
             else:
                 f.write("Indexes: None\n\n")
-            
+
             f.write("=" * 80 + "\n\n")
-    
+
     logging.info(f"Database structure has been written to {output_file}")
     print(f"Database structure has been written to {output_file}")
+
 
 def main():
     """
@@ -216,65 +229,52 @@ def main():
     """
     parser = argparse.ArgumentParser(
         description=(
-            'Generate a PostgreSQL database structure layout as a text document.'
+            "Generate a PostgreSQL database structure layout as a text document."
         )
     )
-    parser.add_argument(
-        '--host',
-        type=str,
-        default='localhost',
-        help='Database host (default: localhost)'
-    )
-    parser.add_argument(
-        '--port',
-        type=int,
-        default=5432,
-        help='Database port (default: 5432)'
-    )
-    parser.add_argument(
-        '--dbname',
-        type=str,
-        required=True,
-        help='Name of the PostgreSQL database'
-    )
-    parser.add_argument(
-        '--user',
-        type=str,
-        required=True,
-        help='Database user'
-    )
-    parser.add_argument(
-        '--password',
-        type=str,
-        help='Password for the database user. If not provided, you will be prompted.'
-    )
-    parser.add_argument(
-        '-o', '--output',
-        type=str,
-        default='database_structure.txt',
-        help='Output file name (default: database_structure.txt)'
-    )
-    
-    args = parser.parse_args()
-    # Securely handle password
-    if args.password:
-        password = args.password
-    else:
-        password = getpass.getpass(prompt='Enter database password: ')
-    
+    # parser.add_argument(
+    #     "--host",
+    #     type=str,
+    #     default="localhost",
+    #     help="Database host (default: localhost)",
+    # )
+    # parser.add_argument(
+    #     "--port", type=int, default=5432, help="Database port (default: 5432)"
+    # )
+    # parser.add_argument(
+    #     "--dbname", type=str, required=True, help="Name of the PostgreSQL database"
+    # )
+    # parser.add_argument("--user", type=str, required=True, help="Database user")
+    # parser.add_argument(
+    #     "--password",
+    #     type=str,
+    #     help="Password for the database user. If not provided, you will be prompted.",
+    # )
+    # parser.add_argument(
+    #     "-o",
+    #     "--output",
+    #     type=str,
+    #     default="database_structure.txt",
+    #     help="Output file name (default: database_structure.txt)",
+    # )
+
+    # args = parser.parse_args()
+    # # Securely handle password
+    # if args.password:
+    #     password = args.password
+    # else:
+    #     password = getpass.getpass(prompt="Enter database password: ")
+
     conn = get_connection(
-        host=args.host,
-        port=args.port,
-        dbname=args.dbname,
-        user=args.user,
-        password=password
+        host="localhost", port=5432, dbname="postgres", user="postgres", password=""
     )
-    
+
     try:
-        generate_structure(conn, args.output)
+        generate_structure(conn, "db_structure.txt")
     finally:
         conn.close()
         logging.info("Database connection closed.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

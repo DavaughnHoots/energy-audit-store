@@ -125,8 +125,15 @@ const HomeConditionsSection: React.FC<Props> = ({ onSave, initialData }) => {
       await onSave(formData);
       setIsDirty(false);
       localStorage.removeItem('homeConditions');
+      // Redirect to dashboard after successful save
+      window.location.href = '/dashboard';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save home conditions');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to save home conditions. Please try again.');
+      }
+      console.error('Error saving home conditions:', err);
     } finally {
       setIsSaving(false);
     }
@@ -329,7 +336,7 @@ const HomeConditionsSection: React.FC<Props> = ({ onSave, initialData }) => {
             disabled={isSaving || !isDirty}
             className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? 'Saving...' : 'Complete Setup'}
           </button>
         </div>
       </form>

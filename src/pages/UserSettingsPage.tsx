@@ -3,9 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import EnergyConsumptionSection from '../components/user-settings/EnergyConsumptionSection';
+import HomeConditionsSection from '../components/user-settings/HomeConditionsSection';
 import type { EnergyConsumptionData } from '../components/user-settings/EnergyConsumptionSection';
+import { API_BASE_URL } from '../config/api';
 
-const UserSettingsPage = () => {
+interface Props {
+  initialSection?: 'property' | 'general';
+}
+
+const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
+  const [activeSection, setActiveSection] = useState(initialSection);
   const [settings, setSettings] = useState({
     fullName: '',
     email: '',
@@ -27,9 +34,13 @@ const UserSettingsPage = () => {
     fetchEnergyData();
   }, []);
 
+  useEffect(() => {
+    setActiveSection(initialSection);
+  }, [initialSection]);
+
   const fetchEnergyData = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/settings/energy`, {
+      const response = await fetch(`${API_BASE_URL}/settings/energy`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -46,7 +57,7 @@ const UserSettingsPage = () => {
 
   const handleSaveEnergyData = async (data: EnergyConsumptionData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/settings/energy`, {
+      const response = await fetch(`${API_BASE_URL}/settings/energy`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -64,9 +75,30 @@ const UserSettingsPage = () => {
     }
   };
 
+  const handleSaveHomeConditions = async (data: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/settings/property`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error('Failed to save property details');
+
+      setSuccess('Property details saved successfully');
+      return response.json();
+    } catch (err) {
+      setError('Failed to save property details');
+      throw err;
+    }
+  };
+
   const fetchSettings = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/settings`, {
+      const response = await fetch(`${API_BASE_URL}/settings`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -106,7 +138,7 @@ const UserSettingsPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/settings`, {
+      const response = await fetch(`${API_BASE_URL}/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +159,7 @@ const UserSettingsPage = () => {
 
   const handleExportData = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/settings/export`, {
+      const response = await fetch(`${API_BASE_URL}/settings/export`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -149,7 +181,7 @@ const UserSettingsPage = () => {
 
   const handleDeleteAccount = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/settings`, {
+      const response = await fetch(`${API_BASE_URL}/settings`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -170,177 +202,212 @@ const UserSettingsPage = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="space-y-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
+        {/* Navigation Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveSection('general')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeSection === 'general'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              General Settings
+            </button>
+            <button
+              onClick={() => setActiveSection('property')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeSection === 'property'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Property Details
+            </button>
+          </nav>
+        </div>
 
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          {success && (
-            <Alert className="mb-6 bg-green-50">
-              <AlertDescription>{success}</AlertDescription>
-            </Alert>
-          )}
+        {success && (
+          <Alert className="mb-6 bg-green-50">
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <input
-                type="text"
-                id="fullName"
-                name="fullName"
-                value={settings.fullName}
-                onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
+        {activeSection === 'general' && (
+          <>
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    value={settings.fullName}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={settings.email}
-                disabled
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-              />
-            </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={settings.email}
+                    disabled
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Phone
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={settings.phone}
-                onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={settings.phone}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                Address
-              </label>
-              <textarea
-                id="address"
-                name="address"
-                value={settings.address}
-                onChange={handleInputChange}
-                rows={3}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                    Address
+                  </label>
+                  <textarea
+                    id="address"
+                    name="address"
+                    value={settings.address}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="emailNotifications"
-                name="emailNotifications"
-                checked={settings.emailNotifications}
-                onChange={handleInputChange}
-                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-              />
-              <label htmlFor="emailNotifications" className="ml-2 block text-sm text-gray-900">
-                Receive email notifications
-              </label>
-            </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="emailNotifications"
+                    name="emailNotifications"
+                    checked={settings.emailNotifications}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="emailNotifications" className="ml-2 block text-sm text-gray-900">
+                    Receive email notifications
+                  </label>
+                </div>
 
-            <div>
-              <label htmlFor="theme" className="block text-sm font-medium text-gray-700">
-                Theme
-              </label>
-              <select
-                id="theme"
-                name="theme"
-                value={settings.theme}
-                onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            </div>
-
-            <div className="flex justify-between pt-6">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
-              >
-                {isLoading ? 'Saving...' : 'Save Changes'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExportData}
-                className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                Export Data
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-12 border-t pt-6">
-            <h2 className="text-lg font-medium text-red-600 mb-4">Danger Zone</h2>
-
-            {!showDeleteConfirm ? (
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="inline-flex justify-center py-2 px-4 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Delete Account
-              </button>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  Please enter your password to confirm account deletion. This action cannot be undone.
-                </p>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                />
-                <div className="flex space-x-4">
-                  <button
-                    onClick={handleDeleteAccount}
-                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                <div>
+                  <label htmlFor="theme" className="block text-sm font-medium text-gray-700">
+                    Theme
+                  </label>
+                  <select
+                    id="theme"
+                    name="theme"
+                    value={settings.theme}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                   >
-                    Confirm Deletion
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-between pt-6">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                  >
+                    {isLoading ? 'Saving...' : 'Save Changes'}
                   </button>
+
                   <button
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setDeletePassword('');
-                    }}
-                    className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    type="button"
+                    onClick={handleExportData}
+                    className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                   >
-                    Cancel
+                    Export Data
                   </button>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
+              </form>
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <EnergyConsumptionSection
-            onSave={handleSaveEnergyData}
-            initialData={energyData}
-          />
-        </div>
+              <div className="mt-12 border-t pt-6">
+                <h2 className="text-lg font-medium text-red-600 mb-4">Danger Zone</h2>
+
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="inline-flex justify-center py-2 px-4 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Delete Account
+                  </button>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                      Please enter your password to confirm account deletion. This action cannot be undone.
+                    </p>
+                    <input
+                      type="password"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      placeholder="Enter password"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                    />
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={handleDeleteAccount}
+                        className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        Confirm Deletion
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDeleteConfirm(false);
+                          setDeletePassword('');
+                        }}
+                        className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <EnergyConsumptionSection
+                onSave={handleSaveEnergyData}
+                initialData={energyData}
+              />
+            </div>
+          </>
+        )}
+
+        {activeSection === 'property' && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <HomeConditionsSection onSave={handleSaveHomeConditions} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { authenticate, requireRole } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/auth';
 import { UserSettingsService } from '../services/userSettingsService';
 import { pool } from '../config/database';
+import { appLogger } from '../config/logger';
 
 const router = express.Router();
 const settingsService = new UserSettingsService(pool);
@@ -96,6 +97,48 @@ router.get('/export', authenticate, async (req: AuthenticatedRequest, res: Respo
     });
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+// Get property details
+router.get('/property', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const result = await pool.query(
+      'SELECT property_details FROM user_settings WHERE user_id = $1',
+      [req.user!.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ property_details: null });
+    }
+
+    res.json({ property_details: result.rows[0].property_details });
+  } catch (error) {
+    appLogger.error('Error fetching property details:', { error: error instanceof Error ? error.message : 'Unknown error' });
+    res.status(500).json({ error: 'Failed to fetch property details' });
+  }
+});
+
+// Update property details
+router.put('/property', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const propertyDetails = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO user_settings (user_id, property_details, updated_at)
+       VALUES ($1, $2, CURRENT_TIMESTAMP)
+       ON CONFLICT (user_id)
+       DO UPDATE SET
+         property_details = $2,
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING property_details`,
+      [req.user!.id, propertyDetails]
+    );
+
+    res.json({ property_details: result.rows[0].property_details });
+  } catch (error) {
+    appLogger.error('Error updating property details:', { error: error instanceof Error ? error.message : 'Unknown error' });
+    res.status(500).json({ error: 'Failed to update property details' });
   }
 });
 

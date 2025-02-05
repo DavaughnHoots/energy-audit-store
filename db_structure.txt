@@ -1,0 +1,824 @@
+Database Structure Report
+Generated on: 2025-02-05 18:00:52
+
+Schema: pgagent
+Table: pga_exception
+----------------------------------------
+Columns:
++-------------+------------------------+----------+------------------------------------------------------+
+| Column Name |       Data Type        | Nullable |                       Default                        |
++-------------+------------------------+----------+------------------------------------------------------+
+|    jexid    |        integer         |    NO    | nextval('pgagent.pga_exception_jexid_seq'::regclass) |
+|   jexscid   |        integer         |    NO    |                         None                         |
+|   jexdate   |          date          |   YES    |                         None                         |
+|   jextime   | time without time zone |   YES    |                         None                         |
++-------------+------------------------+----------+------------------------------------------------------+
+
+Primary Key: jexid
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| jexscid |    pgagent     |  pga_schedule |     jscid      |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `pga_exception_datetime`: CREATE UNIQUE INDEX pga_exception_datetime ON pgagent.pga_exception USING btree (jexdate, jextime)
+- `pga_exception_jexscid`: CREATE INDEX pga_exception_jexscid ON pgagent.pga_exception USING btree (jexscid)
+- `pga_exception_pkey`: CREATE UNIQUE INDEX pga_exception_pkey ON pgagent.pga_exception USING btree (jexid)
+
+================================================================================
+
+Schema: pgagent
+Table: pga_job
+----------------------------------------
+Columns:
++--------------+--------------------------+----------+------------------------------------------------+
+| Column Name  |        Data Type         | Nullable |                    Default                     |
++--------------+--------------------------+----------+------------------------------------------------+
+|    jobid     |         integer          |    NO    | nextval('pgagent.pga_job_jobid_seq'::regclass) |
+|   jobjclid   |         integer          |    NO    |                      None                      |
+|   jobname    |           text           |    NO    |                      None                      |
+|   jobdesc    |           text           |    NO    |                    ''::text                    |
+| jobhostagent |           text           |    NO    |                    ''::text                    |
+|  jobenabled  |         boolean          |    NO    |                      true                      |
+|  jobcreated  | timestamp with time zone |    NO    |               CURRENT_TIMESTAMP                |
+|  jobchanged  | timestamp with time zone |    NO    |               CURRENT_TIMESTAMP                |
+|  jobagentid  |         integer          |   YES    |                      None                      |
+|  jobnextrun  | timestamp with time zone |   YES    |                      None                      |
+|  joblastrun  | timestamp with time zone |   YES    |                      None                      |
++--------------+--------------------------+----------+------------------------------------------------+
+
+Primary Key: jobid
+
+Foreign Keys:
++------------+----------------+---------------+----------------+
+|   Column   | Foreign Schema | Foreign Table | Foreign Column |
++------------+----------------+---------------+----------------+
+|  jobjclid  |    pgagent     |  pga_jobclass |     jclid      |
+| jobagentid |    pgagent     |  pga_jobagent |     jagpid     |
++------------+----------------+---------------+----------------+
+
+Indexes:
+- `pga_job_pkey`: CREATE UNIQUE INDEX pga_job_pkey ON pgagent.pga_job USING btree (jobid)
+
+================================================================================
+
+Schema: pgagent
+Table: pga_jobagent
+----------------------------------------
+Columns:
++--------------+--------------------------+----------+-------------------+
+| Column Name  |        Data Type         | Nullable |      Default      |
++--------------+--------------------------+----------+-------------------+
+|    jagpid    |         integer          |    NO    |        None       |
+| jaglogintime | timestamp with time zone |    NO    | CURRENT_TIMESTAMP |
+|  jagstation  |           text           |    NO    |        None       |
++--------------+--------------------------+----------+-------------------+
+
+Primary Key: jagpid
+
+Foreign Keys: None
+
+Indexes:
+- `pga_jobagent_pkey`: CREATE UNIQUE INDEX pga_jobagent_pkey ON pgagent.pga_jobagent USING btree (jagpid)
+
+================================================================================
+
+Schema: pgagent
+Table: pga_jobclass
+----------------------------------------
+Columns:
++-------------+-----------+----------+-----------------------------------------------------+
+| Column Name | Data Type | Nullable |                       Default                       |
++-------------+-----------+----------+-----------------------------------------------------+
+|    jclid    |  integer  |    NO    | nextval('pgagent.pga_jobclass_jclid_seq'::regclass) |
+|   jclname   |    text   |    NO    |                         None                        |
++-------------+-----------+----------+-----------------------------------------------------+
+
+Primary Key: jclid
+
+Foreign Keys: None
+
+Indexes:
+- `pga_jobclass_name`: CREATE UNIQUE INDEX pga_jobclass_name ON pgagent.pga_jobclass USING btree (jclname)
+- `pga_jobclass_pkey`: CREATE UNIQUE INDEX pga_jobclass_pkey ON pgagent.pga_jobclass USING btree (jclid)
+
+================================================================================
+
+Schema: pgagent
+Table: pga_joblog
+----------------------------------------
+Columns:
++-------------+--------------------------+----------+---------------------------------------------------+
+| Column Name |        Data Type         | Nullable |                      Default                      |
++-------------+--------------------------+----------+---------------------------------------------------+
+|    jlgid    |         integer          |    NO    | nextval('pgagent.pga_joblog_jlgid_seq'::regclass) |
+|   jlgjobid  |         integer          |    NO    |                        None                       |
+|  jlgstatus  |        character         |    NO    |                    'r'::bpchar                    |
+|   jlgstart  | timestamp with time zone |    NO    |                 CURRENT_TIMESTAMP                 |
+| jlgduration |         interval         |   YES    |                        None                       |
++-------------+--------------------------+----------+---------------------------------------------------+
+
+Primary Key: jlgid
+
+Foreign Keys:
++----------+----------------+---------------+----------------+
+|  Column  | Foreign Schema | Foreign Table | Foreign Column |
++----------+----------------+---------------+----------------+
+| jlgjobid |    pgagent     |    pga_job    |     jobid      |
++----------+----------------+---------------+----------------+
+
+Indexes:
+- `pga_joblog_jobid`: CREATE INDEX pga_joblog_jobid ON pgagent.pga_joblog USING btree (jlgjobid)
+- `pga_joblog_pkey`: CREATE UNIQUE INDEX pga_joblog_pkey ON pgagent.pga_joblog USING btree (jlgid)
+
+================================================================================
+
+Schema: pgagent
+Table: pga_jobstep
+----------------------------------------
+Columns:
++-------------+--------------------------+----------+----------------------------------------------------+
+| Column Name |        Data Type         | Nullable |                      Default                       |
++-------------+--------------------------+----------+----------------------------------------------------+
+|    jstid    |         integer          |    NO    | nextval('pgagent.pga_jobstep_jstid_seq'::regclass) |
+|   jstjobid  |         integer          |    NO    |                        None                        |
+|   jstname   |           text           |    NO    |                        None                        |
+|   jstdesc   |           text           |    NO    |                      ''::text                      |
+|  jstenabled |         boolean          |    NO    |                        true                        |
+|   jstkind   |        character         |    NO    |                        None                        |
+|   jstcode   |           text           |    NO    |                        None                        |
+|  jstconnstr |           text           |    NO    |                      ''::text                      |
+|  jstdbname  |           name           |    NO    |                      ''::name                      |
+|  jstonerror |        character         |    NO    |                    'f'::bpchar                     |
+|  jscnextrun | timestamp with time zone |   YES    |                        None                        |
++-------------+--------------------------+----------+----------------------------------------------------+
+
+Primary Key: jstid
+
+Foreign Keys:
++----------+----------------+---------------+----------------+
+|  Column  | Foreign Schema | Foreign Table | Foreign Column |
++----------+----------------+---------------+----------------+
+| jstjobid |    pgagent     |    pga_job    |     jobid      |
++----------+----------------+---------------+----------------+
+
+Indexes:
+- `pga_jobstep_jobid`: CREATE INDEX pga_jobstep_jobid ON pgagent.pga_jobstep USING btree (jstjobid)
+- `pga_jobstep_pkey`: CREATE UNIQUE INDEX pga_jobstep_pkey ON pgagent.pga_jobstep USING btree (jstid)
+
+================================================================================
+
+Schema: pgagent
+Table: pga_jobsteplog
+----------------------------------------
+Columns:
++-------------+--------------------------+----------+-------------------------------------------------------+
+| Column Name |        Data Type         | Nullable |                        Default                        |
++-------------+--------------------------+----------+-------------------------------------------------------+
+|    jslid    |         integer          |    NO    | nextval('pgagent.pga_jobsteplog_jslid_seq'::regclass) |
+|   jsljlgid  |         integer          |    NO    |                          None                         |
+|   jsljstid  |         integer          |    NO    |                          None                         |
+|  jslstatus  |        character         |    NO    |                      'r'::bpchar                      |
+|  jslresult  |         integer          |   YES    |                          None                         |
+|   jslstart  | timestamp with time zone |    NO    |                   CURRENT_TIMESTAMP                   |
+| jslduration |         interval         |   YES    |                          None                         |
+|  jsloutput  |           text           |   YES    |                          None                         |
++-------------+--------------------------+----------+-------------------------------------------------------+
+
+Primary Key: jslid
+
+Foreign Keys:
++----------+----------------+---------------+----------------+
+|  Column  | Foreign Schema | Foreign Table | Foreign Column |
++----------+----------------+---------------+----------------+
+| jsljlgid |    pgagent     |   pga_joblog  |     jlgid      |
+| jsljstid |    pgagent     |  pga_jobstep  |     jstid      |
++----------+----------------+---------------+----------------+
+
+Indexes:
+- `pga_jobsteplog_jslid`: CREATE INDEX pga_jobsteplog_jslid ON pgagent.pga_jobsteplog USING btree (jsljlgid)
+- `pga_jobsteplog_pkey`: CREATE UNIQUE INDEX pga_jobsteplog_pkey ON pgagent.pga_jobsteplog USING btree (jslid)
+
+================================================================================
+
+Schema: pgagent
+Table: pga_schedule
+----------------------------------------
+Columns:
++--------------+--------------------------+----------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Column Name  |        Data Type         | Nullable |                                                                Default                                                                 |
++--------------+--------------------------+----------+----------------------------------------------------------------------------------------------------------------------------------------+
+|    jscid     |         integer          |    NO    |                                          nextval('pgagent.pga_schedule_jscid_seq'::regclass)                                           |
+|   jscjobid   |         integer          |    NO    |                                                                  None                                                                  |
+|   jscname    |           text           |    NO    |                                                                  None                                                                  |
+|   jscdesc    |           text           |    NO    |                                                                ''::text                                                                |
+|  jscenabled  |         boolean          |    NO    |                                                                  true                                                                  |
+|   jscstart   | timestamp with time zone |    NO    |                                                           CURRENT_TIMESTAMP                                                            |
+|    jscend    | timestamp with time zone |   YES    |                                                                  None                                                                  |
+|  jscminutes  |          ARRAY           |    NO    | '{f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f}'::boolean[] |
+|   jschours   |          ARRAY           |    NO    |                                     '{f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f}'::boolean[]                                     |
+| jscweekdays  |          ARRAY           |    NO    |                                                      '{f,f,f,f,f,f,f}'::boolean[]                                                      |
+| jscmonthdays |          ARRAY           |    NO    |                             '{f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f,f}'::boolean[]                             |
+|  jscmonths   |          ARRAY           |    NO    |                                                 '{f,f,f,f,f,f,f,f,f,f,f,f}'::boolean[]                                                 |
++--------------+--------------------------+----------+----------------------------------------------------------------------------------------------------------------------------------------+
+
+Primary Key: jscid
+
+Foreign Keys:
++----------+----------------+---------------+----------------+
+|  Column  | Foreign Schema | Foreign Table | Foreign Column |
++----------+----------------+---------------+----------------+
+| jscjobid |    pgagent     |    pga_job    |     jobid      |
++----------+----------------+---------------+----------------+
+
+Indexes:
+- `pga_jobschedule_jobid`: CREATE INDEX pga_jobschedule_jobid ON pgagent.pga_schedule USING btree (jscjobid)
+- `pga_schedule_pkey`: CREATE UNIQUE INDEX pga_schedule_pkey ON pgagent.pga_schedule USING btree (jscid)
+
+================================================================================
+
+Schema: public
+Table: analytics_data
+----------------------------------------
+Columns:
++-------------+-----------------------------+----------+--------------------+
+| Column Name |          Data Type          | Nullable |      Default       |
++-------------+-----------------------------+----------+--------------------+
+|      id     |             uuid            |    NO    | uuid_generate_v4() |
+|   user_id   |             uuid            |   YES    |        None        |
+|  event_type |      character varying      |    NO    |        None        |
+|  event_data |            jsonb            |   YES    |        None        |
+|  created_at | timestamp without time zone |   YES    | CURRENT_TIMESTAMP  |
++-------------+-----------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `analytics_data_pkey`: CREATE UNIQUE INDEX analytics_data_pkey ON public.analytics_data USING btree (id)
+- `idx_analytics_user_event`: CREATE INDEX idx_analytics_user_event ON public.analytics_data USING btree (user_id, event_type)
+
+================================================================================
+
+Schema: public
+Table: audit_history
+----------------------------------------
+Columns:
++-------------+-----------------------------+----------+--------------------+
+| Column Name |          Data Type          | Nullable |      Default       |
++-------------+-----------------------------+----------+--------------------+
+|      id     |             uuid            |    NO    | uuid_generate_v4() |
+|   audit_id  |             uuid            |   YES    |        None        |
+|  field_name |      character varying      |   YES    |        None        |
+|  old_value  |            jsonb            |   YES    |        None        |
+|  new_value  |            jsonb            |   YES    |        None        |
+|  changed_at | timestamp without time zone |   YES    | CURRENT_TIMESTAMP  |
+|  created_at | timestamp without time zone |   YES    | CURRENT_TIMESTAMP  |
++-------------+-----------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++----------+----------------+---------------+----------------+
+|  Column  | Foreign Schema | Foreign Table | Foreign Column |
++----------+----------------+---------------+----------------+
+| audit_id |     public     | energy_audits |       id       |
++----------+----------------+---------------+----------------+
+
+Indexes:
+- `audit_history_pkey`: CREATE UNIQUE INDEX audit_history_pkey ON public.audit_history USING btree (id)
+- `idx_audit_history_audit_id`: CREATE INDEX idx_audit_history_audit_id ON public.audit_history USING btree (audit_id)
+
+================================================================================
+
+Schema: public
+Table: energy_audits
+----------------------------------------
+Columns:
++---------------------+-----------------------------+----------+----------------------------------+
+|     Column Name     |          Data Type          | Nullable |             Default              |
++---------------------+-----------------------------+----------+----------------------------------+
+|          id         |             uuid            |    NO    |        uuid_generate_v4()        |
+|       user_id       |             uuid            |   YES    |               None               |
+|      audit_date     | timestamp without time zone |   YES    |        CURRENT_TIMESTAMP         |
+|     home_details    |            jsonb            |   YES    |               None               |
+|  current_conditions |            jsonb            |   YES    |               None               |
+|   heating_cooling   |            jsonb            |   YES    |               None               |
+|  energy_consumption |            jsonb            |   YES    |               None               |
+|   lighting_details  |            jsonb            |   YES    |               None               |
+| renewable_potential |            jsonb            |   YES    |               None               |
+|  financial_details  |            jsonb            |   YES    |               None               |
+|   recommendations   |            jsonb            |   YES    |               None               |
+|        status       |      character varying      |   YES    | 'in_progress'::character varying |
+|     completed_at    | timestamp without time zone |   YES    |               None               |
++---------------------+-----------------------------+----------+----------------------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `energy_audits_pkey`: CREATE UNIQUE INDEX energy_audits_pkey ON public.energy_audits USING btree (id)
+- `idx_energy_audits_user_status`: CREATE INDEX idx_energy_audits_user_status ON public.energy_audits USING btree (user_id, status)
+
+================================================================================
+
+Schema: public
+Table: energy_usage
+----------------------------------------
+Columns:
++-------------+-----------------------------+----------+--------------------+
+| Column Name |          Data Type          | Nullable |      Default       |
++-------------+-----------------------------+----------+--------------------+
+|      id     |             uuid            |    NO    | uuid_generate_v4() |
+|   user_id   |             uuid            |   YES    |        None        |
+|    month    |             date            |    NO    |        None        |
+| consumption |           numeric           |    NO    |        None        |
+|     cost    |           numeric           |    NO    |        None        |
+|  created_at | timestamp without time zone |   YES    | CURRENT_TIMESTAMP  |
++-------------+-----------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `energy_usage_pkey`: CREATE UNIQUE INDEX energy_usage_pkey ON public.energy_usage USING btree (id)
+- `idx_energy_usage_user_month`: CREATE INDEX idx_energy_usage_user_month ON public.energy_usage USING btree (user_id, month)
+
+================================================================================
+
+Schema: public
+Table: energy_usage_history
+----------------------------------------
+Columns:
++--------------+--------------------------+----------+--------------------+
+| Column Name  |        Data Type         | Nullable |      Default       |
++--------------+--------------------------+----------+--------------------+
+|      id      |           uuid           |    NO    | uuid_generate_v4() |
+|   user_id    |           uuid           |    NO    |        None        |
+|    month     |           date           |    NO    |        None        |
+| consumption  |         numeric          |    NO    |        None        |
+|     cost     |         numeric          |    NO    |        None        |
+| utility_type |    character varying     |    NO    |        None        |
+|  created_at  | timestamp with time zone |   YES    | CURRENT_TIMESTAMP  |
++--------------+--------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `energy_usage_history_pkey`: CREATE UNIQUE INDEX energy_usage_history_pkey ON public.energy_usage_history USING btree (id)
+- `idx_energy_usage_month`: CREATE UNIQUE INDEX idx_energy_usage_month ON public.energy_usage_history USING btree (user_id, month, utility_type)
+
+================================================================================
+
+Schema: public
+Table: password_change_history
+----------------------------------------
+Columns:
++-------------+--------------------------+----------+--------------------+
+| Column Name |        Data Type         | Nullable |      Default       |
++-------------+--------------------------+----------+--------------------+
+|      id     |           uuid           |    NO    | uuid_generate_v4() |
+|   user_id   |           uuid           |    NO    |        None        |
+|  changed_at | timestamp with time zone |   YES    | CURRENT_TIMESTAMP  |
+| change_type |    character varying     |    NO    |        None        |
+|  ip_address |    character varying     |   YES    |        None        |
+|  user_agent |           text           |   YES    |        None        |
++-------------+--------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `password_change_history_pkey`: CREATE UNIQUE INDEX password_change_history_pkey ON public.password_change_history USING btree (id)
+
+================================================================================
+
+Schema: public
+Table: password_reset_attempts
+----------------------------------------
+Columns:
++--------------+--------------------------+----------+--------------------+
+| Column Name  |        Data Type         | Nullable |      Default       |
++--------------+--------------------------+----------+--------------------+
+|      id      |           uuid           |    NO    | uuid_generate_v4() |
+|   user_id    |           uuid           |    NO    |        None        |
+|  ip_address  |    character varying     |    NO    |        None        |
+| attempted_at | timestamp with time zone |   YES    | CURRENT_TIMESTAMP  |
+|   success    |         boolean          |    NO    |       false        |
++--------------+--------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `idx_reset_attempts_ip`: CREATE INDEX idx_reset_attempts_ip ON public.password_reset_attempts USING btree (ip_address, attempted_at)
+- `password_reset_attempts_pkey`: CREATE UNIQUE INDEX password_reset_attempts_pkey ON public.password_reset_attempts USING btree (id)
+
+================================================================================
+
+Schema: public
+Table: password_reset_tokens
+----------------------------------------
+Columns:
++-------------+--------------------------+----------+--------------------+
+| Column Name |        Data Type         | Nullable |      Default       |
++-------------+--------------------------+----------+--------------------+
+|      id     |           uuid           |    NO    | uuid_generate_v4() |
+|   user_id   |           uuid           |    NO    |        None        |
+|    token    |    character varying     |    NO    |        None        |
+|  expires_at | timestamp with time zone |    NO    |        None        |
+|  created_at | timestamp with time zone |   YES    | CURRENT_TIMESTAMP  |
+|   used_at   | timestamp with time zone |   YES    |        None        |
++-------------+--------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `idx_reset_tokens_expires_at`: CREATE INDEX idx_reset_tokens_expires_at ON public.password_reset_tokens USING btree (expires_at)
+- `idx_reset_tokens_token`: CREATE INDEX idx_reset_tokens_token ON public.password_reset_tokens USING btree (token)
+- `password_reset_tokens_pkey`: CREATE UNIQUE INDEX password_reset_tokens_pkey ON public.password_reset_tokens USING btree (id)
+- `password_reset_tokens_token_key`: CREATE UNIQUE INDEX password_reset_tokens_token_key ON public.password_reset_tokens USING btree (token)
+
+================================================================================
+
+Schema: public
+Table: products
+----------------------------------------
+Columns:
++----------------+-----------------------------+----------+--------------------+
+|  Column Name   |          Data Type          | Nullable |      Default       |
++----------------+-----------------------------+----------+--------------------+
+|       id       |             uuid            |    NO    | uuid_generate_v4() |
+|  product_url   |             text            |    NO    |        None        |
+| main_category  |      character varying      |    NO    |        None        |
+|  sub_category  |      character varying      |    NO    |        None        |
+|      name      |      character varying      |    NO    |        None        |
+|     model      |      character varying      |    NO    |        None        |
+|  description   |             text            |   YES    |        None        |
+|   efficiency   |      character varying      |   YES    |        None        |
+|    features    |            jsonb            |   YES    |        None        |
+| specifications |            jsonb            |   YES    |        None        |
+|  market_info   |             text            |   YES    |        None        |
+| energy_star_id |      character varying      |   YES    |        None        |
+|     price      |           numeric           |   YES    |        None        |
+|   created_at   | timestamp without time zone |   YES    | CURRENT_TIMESTAMP  |
+|   updated_at   | timestamp without time zone |   YES    | CURRENT_TIMESTAMP  |
++----------------+-----------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys: None
+
+Indexes:
+- `idx_products_categories`: CREATE INDEX idx_products_categories ON public.products USING btree (main_category, sub_category)
+- `products_pkey`: CREATE UNIQUE INDEX products_pkey ON public.products USING btree (id)
+
+================================================================================
+
+Schema: public
+Table: property_verifications
+----------------------------------------
+Columns:
++-------------------+--------------------------+----------+------------------------------+
+|    Column Name    |        Data Type         | Nullable |           Default            |
++-------------------+--------------------------+----------+------------------------------+
+|         id        |           uuid           |    NO    |      uuid_generate_v4()      |
+|      user_id      |           uuid           |    NO    |             None             |
+| verification_type |    character varying     |    NO    |             None             |
+|       status      |    character varying     |    NO    | 'pending'::character varying |
+| verification_data |          jsonb           |   YES    |             None             |
+|    verified_at    | timestamp with time zone |   YES    |             None             |
+|     created_at    | timestamp with time zone |   YES    |      CURRENT_TIMESTAMP       |
+|     updated_at    | timestamp with time zone |   YES    |      CURRENT_TIMESTAMP       |
++-------------------+--------------------------+----------+------------------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `property_verifications_pkey`: CREATE UNIQUE INDEX property_verifications_pkey ON public.property_verifications USING btree (id)
+
+================================================================================
+
+Schema: public
+Table: recommendations
+----------------------------------------
+Columns:
++-------------------+--------------------------+----------+---------------------------------------------+
+|    Column Name    |        Data Type         | Nullable |                   Default                   |
++-------------------+--------------------------+----------+---------------------------------------------+
+|         id        |         integer          |    NO    | nextval('recommendations_id_seq'::regclass) |
+|      user_id      |           uuid           |    NO    |                     None                    |
+|       title       |    character varying     |    NO    |                     None                    |
+|    description    |           text           |   YES    |                     None                    |
+| estimated_savings |         numeric          |   YES    |                     None                    |
+|       status      |    character varying     |    NO    |         'active'::character varying         |
+|      priority     |    character varying     |   YES    |                     None                    |
+|     created_at    | timestamp with time zone |   YES    |              CURRENT_TIMESTAMP              |
+|  implemented_date | timestamp with time zone |   YES    |                     None                    |
++-------------------+--------------------------+----------+---------------------------------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `idx_recommendations_user_status`: CREATE INDEX idx_recommendations_user_status ON public.recommendations USING btree (user_id, status)
+- `recommendations_pkey`: CREATE UNIQUE INDEX recommendations_pkey ON public.recommendations USING btree (id)
+
+================================================================================
+
+Schema: public
+Table: sessions
+----------------------------------------
+Columns:
++-------------+-----------------------------+----------+-------------------+
+| Column Name |          Data Type          | Nullable |      Default      |
++-------------+-----------------------------+----------+-------------------+
+|      id     |             uuid            |    NO    | gen_random_uuid() |
+|   user_id   |             uuid            |   YES    |        None       |
+|    token    |      character varying      |    NO    |        None       |
+|  expires_at | timestamp without time zone |    NO    |        None       |
+|  created_at | timestamp without time zone |   YES    | CURRENT_TIMESTAMP |
+|  updated_at | timestamp without time zone |   YES    | CURRENT_TIMESTAMP |
++-------------+-----------------------------+----------+-------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `idx_sessions_token`: CREATE INDEX idx_sessions_token ON public.sessions USING btree (token)
+- `idx_sessions_user_id`: CREATE INDEX idx_sessions_user_id ON public.sessions USING btree (user_id)
+- `sessions_pkey`: CREATE UNIQUE INDEX sessions_pkey ON public.sessions USING btree (id)
+
+================================================================================
+
+Schema: public
+Table: user_activity_log
+----------------------------------------
+Columns:
++---------------+--------------------------+----------+--------------------+
+|  Column Name  |        Data Type         | Nullable |      Default       |
++---------------+--------------------------+----------+--------------------+
+|       id      |           uuid           |    NO    | uuid_generate_v4() |
+|    user_id    |           uuid           |    NO    |        None        |
+| activity_type |    character varying     |    NO    |        None        |
+|    details    |          jsonb           |   YES    |        None        |
+|   ip_address  |    character varying     |   YES    |        None        |
+|   user_agent  |           text           |   YES    |        None        |
+|   created_at  | timestamp with time zone |   YES    | CURRENT_TIMESTAMP  |
++---------------+--------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `idx_user_activity_log_created_at`: CREATE INDEX idx_user_activity_log_created_at ON public.user_activity_log USING btree (created_at)
+- `idx_user_activity_log_type`: CREATE INDEX idx_user_activity_log_type ON public.user_activity_log USING btree (activity_type)
+- `idx_user_activity_log_user_id`: CREATE INDEX idx_user_activity_log_user_id ON public.user_activity_log USING btree (user_id)
+- `user_activity_log_pkey`: CREATE UNIQUE INDEX user_activity_log_pkey ON public.user_activity_log USING btree (id)
+
+================================================================================
+
+Schema: public
+Table: user_energy_consumption
+----------------------------------------
+Columns:
++-------------------------+--------------------------+----------+-------------------+
+|       Column Name       |        Data Type         | Nullable |      Default      |
++-------------------------+--------------------------+----------+-------------------+
+|         user_id         |           uuid           |    NO    |        None       |
+|    power_consumption    |    character varying     |   YES    |        None       |
+| weekday_occupancy_hours |    character varying     |   YES    |        None       |
+| weekend_occupancy_hours |    character varying     |   YES    |        None       |
+|          season         |    character varying     |   YES    |        None       |
+|    occupancy_pattern    |           text           |   YES    |        None       |
+|       monthly_bill      |         numeric          |   YES    |        None       |
+|     peak_usage_times    |          ARRAY           |   YES    |        None       |
+|        created_at       | timestamp with time zone |   YES    | CURRENT_TIMESTAMP |
+|        updated_at       | timestamp with time zone |   YES    | CURRENT_TIMESTAMP |
++-------------------------+--------------------------+----------+-------------------+
+
+Primary Key: user_id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `idx_energy_consumption_user_id`: CREATE INDEX idx_energy_consumption_user_id ON public.user_energy_consumption USING btree (user_id)
+- `user_energy_consumption_pkey`: CREATE UNIQUE INDEX user_energy_consumption_pkey ON public.user_energy_consumption USING btree (user_id)
+
+================================================================================
+
+Schema: public
+Table: user_hvac_settings
+----------------------------------------
+Columns:
++----------------+--------------------------+----------+-------------------+
+|  Column Name   |        Data Type         | Nullable |      Default      |
++----------------+--------------------------+----------+-------------------+
+|    user_id     |           uuid           |    NO    |        None       |
+| heating_system |          jsonb           |    NO    |        None       |
+| cooling_system |          jsonb           |    NO    |        None       |
+|  ventilation   |          jsonb           |    NO    |        None       |
+|  maintenance   |          jsonb           |    NO    |        None       |
+|   created_at   | timestamp with time zone |   YES    | CURRENT_TIMESTAMP |
+|   updated_at   | timestamp with time zone |   YES    | CURRENT_TIMESTAMP |
++----------------+--------------------------+----------+-------------------+
+
+Primary Key: user_id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `idx_user_hvac_settings_updated`: CREATE INDEX idx_user_hvac_settings_updated ON public.user_hvac_settings USING btree (updated_at)
+- `user_hvac_settings_pkey`: CREATE UNIQUE INDEX user_hvac_settings_pkey ON public.user_hvac_settings USING btree (user_id)
+
+================================================================================
+
+Schema: public
+Table: user_savings
+----------------------------------------
+Columns:
++---------------------+-----------------------------+----------+--------------------+
+|     Column Name     |          Data Type          | Nullable |      Default       |
++---------------------+-----------------------------+----------+--------------------+
+|          id         |             uuid            |    NO    | uuid_generate_v4() |
+|       user_id       |             uuid            |   YES    |        None        |
+|       audit_id      |             uuid            |   YES    |        None        |
+|  estimated_savings  |           numeric           |    NO    |        None        |
+|    actual_savings   |           numeric           |   YES    |        None        |
+| implementation_date |             date            |   YES    |        None        |
+|      created_at     | timestamp without time zone |   YES    | CURRENT_TIMESTAMP  |
++---------------------+-----------------------------+----------+--------------------+
+
+Primary Key: id
+
+Foreign Keys:
++----------+----------------+---------------+----------------+
+|  Column  | Foreign Schema | Foreign Table | Foreign Column |
++----------+----------------+---------------+----------------+
+| user_id  |     public     |     users     |       id       |
+| audit_id |     public     | energy_audits |       id       |
++----------+----------------+---------------+----------------+
+
+Indexes:
+- `user_savings_pkey`: CREATE UNIQUE INDEX user_savings_pkey ON public.user_savings USING btree (id)
+
+================================================================================
+
+Schema: public
+Table: user_settings
+----------------------------------------
+Columns:
++--------------------------+-----------------------------+----------+----------------------------+
+|       Column Name        |          Data Type          | Nullable |          Default           |
++--------------------------+-----------------------------+----------+----------------------------+
+|         user_id          |             uuid            |    NO    |            None            |
+|          theme           |      character varying      |   YES    | 'light'::character varying |
+|   email_notifications    |           boolean           |   YES    |            true            |
+| notification_preferences |            jsonb            |   YES    |        '{}'::jsonb         |
+|        created_at        | timestamp without time zone |   YES    |     CURRENT_TIMESTAMP      |
+|        updated_at        | timestamp without time zone |   YES    |     CURRENT_TIMESTAMP      |
+|     property_details     |            jsonb            |   YES    |            None            |
+|     home_conditions      |            jsonb            |   YES    |            None            |
+|       hvac_details       |            jsonb            |   YES    |            None            |
+|      water_heating       |            jsonb            |   YES    |            None            |
+|       energy_usage       |            jsonb            |   YES    |            None            |
++--------------------------+-----------------------------+----------+----------------------------+
+
+Primary Key: user_id
+
+Foreign Keys:
++---------+----------------+---------------+----------------+
+|  Column | Foreign Schema | Foreign Table | Foreign Column |
++---------+----------------+---------------+----------------+
+| user_id |     public     |     users     |       id       |
++---------+----------------+---------------+----------------+
+
+Indexes:
+- `idx_home_conditions`: CREATE INDEX idx_home_conditions ON public.user_settings USING gin (home_conditions)
+- `idx_hvac_details`: CREATE INDEX idx_hvac_details ON public.user_settings USING gin (hvac_details)
+- `idx_property_details`: CREATE INDEX idx_property_details ON public.user_settings USING gin (property_details)
+- `idx_user_settings_property_details`: CREATE INDEX idx_user_settings_property_details ON public.user_settings USING gin (property_details)
+- `user_settings_pkey`: CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id)
+
+================================================================================
+
+Schema: public
+Table: users
+----------------------------------------
+Columns:
++----------------------+-----------------------------+----------+---------------------------+
+|     Column Name      |          Data Type          | Nullable |          Default          |
++----------------------+-----------------------------+----------+---------------------------+
+|          id          |             uuid            |    NO    |     uuid_generate_v4()    |
+|        email         |      character varying      |    NO    |            None           |
+|    password_hash     |      character varying      |    NO    |            None           |
+|      full_name       |      character varying      |    NO    |            None           |
+|        phone         |      character varying      |   YES    |            None           |
+|       address        |             text            |   YES    |            None           |
+|         role         |      character varying      |   YES    | 'user'::character varying |
+|      created_at      | timestamp without time zone |   YES    |     CURRENT_TIMESTAMP     |
+|      updated_at      | timestamp without time zone |   YES    |     CURRENT_TIMESTAMP     |
+|      last_login      | timestamp without time zone |   YES    |            None           |
+|     reset_token      |      character varying      |   YES    |            None           |
+|    reset_expires     | timestamp without time zone |   YES    |            None           |
+|    email_verified    |           boolean           |   YES    |           false           |
+|  email_verify_token  |      character varying      |   YES    |            None           |
+| email_verify_expires | timestamp without time zone |   YES    |            None           |
+|  verification_token  |      character varying      |   YES    |            None           |
+| verification_expires | timestamp without time zone |   YES    |            None           |
++----------------------+-----------------------------+----------+---------------------------+
+
+Primary Key: id
+
+Foreign Keys: None
+
+Indexes:
+- `idx_email_verify_token`: CREATE INDEX idx_email_verify_token ON public.users USING btree (email_verify_token)
+- `idx_reset_token`: CREATE INDEX idx_reset_token ON public.users USING btree (reset_token)
+- `users_email_key`: CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)
+- `users_pkey`: CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)
+
+================================================================================
+
