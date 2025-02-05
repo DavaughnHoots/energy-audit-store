@@ -13,6 +13,7 @@ import EducationPage from './pages/EducationPage';
 import CommunityPage from './pages/CommunityPage';
 import SignIn from './components/auth/SignIn';
 import SignUp from './components/auth/SignUp';
+import UserSettingsPage from './pages/UserSettingsPage';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 import { LineChart, Battery, Users } from 'lucide-react';
 
@@ -134,6 +135,22 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <UserDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <UserSettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/property"
+              element={
+                <ProtectedRoute>
+                  <UserSettingsPage initialSection="property" />
                 </ProtectedRoute>
               }
             />

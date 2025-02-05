@@ -32,7 +32,9 @@ def generate_tree(base_path, spec, prefix=''):
     """
     Recursively generate the tree structure as a list of strings.
     """
-    entries = sorted([e for e in base_path.iterdir()], key=lambda e: (e.is_file(), e.name.lower()))
+    entries = sorted(
+        list(base_path.iterdir()), key=lambda e: (e.is_file(), e.name.lower())
+    )
     entries = [e for e in entries if not is_ignored(e, spec, base_path)]
 
     tree_lines = []

@@ -30,3 +30,8 @@ node_modules/*
 *.idx
 *.pack
 *.sample
+*.git
+# ignore all files in the .git folder
+.git/*
+.trunk/*
+.claudesync/*

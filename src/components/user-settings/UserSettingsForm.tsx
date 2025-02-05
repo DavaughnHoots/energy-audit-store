@@ -18,12 +18,22 @@ const CONSTRUCTION_PERIODS = [
   { value: '2020-newer', label: '2020 or newer' }
 ];
 
+interface FormData {
+  propertyType: string;
+  constructionPeriod: string;
+  stories: number;
+  squareFootage: number;
+  ceilingHeight: string;
+  foundation: string;
+  atticType: string;
+}
+
 export default function UserSettingsForm() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     propertyType: '',
     constructionPeriod: '',
-    stories: '',
-    squareFootage: '',
+    stories: 1,
+    squareFootage: 100,
     ceilingHeight: '',
     foundation: '',
     atticType: '',
@@ -46,11 +56,13 @@ export default function UserSettingsForm() {
     localStorage.setItem('userSettingsForm', JSON.stringify(formData));
   }, [formData]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'stories' || name === 'squareFootage'
+        ? parseInt(value) || 0
+        : value
     }));
     setError(''); // Clear any previous errors
   };
@@ -64,14 +76,18 @@ export default function UserSettingsForm() {
       setError('Construction period is required');
       return false;
     }
-    if (!formData.squareFootage || isNaN(formData.squareFootage)) {
-      setError('Valid square footage is required');
+    if (!formData.squareFootage || formData.squareFootage < 100) {
+      setError('Valid square footage is required (minimum 100)');
+      return false;
+    }
+    if (!formData.stories || formData.stories < 1) {
+      setError('Valid number of stories is required (minimum 1)');
       return false;
     }
     return true;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -84,7 +100,7 @@ export default function UserSettingsForm() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          // Add your auth headers here
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(formData),
       });
@@ -96,9 +112,10 @@ export default function UserSettingsForm() {
       // Clear localStorage after successful save
       localStorage.removeItem('userSettingsForm');
       
-      // You might want to show a success message or redirect
+      // Redirect to dashboard after successful save
+      window.location.href = '/dashboard';
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
     } finally {
       setIsSaving(false);
     }
@@ -240,15 +257,7 @@ export default function UserSettingsForm() {
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save Progress'}
-              </button>
-              
-              <button
-                type="button"
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
+                {isSaving ? 'Saving...' : 'Complete Setup'}
               </button>
             </div>
           </div>
