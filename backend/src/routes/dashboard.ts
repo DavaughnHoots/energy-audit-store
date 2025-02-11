@@ -1,15 +1,23 @@
 import express from 'express';
 import { AuthenticatedRequest } from '../types/auth';
-import { validateSession } from '../middleware/auth';
 import { DashboardService } from '../services/dashboardService';
 import { pool } from '../config/database';
 import { appLogger } from '../config/logger';
 
-const dashboardService = new DashboardService();
+let dashboardService: DashboardService;
+try {
+  dashboardService = new DashboardService();
+} catch (error) {
+  appLogger.error('Failed to initialize DashboardService:', {
+    error: error instanceof Error ? error.message : 'Unknown error',
+    stack: error instanceof Error ? error.stack : undefined
+  });
+  throw error;
+}
 
 const router = express.Router();
 
-router.get('/stats', validateSession, async (req: AuthenticatedRequest, res) => {
+router.get('/stats', async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {

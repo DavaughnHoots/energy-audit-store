@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import { promisify } from 'util';
 
 const SALT_ROUNDS = 12;
 if (!process.env.JWT_SECRET) {
@@ -11,16 +12,70 @@ if (!process.env.JWT_SECRET) {
 }
 const JWT_SECRET: string = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '24h';
+const REFRESH_TOKEN_EXPIRES_IN = '7d';
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+interface LoginAttempt {
+  count: number;
+  firstAttempt: number;
+}
 
 export class UserAuthService {
   private pool: Pool;
+  private loginAttempts: Map<string, LoginAttempt>;
 
   constructor(pool: Pool) {
     this.pool = pool;
+    this.loginAttempts = new Map();
+
+    // Cleanup expired login attempts every hour
+    setInterval(() => this.cleanupLoginAttempts(), 60 * 60 * 1000);
   }
 
-  async registerUser(email: string, password: string, fullName: string, phone?: string, address?: string) {
+  private cleanupLoginAttempts() {
+    const now = Date.now();
+    for (const [ip, attempt] of this.loginAttempts.entries()) {
+      if (now - attempt.firstAttempt > LOGIN_ATTEMPT_WINDOW) {
+        this.loginAttempts.delete(ip);
+      }
+    }
+  }
+
+  private async checkRateLimit(ip: string): Promise<void> {
+    const attempt = this.loginAttempts.get(ip) || { count: 0, firstAttempt: Date.now() };
+    const now = Date.now();
+
+    // Reset if outside window
+    if (now - attempt.firstAttempt > LOGIN_ATTEMPT_WINDOW) {
+      attempt.count = 1;
+      attempt.firstAttempt = now;
+    } else {
+      attempt.count++;
+    }
+
+    this.loginAttempts.set(ip, attempt);
+
+    if (attempt.count > MAX_LOGIN_ATTEMPTS) {
+      const minutesLeft = Math.ceil((LOGIN_ATTEMPT_WINDOW - (now - attempt.firstAttempt)) / 60000);
+      throw new AuthError(`Too many login attempts. Please try again in ${minutesLeft} minutes.`);
+    }
+  }
+
+  async registerUser(email: string, password: string, fullName: string, ip: string, phone?: string, address?: string) {
     try {
+      await this.checkRateLimit(ip);
+
+      if (!validateEmail(email)) {
+        throw new ValidationError('Invalid email format');
+      }
+
+      if (!validatePassword(password)) {
+        throw new ValidationError(
+          'Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character'
+        );
+      }
+
       // Check if user already exists
       const existingUser = await this.pool.query(
         'SELECT id FROM users WHERE email = $1',
@@ -28,38 +83,59 @@ export class UserAuthService {
       );
 
       if (existingUser.rows.length > 0) {
-        throw new Error('User already exists');
+        throw new AuthError('User already exists');
       }
 
       // Hash password
       const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-      // Insert new user with default role
-      const result = await this.pool.query(
-        `INSERT INTO users (id, email, password_hash, full_name, phone, address, role)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id, email, full_name, role, created_at`,
-        [uuidv4(), email, passwordHash, fullName, phone, address, 'user']
-      );
+      const client = await this.pool.connect();
+      try {
+        await client.query('BEGIN');
 
-      // Generate JWT token
-      const token = this.generateToken(result.rows[0]);
+        // Insert new user
+        const result = await client.query(
+          `INSERT INTO users (id, email, password_hash, full_name, phone, address, role, failed_login_attempts)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           RETURNING id, email, full_name, role, created_at`,
+          [uuidv4(), email, passwordHash, fullName, phone || null, address || null, 'user', 0]
+        );
 
-      return {
-        user: result.rows[0],
-        token
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Registration failed: ${error.message}`);
+        // Generate tokens
+        const { token, refreshToken } = await this.generateTokenPair(result.rows[0]);
+
+        // Store refresh token
+        await client.query(
+          `INSERT INTO refresh_tokens (token, user_id, expires_at)
+           VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+          [refreshToken, result.rows[0].id]
+        );
+
+        await client.query('COMMIT');
+
+        return {
+          user: result.rows[0],
+          token,
+          refreshToken
+        };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
       }
-      throw new Error('Registration failed');
+    } catch (error) {
+      if (error instanceof AuthError || error instanceof ValidationError) {
+        throw error;
+      }
+      throw new Error(`Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async loginUser(email: string, password: string) {
+  async loginUser(email: string, password: string, ip: string) {
     const client = await this.pool.connect();
     try {
+      await this.checkRateLimit(ip);
       await client.query('BEGIN');
 
       // Get user by email
@@ -70,33 +146,55 @@ export class UserAuthService {
 
       const user = userResult.rows[0];
       if (!user) {
-        throw new Error('User not found');
+        throw new AuthError('Invalid email or password');
+      }
+
+      // Check if account is locked
+      if (user.failed_login_attempts >= MAX_LOGIN_ATTEMPTS) {
+        const lockoutTime = new Date(user.last_failed_login);
+        lockoutTime.setMinutes(lockoutTime.getMinutes() + 15);
+
+        if (new Date() < lockoutTime) {
+          const minutesLeft = Math.ceil((lockoutTime.getTime() - new Date().getTime()) / 60000);
+          throw new AuthError(`Account is locked. Please try again in ${minutesLeft} minutes`);
+        } else {
+          // Reset failed attempts if lockout period has passed
+          await client.query(
+            'UPDATE users SET failed_login_attempts = 0 WHERE id = $1',
+            [user.id]
+          );
+        }
       }
 
       // Verify password
       const isValid = await bcrypt.compare(password, user.password_hash);
       if (!isValid) {
-        throw new Error('Invalid password');
+        // Increment failed login attempts
+        await client.query(
+          `UPDATE users
+           SET failed_login_attempts = failed_login_attempts + 1,
+               last_failed_login = CURRENT_TIMESTAMP
+           WHERE id = $1`,
+          [user.id]
+        );
+        await client.query('COMMIT');
+        throw new AuthError('Invalid email or password');
       }
 
-      // Update last login
+      // Reset failed login attempts on successful login
       await client.query(
-        'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1',
+        'UPDATE users SET failed_login_attempts = 0, last_login = CURRENT_TIMESTAMP WHERE id = $1',
         [user.id]
       );
 
-      // Generate token
-      const token = this.generateToken(user);
+      // Generate new tokens
+      const { token, refreshToken } = await this.generateTokenPair(user);
 
-      // Calculate token expiration (24 hours from now)
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
-
-      // Create new session
+      // Store refresh token
       await client.query(
-        `INSERT INTO sessions (token, user_id, created_at, expires_at)
-         VALUES ($1, $2, CURRENT_TIMESTAMP, $3)`,
-        [token, user.id, expiresAt]
+        `INSERT INTO refresh_tokens (token, user_id, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+        [refreshToken, user.id]
       );
 
       await client.query('COMMIT');
@@ -108,83 +206,80 @@ export class UserAuthService {
           fullName: user.full_name,
           role: user.role
         },
-        token
+        token,
+        refreshToken
       };
     } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Login failed: ${error.message}`);
+      await client.query('ROLLBACK');
+      if (error instanceof AuthError) {
+        throw error;
       }
-      throw new Error('Login failed');
+      throw new Error(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      client.release();
     }
   }
 
-  async verifyToken(token: string) {
+  async logout(token: string, refreshToken: string) {
+    const client = await this.pool.connect();
     try {
+      await client.query('BEGIN');
+
+      // Invalidate refresh token
+      await client.query(
+        'DELETE FROM refresh_tokens WHERE token = $1',
+        [refreshToken]
+      );
+
+      // Add access token to blacklist with its remaining TTL
+      const decoded = jwt.decode(token) as { exp?: number };
+      if (decoded?.exp) {
+        const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+        if (ttl > 0) {
+          await client.query(
+            `INSERT INTO token_blacklist (token, expires_at)
+             VALUES ($1, NOW() + INTERVAL '${ttl} seconds')`,
+            [token]
+          );
+        }
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw new Error(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      client.release();
+    }
+  }
+
+  async verifyToken(token: string): Promise<any> {
+    try {
+      // Check if token is blacklisted
+      const blacklistResult = await this.pool.query(
+        'SELECT 1 FROM token_blacklist WHERE token = $1 AND expires_at > NOW()',
+        [token]
+      );
+
+      if (blacklistResult.rows.length > 0) {
+        throw new AuthError('Token has been revoked');
+      }
+
       const decoded = jwt.verify(token, JWT_SECRET);
       return decoded;
     } catch (error) {
-      throw new Error('Invalid token');
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new AuthError('Token has expired');
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new AuthError('Invalid token');
+      }
+      throw error;
     }
   }
 
-  async updateUserProfile(userId: string, updates: {
-    fullName?: string;
-    phone?: string;
-    address?: string;
-  }) {
-    try {
-      const setClause = [];
-      const values = [];
-      let paramCount = 1;
-
-      if (updates.fullName) {
-        setClause.push(`full_name = $${paramCount}`);
-        values.push(updates.fullName);
-        paramCount++;
-      }
-
-      if (updates.phone) {
-        setClause.push(`phone = $${paramCount}`);
-        values.push(updates.phone);
-        paramCount++;
-      }
-
-      if (updates.address) {
-        setClause.push(`address = $${paramCount}`);
-        values.push(updates.address);
-        paramCount++;
-      }
-
-      if (setClause.length === 0) {
-        throw new Error('No updates provided');
-      }
-
-      values.push(userId);
-
-      const query = `
-        UPDATE users
-        SET ${setClause.join(', ')}, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $${paramCount}
-        RETURNING id, email, full_name, phone, address, role, updated_at
-      `;
-
-      const result = await this.pool.query(query, values);
-
-      if (result.rows.length === 0) {
-        throw new Error('User not found');
-      }
-
-      return result.rows[0];
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Profile update failed: ${error.message}`);
-      }
-      throw new Error('Profile update failed');
-    }
-  }
-
-  private generateToken(user: any) {
-    return jwt.sign(
+  private async generateTokenPair(user: any) {
+    const token = jwt.sign(
       {
         userId: user.id,
         email: user.email,
@@ -193,34 +288,39 @@ export class UserAuthService {
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
+
+    const refreshToken = jwt.sign(
+      {
+        userId: user.id,
+        tokenType: 'refresh'
+      },
+      JWT_SECRET,
+      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+    );
+
+    return { token, refreshToken };
   }
 
-  async cleanupExpiredSessions() {
-    try {
-      await this.pool.query(
-        'DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP'
-      );
-    } catch (error) {
-      console.error('Failed to cleanup expired sessions:', error);
-    }
-  }
-
-  async refreshToken(oldToken: string) {
+  async refreshToken(refreshToken: string) {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Verify the old token
-      const decoded = await this.verifyToken(oldToken) as { userId: string };
+      // Verify the refresh token
+      const decoded = jwt.verify(refreshToken, JWT_SECRET) as { userId: string; tokenType: string };
 
-      // Check if token exists in valid sessions
-      const sessionResult = await client.query(
-        'SELECT * FROM sessions WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP',
-        [oldToken]
+      if (decoded.tokenType !== 'refresh') {
+        throw new AuthError('Invalid refresh token');
+      }
+
+      // Check if refresh token exists and is valid
+      const tokenResult = await client.query(
+        'SELECT * FROM refresh_tokens WHERE token = $1 AND expires_at > NOW()',
+        [refreshToken]
       );
 
-      if (sessionResult.rows.length === 0) {
-        throw new Error('Invalid or expired session');
+      if (tokenResult.rows.length === 0) {
+        throw new AuthError('Invalid or expired refresh token');
       }
 
       // Get user data
@@ -230,37 +330,59 @@ export class UserAuthService {
       );
 
       if (userResult.rows.length === 0) {
-        throw new Error('User not found');
+        throw new AuthError('User not found');
       }
 
       const user = userResult.rows[0];
 
-      // Generate new token
-      const newToken = this.generateToken(user);
+      // Generate new token pair
+      const { token: newToken, refreshToken: newRefreshToken } = await this.generateTokenPair(user);
 
-      // Calculate new expiration (24 hours from now)
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
-
-      // Remove old session
-      await client.query('DELETE FROM sessions WHERE token = $1', [oldToken]);
-
-      // Create new session
+      // Remove old refresh token
       await client.query(
-        `INSERT INTO sessions (token, user_id, created_at, expires_at)
-         VALUES ($1, $2, CURRENT_TIMESTAMP, $3)`,
-        [newToken, user.id, expiresAt]
+        'DELETE FROM refresh_tokens WHERE token = $1',
+        [refreshToken]
+      );
+
+      // Store new refresh token
+      await client.query(
+        `INSERT INTO refresh_tokens (token, user_id, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+        [newRefreshToken, user.id]
       );
 
       await client.query('COMMIT');
 
-      return { token: newToken };
+      return { token: newToken, refreshToken: newRefreshToken };
     } catch (error) {
       await client.query('ROLLBACK');
-      if (error instanceof Error) {
-        throw new Error(`Token refresh failed: ${error.message}`);
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new AuthError('Refresh token has expired');
       }
-      throw new Error('Token refresh failed');
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw new Error(`Token refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      client.release();
+    }
+  }
+
+  async cleanupExpiredTokens() {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Clean up expired refresh tokens
+      await client.query('DELETE FROM refresh_tokens WHERE expires_at < NOW()');
+
+      // Clean up expired blacklisted tokens
+      await client.query('DELETE FROM token_blacklist WHERE expires_at < NOW()');
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Failed to cleanup expired tokens:', error);
     } finally {
       client.release();
     }
@@ -284,12 +406,12 @@ export class ValidationError extends Error {
 
 // Input validation functions
 export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 };
 
 export const validatePassword = (password: string): boolean => {
-  // Minimum 8 characters, at least one uppercase, one lowercase, one number
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+  // At least 8 characters, one uppercase, one lowercase, one number, one special character
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
   return passwordRegex.test(password);
 };
