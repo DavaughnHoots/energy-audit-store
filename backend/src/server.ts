@@ -3,7 +3,7 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { validateSession } from './middleware/auth';
+import { authenticate } from './middleware/auth';
 import authRouter from './routes/auth';
 import dashboardRouter from './routes/dashboard';
 import userSettingsRouter from './routes/userSettings';
@@ -44,10 +44,10 @@ app.use(cookieParser());
 app.use('/api/auth', authRouter);
 
 // Protected routes with validation
-app.use('/api/dashboard', validateSession, dashboardRouter);
-app.use('/api/settings', validateSession, userSettingsRouter);
-app.use('/api/user-property-settings', validateSession, userPropertySettingsRouter);
-app.use('/api/settings/energy', validateSession, energyConsumptionRouter);
+app.use('/api/dashboard', authenticate, dashboardRouter);
+app.use('/api/settings', authenticate, userSettingsRouter);
+app.use('/api/user-property-settings', authenticate, userPropertySettingsRouter);
+app.use('/api/settings/energy', authenticate, energyConsumptionRouter);
 
 // Error handling
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
