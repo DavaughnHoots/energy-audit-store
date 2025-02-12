@@ -1,160 +1,142 @@
-// backend/src/routes/energyAudit.ts
-
-import express from 'express';
-import { authenticate, validateEmailVerification, auditLimiter } from '../middleware/auth';
-import { validators } from '../middleware/validators';
+import { Router, Request } from 'express';
 import { EnergyAuditService } from '../services/EnergyAuditService';
-import { pool } from '../config/database';
+import { validateToken } from '../middleware/tokenValidation';
+import { Pool } from 'pg';
 
-const router = express.Router();
+const router = Router();
+const pool = new Pool(); // This will use the connection details from your environment variables
 const auditService = new EnergyAuditService(pool);
 
-// Submit new audit
-router.post('/', 
-  authenticate,
-  validateEmailVerification,
-  auditLimiter,
-  validators.validateAuditData,
-  async (req, res) => {
-    try {
-      const auditId = await auditService.submitAudit({
-        ...req.body,
-        basicInfo: {
-          ...req.body.basicInfo,
-          userId: req.user!.userId
-        }
-      });
-      res.status(201).json({ auditId });
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-});
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+  };
+}
 
-// Get audit by ID
-router.get('/:id', authenticate, async (req, res) => {
+// Submit audit for authenticated user
+router.post('/submit', validateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const audit = await pool.query(
-      'SELECT * FROM energy_audits WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.user!.userId]
-    );
-    
-    if (audit.rows.length === 0) {
-      return res.status(404).json({ error: 'Audit not found' });
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
     }
-    
-    res.json(audit.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+
+    const auditId = await auditService.submitAudit(req.body, userId);
+    res.json({ auditId });
+  } catch (err) {
+    console.error('Error submitting audit:', err);
+    res.status(500).json({ error: 'Failed to submit audit' });
   }
 });
 
-// Get user's audit history
-router.get('/', authenticate, async (req, res) => {
+// Submit audit for guest user
+router.post('/guest', async (req, res) => {
   try {
-    const audits = await auditService.getAuditHistory(req.user!.userId);
-    res.json(audits);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+    const auditId = await auditService.submitAudit(req.body);
+    res.json({ auditId });
+  } catch (err) {
+    console.error('Error submitting guest audit:', err);
+    res.status(500).json({ error: 'Failed to submit audit' });
   }
 });
 
-// Update audit
-router.put('/:id', 
-  authenticate,
-  validators.validateAuditData,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const audit = await pool.query(
-        'SELECT * FROM energy_audits WHERE id = $1 AND user_id = $2',
-        [id, req.user!.userId]
-      );
-
-      if (audit.rows.length === 0) {
-        return res.status(404).json({ error: 'Audit not found' });
-      }
-
-      if (audit.rows[0].status === 'completed') {
-        return res.status(400).json({ error: 'Cannot update completed audit' });
-      }
-
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-
-        // Log changes
-        const oldData = audit.rows[0];
-        const changes = Object.keys(req.body).filter(key => 
-          JSON.stringify(oldData[key]) !== JSON.stringify(req.body[key])
-        );
-
-        for (const field of changes) {
-          await client.query(
-            `INSERT INTO audit_history (
-              audit_id, field_name, old_value, new_value
-            ) VALUES ($1, $2, $3, $4)`,
-            [id, field, oldData[field], req.body[field]]
-          );
-        }
-
-        // Update audit
-        await client.query(
-          `UPDATE energy_audits SET
-            home_details = $1,
-            current_conditions = $2,
-            heating_cooling = $3,
-            energy_consumption = $4,
-            lighting_details = $5,
-            renewable_potential = $6,
-            financial_details = $7,
-            updated_at = CURRENT_TIMESTAMP
-           WHERE id = $8`,
-          [
-            req.body.homeDetails,
-            req.body.currentConditions,
-            req.body.heatingCooling,
-            req.body.energyConsumption,
-            req.body.lightingDetails,
-            req.body.renewablePotential,
-            req.body.financialDetails,
-            id
-          ]
-        );
-
-        await client.query('COMMIT');
-        res.json({ message: 'Audit updated successfully' });
-      } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
+// Generate and download report
+router.get('/:auditId/report', async (req: AuthenticatedRequest, res) => {
+  try {
+    const auditId = req.params.auditId;
+    if (!auditId) {
+      return res.status(400).json({ error: 'Audit ID is required' });
     }
+
+    const userId = req.user?.id;
+
+    // If user is authenticated, verify they own this audit
+    if (userId) {
+      const audit = await auditService.getAuditById(auditId);
+      if (audit.userId && audit.userId !== userId) {
+        return res.status(403).json({ error: 'Not authorized to access this audit' });
+      }
+    }
+
+    // For guest users, no authorization check needed
+
+    const report = await auditService.generateReport(auditId, {
+      includeProducts: true,
+      includeSavingsProjections: true,
+      format: 'detailed'
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=energy-audit-report-${auditId}.pdf`);
+    res.send(report);
+  } catch (err) {
+    console.error('Error generating report:', err);
+    res.status(500).json({ error: 'Failed to generate report' });
+  }
 });
 
-// Complete audit
-router.post('/:id/complete', authenticate, async (req, res) => {
+// Get audit recommendations
+router.get('/:auditId/recommendations', validateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const { id } = req.params;
-    const result = await pool.query(
-      `UPDATE energy_audits 
-       SET status = 'completed', 
-           completed_at = CURRENT_TIMESTAMP,
-           recommendations = $1
-       WHERE id = $2 AND user_id = $3
-       RETURNING *`,
-      [req.body.recommendations, id, req.user!.userId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Audit not found' });
+    const auditId = req.params.auditId;
+    if (!auditId) {
+      return res.status(400).json({ error: 'Audit ID is required' });
     }
 
-    res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Verify user owns this audit
+    const audit = await auditService.getAuditById(auditId);
+    if (!audit.userId || audit.userId !== userId) {
+      return res.status(403).json({ error: 'Not authorized to access this audit' });
+    }
+
+    const recommendations = await auditService.getRecommendations(auditId);
+    res.json(recommendations);
+  } catch (err) {
+    console.error('Error fetching recommendations:', err);
+    res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
+});
+
+// Update recommendation implementation status
+router.patch('/:auditId/recommendations/:recommendationId', validateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const auditId = req.params.auditId;
+    const recommendationId = req.params.recommendationId;
+    const status = req.body.status as 'pending' | 'in_progress' | 'completed';
+
+    if (!auditId) {
+      return res.status(400).json({ error: 'Audit ID is required' });
+    }
+
+    if (!recommendationId) {
+      return res.status(400).json({ error: 'Recommendation ID is required' });
+    }
+
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!status || !['pending', 'in_progress', 'completed'].includes(status)) {
+      return res.status(400).json({ error: 'Valid status is required' });
+    }
+
+    // Verify user owns this audit
+    const audit = await auditService.getAuditById(auditId);
+    if (!audit.userId || audit.userId !== userId) {
+      return res.status(403).json({ error: 'Not authorized to modify this audit' });
+    }
+
+    await auditService.updateRecommendationStatus(auditId, recommendationId, status);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating recommendation status:', err);
+    res.status(500).json({ error: 'Failed to update recommendation status' });
   }
 });
 

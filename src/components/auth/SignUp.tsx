@@ -73,8 +73,10 @@ const SignUp: React.FC = () => {
         setError('Valid email is required');
         return false;
       }
-      if (formData.password.length < 8) {
-        setError('Password must be at least 8 characters');
+      // Password validation with the same requirements as backend
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};:'",.<>/?\\|])[A-Za-z\d!@#$%^&*()_+\-=[\]{};:'",.<>/?\\|]{8,}$/;
+      if (!passwordRegex.test(formData.password)) {
+        setError('Password must be at least 8 characters long and contain uppercase, lowercase, number, and a special character (!@#$%^&*()_+-=[]{};\'",./<>?\\|)');
         return false;
       }
       if (formData.password !== formData.confirmPassword) {

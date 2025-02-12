@@ -6,16 +6,23 @@ export interface BasicInfo {
     phone?: string;
     address: string;
     auditDate: string;
+    propertyType: 'residential' | 'commercial' | 'multi-family';
+    yearBuilt: number;
   }
   
-  export interface HomeDetails {
+export interface HomeDetails {
     yearBuilt: number;
     homeSize: number;
+    squareFootage: number;
     numRooms: number;
     homeType: 'apartment' | 'single-family' | 'townhouse' | 'duplex' | 'other';
     numFloors: number;
     basementType: 'full' | 'partial' | 'crawlspace' | 'slab' | 'none' | 'other';
     basementHeating?: 'heated' | 'unheated' | 'partial';
+    // Advanced fields
+    ceilingHeight?: number;
+    wallLength?: number;
+    wallWidth?: number;
   }
   
   export interface CurrentConditions {
@@ -44,7 +51,7 @@ export interface BasicInfo {
     };
   }
   
-  export interface EnergyConsumption {
+export interface EnergyConsumption {
     powerConsumption: string; // e.g., "2-4kW"
     occupancyHours: {
       weekdays: '0-6' | '7-12' | '13-18' | '19-24';
@@ -54,6 +61,8 @@ export interface BasicInfo {
     occupancyPattern: string;
     monthlyBill: number;
     peakUsageTimes: string[];
+    electricBill: number;
+    gasBill: number;
   }
   
   export interface EnergyAuditData {
@@ -65,7 +74,23 @@ export interface BasicInfo {
     // Additional sections will be added as needed
   }
   
-  // Validation functions
+export interface AuditRecommendation {
+  id?: string;
+  auditId?: string;
+  category: string;
+  priority: 'high' | 'medium' | 'low';
+  title: string;
+  description: string;
+  estimatedSavings: number;
+  estimatedCost: number;
+  paybackPeriod: number;
+  implementationStatus?: 'pending' | 'in_progress' | 'completed';
+  products?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Validation functions
   export const validateBasicInfo = (data: BasicInfo): string[] => {
     const errors: string[] = [];
     
