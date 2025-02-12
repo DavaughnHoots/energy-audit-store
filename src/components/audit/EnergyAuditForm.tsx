@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import useAuth from '@/context/AuthContext';
 import { HomeIcon, Thermometer, Lightbulb, Battery, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 import AuditSubmissionModal from './AuditSubmissionModal';
@@ -37,6 +39,7 @@ type SectionFieldValue<T extends keyof FormSectionData> =
   never;
 
 const EnergyAuditForm: React.FC = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,12 +53,15 @@ const EnergyAuditForm: React.FC = () => {
       email: '',
       phone: undefined,
       address: '',
-      auditDate: today
+      auditDate: today,
+      propertyType: 'residential',
+      yearBuilt: new Date().getFullYear()
     },
     homeDetails: {
       yearBuilt: new Date().getFullYear(),
-      homeSize: 0,
-      numRooms: 0,
+      homeSize: 1500, // Default to a valid size within 100-50,000 range
+      squareFootage: 1500, // Match homeSize as default
+      numRooms: 1, // Default to valid minimum
       homeType: 'single-family',
       numFloors: 1,
       basementType: 'none'
@@ -68,7 +74,7 @@ const EnergyAuditForm: React.FC = () => {
         floor: 'not-sure'
       },
       windowType: 'not-sure',
-      numWindows: 0,
+      numWindows: 1, // Default to valid minimum
       windowCondition: 'fair',
       weatherStripping: 'not-sure'
     },
@@ -76,12 +82,12 @@ const EnergyAuditForm: React.FC = () => {
       heatingSystem: {
         type: 'furnace',
         fuelType: 'natural-gas',
-        age: 0,
+        age: 1, // Default to valid minimum
         lastService: today
       },
       coolingSystem: {
         type: 'none',
-        age: 0
+        age: 1 // Default to valid minimum
       }
     },
     energyConsumption: {
@@ -92,8 +98,10 @@ const EnergyAuditForm: React.FC = () => {
       },
       season: 'spring-fall',
       occupancyPattern: '',
-      monthlyBill: 0,
-      peakUsageTimes: []
+      monthlyBill: 1, // Default to valid minimum (positive number)
+      peakUsageTimes: [],
+      electricBill: 0,
+      gasBill: 0
     }
   });
 
@@ -155,10 +163,29 @@ const EnergyAuditForm: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Submit logic here
-      setShowModal(true);
+      const { isAuthenticated } = useAuth();
+      
+      if (isAuthenticated) {
+        // Submit directly if user is logged in
+        const response = await fetch('/api/energy-audit/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) throw new Error('Failed to submit audit');
+
+        const { auditId } = await response.json();
+        navigate(`/dashboard?newAudit=${auditId}`);
+      } else {
+        // Show modal for guest users
+        setShowModal(true);
+      }
     } catch (err) {
       setFormError('Failed to submit the audit. Please try again.');
+      console.error('Submit error:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -328,6 +355,9 @@ const EnergyAuditForm: React.FC = () => {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         formData={formData}
+        onSubmitSuccess={(auditId) => {
+          navigate(`/dashboard?newAudit=${auditId}`);
+        }}
       />
     </div>
   );

@@ -6,9 +6,22 @@ import {
   HomeDetails,
   CurrentConditions,
   HeatingCooling,
+  BasicInfo,
+  EnergyConsumption,
   validateBasicInfo,
   validateHomeDetails
 } from '../types/energyAudit';
+
+export interface AuditData {
+  id: string;
+  userId?: string;
+  basicInfo: BasicInfo;
+  homeDetails: HomeDetails;
+  currentConditions: CurrentConditions;
+  heatingCooling: HeatingCooling;
+  energyConsumption: EnergyConsumption;
+  createdAt: Date;
+}
 
 export interface AuditRecommendation {
   category: string;
@@ -18,7 +31,14 @@ export interface AuditRecommendation {
   estimatedSavings: number;
   estimatedCost: number;
   paybackPeriod: number;
+  implementationStatus?: 'pending' | 'in_progress' | 'completed';
   products?: string[];
+}
+
+interface ReportGenerationOptions {
+  includeProducts?: boolean;
+  includeSavingsProjections?: boolean;
+  format?: 'detailed' | 'summary';
 }
 
 export class EnergyAuditService {
@@ -84,7 +104,7 @@ export class EnergyAuditService {
     return Math.max(0, score);
   }
 
-  async submitAudit(auditData: EnergyAuditData): Promise<string> {
+  async submitAudit(auditData: EnergyAuditData, userId?: string): Promise<string> {
     // Validate input data
     const basicInfoErrors = validateBasicInfo(auditData.basicInfo);
     const homeDetailsErrors = validateHomeDetails(auditData.homeDetails);
@@ -99,7 +119,8 @@ export class EnergyAuditService {
     try {
       await client.query('BEGIN');
 
-      const result = await client.query(
+      // Insert audit data
+      const auditResult = await client.query(
         `INSERT INTO energy_audits (
           user_id, basic_info, home_details,
           current_conditions, heating_cooling,
@@ -107,7 +128,7 @@ export class EnergyAuditService {
         ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
         RETURNING id`,
         [
-          auditData.basicInfo.userId,
+          userId,
           auditData.basicInfo,
           auditData.homeDetails,
           auditData.currentConditions,
@@ -116,8 +137,33 @@ export class EnergyAuditService {
         ]
       );
 
+      const auditId = auditResult.rows[0].id;
+
+      // Generate and store recommendations
+      const recommendations = await this.generateRecommendations(auditData);
+      for (const rec of recommendations) {
+        await client.query(
+          `INSERT INTO audit_recommendations (
+            audit_id, category, priority, title,
+            description, estimated_savings, estimated_cost,
+            payback_period, implementation_status
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            auditId,
+            rec.category,
+            rec.priority,
+            rec.title,
+            rec.description,
+            rec.estimatedSavings,
+            rec.estimatedCost,
+            rec.paybackPeriod,
+            'pending'
+          ]
+        );
+      }
+
       await client.query('COMMIT');
-      return result.rows[0].id;
+      return auditId;
 
     } catch (error) {
       await client.query('ROLLBACK');
@@ -127,18 +173,7 @@ export class EnergyAuditService {
     }
   }
 
-  async generateRecommendations(auditId: string): Promise<AuditRecommendation[]> {
-    // Fetch audit data
-    const result = await this.pool.query(
-      'SELECT * FROM energy_audits WHERE id = $1',
-      [auditId]
-    );
-
-    if (result.rows.length === 0) {
-      throw new Error('Audit not found');
-    }
-
-    const auditData: EnergyAuditData = result.rows[0];
+  async generateRecommendations(auditData: EnergyAuditData): Promise<AuditRecommendation[]> {
 
     // Calculate component scores
     const insulation = this.calculateInsulationScore(auditData.currentConditions);
@@ -190,12 +225,102 @@ export class EnergyAuditService {
     return recommendations;
   }
 
-  async getAuditHistory(userId: string): Promise<EnergyAuditData[]> {
+  async getAuditById(auditId: string): Promise<AuditData> {
     const result = await this.pool.query(
-      'SELECT * FROM energy_audits WHERE user_id = $1 ORDER BY created_at DESC',
+      'SELECT * FROM energy_audits WHERE id = $1',
+      [auditId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error('Audit not found');
+    }
+
+    return result.rows[0];
+  }
+
+  async getRecommendations(auditId: string): Promise<AuditRecommendation[]> {
+    const result = await this.pool.query(
+      'SELECT * FROM audit_recommendations WHERE audit_id = $1',
+      [auditId]
+    );
+
+    return result.rows;
+  }
+
+  async getAuditHistory(userId: string): Promise<AuditData[]> {
+    const result = await this.pool.query(
+      `SELECT 
+        ea.*,
+        json_agg(ar.*) as recommendations
+      FROM energy_audits ea
+      LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
+      WHERE ea.user_id = $1
+      GROUP BY ea.id
+      ORDER BY ea.created_at DESC`,
       [userId]
     );
     return result.rows;
+  }
+
+  async generateReport(auditId: string, options: ReportGenerationOptions = {}): Promise<Buffer> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Get audit data with recommendations
+      const result = await client.query(
+        `SELECT 
+          ea.*,
+          json_agg(ar.*) as recommendations
+        FROM energy_audits ea
+        LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
+        WHERE ea.id = $1
+        GROUP BY ea.id`,
+        [auditId]
+      );
+
+      if (result.rows.length === 0) {
+        throw new Error('Audit not found');
+      }
+
+      const auditData = result.rows[0];
+
+      // Update report generation status
+      await client.query(
+        `UPDATE energy_audits 
+        SET report_generated = true,
+            report_generated_at = CURRENT_TIMESTAMP,
+            report_download_count = report_download_count + 1
+        WHERE id = $1`,
+        [auditId]
+      );
+
+      await client.query('COMMIT');
+
+      // Generate PDF report (implementation depends on your PDF generation library)
+      // This is a placeholder - you'll need to implement the actual PDF generation
+      return Buffer.from('PDF Report');
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async updateRecommendationStatus(
+    auditId: string,
+    recommendationId: string,
+    status: 'pending' | 'in_progress' | 'completed'
+  ): Promise<void> {
+    await this.pool.query(
+      `UPDATE audit_recommendations
+      SET implementation_status = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2 AND audit_id = $3`,
+      [status, recommendationId, auditId]
+    );
   }
 }
 

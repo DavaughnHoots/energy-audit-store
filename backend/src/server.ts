@@ -9,9 +9,10 @@ import dashboardRouter from './routes/dashboard';
 import userSettingsRouter from './routes/userSettings';
 import userPropertySettingsRouter from './routes/userPropertySettings';
 import energyConsumptionRouter from './routes/energyConsumption';
+import energyAuditRouter from './routes/energyAudit';
 
 // Verify all routers are defined
-if (!authRouter || !dashboardRouter || !userSettingsRouter || !userPropertySettingsRouter || !energyConsumptionRouter) {
+if (!authRouter || !dashboardRouter || !userSettingsRouter || !userPropertySettingsRouter || !energyConsumptionRouter || !energyAuditRouter) {
   throw new Error('One or more routers are undefined');
 }
 
@@ -20,7 +21,9 @@ const app = express();
 // Middleware
 // Configure CORS with more detailed options
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL ? 
+    [process.env.FRONTEND_URL] : 
+    ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],
@@ -48,6 +51,7 @@ app.use('/api/dashboard', authenticate, dashboardRouter);
 app.use('/api/settings', authenticate, userSettingsRouter);
 app.use('/api/user-property-settings', authenticate, userPropertySettingsRouter);
 app.use('/api/settings/energy', authenticate, energyConsumptionRouter);
+app.use('/api/energy-audit', energyAuditRouter);
 
 // Error handling
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

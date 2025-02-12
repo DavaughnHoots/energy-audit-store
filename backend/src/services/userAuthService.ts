@@ -72,7 +72,7 @@ export class UserAuthService {
 
       if (!validatePassword(password)) {
         throw new ValidationError(
-          'Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character'
+          `Password must be at least ${MIN_LENGTH} characters long and contain uppercase, lowercase, number, and a special character (${SPECIAL_CHARS})`
         );
       }
 
@@ -410,8 +410,16 @@ export const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+const SPECIAL_CHARS = '!@#$%^&*()_+-=[]{};\'",./<>?\\|';
+const MIN_LENGTH = 8;
+
 export const validatePassword = (password: string): boolean => {
-  // At least 8 characters, one uppercase, one lowercase, one number, one special character
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+  const passwordRegex = new RegExp(
+    `^(?=.*[a-z])` + // at least one lowercase
+    `(?=.*[A-Z])` + // at least one uppercase
+    `(?=.*\\d)` + // at least one digit
+    `(?=.*[${SPECIAL_CHARS.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}])` + // at least one special char
+    `[A-Za-z\\d${SPECIAL_CHARS.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}]{${MIN_LENGTH},}$`
+  );
   return passwordRegex.test(password);
 };
