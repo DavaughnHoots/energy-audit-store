@@ -35,6 +35,9 @@ export const rateLimiter = rateLimit({
 // IP blocking middleware
 export const ipBlocker = async (req: Request, res: Response, next: NextFunction) => {
   const clientIP = req.ip;
+  if (!clientIP) {
+    return res.status(400).json({ error: 'Client IP not available' });
+  }
   
   const result = await pool.query(
     'SELECT * FROM blocked_ips WHERE ip = $1 AND blocked_until > NOW()',
@@ -100,9 +103,12 @@ const failedAttempts = new Map<string, FailedAttempt>();
 
 export const bruteForceProtection = async (req: Request, res: Response, next: NextFunction) => {
   const clientIP = req.ip;
+  if (!clientIP) {
+    return res.status(400).json({ error: 'Client IP not available' });
+  }
   const attempt = failedAttempts.get(clientIP) || { count: 0, firstAttempt: new Date() };
 
-  if (attempt.blockedUntil && attempt.blockedUntil > new Date()) {
+  if (attempt.blockedUntil && attempt.blockedUntil instanceof Date && attempt.blockedUntil > new Date()) {
     return res.status(403).json({
       error: 'Account locked',
       blockedUntil: attempt.blockedUntil

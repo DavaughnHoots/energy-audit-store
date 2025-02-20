@@ -124,11 +124,9 @@ const energyAuditSchema = z.object({
 });
 
 // Validation function that returns typed results
-export interface ValidationResult {
-  success: boolean;
-  errors?: z.ZodError;
-  data?: z.infer<typeof energyAuditSchema>;
-}
+export type ValidationResult =
+  | { success: true; data: z.infer<typeof energyAuditSchema>; errors?: never }
+  | { success: false; errors: z.ZodError; data?: never };
 
 export const validateEnergyAudit = (data: unknown): ValidationResult => {
   try {
@@ -157,7 +155,7 @@ export const validatePartialEnergyAudit = (data: unknown): ValidationResult => {
     const validatedData = energyAuditSchema.partial().parse(data);
     return {
       success: true,
-      data: validatedData
+      data: validatedData as z.infer<typeof energyAuditSchema>
     };
   } catch (error) {
     if (error instanceof z.ZodError) {

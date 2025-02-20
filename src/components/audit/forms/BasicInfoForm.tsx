@@ -1,117 +1,103 @@
 import React from 'react';
-import { BasicInfo } from '../../../../backend/src/types/energyAudit';
+import { User } from 'lucide-react';
+import { BasicInfoFormProps } from './types';
+import FormSection from '../FormSection';
+import { FormGrid, InputField, SelectField } from '../FormFields';
 
-interface BasicInfoFormProps {
-  data: BasicInfo;
-  onInputChange: (field: keyof BasicInfo, value: string) => void;
-}
+const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
+  data,
+  onInputChange
+}) => {
+  const handleChange = (field: keyof typeof data) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const value = e.target.type === 'number' ? parseInt(e.target.value) : e.target.value;
+    onInputChange(field, value);
+  };
 
-const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ data, onInputChange }) => {
   return (
-    <div className="space-y-6">
-      <div>
-        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-          Full Name *
-        </label>
-        <input
-          type="text"
-          id="fullName"
+    <FormSection
+      title="Basic Information"
+      description="Please provide your contact information and basic property details."
+      icon={User}
+    >
+      <FormGrid>
+        <InputField
+          label="Full Name"
           value={data.fullName}
-          onChange={(e) => onInputChange('fullName', e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+          onChange={handleChange('fullName')}
           required
         />
-      </div>
 
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-          Email *
-        </label>
-        <input
+        <InputField
+          label="Email"
           type="email"
-          id="email"
           value={data.email}
-          onChange={(e) => onInputChange('email', e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+          onChange={handleChange('email')}
           required
         />
-      </div>
 
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-          Phone Number
-        </label>
-        <input
+        <InputField
+          label="Phone"
           type="tel"
-          id="phone"
-          value={data.phone || ''}
-          onChange={(e) => onInputChange('phone', e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-          placeholder="Optional"
+          value={data.phone}
+          onChange={handleChange('phone')}
+          required
         />
-      </div>
 
-      <div>
-        <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-          Address *
-        </label>
-        <input
-          type="text"
-          id="address"
+        <InputField
+          label="Address"
           value={data.address}
-          onChange={(e) => onInputChange('address', e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+          onChange={handleChange('address')}
           required
         />
-      </div>
 
-      <div>
-        <label htmlFor="auditDate" className="block text-sm font-medium text-gray-700 mb-2">
-          Audit Date *
-        </label>
-        <input
-          type="date"
-          id="auditDate"
-          value={data.auditDate}
-          onChange={(e) => onInputChange('auditDate', e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="propertyType" className="block text-sm font-medium text-gray-700 mb-2">
-          Property Type *
-        </label>
-        <select
-          id="propertyType"
+        <SelectField
+          label="Property Type"
           value={data.propertyType}
-          onChange={(e) => onInputChange('propertyType', e.target.value as BasicInfo['propertyType'])}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-          required
-        >
-          <option value="residential">Residential</option>
-          <option value="commercial">Commercial</option>
-          <option value="multi-family">Multi-Family</option>
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="yearBuilt" className="block text-sm font-medium text-gray-700 mb-2">
-          Year Built *
-        </label>
-        <input
-          type="number"
-          id="yearBuilt"
-          value={data.yearBuilt}
-          onChange={(e) => onInputChange('yearBuilt', e.target.value)}
-          min="1800"
-          max={new Date().getFullYear()}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+          onChange={handleChange('propertyType')}
+          options={[
+            { value: 'single-family', label: 'Single Family Home' },
+            { value: 'townhouse', label: 'Townhouse' },
+            { value: 'duplex', label: 'Duplex' },
+            { value: 'apartment', label: 'Apartment' },
+            { value: 'condo', label: 'Condominium' },
+            { value: 'mobile-home', label: 'Mobile Home' }
+          ]}
           required
         />
-      </div>
-    </div>
+
+        <InputField
+          label="Year Built"
+          type="number"
+          value={data.yearBuilt || ''}
+          onChange={handleChange('yearBuilt')}
+          min={1800}
+          max={new Date().getFullYear()}
+          required
+          helpText="Enter the year your property was constructed"
+        />
+
+        <InputField
+          label="Number of Occupants"
+          type="number"
+          value={data.occupants || ''}
+          onChange={handleChange('occupants')}
+          min={1}
+          max={20}
+          required
+          helpText="How many people typically live in the property?"
+        />
+
+        <InputField
+          label="Audit Date"
+          type="date"
+          value={data.auditDate}
+          onChange={handleChange('auditDate')}
+          required
+        />
+      </FormGrid>
+    </FormSection>
   );
 };
 

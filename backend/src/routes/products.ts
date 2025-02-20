@@ -3,13 +3,14 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
 import { apiLimiter } from '../middleware/security';
-import { ProductDataService } from '../services/productDataService';
-import { pool } from '../config/database';
+import ProductDataService from '../services/productDataService';
+import pool from '../config/database';
+import { AuthenticatedRequest } from '../types/auth';
 
 const router = express.Router();
 const productService = new ProductDataService();
 
-router.get('/', apiLimiter, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const filters = {
       mainCategory: req.query.category as string,
@@ -46,14 +47,14 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/:id/view', authenticate, async (req, res) => {
+router.post('/:id/view', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     await pool.query(
       `INSERT INTO analytics_data (
         user_id, event_type, event_data
       ) VALUES ($1, $2, $3)`,
       [
-        req.user!.userId,
+        req.user!.id,
         'product_view',
         { productId: req.params.id, timestamp: new Date() }
       ]
@@ -86,14 +87,14 @@ router.get('/:id/similar', async (req, res) => {
   }
 });
 
-router.get('/:id/recommendations', authenticate, async (req, res) => {
+router.get('/:id/recommendations', authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const result = await pool.query(
       `SELECT r.* FROM recommendations r
        JOIN energy_audits a ON r.audit_id = a.id
        WHERE r.product_id = $1 AND a.user_id = $2
        ORDER BY r.created_at DESC`,
-      [req.params.id, req.user!.userId]
+      [req.params.id, req.user!.id]
     );
     res.json(result.rows);
   } catch (error) {

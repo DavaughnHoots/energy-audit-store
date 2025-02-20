@@ -1,9 +1,7 @@
-// src/components/auth/SignIn.tsx
-
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { API_BASE_URL, API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getApiUrl } from '@/config/api';
 import useAuth from '@/context/AuthContext';
 
 interface FormData {
@@ -22,6 +20,7 @@ const SignIn: React.FC = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -76,7 +75,7 @@ const SignIn: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.SIGNIN}`, {
+      const response = await fetch(getApiUrl(API_ENDPOINTS.AUTH.SIGNIN), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +89,10 @@ const SignIn: React.FC = () => {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Sign in failed');
+        if (response.status === 429) {
+          throw new Error(`Too many sign-in attempts. Please wait ${data.retryAfter || 60} seconds before trying again.`);
+        }
+        throw new Error(data.error || data.message || 'Sign in failed');
       }
 
       const data = await response.json();
@@ -106,7 +108,9 @@ const SignIn: React.FC = () => {
       login(data.user);
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      console.error('Sign in error:', err);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

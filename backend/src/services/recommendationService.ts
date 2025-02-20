@@ -15,6 +15,14 @@ export interface Recommendation {
   createdAt: Date;
 }
 
+interface EnergyProfile {
+  heatingEfficiency: number;
+  coolingEfficiency: number;
+  insulationScore: number;
+  windowEfficiency: number;
+  applianceAge: number;
+}
+
 export class RecommendationService {
   private pool: Pool;
 
@@ -52,8 +60,8 @@ export class RecommendationService {
     return recommendations;
   }
 
-  private async analyzeEnergyProfile(auditData: EnergyAuditData) {
-    const profile = {
+  private async analyzeEnergyProfile(auditData: EnergyAuditData): Promise<EnergyProfile> {
+    const profile: EnergyProfile = {
       heatingEfficiency: this.calculateHeatingEfficiency(auditData),
       coolingEfficiency: this.calculateCoolingEfficiency(auditData),
       insulationScore: this.calculateInsulationScore(auditData),
@@ -73,13 +81,13 @@ export class RecommendationService {
     else if (heatingSystem.age > 10) efficiency *= 0.85;
 
     // Factor in fuel type efficiency
-    const fuelEfficiency = {
+    const fuelEfficiency: Record<string, number> = {
       'natural-gas': 0.95,
       'oil': 0.85,
       'electric': 1.0,
       'propane': 0.90
     };
-    efficiency *= fuelEfficiency[heatingSystem.fuelType] || 0.85;
+    efficiency *= fuelEfficiency[heatingSystem.fuelType as keyof typeof fuelEfficiency] || 0.85;
 
     return efficiency;
   }
@@ -101,7 +109,7 @@ export class RecommendationService {
 
   private calculateInsulationScore(auditData: EnergyAuditData): number {
     const { insulation } = auditData.currentConditions;
-    const scores = {
+    const scores: Record<string, number> = {
       'poor': 0,
       'average': 1,
       'good': 2,
@@ -109,29 +117,32 @@ export class RecommendationService {
     };
 
     return (
-      scores[insulation.attic] +
-      scores[insulation.walls] +
-      scores[insulation.basement] +
-      scores[insulation.floor]
+      scores[insulation.attic as keyof typeof scores] +
+      scores[insulation.walls as keyof typeof scores] +
+      scores[insulation.basement as keyof typeof scores] +
+      scores[insulation.floor as keyof typeof scores]
     ) / 12; // Normalize to 0-1 scale
   }
 
   private calculateWindowEfficiency(auditData: EnergyAuditData): number {
     const { windowType, windowCondition } = auditData.currentConditions;
     
-    const typeScore = {
+    const typeScores: Record<string, number> = {
       'single': 0.3,
       'double': 0.7,
       'triple': 1.0,
       'not-sure': 0.5
-    }[windowType];
+    };
 
-    const conditionScore = {
+    const conditionScores: Record<string, number> = {
       'poor': 0.3,
       'fair': 0.6,
       'good': 0.8,
       'excellent': 1.0
-    }[windowCondition];
+    };
+
+    const typeScore = typeScores[windowType as keyof typeof typeScores] || 0.5;
+    const conditionScore = conditionScores[windowCondition as keyof typeof conditionScores] || 0.5;
 
     return (typeScore + conditionScore) / 2;
   }
@@ -141,7 +152,7 @@ export class RecommendationService {
     return auditData.heatingCooling.heatingSystem.age;
   }
 
-  private async findMatchingProducts(energyProfile: any): Promise<Product[]> {
+  private async findMatchingProducts(energyProfile: EnergyProfile): Promise<Product[]> {
     // Query database for products matching the energy profile
     const result = await this.pool.query(
       `SELECT * FROM products WHERE 
@@ -156,8 +167,8 @@ export class RecommendationService {
     return result.rows;
   }
 
-  private determineRelevantCategories(profile: any): string[] {
-    const categories = [];
+  private determineRelevantCategories(profile: EnergyProfile): string[] {
+    const categories: string[] = [];
     
     if (profile.heatingEfficiency < 0.8) categories.push('heating');
     if (profile.coolingEfficiency < 0.8) categories.push('cooling');
@@ -167,9 +178,10 @@ export class RecommendationService {
     return categories;
   }
 
-  private calculateMinEfficiencyThreshold(profile: any): number {
+  private calculateMinEfficiencyThreshold(profile: EnergyProfile): number {
     // Dynamic threshold based on current efficiency levels
-    return Math.min(...Object.values(profile)) + 0.2;
+    const values = Object.values(profile) as number[];
+    return Math.min(...values) + 0.2;
   }
 
   private async calculatePotentialSavings(product: Product, auditData: EnergyAuditData): Promise<number> {

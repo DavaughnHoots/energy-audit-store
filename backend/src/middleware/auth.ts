@@ -2,7 +2,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database';
+import pool from '../config/database';
 import { UserAuthService, AuthError } from '../services/userAuthService';
 import { AuthenticatedRequest, User } from '../types/auth';
 
@@ -11,93 +11,107 @@ const authService = new UserAuthService(pool);
 // Constants for token refresh
 const REFRESH_THRESHOLD = 15 * 60 * 1000; // 15 minutes in milliseconds
 
+// Cookie settings
+const COOKIE_CONFIG = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+  domain: 'localhost'
+};
+
 export const authenticate = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    // Check if route requires authentication
+    const publicRoutes = ['/api/products', '/api/recommendations'];
+    const isPublicRoute = publicRoutes.some(route => req.path.startsWith(route));
+    
+    // Log authentication attempt for debugging
+    console.log(`Authentication attempt for path: ${req.path}`);
+    console.log('Cookies:', req.cookies);
+    
     const accessToken = req.cookies.accessToken;
     const refreshToken = req.cookies.refreshToken;
 
+    console.log('Access Token:', accessToken ? 'Present' : 'Missing');
+    console.log('Refresh Token:', refreshToken ? 'Present' : 'Missing');
+
     if (!accessToken) {
+      if (isPublicRoute) {
+        return next(); // Allow access to public routes without authentication
+      }
+      console.log('No access token found');
       return res.status(401).json({ error: 'Authentication required' });
     }
 
     try {
       // Verify access token
       const decoded = await authService.verifyToken(accessToken);
-      req.user = {
-        id: decoded.userId,
-        email: decoded.email,
-        role: decoded.role
-      };
+      if (decoded) {
+        console.log('Token verified successfully');
+        req.user = {
+          id: decoded.userId,
+          email: decoded.email,
+          role: decoded.role
+        };
 
-      // Check if token is close to expiring
-      const tokenExp = decoded.exp ? decoded.exp * 1000 : 0;
-      if (tokenExp - Date.now() < REFRESH_THRESHOLD && refreshToken) {
-        try {
-          // Attempt to refresh tokens
-          const { token: newAccessToken, refreshToken: newRefreshToken } =
-            await authService.refreshToken(refreshToken);
-
-          // Set new cookies
-          res.cookie('accessToken', newAccessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/'
-          });
-
-          res.cookie('refreshToken', newRefreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/'
-          });
-        } catch (refreshError) {
-          // Log refresh error but continue with current token
-          console.error('Token refresh failed:', refreshError);
-        }
-      }
-
-      next();
-    } catch (error) {
-      if (error instanceof AuthError) {
-        if (refreshToken) {
+        // Check if token is close to expiring
+        const tokenExp = decoded.exp ? decoded.exp * 1000 : 0;
+        if (tokenExp - Date.now() < REFRESH_THRESHOLD && refreshToken) {
+          console.log('Token near expiry, attempting refresh');
           try {
             // Attempt to refresh tokens
             const { token: newAccessToken, refreshToken: newRefreshToken } =
               await authService.refreshToken(refreshToken);
 
             // Set new cookies
-            res.cookie('accessToken', newAccessToken, {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'lax',
-              path: '/'
-            });
+            res.cookie('accessToken', newAccessToken, COOKIE_CONFIG);
+            res.cookie('refreshToken', newRefreshToken, COOKIE_CONFIG);
+            
+            console.log('Tokens refreshed successfully');
+          } catch (refreshError) {
+            // Log refresh error but continue with current token
+            console.error('Token refresh failed:', refreshError);
+          }
+        }
+      }
 
-            res.cookie('refreshToken', newRefreshToken, {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'lax',
-              path: '/'
-            });
+      next();
+    } catch (error) {
+      console.log('Token verification failed:', error);
+      if (error instanceof AuthError) {
+        if (refreshToken) {
+          console.log('Attempting token refresh after verification failure');
+          try {
+            // Attempt to refresh tokens
+            const { token: newAccessToken, refreshToken: newRefreshToken } =
+              await authService.refreshToken(refreshToken);
+
+            // Set new cookies
+            res.cookie('accessToken', newAccessToken, COOKIE_CONFIG);
+            res.cookie('refreshToken', newRefreshToken, COOKIE_CONFIG);
 
             // Verify new access token
             const decoded = await authService.verifyToken(newAccessToken);
-            req.user = {
-              id: decoded.userId,
-              email: decoded.email,
-              role: decoded.role
-            };
+            if (decoded) {
+              req.user = {
+                id: decoded.userId,
+                email: decoded.email,
+                role: decoded.role
+              };
+              console.log('Token refresh and verification successful');
+            }
 
             return next();
           } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
             // Clear cookies if refresh fails
-            res.clearCookie('accessToken');
-            res.clearCookie('refreshToken');
+            res.clearCookie('accessToken', COOKIE_CONFIG);
+            res.clearCookie('refreshToken', COOKIE_CONFIG);
             return res.status(401).json({ error: 'Session expired' });
           }
         }
@@ -107,8 +121,8 @@ export const authenticate = async (
     }
   } catch (error) {
     console.error('Authentication error:', error);
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    res.clearCookie('accessToken', COOKIE_CONFIG);
+    res.clearCookie('refreshToken', COOKIE_CONFIG);
     res.status(500).json({ error: 'Authentication failed' });
   }
 };
@@ -155,10 +169,8 @@ export const generateCsrfToken = (
 ) => {
   const token = jwt.sign({}, process.env.JWT_SECRET!, { expiresIn: '1h' });
   res.cookie('XSRF-TOKEN', token, {
-    httpOnly: false, // Must be accessible to JavaScript
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/'
+    ...COOKIE_CONFIG,
+    httpOnly: false // Must be accessible to JavaScript
   });
   next();
 };

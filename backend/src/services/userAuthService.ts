@@ -62,7 +62,15 @@ export class UserAuthService {
     }
   }
 
-  async registerUser(email: string, password: string, fullName: string, ip: string, phone?: string, address?: string) {
+  async registerUser(
+    email: string, 
+    password: string, 
+    fullName: string, 
+    ip: string, 
+    phone?: string, 
+    address?: string,
+    auditId?: string
+  ) {
     try {
       await this.checkRateLimit(ip);
 
@@ -111,12 +119,21 @@ export class UserAuthService {
           [refreshToken, result.rows[0].id]
         );
 
+        // If auditId is provided, associate it with the new user
+        if (auditId) {
+          await client.query(
+            'UPDATE energy_audits SET user_id = $1 WHERE id = $2 AND user_id IS NULL',
+            [result.rows[0].id, auditId]
+          );
+        }
+
         await client.query('COMMIT');
 
         return {
           user: result.rows[0],
           token,
-          refreshToken
+          refreshToken,
+          associatedAudit: auditId ? true : false
         };
       } catch (error) {
         await client.query('ROLLBACK');
@@ -253,8 +270,12 @@ export class UserAuthService {
     }
   }
 
-  async verifyToken(token: string): Promise<any> {
+  async verifyToken(token: string | null): Promise<any> {
     try {
+      if (!token) {
+        return null;
+      }
+
       // Check if token is blacklisted
       const blacklistResult = await this.pool.query(
         'SELECT 1 FROM token_blacklist WHERE token = $1 AND expires_at > NOW()',

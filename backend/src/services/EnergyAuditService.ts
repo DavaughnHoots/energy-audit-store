@@ -1,5 +1,3 @@
-// src/services/EnergyAuditService.ts
-
 import { Pool } from 'pg';
 import {
   EnergyAuditData,
@@ -9,8 +7,39 @@ import {
   BasicInfo,
   EnergyConsumption,
   validateBasicInfo,
-  validateHomeDetails
+  validateHomeDetails,
+  AuditRecommendation,
+  RecommendationStatus,
+  RecommendationPriority
 } from '../types/energyAudit';
+
+interface DbRecommendation {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  priority: RecommendationPriority;
+  status: RecommendationStatus;
+  estimatedSavings: number;
+  estimatedCost: number;
+  paybackPeriod: number;
+  actualSavings: number | null;
+  implementationDate: string | null;
+  implementationCost: number | null;
+  lastUpdate: string;
+}
+
+const mapDbToAuditRecommendation = (dbRec: DbRecommendation): AuditRecommendation => {
+  const { category, ...recommendation } = dbRec;
+  return recommendation;
+};
+
+const mapAuditToDbRecommendation = (rec: AuditRecommendation, category: string): DbRecommendation => {
+  return {
+    ...rec,
+    category
+  };
+};
 
 export interface AuditData {
   id: string;
@@ -21,18 +50,6 @@ export interface AuditData {
   heatingCooling: HeatingCooling;
   energyConsumption: EnergyConsumption;
   createdAt: Date;
-}
-
-export interface AuditRecommendation {
-  category: string;
-  priority: 'high' | 'medium' | 'low';
-  title: string;
-  description: string;
-  estimatedSavings: number;
-  estimatedCost: number;
-  paybackPeriod: number;
-  implementationStatus?: 'pending' | 'in_progress' | 'completed';
-  products?: string[];
 }
 
 interface ReportGenerationOptions {
@@ -49,7 +66,8 @@ export class EnergyAuditService {
   }
 
   private calculateInsulationScore(conditions: CurrentConditions): number {
-    const scores = {
+    type InsulationScore = 'poor' | 'average' | 'good' | 'excellent' | 'not-sure';
+    const scores: Record<InsulationScore, number> = {
       poor: 0,
       average: 1,
       good: 2,
@@ -59,22 +77,25 @@ export class EnergyAuditService {
 
     const {attic, walls, basement, floor} = conditions.insulation;
     return (
-      scores[attic] +
-      scores[walls] +
-      scores[basement] +
-      scores[floor]
+      (scores[attic as InsulationScore] ?? 1) +
+      (scores[walls as InsulationScore] ?? 1) +
+      (scores[basement as InsulationScore] ?? 1) +
+      (scores[floor as InsulationScore] ?? 1)
     ) / 4;
   }
 
   private calculateWindowScore(conditions: CurrentConditions): number {
-    const windowTypeScores = {
+    type WindowType = 'single' | 'double' | 'triple' | 'not-sure';
+    type WindowCondition = 'poor' | 'fair' | 'good' | 'excellent';
+    
+    const windowTypeScores: Record<WindowType, number> = {
       single: 0,
       double: 2,
       triple: 3,
       'not-sure': 1
     };
 
-    const conditionScores = {
+    const conditionScores: Record<WindowCondition, number> = {
       poor: 0,
       fair: 1,
       good: 2,
@@ -82,8 +103,8 @@ export class EnergyAuditService {
     };
 
     return (
-      windowTypeScores[conditions.windowType] +
-      conditionScores[conditions.windowCondition]
+      (windowTypeScores[conditions.windowType as WindowType] ?? 1) +
+      (conditionScores[conditions.windowCondition as WindowCondition] ?? 1)
     ) / 2;
   }
 
@@ -104,14 +125,18 @@ export class EnergyAuditService {
     return Math.max(0, score);
   }
 
-  async submitAudit(auditData: EnergyAuditData, userId?: string): Promise<string> {
+  async createAudit(
+    auditData: EnergyAuditData, 
+    userId?: string,
+    clientId?: string
+  ): Promise<string> {
     // Validate input data
     const basicInfoErrors = validateBasicInfo(auditData.basicInfo);
     const homeDetailsErrors = validateHomeDetails(auditData.homeDetails);
 
-    if (basicInfoErrors.length > 0 || homeDetailsErrors.length > 0) {
-      throw new Error('Invalid audit data: ' +
-        [...basicInfoErrors, ...homeDetailsErrors].join(', '));
+    const errors = [...(basicInfoErrors || []), ...(homeDetailsErrors || [])];
+    if (errors.length > 0) {
+      throw new Error('Invalid audit data: ' + errors.join(', '));
     }
 
     // Store audit data
@@ -119,21 +144,48 @@ export class EnergyAuditService {
     try {
       await client.query('BEGIN');
 
+      // Format data as JSONB
+      const jsonData = {
+        basic_info: JSON.stringify(auditData.basicInfo),
+        home_details: JSON.stringify(auditData.homeDetails),
+        current_conditions: JSON.stringify(auditData.currentConditions),
+        heating_cooling: JSON.stringify(auditData.heatingCooling),
+        energy_consumption: JSON.stringify(auditData.energyConsumption)
+      };
+
+      console.log('Formatted JSONB data:', jsonData);
+
       // Insert audit data
-      const auditResult = await client.query(
-        `INSERT INTO energy_audits (
-          user_id, basic_info, home_details,
+      const insertQuery = `
+        INSERT INTO energy_audits (
+          user_id, client_id, basic_info, home_details,
           current_conditions, heating_cooling,
           energy_consumption, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
-        RETURNING id`,
+        ) VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb, $6::jsonb, $7::jsonb, CURRENT_TIMESTAMP)
+        RETURNING id
+      `;
+
+      console.log('Executing query:', insertQuery);
+      console.log('Query parameters:', [
+        userId || null,
+        clientId || null,
+        jsonData.basic_info,
+        jsonData.home_details,
+        jsonData.current_conditions,
+        jsonData.heating_cooling,
+        jsonData.energy_consumption
+      ]);
+
+      const auditResult = await client.query(
+        insertQuery,
         [
-          userId,
-          auditData.basicInfo,
-          auditData.homeDetails,
-          auditData.currentConditions,
-          auditData.heatingCooling,
-          auditData.energyConsumption
+          userId || null,
+          clientId || null,
+          jsonData.basic_info,
+          jsonData.home_details,
+          jsonData.current_conditions,
+          jsonData.heating_cooling,
+          jsonData.energy_consumption
         ]
       );
 
@@ -173,52 +225,67 @@ export class EnergyAuditService {
     }
   }
 
-  async generateRecommendations(auditData: EnergyAuditData): Promise<AuditRecommendation[]> {
-
+  async generateRecommendations(auditData: EnergyAuditData): Promise<DbRecommendation[]> {
     // Calculate component scores
     const insulation = this.calculateInsulationScore(auditData.currentConditions);
     const windows = this.calculateWindowScore(auditData.currentConditions);
     const hvac = this.calculateHVACScore(auditData.heatingCooling);
 
-    const recommendations: AuditRecommendation[] = [];
+    const recommendations: DbRecommendation[] = [];
+    const now = new Date().toISOString();
 
     // Generate recommendations based on scores
     if (insulation < 2) {
       recommendations.push({
+        id: `INS-${Date.now()}`,
         category: 'Insulation',
-        priority: 'high',
         title: 'Improve Home Insulation',
         description: 'Add or upgrade insulation in walls and attic',
+        priority: 'high',
+        status: 'pending',
         estimatedSavings: 500,
         estimatedCost: 2000,
         paybackPeriod: 4,
-        products: ['INS-001', 'INS-002']
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
       });
     }
 
     if (windows < 1.5) {
       recommendations.push({
+        id: `WIN-${Date.now()}`,
         category: 'Windows',
-        priority: 'medium',
         title: 'Upgrade Windows',
         description: 'Replace single-pane windows with double-pane',
+        priority: 'medium',
+        status: 'pending',
         estimatedSavings: 300,
         estimatedCost: 5000,
         paybackPeriod: 16.7,
-        products: ['WIN-001', 'WIN-002']
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
       });
     }
 
     if (hvac < 2) {
       recommendations.push({
+        id: `HVAC-${Date.now()}`,
         category: 'HVAC',
-        priority: 'high',
         title: 'HVAC Maintenance/Upgrade',
         description: 'Schedule HVAC maintenance or consider upgrade',
+        priority: 'high',
+        status: 'pending',
         estimatedSavings: 400,
         estimatedCost: 1000,
         paybackPeriod: 2.5,
-        products: ['HVAC-001']
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
       });
     }
 
@@ -227,7 +294,13 @@ export class EnergyAuditService {
 
   async getAuditById(auditId: string): Promise<AuditData> {
     const result = await this.pool.query(
-      'SELECT * FROM energy_audits WHERE id = $1',
+      `SELECT 
+        ea.*,
+        COALESCE(json_agg(ar.*) FILTER (WHERE ar.id IS NOT NULL), '[]') as recommendations
+      FROM energy_audits ea
+      LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
+      WHERE ea.id = $1
+      GROUP BY ea.id`,
       [auditId]
     );
 
@@ -235,7 +308,11 @@ export class EnergyAuditService {
       throw new Error('Audit not found');
     }
 
-    return result.rows[0];
+    return {
+      ...result.rows[0],
+      recommendations: (result.rows[0].recommendations as DbRecommendation[])
+        .map(mapDbToAuditRecommendation)
+    };
   }
 
   async getRecommendations(auditId: string): Promise<AuditRecommendation[]> {
@@ -244,14 +321,14 @@ export class EnergyAuditService {
       [auditId]
     );
 
-    return result.rows;
+    return result.rows.map(row => mapDbToAuditRecommendation(row as DbRecommendation));
   }
 
   async getAuditHistory(userId: string): Promise<AuditData[]> {
     const result = await this.pool.query(
       `SELECT 
         ea.*,
-        json_agg(ar.*) as recommendations
+        COALESCE(json_agg(ar.*) FILTER (WHERE ar.id IS NOT NULL), '[]') as recommendations
       FROM energy_audits ea
       LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
       WHERE ea.user_id = $1
@@ -259,7 +336,37 @@ export class EnergyAuditService {
       ORDER BY ea.created_at DESC`,
       [userId]
     );
-    return result.rows;
+
+    return result.rows.map(row => ({
+      ...row,
+      recommendations: (row.recommendations as DbRecommendation[]).map(mapDbToAuditRecommendation)
+    }));
+  }
+
+  async getAuditsByClientId(clientId: string): Promise<AuditData[]> {
+    const result = await this.pool.query(
+      `SELECT 
+        ea.*,
+        COALESCE(json_agg(ar.*) FILTER (WHERE ar.id IS NOT NULL), '[]') as recommendations
+      FROM energy_audits ea
+      LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
+      WHERE ea.client_id = $1
+      GROUP BY ea.id
+      ORDER BY ea.created_at DESC`,
+      [clientId]
+    );
+
+    return result.rows.map(row => ({
+      ...row,
+      recommendations: (row.recommendations as DbRecommendation[]).map(mapDbToAuditRecommendation)
+    }));
+  }
+
+  async associateAuditsWithUser(userId: string, clientId: string): Promise<void> {
+    await this.pool.query(
+      'SELECT associate_anonymous_audits($1, $2)',
+      [userId, clientId]
+    );
   }
 
   async generateReport(auditId: string, options: ReportGenerationOptions = {}): Promise<Buffer> {
@@ -271,7 +378,7 @@ export class EnergyAuditService {
       const result = await client.query(
         `SELECT 
           ea.*,
-          json_agg(ar.*) as recommendations
+          COALESCE(json_agg(ar.*) FILTER (WHERE ar.id IS NOT NULL), '[]') as recommendations
         FROM energy_audits ea
         LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
         WHERE ea.id = $1
@@ -283,7 +390,11 @@ export class EnergyAuditService {
         throw new Error('Audit not found');
       }
 
-      const auditData = result.rows[0];
+      const auditData = {
+        ...result.rows[0],
+        recommendations: (result.rows[0].recommendations as DbRecommendation[])
+          .map(mapDbToAuditRecommendation)
+      };
 
       // Update report generation status
       await client.query(
@@ -309,17 +420,105 @@ export class EnergyAuditService {
     }
   }
 
+  async updateAudit(auditId: string, userId: string, auditData: Partial<EnergyAuditData>): Promise<AuditData | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Verify ownership
+      const audit = await client.query(
+        'SELECT * FROM energy_audits WHERE id = $1 AND user_id = $2',
+        [auditId, userId]
+      );
+
+      if (audit.rows.length === 0) {
+        return null;
+      }
+
+      // Update audit data
+      const result = await client.query(
+        `UPDATE energy_audits
+        SET basic_info = COALESCE($1, basic_info),
+            home_details = COALESCE($2, home_details),
+            current_conditions = COALESCE($3, current_conditions),
+            heating_cooling = COALESCE($4, heating_cooling),
+            energy_consumption = COALESCE($5, energy_consumption),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $6 AND user_id = $7
+        RETURNING *`,
+        [
+          auditData.basicInfo || null,
+          auditData.homeDetails || null,
+          auditData.currentConditions || null,
+          auditData.heatingCooling || null,
+          auditData.energyConsumption || null,
+          auditId,
+          userId
+        ]
+      );
+
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async deleteAudit(auditId: string, userId: string): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Verify ownership
+      const audit = await client.query(
+        'SELECT * FROM energy_audits WHERE id = $1 AND user_id = $2',
+        [auditId, userId]
+      );
+
+      if (audit.rows.length === 0) {
+        throw new Error('Audit not found or not authorized');
+      }
+
+      // Delete recommendations first due to foreign key constraint
+      await client.query(
+        'DELETE FROM audit_recommendations WHERE audit_id = $1',
+        [auditId]
+      );
+
+      // Delete the audit
+      await client.query(
+        'DELETE FROM energy_audits WHERE id = $1 AND user_id = $2',
+        [auditId, userId]
+      );
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async updateRecommendationStatus(
     auditId: string,
     recommendationId: string,
-    status: 'pending' | 'in_progress' | 'completed'
+    status: RecommendationStatus,
+    actualSavings?: number,
+    notes?: string
   ): Promise<void> {
     await this.pool.query(
       `UPDATE audit_recommendations
-      SET implementation_status = $1,
+      SET status = $1,
+          actual_savings = COALESCE($2, actual_savings),
+          notes = COALESCE($3, notes),
+          implementation_date = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE implementation_date END,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2 AND audit_id = $3`,
-      [status, recommendationId, auditId]
+      WHERE id = $4 AND audit_id = $5`,
+      [status, actualSavings, notes, recommendationId, auditId]
     );
   }
 }

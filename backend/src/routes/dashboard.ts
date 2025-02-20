@@ -1,19 +1,8 @@
 import express from 'express';
 import { AuthenticatedRequest } from '../types/auth';
-import { DashboardService } from '../services/dashboardService';
-import { pool } from '../config/database';
+import { dashboardService } from '../services/dashboardService';
+import pool from '../config/database';
 import { appLogger } from '../config/logger';
-
-let dashboardService: DashboardService;
-try {
-  dashboardService = new DashboardService();
-} catch (error) {
-  appLogger.error('Failed to initialize DashboardService:', {
-    error: error instanceof Error ? error.message : 'Unknown error',
-    stack: error instanceof Error ? error.stack : undefined
-  });
-  throw error;
-}
 
 const router = express.Router();
 

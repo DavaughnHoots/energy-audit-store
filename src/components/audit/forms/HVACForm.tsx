@@ -1,231 +1,317 @@
-import React, { useState } from 'react';
-import { HeatingCooling } from '../../../../backend/src/types/energyAudit';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { heatingSystemDefaults, fuelTypeDefaults, coolingSystemDefaults } from './hvacDefaults';
+import React, { useState, ChangeEvent } from 'react';
+import { HeatingCooling } from '@/types/energyAudit';
+import { Fan } from 'lucide-react';
+import { HVACFormProps } from './types';
+import FormSection, { FormSectionAdvanced } from '../FormSection';
+import { FormGrid, SelectField, InputField, FormSubsection } from '../FormFields';
+import {
+  heatingSystemDefaults,
+  coolingSystemDefaults,
+  systemPerformanceDefaults,
+  thermostatDefaults,
+  efficiencyRanges
+} from './hvacDefaults';
 
-interface HVACFormProps {
-  data: HeatingCooling;
-  onInputChange: (
-    section: 'heatingSystem' | 'coolingSystem',
-    field: string,
-    value: string | number
-  ) => void;
-}
-
-const HVACForm: React.FC<HVACFormProps> = ({ data, onInputChange }) => {
+const HVACForm: React.FC<HVACFormProps> = ({
+  data,
+  onInputChange
+}) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [userModified, setUserModified] = useState<Record<string, boolean>>({});
-  const today = new Date().toISOString().split('T')[0];
+  const [efficiencyError, setEfficiencyError] = useState<string | undefined>(undefined);
 
   // Helper function to update a field if it hasn't been modified by the user
-  const updateIfNotModified = (section: 'heatingSystem' | 'coolingSystem', field: string, value: any) => {
-    const key = `${section}.${field}`;
+  const updateIfNotModified = (field: keyof HeatingCooling, subfield: string, value: any) => {
+    const key = `${field}.${subfield}`;
     if (!userModified[key]) {
-      onInputChange(section, field, value);
+      if (field === 'heatingSystem') {
+        onInputChange(field, {
+          ...data.heatingSystem,
+          [subfield]: value
+        });
+      } else if (field === 'coolingSystem') {
+        onInputChange(field, {
+          ...data.coolingSystem,
+          [subfield]: value
+        });
+      } else {
+        onInputChange(field, value);
+      }
     }
   };
 
+  // Get efficiency range and unit for a system type
+  const getEfficiencyRange = (systemType: string, isHeating: boolean) => {
+    if (systemType === 'heat-pump') {
+      return isHeating ? efficiencyRanges.heatPump.heating : efficiencyRanges.heatPump.cooling;
+    }
+    
+    const ranges = {
+      'furnace': efficiencyRanges.furnace,
+      'boiler': efficiencyRanges.boiler,
+      'central-ac': efficiencyRanges.centralAC,
+      'mini-split': efficiencyRanges.miniSplit,
+      'window-units': efficiencyRanges.windowUnit
+    } as const;
+
+    return ranges[systemType as keyof typeof ranges];
+  };
+
+  // Validate efficiency rating based on system type
+  const validateEfficiency = (systemType: string, efficiency: number, isHeating: boolean): boolean => {
+    const range = getEfficiencyRange(systemType, isHeating);
+    return range ? efficiency >= range.min && efficiency <= range.max : true;
+  };
+
   // Handle basic field changes and update related advanced fields
-  const handleBasicFieldChange = (section: 'heatingSystem' | 'coolingSystem', field: string, value: string) => {
-    onInputChange(section, field, value);
-
-    // Update advanced fields based on heating system type
-    if (section === 'heatingSystem' && field === 'type') {
-      const defaults = heatingSystemDefaults[value as keyof typeof heatingSystemDefaults];
+  const handleBasicFieldChange = (field: keyof HeatingCooling, value: any): void => {
+    if (field === 'heatingSystem') {
+      const defaults = heatingSystemDefaults[value.type as keyof typeof heatingSystemDefaults];
       if (defaults) {
-        Object.entries(defaults).forEach(([key, defaultValue]) => {
-          updateIfNotModified('heatingSystem', key, defaultValue);
+        onInputChange('heatingSystem', {
+          ...data.heatingSystem,
+          type: value.type,
+          fuel: defaults.fuel,
+          efficiency: defaults.efficiency,
+          age: defaults.age,
+          lastService: defaults.lastService
         });
       }
-    }
-
-    // Update advanced fields based on fuel type
-    if (section === 'heatingSystem' && field === 'fuelType') {
-      const defaults = fuelTypeDefaults[value as keyof typeof fuelTypeDefaults];
+    } else if (field === 'coolingSystem') {
+      const defaults = coolingSystemDefaults[value.type as keyof typeof coolingSystemDefaults];
       if (defaults) {
-        Object.entries(defaults).forEach(([key, defaultValue]) => {
-          updateIfNotModified('heatingSystem', key, defaultValue);
+        onInputChange('coolingSystem', {
+          ...data.coolingSystem,
+          type: value.type,
+          efficiency: defaults.efficiency,
+          age: defaults.age
         });
       }
-    }
-
-    // Update advanced fields based on cooling system type
-    if (section === 'coolingSystem' && field === 'type') {
-      const defaults = coolingSystemDefaults[value as keyof typeof coolingSystemDefaults];
+    } else if (field === 'systemPerformance') {
+      const defaults = systemPerformanceDefaults[value as keyof typeof systemPerformanceDefaults];
       if (defaults) {
-        Object.entries(defaults).forEach(([key, defaultValue]) => {
-          updateIfNotModified('coolingSystem', key, defaultValue);
-        });
+        // Adjust efficiencies based on performance
+        if (data.heatingSystem.efficiency) {
+          updateIfNotModified('heatingSystem', 'efficiency', 
+            Math.round(data.heatingSystem.efficiency * defaults.heatingEfficiencyMultiplier)
+          );
+        }
+        if (data.coolingSystem.efficiency) {
+          updateIfNotModified('coolingSystem', 'efficiency',
+            Math.round(data.coolingSystem.efficiency * defaults.coolingEfficiencyMultiplier)
+          );
+        }
       }
+      onInputChange(field, value);
+    } else if (field === 'thermostatType') {
+      const defaults = thermostatDefaults[value as keyof typeof thermostatDefaults];
+      if (defaults) {
+        updateIfNotModified('zoneCount', '', defaults.zoneCount);
+      }
+      onInputChange(field, value);
+    } else {
+      onInputChange(field, value);
     }
   };
 
   // Handle advanced field changes
-  const handleAdvancedFieldChange = (section: 'heatingSystem' | 'coolingSystem', field: string, value: string | number) => {
-    const key = `${section}.${field}`;
+  const handleAdvancedFieldChange = (field: keyof HeatingCooling, subfield: string, value: any): void => {
+    const key = `${field}.${subfield}`;
     setUserModified(prev => ({ ...prev, [key]: true }));
-    onInputChange(section, field, value);
+
+    // Validate efficiency ratings
+    if (subfield === 'efficiency') {
+      const isHeating = field === 'heatingSystem';
+      const systemType = field === 'heatingSystem' 
+        ? data.heatingSystem.type 
+        : data.coolingSystem.type;
+      const isValid = validateEfficiency(systemType, value, isHeating);
+      
+      if (!isValid) {
+        const range = getEfficiencyRange(systemType, isHeating);
+        if (range) {
+          setEfficiencyError(
+            `Invalid ${range.unit} rating. Must be between ${range.min} and ${range.max}.`
+          );
+          return;
+        }
+      }
+      setEfficiencyError(undefined);
+    }
+
+    if (field === 'heatingSystem') {
+      onInputChange(field, {
+        ...data.heatingSystem,
+        [subfield]: value
+      });
+    } else if (field === 'coolingSystem') {
+      onInputChange(field, {
+        ...data.coolingSystem,
+        [subfield]: value
+      });
+    } else {
+      onInputChange(field, value);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Basic Questions Section */}
-      <div className="space-y-6">
-        <div>
-          <label htmlFor="heatingType" className="block text-sm font-medium text-gray-700 mb-2">
-            Primary Heating System *
-          </label>
-          <select
-            id="heatingType"
-            value={data.heatingSystem.type}
-            onChange={(e) => handleBasicFieldChange('heatingSystem', 'type', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            required
-          >
-            <option value="">Select type</option>
-            <option value="furnace">Furnace</option>
-            <option value="boiler">Boiler</option>
-            <option value="heat-pump">Heat Pump</option>
-            <option value="electric-baseboard">Electric Baseboard</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
+    <FormSection
+      title="HVAC Systems"
+      description="Tell us about your heating, cooling, and ventilation systems."
+      icon={Fan}
+      showAdvanced={showAdvanced}
+      onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
+    >
+      {/* Basic Fields */}
+      <FormGrid>
+        <SelectField
+          label="Heating System Type"
+          value={data.heatingSystem.type}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => handleBasicFieldChange('heatingSystem', { type: e.target.value })}
+          options={[
+            { value: 'furnace', label: 'Furnace' },
+            { value: 'heat-pump', label: 'Heat Pump' },
+            { value: 'boiler', label: 'Boiler' },
+            { value: 'electric-baseboard', label: 'Electric Baseboard' },
+            { value: 'not-sure', label: 'Not Sure' }
+          ]}
+          required
+        />
 
-        <div>
-          <label htmlFor="coolingType" className="block text-sm font-medium text-gray-700 mb-2">
-            Primary Cooling System *
-          </label>
-          <select
-            id="coolingType"
-            value={data.coolingSystem.type}
-            onChange={(e) => handleBasicFieldChange('coolingSystem', 'type', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            required
-          >
-            <option value="">Select type</option>
-            <option value="central">Central Air</option>
-            <option value="window-unit">Window Units</option>
-            <option value="portable">Portable Units</option>
-            <option value="none">None</option>
-          </select>
-        </div>
+        <SelectField
+          label="Cooling System Type"
+          value={data.coolingSystem.type}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => handleBasicFieldChange('coolingSystem', { type: e.target.value })}
+          options={[
+            { value: 'central-ac', label: 'Central AC' },
+            { value: 'heat-pump', label: 'Heat Pump' },
+            { value: 'mini-split', label: 'Mini Split' },
+            { value: 'window-units', label: 'Window Units' },
+            { value: 'none', label: 'No Cooling System' }
+          ]}
+          required
+        />
 
-        <div>
-          <label htmlFor="fuelType" className="block text-sm font-medium text-gray-700 mb-2">
-            Primary Heating Fuel *
-          </label>
-          <select
-            id="fuelType"
-            value={data.heatingSystem.fuelType}
-            onChange={(e) => handleBasicFieldChange('heatingSystem', 'fuelType', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            required
-          >
-            <option value="">Select fuel type</option>
-            <option value="natural-gas">Natural Gas</option>
-            <option value="electric">Electric</option>
-            <option value="oil">Oil</option>
-            <option value="propane">Propane</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-      </div>
+        <SelectField
+          label="System Performance"
+          value={data.systemPerformance}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => handleBasicFieldChange('systemPerformance', e.target.value)}
+          options={[
+            { value: 'works-well', label: 'Works well (no issues)' },
+            { value: 'some-problems', label: 'Some problems (occasional issues)' },
+            { value: 'needs-attention', label: 'Needs attention (frequent issues)' }
+          ]}
+          required
+        />
 
-      {/* Advanced Options Toggle */}
-      <div className="border-t pt-4">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900"
-        >
-          {showAdvanced ? (
-            <ChevronUp className="h-4 w-4 mr-2" />
-          ) : (
-            <ChevronDown className="h-4 w-4 mr-2" />
-          )}
-          {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
-        </button>
-      </div>
+        <SelectField
+          label="Thermostat Type"
+          value={data.thermostatType}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => handleBasicFieldChange('thermostatType', e.target.value)}
+          options={[
+            { value: 'manual', label: 'Manual' },
+            { value: 'programmable', label: 'Programmable' },
+            { value: 'smart', label: 'Smart/WiFi' }
+          ]}
+          required
+        />
+      </FormGrid>
 
-      {/* Advanced Questions Section */}
+      {/* Advanced Fields */}
       {showAdvanced && (
-        <div className="space-y-6 bg-gray-50 p-4 rounded-lg">
-          <div className="text-sm text-gray-500 mb-4">
-            Advanced options help us provide more accurate recommendations.
-            Default values are automatically set based on your basic selections, but you can modify them if needed.
-          </div>
-
+        <FormSectionAdvanced>
           {/* Heating System Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Heating System Details</h3>
-            
-            <div>
-              <label htmlFor="heatingAge" className="block text-sm font-medium text-gray-700 mb-2">
-                System Age (years)
-              </label>
-              <input
-                type="number"
-                id="heatingAge"
-                value={data.heatingSystem.age}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 0 && value <= 100) {
-                    handleAdvancedFieldChange('heatingSystem', 'age', value);
-                  }
-                }}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                min="0"
-                max="100"
-                required
+          <FormSubsection title="Heating System Details">
+            <FormGrid>
+              <SelectField
+                label="Fuel Type"
+                value={data.heatingSystem.fuel}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => handleAdvancedFieldChange('heatingSystem', 'fuel', e.target.value)}
+                options={[
+                  { value: 'natural-gas', label: 'Natural Gas' },
+                  { value: 'electricity', label: 'Electricity' },
+                  { value: 'oil', label: 'Oil' },
+                  { value: 'propane', label: 'Propane' }
+                ]}
               />
-              <p className="mt-1 text-sm text-gray-500">Must be between 0 and 100 years</p>
-            </div>
 
-            <div>
-              <label htmlFor="lastService" className="block text-sm font-medium text-gray-700 mb-2">
-                Last Service Date
-              </label>
-              <input
-                type="date"
-                id="lastService"
-                value={data.heatingSystem.lastService || today}
-                onChange={(e) => handleAdvancedFieldChange('heatingSystem', 'lastService', e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              <InputField
+                label="System Age (years)"
+                type="number"
+                value={data.heatingSystem.age || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('heatingSystem', 'age', parseInt(e.target.value))}
+                min={0}
+                max={50}
               />
-            </div>
-          </div>
+
+              <InputField
+                label="Efficiency Rating"
+                type="number"
+                value={data.heatingSystem.efficiency || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('heatingSystem', 'efficiency', parseInt(e.target.value))}
+                min={0}
+                max={400}
+                error={efficiencyError}
+                helpText={data.heatingSystem.type === 'heat-pump'
+                  ? 'HSPF for heat pumps (8-13)'
+                  : 'AFUE for furnaces/boilers (80-98)'}
+              />
+
+              <InputField
+                label="Last Service Date"
+                type="date"
+                value={data.heatingSystem.lastService || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('heatingSystem', 'lastService', e.target.value)}
+              />
+            </FormGrid>
+          </FormSubsection>
 
           {/* Cooling System Details */}
           {data.coolingSystem.type !== 'none' && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Cooling System Details</h3>
-              
-              <div>
-                <label htmlFor="coolingAge" className="block text-sm font-medium text-gray-700 mb-2">
-                  System Age (years)
-                </label>
-                  <input
-                    type="number"
-                    id="coolingAge"
-                    value={data.coolingSystem.age}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value);
-                      if (value >= 0 && value <= 100) {
-                        handleAdvancedFieldChange('coolingSystem', 'age', value);
-                      }
-                    }}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                    min="0"
-                    max="100"
-                    required
-                  />
-                  <p className="mt-1 text-sm text-gray-500">Must be between 0 and 100 years</p>
-              </div>
-            </div>
+            <FormSubsection title="Cooling System Details">
+              <FormGrid>
+                <InputField
+                  label="System Age (years)"
+                  type="number"
+                  value={data.coolingSystem.age || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('coolingSystem', 'age', parseInt(e.target.value))}
+                  min={0}
+                  max={50}
+                />
+
+                <InputField
+                  label="Efficiency Rating"
+                  type="number"
+                  value={data.coolingSystem.efficiency || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('coolingSystem', 'efficiency', parseInt(e.target.value))}
+                  min={0}
+                  max={30}
+                  error={efficiencyError}
+                  helpText={data.coolingSystem.type === 'window-units'
+                    ? 'EER for window units (9.8-12)'
+                    : 'SEER rating (13-21 for central AC/heat pump, 15-30 for mini-splits)'}
+                />
+              </FormGrid>
+            </FormSubsection>
           )}
-        </div>
+
+          {/* Zone Control */}
+          <FormSubsection title="Zone Control">
+            <FormGrid>
+              <InputField
+                label="Number of HVAC Zones"
+                type="number"
+                value={data.zoneCount}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handleBasicFieldChange('zoneCount', parseInt(e.target.value))}
+                min={1}
+                max={10}
+                helpText="Number of independently controlled heating/cooling zones"
+              />
+            </FormGrid>
+          </FormSubsection>
+        </FormSectionAdvanced>
       )}
-    </div>
+    </FormSection>
   );
 };
 

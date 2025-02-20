@@ -1,18 +1,34 @@
 // src/config/api.ts
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Base URL will be relative since we're using Vite's proxy
+const API_BASE_URL = '';
 
 export const API_ENDPOINTS = {
   AUTH: {
-    SIGNIN: '/auth/signin',
-    REGISTER: '/auth/register',
-    LOGOUT: '/auth/logout',
-    PROFILE: '/auth/profile',
-    REFRESH: '/auth/refresh'
+    SIGNIN: '/api/auth/signin',
+    REGISTER: '/api/auth/register',
+    LOGOUT: '/api/auth/logout',
+    PROFILE: '/api/auth/profile',
+    REFRESH: '/api/auth/refresh'
   },
   EMAIL: {
-    VERIFY: '/email/verify',
-    SEND_VERIFICATION: '/email/send-verification'
+    VERIFY: '/api/email/verify',
+    SEND_VERIFICATION: '/api/email/send-verification'
   },
-  PRODUCTS: '/products',
-  ENERGY_AUDIT: '/energy-audit'
+  PRODUCTS: '/api/products',
+  ENERGY_AUDIT: '/api/energy-audit',
+  DASHBOARD: {
+    STATS: '/api/dashboard/stats'
+  },
+  SETTINGS: {
+    PROPERTY: '/api/settings/property',
+    ENERGY: '/api/settings/energy'
+  }
 } as const;
+
+// Helper function to get full API URL
+export const getApiUrl = (endpoint: string): string => {
+  return `${API_BASE_URL}${endpoint}`;
+};
+
+export { API_BASE_URL };

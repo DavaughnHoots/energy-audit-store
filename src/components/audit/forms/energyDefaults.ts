@@ -2,116 +2,99 @@
 
 export const occupancyPatternDefaults = {
   'home-all-day': {
-    powerConsumption: '6-8kW',
+    electricBill: 800,
+    gasBill: 100,
+    powerConsumption: 30,
     occupancyHours: {
-      weekdays: '19-24' as const,
-      weekends: '19-24' as const
+      weekday: '19-24',
+      weekend: '19-24'
     },
-    peakUsageTimes: [
-      'Morning (6am-12pm)',
-      'Afternoon (12pm-6pm)',
-      'Evening (6pm-12am)'
-    ]
+    peakUsageTimes: ['Morning (6am-12pm)', 'Evening (6pm-12am)']
   },
   'work-hours': {
-    powerConsumption: '3-5kW',
+    electricBill: 600,
+    gasBill: 80,
+    powerConsumption: 20,
     occupancyHours: {
-      weekdays: '14-16' as const,
-      weekends: '19-24' as const
+      weekday: '13-18',
+      weekend: '19-24'
     },
-    peakUsageTimes: [
-      'Morning (6am-12pm)',
-      'Evening (6pm-12am)'
-    ]
+    peakUsageTimes: ['Morning (6am-12pm)', 'Evening (6pm-12am)']
   },
   'evenings-weekends': {
-    powerConsumption: '2-4kW',
+    electricBill: 400,
+    gasBill: 60,
+    powerConsumption: 15,
     occupancyHours: {
-      weekdays: '7-12' as const,
-      weekends: '13-18' as const
+      weekday: '7-12',
+      weekend: '13-18'
     },
-    peakUsageTimes: [
-      'Evening (6pm-12am)'
-    ]
+    peakUsageTimes: ['Evening (6pm-12am)']
   },
   'variable': {
-    powerConsumption: '2-4kW',
+    electricBill: 500,
+    gasBill: 70,
+    powerConsumption: 25,
     occupancyHours: {
-      weekdays: '7-12' as const,
-      weekends: '13-18' as const
+      weekday: '7-12',
+      weekend: '13-18'
     },
-    peakUsageTimes: [
-      'Morning (6am-12pm)',
-      'Evening (6pm-12am)'
-    ]
+    peakUsageTimes: ['Afternoon (12pm-6pm)', 'Evening (6pm-12am)']
   }
 } as const;
 
-export const seasonDefaults = {
-  'mild-winter': {
-    powerConsumption: '2-4kW',
-    peakUsageTimes: [
-      'Morning (6am-12pm)',
-      'Evening (6pm-12am)'
-    ]
+export const seasonalVariationDefaults = {
+  'highest-summer': {
+    electricBillMultiplier: 1.4,
+    gasBillMultiplier: 0.7,
+    powerConsumptionMultiplier: 1.3
   },
-  'moderate-winter': {
-    powerConsumption: '6-8kW',
-    peakUsageTimes: [
-      'Morning (6am-12pm)',
-      'Evening (6pm-12am)',
-      'Night (12am-6am)'
-    ]
+  'highest-winter': {
+    electricBillMultiplier: 1.3,
+    gasBillMultiplier: 1.5,
+    powerConsumptionMultiplier: 1.2
   },
-  'mild-summer': {
-    powerConsumption: '2-4kW',
-    peakUsageTimes: [
-      'Afternoon (12pm-6pm)',
-      'Evening (6pm-12am)'
-    ]
-  },
-  'moderate-summer': {
-    powerConsumption: '4-6kW',
-    peakUsageTimes: [
-      'Afternoon (12pm-6pm)',
-      'Evening (6pm-12am)'
-    ]
-  },
-  'peak-summer': {
-    powerConsumption: '8-10kW',
-    peakUsageTimes: [
-      'Morning (6am-12pm)',
-      'Afternoon (12pm-6pm)',
-      'Evening (6pm-12am)'
-    ]
-  },
-  'spring-fall': {
-    powerConsumption: '2-4kW',
-    peakUsageTimes: [
-      'Morning (6am-12pm)',
-      'Evening (6pm-12am)'
-    ]
+  'consistent': {
+    electricBillMultiplier: 1.0,
+    gasBillMultiplier: 1.0,
+    powerConsumptionMultiplier: 1.0
   }
 } as const;
 
-export const monthlyBillDefaults = {
-    low: {
-        powerConsumption: '0-2kW',
-        peakUsageTimes: ['Evening (6pm-12am)']
-    },
-    medium: {
-        powerConsumption: '2-4kW',
-        peakUsageTimes: ['Morning (6am-12pm)', 'Evening (6pm-12am)']
-    },
-    high: {
-        powerConsumption: '4-6kW',
-        peakUsageTimes: ['Morning (6am-12pm)', 'Afternoon (12pm-6pm)', 'Evening (6pm-12am)']
+export const monthlyBillRanges = {
+  'low': {
+    range: '0-100',
+    typical: {
+      electric: 75,
+      gas: 25
     }
-}
+  },
+  'medium': {
+    range: '101-250',
+    typical: {
+      electric: 150,
+      gas: 50
+    }
+  },
+  'high': {
+    range: '251+',
+    typical: {
+      electric: 300,
+      gas: 100
+    }
+  }
+} as const;
 
-// Adjust bill categories based on national averages
-export const getBillCategory = (amount: number): keyof typeof monthlyBillDefaults => {
-    if (amount <= 115) return 'low';  
-    if (amount <= 175) return 'medium'; 
-    return 'high';
-};
+export const peakTimeOptions = [
+  { id: 'morning', label: 'Morning (6am-12pm)' },
+  { id: 'afternoon', label: 'Afternoon (12pm-6pm)' },
+  { id: 'evening', label: 'Evening (6pm-12am)' },
+  { id: 'night', label: 'Night (12am-6am)' }
+] as const;
+
+export const occupancyHourOptions = [
+  { value: '0-6', label: '0-6 hours' },
+  { value: '7-12', label: '7-12 hours' },
+  { value: '13-18', label: '13-18 hours' },
+  { value: '19-24', label: '19-24 hours' }
+] as const;

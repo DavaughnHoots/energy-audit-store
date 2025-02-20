@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import EnergyConsumptionSection from '../components/user-settings/EnergyConsumptionSection';
 import HomeConditionsSection from '../components/user-settings/HomeConditionsSection';
 import type { EnergyConsumptionData } from '../components/user-settings/EnergyConsumptionSection';
-import { API_BASE_URL } from '../config/api';
+import { API_ENDPOINTS } from '../config/api';
 
 interface Props {
   initialSection?: 'property' | 'general';
@@ -40,7 +40,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const fetchEnergyData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings/energy`, {
+      const response = await fetch(API_ENDPOINTS.SETTINGS.ENERGY, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -57,7 +57,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleSaveEnergyData = async (data: EnergyConsumptionData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings/energy`, {
+      const response = await fetch(API_ENDPOINTS.SETTINGS.ENERGY, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleSaveHomeConditions = async (data: any) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings/property`, {
+      const response = await fetch(API_ENDPOINTS.SETTINGS.PROPERTY, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings`, {
+      const response = await fetch(`${API_ENDPOINTS.AUTH.PROFILE}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -138,7 +138,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/settings`, {
+      const response = await fetch(`${API_ENDPOINTS.AUTH.PROFILE}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleExportData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings/export`, {
+      const response = await fetch(`${API_ENDPOINTS.AUTH.PROFILE}/export`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -181,7 +181,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleDeleteAccount = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings`, {
+      const response = await fetch(`${API_ENDPOINTS.AUTH.PROFILE}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

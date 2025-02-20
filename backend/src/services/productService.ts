@@ -22,7 +22,16 @@ const mockProducts: Product[] = [
     annualEnergySavings: 80,
     brand: 'EcoLight',
     modelNumber: 'EL-SB-100',
-    warrantyYears: 3
+    warrantyYears: 3,
+    // Required fields from productDataService
+    productUrl: 'https://example.com/smart-led',
+    mainCategory: 'Lighting',
+    subCategory: 'LED Bulbs',
+    efficiency: 'A+',
+    features: ['Smart Controls', 'Energy Efficient', 'Long Lifespan'],
+    marketInfo: 'Residential',
+    energyStarId: 'LED-001',
+    model: 'SB-100'
   },
   {
     id: '2',
@@ -42,9 +51,17 @@ const mockProducts: Product[] = [
     annualEnergySavings: 150,
     brand: 'ClimateIQ',
     modelNumber: 'CIQ-200',
-    warrantyYears: 2
-  },
-  // Add more mock products here
+    warrantyYears: 2,
+    // Required fields from productDataService
+    productUrl: 'https://example.com/smart-thermostat',
+    mainCategory: 'HVAC',
+    subCategory: 'Thermostats',
+    efficiency: 'A++',
+    features: ['AI Learning', 'Smart Scheduling', 'Remote Control'],
+    marketInfo: 'Residential',
+    energyStarId: 'HVAC-001',
+    model: 'CIQ-200'
+  }
 ];
 
 export const productService = {
@@ -64,14 +81,14 @@ export const productService = {
         filteredProducts = filteredProducts.filter(p => p.energyRating === filters.energyRating);
       }
 
-      if (filters.priceRange) {
+      if (filters.priceRange && filters.priceRange.min !== undefined && filters.priceRange.max !== undefined) {
         filteredProducts = filteredProducts.filter(
-          p => p.price >= filters.priceRange!.min && p.price <= filters.priceRange!.max
+          p => p.price !== undefined && p.price >= filters.priceRange!.min && p.price <= filters.priceRange!.max
         );
       }
 
       if (filters.hasRebate) {
-        filteredProducts = filteredProducts.filter(p => p.rebateAmount > 0);
+        filteredProducts = filteredProducts.filter(p => (p.rebateAmount ?? 0) > 0);
       }
 
       if (filters.search) {
@@ -95,8 +112,10 @@ export const productService = {
 
   // Get product categories
   getCategories: async (): Promise<string[]> => {
-    const categories = [...new Set(mockProducts.map(p => p.category))];
-    return categories;
+    const categories = mockProducts
+      .map(p => p.category)
+      .filter((category): category is string => category !== undefined);
+    return [...new Set(categories)];
   }
 };
 

@@ -1,6 +1,6 @@
 -- Create recommendations table with UUID type for user_id
 CREATE TABLE IF NOT EXISTS recommendations (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
