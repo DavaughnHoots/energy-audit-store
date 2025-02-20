@@ -8,10 +8,42 @@ pnpm-debug.log*
 lerna-debug.log*
 *.yaml
 
+# Dependencies
 node_modules
+node_modules/*
+
+# Build
 dist
 dist-ssr
 *.local
+backend/build/
+build/
+
+# Test coverage
+coverage/
+backend/coverage/
+
+# Environment and sensitive files
+.env
+backend/.env
+*.pem
+ed22519.txt*
+
+# Database files (except migrations)
+database_setup.sql
+database_structure.txt
+db_structure.txt
+*.sql
+!backend/src/migrations/*.sql
+
+# Generated and temporary files
+concatenated_project.txt
+project_tree.txt
+file_tree.txt
+*.generated.*
+filesgather.py
+filetreegenerator.py
+generate_db_structure.py
 
 # Editor directories and files
 .vscode/*
@@ -23,15 +55,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Version control
 trunk/
 .trunk/
-node_modules/*
 .git/*
+.trunk/*
+.claudesync/*
 *.idx
 *.pack
 *.sample
 *.git
-# ignore all files in the .git folder
-.git/*
-.trunk/*
-.claudesync/*

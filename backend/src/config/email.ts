@@ -88,8 +88,8 @@ export class EmailConfiguration {
 
         this.templates.set(key, {
           subject: configFile.subject,
-          html: compiledHtml,
-          text: compiledText
+          html: compiledHtml({}),  // Initialize with empty context
+          text: compiledText({})   // Initialize with empty context
         });
       } catch (error) {
         console.error(`Failed to load email template ${key}:`, error);

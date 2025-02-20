@@ -107,7 +107,10 @@ export class SearchService {
         totalPages: Math.ceil(total / limit)
       };
     } catch (error) {
-      throw new SearchError(`Failed to search products: ${error.message}`);
+      if (error instanceof Error) {
+        throw new SearchError(`Failed to search products: ${error.message}`);
+      }
+      throw new SearchError('Failed to search products: Unknown error');
     }
   }
 
@@ -175,7 +178,10 @@ export class SearchService {
         totalPages: Math.ceil(total / limit)
       };
     } catch (error) {
-      throw new SearchError(`Failed to search recommendations: ${error.message}`);
+      if (error instanceof Error) {
+        throw new SearchError(`Failed to search recommendations: ${error.message}`);
+      }
+      throw new SearchError('Failed to search recommendations: Unknown error');
     }
   }
 
@@ -237,7 +243,10 @@ export class SearchService {
         totalPages: Math.ceil(total / limit)
       };
     } catch (error) {
-      throw new SearchError(`Failed to search audit reports: ${error.message}`);
+      if (error instanceof Error) {
+        throw new SearchError(`Failed to search audit reports: ${error.message}`);
+      }
+      throw new SearchError('Failed to search audit reports: Unknown error');
     }
   }
 

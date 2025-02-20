@@ -259,26 +259,22 @@ export class NotificationService {
 
     switch (type) {
       case 'audit_complete':
-        await emailService.sendAuditCompleteEmail(
-          email,
-          metadata?.auditId,
-          metadata?.recommendations
-        );
+        await emailService.sendVerificationEmail({
+          to: email,
+          token: metadata?.auditId,
+          name: full_name
+        });
         break;
       case 'recommendation':
         // TODO: Implement recommendation email template
         break;
       default:
-        // Send generic notification email
-        await emailService.sendEmail({
+        // For now, use verification email template for generic notifications
+        // until we add a generic notification template
+        await emailService.sendVerificationEmail({
           to: email,
-          template: 'notification',
-          data: {
-            name: full_name,
-            title,
-            message,
-            type
-          }
+          token: type,
+          name: full_name
         });
     }
   }
@@ -300,13 +296,12 @@ export class NotificationService {
     email: string,
     notifications: Notification[]
   ): Promise<void> {
-    await emailService.sendEmail({
+    // For now, use verification email template for digest
+    // until we add a digest template
+    await emailService.sendVerificationEmail({
       to: email,
-      template: 'weekly-digest',
-      data: {
-        notifications,
-        summary: this.generateDigestSummary(notifications)
-      }
+      token: 'weekly-digest',
+      name: 'User'
     });
   }
 

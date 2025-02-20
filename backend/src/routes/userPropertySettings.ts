@@ -10,56 +10,30 @@ import { appLogger } from '../config/logger';
 
 const router = express.Router();
 
-// Validation schema for property settings
+// Validation schema for home conditions
 const propertySettingsSchema = z.object({
-  propertyType: z.enum([
-    'single-family',
-    'townhouse',
-    'duplex',
-    'mobile'
-  ], {
-    required_error: "Property type is required",
-    invalid_type_error: "Invalid property type"
+  insulation: z.object({
+    attic: z.enum(['poor', 'average', 'good', 'excellent', 'not-sure']),
+    walls: z.enum(['poor', 'average', 'good', 'excellent', 'not-sure']),
+    basement: z.enum(['poor', 'average', 'good', 'excellent', 'not-sure']),
+    floor: z.enum(['poor', 'average', 'good', 'excellent', 'not-sure'])
   }),
-  
-  constructionPeriod: z.enum([
-    'before-1940',
-    '1940-1959',
-    '1960-1979',
-    '1980-1999',
-    '2000-2019',
-    '2020-newer'
-  ], {
-    required_error: "Construction period is required"
+  windows: z.object({
+    type: z.enum(['single', 'double', 'triple', 'not-sure']),
+    count: z.number().min(0, "Number of windows cannot be negative"),
+    condition: z.enum(['excellent', 'good', 'fair', 'poor']),
+    lastReplaced: z.string().optional()
   }),
-  
-  stories: z.number()
-    .int()
-    .min(1, "Must have at least 1 story")
-    .max(10, "Maximum 10 stories allowed"),
-    
-  squareFootage: z.number()
-    .min(100, "Square footage must be at least 100")
-    .max(50000, "Square footage must not exceed 50,000"),
-    
-  ceilingHeight: z.number()
-    .optional(),
-    
-  foundation: z.enum([
-    'basement',
-    'crawlspace',
-    'slab'
-  ]).optional(),
-    
-  atticType: z.enum([
-    'full',
-    'partial',
-    'none'
-  ]).optional()
+  weatherization: z.object({
+    weatherStripping: z.enum(['door-sweep', 'foam', 'metal', 'none', 'not-sure']),
+    drafts: z.boolean(),
+    visibleGaps: z.boolean(),
+    condensation: z.boolean()
+  })
 });
 
 // Get user's property settings
-router.get('/property', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const result = await pool.query(
       `SELECT property_details 
@@ -153,10 +127,10 @@ const updatePropertyHandler: RequestHandler = async (req: AuthenticatedRequest, 
   }
 };
 
-router.put('/property', [authenticate, rateLimiter, updatePropertyHandler]);
+router.put('/', [authenticate, rateLimiter, updatePropertyHandler]);
 
 // Delete user's property settings
-router.delete('/property', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const client = await pool.connect();
     try {

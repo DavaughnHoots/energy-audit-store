@@ -1,13 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
-import { User } from '../types/auth';
+import { API_ENDPOINTS, getApiUrl } from '@/config/api';
+import { User } from '@/types/auth';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean;
   user: User | null;
   login: (userData: User) => void;
   logout: () => void;
+}
+
+interface AuthState {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  lastVerified: number | null;
+  user: User | null;
+  initialCheckDone: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -15,43 +24,76 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Prevent token refresh recursion
 let isRefreshing = false;
 
+// Constants
+const AUTH_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes before expiry
+
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [authState, setAuthState] = useState<AuthState>({
+    isAuthenticated: false,
+    isLoading: true,
+    lastVerified: null,
+    user: null,
+    initialCheckDone: false
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check authentication status on mount and route changes, with debounce
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    const debouncedCheck = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(checkAuthStatus, 1000);
-    };
+  const fetchWithRetry = async (endpoint: string, options: RequestInit, maxRetries = 3) => {
+    let retryCount = 0;
+    let lastError: Error | null = null;
 
-    debouncedCheck();
+    while (retryCount < maxRetries) {
+      try {
+        const response = await fetch(getApiUrl(endpoint), {
+          ...options,
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          }
+        });
+        
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const delay = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, retryCount) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retryCount++;
+          continue;
+        }
 
-    return () => clearTimeout(timeoutId);
-  }, [location.pathname]);
+        return response;
+      } catch (error) {
+        lastError = error as Error;
+        if (retryCount === maxRetries - 1) throw error;
+        
+        const delay = Math.pow(2, retryCount) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        retryCount++;
+      }
+    }
 
-  // Prevent multiple simultaneous auth checks
-  const [isChecking, setIsChecking] = useState(false);
+    throw lastError || new Error('Max retries exceeded');
+  };
 
   const refreshToken = async () => {
     if (isRefreshing) return false;
     isRefreshing = true;
 
     try {
-      const refreshResponse = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      console.log('Attempting token refresh');
+      const refreshResponse = await fetchWithRetry(
+        API_ENDPOINTS.AUTH.REFRESH,
+        {
+          method: 'POST',
+        }
+      );
 
       if (!refreshResponse.ok) {
         throw new Error('Token refresh failed');
       }
 
+      console.log('Token refresh successful');
       return true;
     } catch (error) {
       console.error('Token refresh failed:', error);
@@ -61,34 +103,61 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }
   };
 
-  const checkAuthStatus = async () => {
-    if (isChecking) return;
-    setIsChecking(true);
+  const checkAuthStatus = useCallback(async (force: boolean = false) => {
+    console.log('Checking auth status:', {
+      force,
+      currentState: {
+        isLoading: authState.isLoading,
+        lastVerified: authState.lastVerified,
+        initialCheckDone: authState.initialCheckDone,
+        timeSinceLastVerification: authState.lastVerified ? Date.now() - authState.lastVerified : null
+      }
+    });
+
+    // Skip check if recently verified (within last 5 minutes) unless forced
+    if (!force && authState.lastVerified && Date.now() - authState.lastVerified < AUTH_CHECK_INTERVAL) {
+      console.log('Skipping auth check - recently verified');
+      return;
+    }
+
+    // Don't set loading state if this is a periodic check
+    if (!authState.initialCheckDone || force) {
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+    }
+
+    console.log('Starting auth check');
 
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.PROFILE}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await fetchWithRetry(
+        API_ENDPOINTS.AUTH.PROFILE,
+        {
+          method: 'GET',
         }
-      });
+      );
 
       if (!response.ok) {
         if (response.status === 401) {
+          console.log('Profile fetch failed with 401, attempting token refresh');
           const refreshed = await refreshToken();
           if (refreshed) {
-            // Retry the profile fetch once with new token
-            const retryResponse = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.PROFILE}`, {
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json'
+            console.log('Token refreshed, retrying profile fetch');
+            const retryResponse = await fetchWithRetry(
+              API_ENDPOINTS.AUTH.PROFILE,
+              {
+                method: 'GET',
               }
-            });
+            );
 
             if (retryResponse.ok) {
               const userData = await retryResponse.json();
-              setUser(userData);
-              setIsAuthenticated(true);
+              console.log('Profile fetch successful after token refresh');
+              setAuthState({
+                isAuthenticated: true,
+                isLoading: false,
+                lastVerified: Date.now(),
+                user: userData,
+                initialCheckDone: true
+              });
               return;
             }
           }
@@ -97,43 +166,102 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       }
 
       const userData = await response.json();
-      setUser(userData);
-      setIsAuthenticated(true);
+      console.log('Profile fetch successful');
+      setAuthState({
+        isAuthenticated: true,
+        isLoading: false,
+        lastVerified: Date.now(),
+        user: userData,
+        initialCheckDone: true
+      });
     } catch (error) {
       console.error('Auth check failed:', error);
-      setIsAuthenticated(false);
-      setUser(null);
-    } finally {
-      setIsChecking(false);
+      setAuthState({
+        isAuthenticated: false,
+        isLoading: false,
+        lastVerified: Date.now(),
+        user: null,
+        initialCheckDone: true
+      });
     }
-  };
+  }, [authState.isLoading, authState.lastVerified, authState.initialCheckDone]);
+
+  // Initial auth check on mount
+  useEffect(() => {
+    console.log('Initial auth check on mount');
+    checkAuthStatus(true);
+  }, []);
+
+  // Periodic auth check
+  useEffect(() => {
+    if (!authState.initialCheckDone) return;
+
+    console.log('Setting up periodic auth check');
+    const interval = setInterval(() => {
+      checkAuthStatus();
+    }, AUTH_CHECK_INTERVAL);
+
+    return () => {
+      console.log('Cleaning up periodic auth check');
+      clearInterval(interval);
+    };
+  }, [checkAuthStatus, authState.initialCheckDone]);
 
   const login = async (userData: User) => {
-    setUser(userData);
-    setIsAuthenticated(true);
-    navigate('/dashboard');
+    console.log('Login called with user data:', userData);
+    setAuthState({
+      isAuthenticated: true,
+      isLoading: false,
+      lastVerified: Date.now(),
+      user: userData,
+      initialCheckDone: true
+    });
+    
+    // Store the attempted URL if it exists
+    const attemptedUrl = sessionStorage.getItem('attemptedUrl');
+    if (attemptedUrl) {
+      console.log('Redirecting to attempted URL:', attemptedUrl);
+      sessionStorage.removeItem('attemptedUrl');
+      navigate(attemptedUrl);
+    } else {
+      console.log('Redirecting to dashboard');
+      navigate('/dashboard');
+    }
   };
 
   const logout = async () => {
     try {
-      await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGOUT}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
+      console.log('Logging out');
+      await fetchWithRetry(
+        API_ENDPOINTS.AUTH.LOGOUT,
+        {
+          method: 'POST',
         }
-      });
+      );
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      setUser(null);
-      setIsAuthenticated(false);
+      setAuthState({
+        isAuthenticated: false,
+        isLoading: false,
+        lastVerified: null,
+        user: null,
+        initialCheckDone: true
+      });
       navigate('/sign-in');
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider 
+      value={{ 
+        isAuthenticated: authState.isAuthenticated,
+        isLoading: authState.isLoading,
+        user: authState.user,
+        login,
+        logout
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

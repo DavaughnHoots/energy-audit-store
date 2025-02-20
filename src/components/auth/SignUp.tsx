@@ -1,7 +1,7 @@
 // src/components/auth/SignUp.tsx
 
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { API_BASE_URL, API_ENDPOINTS } from '@/config/api';
 
@@ -16,6 +16,9 @@ interface FormData {
 }
 
 const SignUp: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const auditId = searchParams.get('auditId');
+  
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
@@ -125,7 +128,8 @@ const SignUp: React.FC = () => {
           email: formData.email,
           password: formData.password,
           phone: formData.phone,
-          address: formData.address
+          address: formData.address,
+          auditId: auditId || undefined
         }),
       });
 

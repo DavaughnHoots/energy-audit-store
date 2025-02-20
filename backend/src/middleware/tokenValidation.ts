@@ -3,7 +3,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/database';
-import { cacheManager } from '../config/cache';
+import { cache } from '../config/cache';
 
 interface TokenValidationError extends Error {
   code?: string;
@@ -18,7 +18,7 @@ export async function validateToken(req: Request, res: Response, next: NextFunct
 
   try {
     // Check token blacklist cache first
-    const isBlacklisted = await cacheManager.get(`blacklisted_token:${token}`);
+    const isBlacklisted = await cache.get(`blacklisted_token:${token}`);
     if (isBlacklisted) {
       throw Object.assign(new Error('Token has been revoked'), { code: 'TOKEN_REVOKED' });
     }
@@ -37,6 +37,9 @@ export async function validateToken(req: Request, res: Response, next: NextFunct
     }
 
     // Check if token needs refresh
+    if (!decoded.iat) {
+      throw Object.assign(new Error('Invalid token: missing iat claim'), { code: 'TOKEN_INVALID' });
+    }
     const tokenAge = Math.floor((Date.now() - decoded.iat * 1000) / 1000);
     const refreshThreshold = 60 * 60; // 1 hour
 
@@ -104,7 +107,7 @@ export async function revokeToken(token: string): Promise<void> {
     await client.query('DELETE FROM sessions WHERE token = $1', [token]);
 
     // Add to blacklist cache
-    await cacheManager.set(`blacklisted_token:${token}`, true, { ttl: 24 * 60 * 60 });
+    await cache.set(`blacklisted_token:${token}`, true, 24 * 60 * 60);
 
     await client.query('COMMIT');
   } catch (error) {

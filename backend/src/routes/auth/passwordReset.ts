@@ -26,10 +26,7 @@ const resetPasswordSchema = z.object({
 
 // Request password reset
 router.post('/request-reset',
-  rateLimiter({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3 // 3 requests per hour
-  }),
+  rateLimiter,
   validateRequest(requestResetSchema),
   async (req, res) => {
     try {
@@ -59,10 +56,7 @@ router.get('/validate-token/:token', async (req, res) => {
 
 // Reset password
 router.post('/reset',
-  rateLimiter({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3 // 3 attempts per hour
-  }),
+  rateLimiter,
   validateRequest(resetPasswordSchema),
   async (req, res) => {
     try {
@@ -74,7 +68,7 @@ router.post('/reset',
         message: 'Password reset successful' 
       });
     } catch (error) {
-      if (error.name === 'PasswordResetError') {
+      if (error instanceof Error && error.name === 'PasswordResetError') {
         res.status(400).json({ error: error.message });
       } else {
         res.status(500).json({ 

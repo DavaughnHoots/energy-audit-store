@@ -2,66 +2,102 @@
 
 export const heatingSystemDefaults = {
   'furnace': {
-    fuelType: 'natural-gas' as const,
-    age: 15,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
-  },
-  'boiler': {
-    fuelType: 'natural-gas' as const,
-    age: 15,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
+    fuel: 'natural-gas' as const,
+    efficiency: 80, // AFUE rating
+    age: 10,
+    lastService: new Date().toISOString().slice(0, 10)
   },
   'heat-pump': {
-    fuelType: 'electric' as const,
+    fuel: 'electricity' as const,
+    efficiency: 250, // HSPF rating
+    age: 8,
+    lastService: new Date().toISOString().slice(0, 10)
+  },
+  'boiler': {
+    fuel: 'natural-gas' as const,
+    efficiency: 85, // AFUE rating
     age: 12,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
+    lastService: new Date().toISOString().slice(0, 10)
   },
   'electric-baseboard': {
-    fuelType: 'electric' as const,
-    age: 10,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
-  },
-  'other': {
-    fuelType: 'natural-gas' as const,
-    age: 10,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
-  }
-} as const;
-
-export const fuelTypeDefaults = {
-  'natural-gas': {
-    age: 12,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
-  },
-  'oil': {
+    fuel: 'electricity' as const,
+    efficiency: 100, // Direct conversion
     age: 15,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().split('T')[0]
+    lastService: new Date().toISOString().slice(0, 10)
   },
-  'electric': {
-    age: 8,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 12)).toISOString().split('T')[0]
-  },
-  'propane': {
+  'not-sure': {
+    fuel: 'not-sure' as const,
+    efficiency: 80,
     age: 10,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
-  },
-  'other': {
-    age: 10,
-    lastService: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0]
+    lastService: new Date().toISOString().slice(0, 10)
   }
 } as const;
 
 export const coolingSystemDefaults = {
-  'central': {
+  'central-ac': {
+    efficiency: 13, // SEER rating
     age: 10
   },
-  'window-unit': {
+  'heat-pump': {
+    efficiency: 14, // SEER rating
+    age: 8
+  },
+  'mini-split': {
+    efficiency: 16, // SEER rating
     age: 5
   },
-  'portable': {
-    age: 3
+  'window-units': {
+    efficiency: 10, // EER rating
+    age: 7
   },
   'none': {
+    efficiency: 0,
     age: 0
   }
+} as const;
+
+export const systemPerformanceDefaults = {
+  'works-well': {
+    heatingEfficiencyMultiplier: 1.0,
+    coolingEfficiencyMultiplier: 1.0,
+    maintenanceRecommendation: 'routine'
+  },
+  'some-problems': {
+    heatingEfficiencyMultiplier: 0.8,
+    coolingEfficiencyMultiplier: 0.8,
+    maintenanceRecommendation: 'service-soon'
+  },
+  'needs-attention': {
+    heatingEfficiencyMultiplier: 0.6,
+    coolingEfficiencyMultiplier: 0.6,
+    maintenanceRecommendation: 'service-urgent'
+  }
+} as const;
+
+export const thermostatDefaults = {
+  'manual': {
+    zoneCount: 1,
+    estimatedSavings: 0
+  },
+  'programmable': {
+    zoneCount: 1,
+    estimatedSavings: 10 // Percentage
+  },
+  'smart': {
+    zoneCount: 1,
+    estimatedSavings: 15 // Percentage
+  }
+} as const;
+
+// Validation ranges for efficiency ratings
+export const efficiencyRanges = {
+  furnace: { min: 80, max: 98.5, unit: 'AFUE' },
+  boiler: { min: 80, max: 95, unit: 'AFUE' },
+  heatPump: { 
+    heating: { min: 7.7, max: 13.5, unit: 'HSPF' },
+    cooling: { min: 13, max: 21, unit: 'SEER' }
+  },
+  centralAC: { min: 13, max: 21, unit: 'SEER' },
+  miniSplit: { min: 15, max: 30, unit: 'SEER' },
+  windowUnit: { min: 9.8, max: 12, unit: 'EER' }
 } as const;

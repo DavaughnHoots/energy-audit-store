@@ -1,66 +1,207 @@
-import dotenv from 'dotenv';
-dotenv.config();
-import express from 'express';
+// Add this at the top of the file
+declare global {
+  namespace Express {
+    interface Request {
+      id: string;
+      user?: any; // TODO: Define proper user type
+    }
+  }
+}
+
+import 'dotenv/config';
+import express, { Request, Response, NextFunction } from 'express';
+import { appLogger, loggerContextMiddleware, LoggerInitializer, createLogMetadata } from './utils/logger';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { standardLimiter, authLimiter, apiLimiter } from './middleware/rateLimitMiddleware';
 import { authenticate } from './middleware/auth';
-import authRouter from './routes/auth';
-import dashboardRouter from './routes/dashboard';
-import userSettingsRouter from './routes/userSettings';
-import userPropertySettingsRouter from './routes/userPropertySettings';
-import energyConsumptionRouter from './routes/energyConsumption';
-import energyAuditRouter from './routes/energyAudit';
+import authRoutes from './routes/auth';
+import dashboardRoutes from './routes/dashboard';
+import energyAuditRoutes from './routes/energyAudit';
+import userPropertySettingsRoutes from './routes/userPropertySettings';
+import { v4 as uuidv4 } from 'uuid';
 
-// Verify all routers are defined
-if (!authRouter || !dashboardRouter || !userSettingsRouter || !userPropertySettingsRouter || !energyConsumptionRouter || !energyAuditRouter) {
-  throw new Error('One or more routers are undefined');
+interface AppError extends Error {
+  status?: number;
+  code?: string;
+}
+
+// Initialize logger before starting server
+try {
+  LoggerInitializer.initialize();
+} catch (error) {
+  console.error('Failed to initialize logger:', error);
+  process.exit(1);
 }
 
 const app = express();
 
-// Middleware
-// Configure CORS with more detailed options
+// Request ID middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  req.id = req.id || uuidv4();
+  res.setHeader('X-Request-ID', req.id);
+  next();
+});
+
+// Apply logger context middleware
+app.use(loggerContextMiddleware);
+
+// Security middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL ? 
-    [process.env.FRONTEND_URL] : 
-    ['http://localhost:5173', 'http://localhost:5174'],
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175'
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],
-  exposedHeaders: ['X-Token-Expired'],
-  maxAge: 86400, // 24 hours in seconds
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Credentials'
+  ],
+  exposedHeaders: ['Set-Cookie', 'Date', 'ETag']
 }));
 
-// Log incoming requests in development
-if (process.env.NODE_ENV !== 'production') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();
-  });
-}
+// Cookie middleware (before rate limiting)
+app.use(cookieParser(process.env.JWT_SECRET));
+
+// Body parsing middleware
 app.use(express.json());
-app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+
+// Rate limiting
+app.use('/api/auth', authLimiter);
+app.use('/api/products', apiLimiter);
+app.use('/api/recommendations', apiLimiter);
+app.use('/', standardLimiter);
 
 // Routes
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', authenticate, dashboardRoutes);
+app.use('/api/energy-audit', energyAuditRoutes);
+app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 
-// Protected routes with validation
-app.use('/api/dashboard', authenticate, dashboardRouter);
-app.use('/api/settings', authenticate, userSettingsRouter);
-app.use('/api/user-property-settings', authenticate, userPropertySettingsRouter);
-app.use('/api/settings/energy', authenticate, energyConsumptionRouter);
-app.use('/api/energy-audit', energyAuditRouter);
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
-// Error handling
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something broke!' });
+// Sanitize error message to prevent sensitive data leakage
+const sanitizeErrorMessage = (message: string): string => {
+  const sensitivePatterns = [
+    /password/i,
+    /secret/i,
+    /token/i,
+    /authorization/i,
+    /key/i,
+    /credential/i
+  ];
+
+  sensitivePatterns.forEach(pattern => {
+    message = message.replace(pattern, '[REDACTED]');
+  });
+
+  return message;
+};
+
+// Enhanced error handling middleware
+app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
+  const requestId = req.id || uuidv4();
+  const errorContext = {
+    requestId,
+    type: 'middleware_error',
+    path: req.path,
+    method: req.method,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+    query: sanitizeErrorMessage(JSON.stringify(req.query)),
+    params: sanitizeErrorMessage(JSON.stringify(req.params)),
+    error: {
+      name: err.name,
+      message: sanitizeErrorMessage(err.message),
+      code: err.code,
+      status: err.status,
+      stack: process.env.NODE_ENV === 'development' ? sanitizeErrorMessage(err.stack || '') : undefined
+    }
+  };
+
+  appLogger.error('Unhandled error', createLogMetadata(req, errorContext));
+
+  const status = err.status || 500;
+  const responseBody = {
+    error: err.code || 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? sanitizeErrorMessage(err.message) : 'An unexpected error occurred',
+    requestId,
+    ...(process.env.NODE_ENV === 'development' && { stack: sanitizeErrorMessage(err.stack || '') })
+  };
+
+  res.status(status).json(responseBody);
+});
+
+// Handle 404 errors with request ID
+app.use((req: Request, res: Response) => {
+  const requestId = req.id || uuidv4();
+  appLogger.warn('Route not found', createLogMetadata(req, {
+    type: '404_error'
+  }));
+
+  res.status(404).json({
+    error: 'Not Found',
+    message: `Cannot ${req.method} ${req.path}`,
+    requestId
+  });
 });
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const server = app.listen(PORT, () => {
+  appLogger.info('Server started', createLogMetadata(undefined, {
+    port: PORT,
+    nodeEnv: process.env.NODE_ENV
+  }));
 });
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error: Error) => {
+  appLogger.error('Uncaught Exception', createLogMetadata(undefined, {
+    type: 'uncaughtException',
+    error
+  }));
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  appLogger.error('Unhandled Rejection', createLogMetadata(undefined, {
+    type: 'unhandledRejection',
+    reason,
+    promise
+  }));
+  // Don't exit the process here as it may be handled
+});
+
+// Graceful shutdown
+const gracefulShutdown = () => {
+  appLogger.info('Received shutdown signal', createLogMetadata(undefined, {
+    type: 'shutdown'
+  }));
+  server.close(() => {
+    appLogger.info('Server closed', createLogMetadata(undefined, {
+      type: 'shutdown'
+    }));
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+export default app;

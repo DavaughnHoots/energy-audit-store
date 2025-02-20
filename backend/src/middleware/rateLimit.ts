@@ -7,9 +7,9 @@ const apiLimiter = new RateLimiterMemory({
   duration: 60, // Per 60 seconds
 });
 
-// Stricter auth endpoints rate limiter - 5 requests per minute per IP
+// Auth endpoints rate limiter - 10 requests per minute per IP
 const authLimiter = new RateLimiterMemory({
-  points: 5, // Number of points
+  points: 10, // Number of points
   duration: 60, // Per 60 seconds
 });
 
@@ -17,7 +17,7 @@ const authLimiter = new RateLimiterMemory({
 const getRateLimitMiddleware = (limiter: RateLimiterMemory) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const ip = req.ip;
+      const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
       await limiter.consume(ip);
       next();
     } catch (error) {

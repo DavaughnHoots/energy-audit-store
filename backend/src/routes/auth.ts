@@ -2,7 +2,7 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { UserAuthService, AuthError, ValidationError } from '../services/userAuthService';
-import { pool } from '../config/database';
+import pool from '../config/database';
 import { authenticate, csrfProtection } from '../middleware/auth';
 import { authRateLimit } from '../middleware/rateLimit';
 
@@ -11,7 +11,8 @@ const COOKIE_CONFIG = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  path: '/'
+  path: '/',
+  domain: 'localhost'
 };
 
 const ACCESS_TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
@@ -31,13 +32,22 @@ const authService = new UserAuthService(pool);
 // Register new user
 router.post('/register', authRateLimit, async (req: Request, res: Response) => {
   try {
-    const { email, password, fullName, phone, address } = req.body;
+    const { email, password, fullName, phone, address, auditId } = req.body;
 
     if (!email || !password || !fullName) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const result = await authService.registerUser(email, password, fullName, req.ip || '127.0.0.1', phone, address);
+    const result = await authService.registerUser(
+      email, 
+      password, 
+      fullName, 
+      req.ip || '127.0.0.1', 
+      phone, 
+      address,
+      auditId
+    );
+    
     // Set cookies
     res.cookie('accessToken', result.token, {
       ...COOKIE_CONFIG,
@@ -68,6 +78,7 @@ router.post('/register', authRateLimit, async (req: Request, res: Response) => {
 router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt:', { email });
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Missing email or password' });
@@ -77,6 +88,7 @@ router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
     await authService.cleanupExpiredTokens();
 
     const result = await authService.loginUser(email, password, req.ip || '127.0.0.1');
+    console.log('Login successful, setting cookies');
 
     // Set cookies
     res.cookie('accessToken', result.token, {
@@ -91,9 +103,11 @@ router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
 
     // Send user data without tokens
     const { token, refreshToken, ...userData } = result;
+    console.log('Sending response with user data');
     res.json({ user: userData });
   } catch (error) {
     if (error instanceof AuthError) {
+      console.error('Auth error during login:', error.message);
       res.status(401).json({ error: error.message });
     } else {
       console.error('Login error:', error);
@@ -112,14 +126,14 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
       await authService.logout(accessToken, refreshToken);
     }
 
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    res.clearCookie('accessToken', COOKIE_CONFIG);
+    res.clearCookie('refreshToken', COOKIE_CONFIG);
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error);
     // Still clear cookies even if blacklisting failed
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    res.clearCookie('accessToken', COOKIE_CONFIG);
+    res.clearCookie('refreshToken', COOKIE_CONFIG);
     res.status(500).json({ error: 'Logout failed, but cookies have been cleared' });
   }
 });
@@ -159,18 +173,37 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
 router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const result = await pool.query(
-      'SELECT id, email, full_name, phone, address, role FROM users WHERE id = $1',
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
-    res.json(result.rows[0]);
+    try {
+      const result = await pool.query(
+        'SELECT id, email, full_name, phone, address, role FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ 
+          error: 'User not found',
+          message: 'The requested user profile could not be found'
+        });
+      }
+
+      res.json(result.rows[0]);
+    } catch (dbError) {
+      console.error('Database error in profile fetch:', dbError);
+      return res.status(500).json({ 
+        error: 'Database error',
+        message: 'Failed to fetch user profile from database'
+      });
+    }
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Profile fetch error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'An unexpected error occurred while fetching the profile'
+    });
   }
 });
 

@@ -1,241 +1,175 @@
 import React, { useState } from 'react';
-import { CurrentConditions } from '../../../../backend/src/types/energyAudit';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { windowTypeDefaults, insulationConditionDefaults, windowConditionDefaults } from './conditionDefaults';
-
-interface CurrentConditionsFormProps {
-  data: CurrentConditions;
-  onInputChange: (
-    section: keyof CurrentConditions,
-    field: string,
-    value: string | number
-  ) => void;
-}
+import { Thermometer } from 'lucide-react';
+import { CurrentConditionsFormProps } from './types';
+import FormSection, { FormSectionAdvanced } from '../FormSection';
+import { FormGrid, SelectField, CheckboxGroup, FormSubsection } from '../FormFields';
+import {
+  windowCountDefaults,
+  temperatureConsistencyDefaults,
+  airLeakOptions
+} from './conditionDefaults';
 
 const CurrentConditionsForm: React.FC<CurrentConditionsFormProps> = ({
   data,
-  onInputChange,
+  onInputChange
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [userModified, setUserModified] = useState<Record<string, boolean>>({});
 
-  // Helper function to update a field if it hasn't been modified by the user
-  const updateIfNotModified = (section: keyof CurrentConditions, field: string, value: any) => {
-    const key = `${section}.${field}`;
-    if (!userModified[key]) {
-      onInputChange(section, field, value);
-    }
-  };
+  const handleBasicChange = (field: keyof typeof data) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const value = e.target.type === 'number' ? parseInt(e.target.value) : e.target.value;
+    onInputChange(field, value);
 
-  // Handle basic field changes and update related advanced fields
-  const handleBasicFieldChange = (section: keyof CurrentConditions, field: string, value: string) => {
-    onInputChange(section, field, value);
-
-    // Update advanced fields based on window type
-    if (section === 'windowType') {
-      const defaults = windowTypeDefaults[value as keyof typeof windowTypeDefaults];
+    // Update advanced fields based on temperature consistency
+    if (field === 'temperatureConsistency') {
+      const defaults = temperatureConsistencyDefaults[value as keyof typeof temperatureConsistencyDefaults];
       if (defaults) {
-        Object.entries(defaults).forEach(([key, defaultValue]) => {
-          if (key === 'windowCondition') {
-            updateIfNotModified('windowCondition', '', defaultValue);
-          } else if (key === 'numWindows') {
-            updateIfNotModified('numWindows', '', defaultValue);
-          } else if (key === 'weatherStripping') {
-            updateIfNotModified('weatherStripping', '', defaultValue);
-          }
-        });
+        onInputChange('insulation', defaults.insulation);
+        onInputChange('windowCondition', defaults.windowCondition);
+        onInputChange('weatherStripping', defaults.weatherStripping);
+        onInputChange('airLeaks', defaults.airLeaks);
       }
     }
 
-    // Update advanced fields based on overall insulation condition
-    if (section === 'insulation' && field === 'walls') {
-      const defaults = insulationConditionDefaults[value as keyof typeof insulationConditionDefaults];
+    // Update advanced fields based on window count
+    if (field === 'windowCount') {
+      const defaults = windowCountDefaults[value as keyof typeof windowCountDefaults];
       if (defaults) {
-        Object.entries(defaults.insulation).forEach(([area, condition]) => {
-          updateIfNotModified('insulation', area, condition);
-        });
-      }
-    }
-
-    // Update advanced fields based on window condition
-    if (section === 'windowCondition') {
-      const defaults = windowConditionDefaults[value as keyof typeof windowConditionDefaults];
-      if (defaults) {
-        Object.entries(defaults).forEach(([key, defaultValue]) => {
-          if (key === 'weatherStripping') {
-            updateIfNotModified('weatherStripping', '', defaultValue);
-          }
-        });
+        onInputChange('numWindows', defaults.numWindows);
+        onInputChange('windowType', defaults.windowType);
+        onInputChange('windowCondition', defaults.windowCondition);
+        onInputChange('weatherStripping', defaults.weatherStripping);
       }
     }
   };
 
-  // Handle advanced field changes
-  const handleAdvancedFieldChange = (section: keyof CurrentConditions, field: string, value: string | number) => {
-    const key = `${section}.${field}`;
-    setUserModified(prev => ({ ...prev, [key]: true }));
-    onInputChange(section, field, value);
+  const handleAdvancedChange = (field: keyof typeof data) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const value = e.target.type === 'number' ? parseInt(e.target.value) : e.target.value;
+    onInputChange(field, value);
   };
 
-  const renderBasicInsulationSelect = (area: keyof typeof data.insulation) => (
-    <div>
-      <label
-        htmlFor={`insulation-${area}`}
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
-        {area.charAt(0).toUpperCase() + area.slice(1)} Insulation
-      </label>
-      <select
-        id={`insulation-${area}`}
-        value={data.insulation[area]}
-        onChange={(e) => handleAdvancedFieldChange('insulation', area, e.target.value)}
-        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-      >
-        <option value="">Select condition</option>
-        <option value="good">Good - No noticeable issues</option>
-        <option value="average">Average - Some minor issues</option>
-        <option value="poor">Poor - Noticeable problems</option>
-        <option value="not-sure">Not Sure</option>
-      </select>
-    </div>
-  );
+  const handleInsulationChange = (area: keyof typeof data.insulation) => (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    onInputChange('insulation', {
+      ...data.insulation,
+      [area]: e.target.value
+    });
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Basic Questions Section */}
-      <div className="space-y-6">
-        <div>
-          <label htmlFor="overallInsulation" className="block text-sm font-medium text-gray-700 mb-2">
-            Overall Insulation Assessment *
-          </label>
-          <select
-            id="overallInsulation"
-            value={data.insulation.walls}
-            onChange={(e) => handleBasicFieldChange('insulation', 'walls', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            required
-          >
-            <option value="">Select overall condition</option>
-            <option value="good">Good - No noticeable issues</option>
-            <option value="average">Average - Some minor issues</option>
-            <option value="poor">Poor - Noticeable problems</option>
-            <option value="not-sure">Not Sure</option>
-          </select>
-        </div>
+    <FormSection
+      title="Current Conditions"
+      description="Tell us about your home's current condition and comfort level."
+      icon={Thermometer}
+      showAdvanced={showAdvanced}
+      onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
+    >
+      {/* Basic Fields */}
+      <FormGrid>
+        <SelectField
+          label="Temperature Consistency Throughout Home"
+          value={data.temperatureConsistency}
+          onChange={handleBasicChange('temperatureConsistency')}
+          options={[
+            { value: 'very-consistent', label: 'Very consistent throughout home' },
+            { value: 'some-variations', label: 'Some noticeable variations' },
+            { value: 'large-variations', label: 'Large variations between areas' }
+          ]}
+          required
+        />
 
-        <div>
-          <label htmlFor="windowType" className="block text-sm font-medium text-gray-700 mb-2">
-            Window Type *
-          </label>
-          <select
-            id="windowType"
-            value={data.windowType}
-            onChange={(e) => handleBasicFieldChange('windowType', '', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            required
-          >
-            <option value="">Select window type</option>
-            <option value="single">Single Pane</option>
-            <option value="double">Double Pane</option>
-            <option value="triple">Triple Pane</option>
-            <option value="not-sure">Not Sure</option>
-          </select>
-        </div>
+        <SelectField
+          label="Number of Windows"
+          value={data.windowCount}
+          onChange={handleBasicChange('windowCount')}
+          options={[
+            { value: 'few', label: 'Few windows (less than 10)' },
+            { value: 'average', label: 'Average amount (10-15)' },
+            { value: 'many', label: 'Many windows (more than 15)' }
+          ]}
+          required
+        />
 
-        <div>
-          <label htmlFor="windowCondition" className="block text-sm font-medium text-gray-700 mb-2">
-            Overall Window Condition *
-          </label>
-          <select
-            id="windowCondition"
-            value={data.windowCondition}
-            onChange={(e) => handleBasicFieldChange('windowCondition', '', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            required
-          >
-            <option value="">Select condition</option>
-            <option value="excellent">Excellent - Like new</option>
-            <option value="good">Good - Minor wear</option>
-            <option value="fair">Fair - Some issues</option>
-            <option value="poor">Poor - Major issues</option>
-          </select>
-        </div>
-      </div>
+        <CheckboxGroup
+          label="Air Leaks and Drafts"
+          options={airLeakOptions}
+          value={data.airLeaks}
+          onChange={(value) => onInputChange('airLeaks', value)}
+          helpText="Select all that apply"
+        />
+      </FormGrid>
 
-      {/* Advanced Options Toggle */}
-      <div className="border-t pt-4">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900"
-        >
-          {showAdvanced ? (
-            <ChevronUp className="h-4 w-4 mr-2" />
-          ) : (
-            <ChevronDown className="h-4 w-4 mr-2" />
-          )}
-          {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
-        </button>
-      </div>
-
-      {/* Advanced Questions Section */}
+      {/* Advanced Fields */}
       {showAdvanced && (
-        <div className="space-y-6 bg-gray-50 p-4 rounded-lg">
-          <div className="text-sm text-gray-500 mb-4">
-            Advanced options help us provide more accurate recommendations.
-            Default values are automatically set based on your basic selections, but you can modify them if needed.
-          </div>
+        <FormSectionAdvanced>
+          {/* Insulation Assessment */}
+          <FormSubsection title="Detailed Insulation Assessment">
+            <FormGrid>
+              {Object.entries(data.insulation).map(([area, value]) => (
+                <SelectField
+                  key={area}
+                  label={`${area.charAt(0).toUpperCase() + area.slice(1)} Insulation`}
+                  value={value}
+                  onChange={handleInsulationChange(area as keyof typeof data.insulation)}
+                  options={[
+                    { value: 'good', label: 'Good - No noticeable issues' },
+                    { value: 'average', label: 'Average - Some minor issues' },
+                    { value: 'poor', label: 'Poor - Noticeable problems' },
+                    { value: 'not-sure', label: 'Not Sure' }
+                  ]}
+                />
+              ))}
+            </FormGrid>
+          </FormSubsection>
 
-          {/* Detailed Insulation Assessment */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Detailed Insulation Assessment</h3>
-            {renderBasicInsulationSelect('attic')}
-            {renderBasicInsulationSelect('walls')}
-            {renderBasicInsulationSelect('basement')}
-            {renderBasicInsulationSelect('floor')}
-          </div>
+          {/* Window Details */}
+          <FormSubsection title="Window Details">
+            <FormGrid>
+              <SelectField
+                label="Window Type"
+                value={data.windowType}
+                onChange={handleAdvancedChange('windowType')}
+                options={[
+                  { value: 'single', label: 'Single Pane' },
+                  { value: 'double', label: 'Double Pane' },
+                  { value: 'triple', label: 'Triple Pane' },
+                  { value: 'not-sure', label: 'Not Sure' }
+                ]}
+              />
 
-          <div>
-            <label htmlFor="numWindows" className="block text-sm font-medium text-gray-700 mb-2">
-              Number of Windows
-            </label>
-            <input
-              type="number"
-              id="numWindows"
-              value={data.numWindows}
-              onChange={(e) => {
-                const value = parseInt(e.target.value);
-                if (value >= 0) { // Ensure non-negative
-                  handleAdvancedFieldChange('numWindows', '', value);
-                }
-              }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-              min="0"
-              required
-            />
-            <p className="mt-1 text-sm text-gray-500">Must be a non-negative number</p>
-          </div>
+              <SelectField
+                label="Window Condition"
+                value={data.windowCondition}
+                onChange={handleAdvancedChange('windowCondition')}
+                options={[
+                  { value: 'excellent', label: 'Excellent - Like new' },
+                  { value: 'good', label: 'Good - Minor wear' },
+                  { value: 'fair', label: 'Fair - Some issues' },
+                  { value: 'poor', label: 'Poor - Major issues' }
+                ]}
+              />
 
-          <div>
-            <label htmlFor="weatherStripping" className="block text-sm font-medium text-gray-700 mb-2">
-              Weather Stripping Type
-            </label>
-            <select
-              id="weatherStripping"
-              value={data.weatherStripping}
-              onChange={(e) => handleAdvancedFieldChange('weatherStripping', '', e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            >
-              <option value="not-sure">Not Sure</option>
-              <option value="door-sweep">Door Sweep</option>
-              <option value="foam">Foam</option>
-              <option value="metal">Metal</option>
-              <option value="none">None</option>
-            </select>
-          </div>
-        </div>
+              <SelectField
+                label="Weather Stripping Type"
+                value={data.weatherStripping}
+                onChange={handleAdvancedChange('weatherStripping')}
+                options={[
+                  { value: 'not-sure', label: 'Not Sure' },
+                  { value: 'door-sweep', label: 'Door Sweep' },
+                  { value: 'foam', label: 'Foam' },
+                  { value: 'metal', label: 'Metal' },
+                  { value: 'none', label: 'None' }
+                ]}
+              />
+            </FormGrid>
+          </FormSubsection>
+        </FormSectionAdvanced>
       )}
-    </div>
+    </FormSection>
   );
 };
 
