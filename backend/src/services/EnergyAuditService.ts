@@ -198,7 +198,7 @@ export class EnergyAuditService {
           `INSERT INTO audit_recommendations (
             audit_id, category, priority, title,
             description, estimated_savings, estimated_cost,
-            payback_period, implementation_status
+            payback_period, status
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [
             auditId,
@@ -209,7 +209,7 @@ export class EnergyAuditService {
             rec.estimatedSavings,
             rec.estimatedCost,
             rec.paybackPeriod,
-            'pending'
+            'active'
           ]
         );
       }
@@ -242,7 +242,7 @@ export class EnergyAuditService {
         title: 'Improve Home Insulation',
         description: 'Add or upgrade insulation in walls and attic',
         priority: 'high',
-        status: 'pending',
+        status: 'active',
         estimatedSavings: 500,
         estimatedCost: 2000,
         paybackPeriod: 4,
@@ -260,7 +260,7 @@ export class EnergyAuditService {
         title: 'Upgrade Windows',
         description: 'Replace single-pane windows with double-pane',
         priority: 'medium',
-        status: 'pending',
+        status: 'active',
         estimatedSavings: 300,
         estimatedCost: 5000,
         paybackPeriod: 16.7,
@@ -278,7 +278,7 @@ export class EnergyAuditService {
         title: 'HVAC Maintenance/Upgrade',
         description: 'Schedule HVAC maintenance or consider upgrade',
         priority: 'high',
-        status: 'pending',
+        status: 'active',
         estimatedSavings: 400,
         estimatedCost: 1000,
         paybackPeriod: 2.5,
@@ -515,7 +515,7 @@ export class EnergyAuditService {
       SET status = $1,
           actual_savings = COALESCE($2, actual_savings),
           notes = COALESCE($3, notes),
-          implementation_date = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE implementation_date END,
+          implementation_date = CASE WHEN $1 = 'implemented' THEN CURRENT_TIMESTAMP ELSE implementation_date END,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $4 AND audit_id = $5`,
       [status, actualSavings, notes, recommendationId, auditId]

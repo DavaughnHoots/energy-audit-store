@@ -42,6 +42,10 @@ class DashboardService {
   private readonly CACHE_TTL = 300; // 5 minutes
   private readonly REFRESH_INTERVAL = 60000; // 1 minute
 
+  async invalidateUserCache(userId: string): Promise<void> {
+    await cache.del(`dashboard_stats:${userId}`);
+  }
+
   async getUserStats(userId: string): Promise<DashboardStats> {
     const cacheKey = `dashboard_stats:${userId}`;
     const cachedStats = await cache.get<DashboardStats>(cacheKey);

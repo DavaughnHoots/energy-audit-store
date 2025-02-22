@@ -97,7 +97,7 @@ export interface EnergyAuditData {
 }
 
 export type RecommendationPriority = 'high' | 'medium' | 'low';
-export type RecommendationStatus = 'pending' | 'in_progress' | 'completed' | 'dismissed';
+export type RecommendationStatus = 'active' | 'implemented';
 
 export interface AuditRecommendation {
   id: string;

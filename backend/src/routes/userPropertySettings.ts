@@ -7,10 +7,12 @@ import { rateLimiter } from '../middleware/security';
 import { z } from 'zod';
 import { pool } from '../config/database';
 import { appLogger } from '../config/logger';
+import { propertySettingsService } from '../services/propertySettingsService';
+import { UpdateWindowMaintenanceDto, UpdateWeatherizationDto } from '../types/propertySettings';
 
 const router = express.Router();
 
-// Validation schema for home conditions
+// Validation schemas
 const propertySettingsSchema = z.object({
   insulation: z.object({
     attic: z.enum(['poor', 'average', 'good', 'excellent', 'not-sure']),
@@ -32,6 +34,26 @@ const propertySettingsSchema = z.object({
   })
 });
 
+const windowMaintenanceSchema = z.object({
+  windowCount: z.number().min(0).optional(),
+  lastReplacementDate: z.string().nullable().optional(),
+  nextMaintenanceDate: z.string().nullable().optional(),
+  maintenanceNotes: z.string().nullable().optional()
+});
+
+const weatherizationSchema = z.object({
+  inspectionDate: z.string().optional(),
+  condensationIssues: z.object({
+    locations: z.array(z.string()),
+    severity: z.enum(['none', 'mild', 'moderate', 'severe'])
+  }).optional(),
+  draftLocations: z.object({
+    locations: z.array(z.string()),
+    severity: z.enum(['none', 'mild', 'moderate', 'severe'])
+  }).optional(),
+  notes: z.string().nullable().optional()
+});
+
 // Get user's property settings
 router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -50,6 +72,58 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res: Response) =
   } catch (error) {
     appLogger.error('Error fetching property settings:', { error, userId: req.user!.id });
     res.status(500).json({ error: 'Failed to fetch property settings' });
+  }
+});
+
+// Window Maintenance Routes
+router.get('/windows', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const maintenance = await propertySettingsService.getWindowMaintenance(req.user!.id);
+    res.json(maintenance);
+  } catch (error) {
+    appLogger.error('Error fetching window maintenance:', { error, userId: req.user!.id });
+    res.status(500).json({ error: 'Failed to fetch window maintenance data' });
+  }
+});
+
+router.put('/windows', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const data = windowMaintenanceSchema.parse(req.body) as UpdateWindowMaintenanceDto;
+    const updated = await propertySettingsService.updateWindowMaintenance(req.user!.id, data);
+    res.json(updated);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Validation failed', details: error.errors });
+    } else {
+      appLogger.error('Error updating window maintenance:', { error, userId: req.user!.id });
+      res.status(500).json({ error: 'Failed to update window maintenance data' });
+    }
+  }
+});
+
+// Weatherization Monitoring Routes
+router.get('/weatherization', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const monitoring = await propertySettingsService.getWeatherizationMonitoring(req.user!.id);
+    res.json(monitoring);
+  } catch (error) {
+    appLogger.error('Error fetching weatherization monitoring:', { error, userId: req.user!.id });
+    res.status(500).json({ error: 'Failed to fetch weatherization data' });
+  }
+});
+
+router.put('/weatherization', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const data = weatherizationSchema.parse(req.body) as UpdateWeatherizationDto;
+    const updated = await propertySettingsService.updateWeatherizationMonitoring(req.user!.id, data);
+    res.json(updated);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Validation failed', details: error.errors });
+    } else {
+      appLogger.error('Error updating weatherization monitoring:', { error, userId: req.user!.id });
+      res.status(500).json({ error: 'Failed to update weatherization data' });
+    }
   }
 });
 

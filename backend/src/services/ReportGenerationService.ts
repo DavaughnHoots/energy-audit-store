@@ -215,7 +215,7 @@ export class ReportGenerationService {
       .moveDown();
 
     // Summary
-    const implementedRecs = recommendations.filter(r => r.status === 'completed');
+    const implementedRecs = recommendations.filter(r => r.status === 'implemented');
     const totalEstimatedSavings = recommendations.reduce((sum, r) => sum + r.estimatedSavings, 0);
     const totalActualSavings = implementedRecs.reduce((sum, r) => sum + (r.actualSavings || 0), 0);
     
