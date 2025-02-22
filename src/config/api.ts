@@ -22,7 +22,12 @@ export const API_ENDPOINTS = {
   },
   SETTINGS: {
     PROPERTY: '/api/settings/property',
-    ENERGY: '/api/settings/energy'
+    WINDOWS: '/api/settings/property/windows',
+    WEATHERIZATION: '/api/settings/property/weatherization'
+  },
+  RECOMMENDATIONS: {
+    UPDATE_STATUS: (id: string) => `/api/recommendations/${id}/status`,
+    UPDATE_SAVINGS: (id: string) => `/api/recommendations/${id}/savings`
   }
 } as const;
 

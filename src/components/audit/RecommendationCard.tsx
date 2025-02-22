@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { API_BASE_URL } from '@/config/api';
+import { API_ENDPOINTS } from '@/config/api';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
@@ -45,7 +45,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE_URL}/recommendations/${recommendation.id}/status`, {
+      const response = await fetch(API_ENDPOINTS.RECOMMENDATIONS.UPDATE_STATUS(recommendation.id), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE_URL}/recommendations/${recommendation.id}/savings`, {
+      const response = await fetch(API_ENDPOINTS.RECOMMENDATIONS.UPDATE_SAVINGS(recommendation.id), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

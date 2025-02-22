@@ -19,6 +19,7 @@ import authRoutes from './routes/auth';
 import dashboardRoutes from './routes/dashboard';
 import energyAuditRoutes from './routes/energyAudit';
 import userPropertySettingsRoutes from './routes/userPropertySettings';
+import recommendationsRoutes from './routes/recommendations';
 import { v4 as uuidv4 } from 'uuid';
 
 interface AppError extends Error {
@@ -88,6 +89,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/energy-audit', energyAuditRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
+app.use('/api/recommendations', authenticate, recommendationsRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
