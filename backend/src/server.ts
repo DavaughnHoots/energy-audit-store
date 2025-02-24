@@ -38,6 +38,9 @@ try {
 
 const app = express();
 
+// Trust proxy - required for Heroku
+app.set('trust proxy', 1);
+
 // Request ID middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.id = req.id || uuidv4();
