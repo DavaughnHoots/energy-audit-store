@@ -7,6 +7,7 @@ const createLimiter = (max: number, windowMs: number = 15 * 60 * 1000) => {
     max,
     standardHeaders: true,
     legacyHeaders: false,
+    skipFailedRequests: true, // Skip failed requests (like 404s)
   }) as unknown as RequestHandler;
 };
 
