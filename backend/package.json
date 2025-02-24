@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "rimraf build && tsc",
+    "build": "rimraf build && tsc && cp -r src/migrations build/",
     "start": "node build/server.js",
     "postinstall": "npm run build",
     "test": "jest --config jest.config.js --detectOpenHandles",
