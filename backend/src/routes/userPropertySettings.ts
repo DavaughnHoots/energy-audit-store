@@ -1,14 +1,14 @@
 // backend/src/routes/userPropertySettings.ts
 
 import express, { Response, RequestHandler } from 'express';
-import { authenticate } from '../middleware/auth';
-import { AuthenticatedRequest } from '../types/auth';
-import { rateLimiter } from '../middleware/security';
+import { authenticate } from '../middleware/auth.js';
+import { AuthenticatedRequest } from '../types/auth.js';
+import { rateLimiter } from '../middleware/security.js';
 import { z } from 'zod';
 import { pool } from '../config/database.js';
 import { appLogger } from '../config/logger.js';
-import { propertySettingsService } from '../services/propertySettingsService';
-import { UpdateWindowMaintenanceDto, UpdateWeatherizationDto } from '../types/propertySettings';
+import { propertySettingsService } from '../services/propertySettingsService.js';
+import { UpdateWindowMaintenanceDto, UpdateWeatherizationDto } from '../types/propertySettings.js';
 
 const router = express.Router();
 

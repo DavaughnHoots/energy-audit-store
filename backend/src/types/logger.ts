@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { User } from './auth';
+import { User } from './auth.js';
 
 // Logger configuration types
 export interface LoggerConfig {

@@ -11,7 +11,7 @@ import {
   AuditRecommendation,
   RecommendationStatus,
   RecommendationPriority
-} from '../types/energyAudit';
+} from '../types/energyAudit.js';
 
 interface DbRecommendation {
   id: string;

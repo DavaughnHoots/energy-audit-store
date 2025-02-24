@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { reportRateLimit, trackReportGeneration } from '../middleware/reportRateLimit';
-import { appLogger } from '../config/logger';
+import { reportRateLimit, trackReportGeneration } from '../middleware/reportRateLimit.js';
+import { appLogger } from '../config/logger.js';
 
 // Extend Express Request type
 interface AuthenticatedRequest extends Request {

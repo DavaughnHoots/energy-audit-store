@@ -1,7 +1,7 @@
 // backend/src/tests/calculationService.test.ts
 
-import { CalculationService } from '../services/calculationService';
-import { CalculationError, CalculationErrorType } from '../types/calculations';
+import { CalculationService } from '../services/calculationService.js';
+import { CalculationError, CalculationErrorType } from '../types/calculations.js';
 
 describe('CalculationService', () => {
   let calculationService: CalculationService;

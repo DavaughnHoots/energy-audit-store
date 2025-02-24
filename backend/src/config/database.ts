@@ -1,5 +1,5 @@
 import { Pool, PoolConfig } from 'pg';
-import { appLogger, createLogMetadata } from './logger';
+import { appLogger, createLogMetadata } from './logger.js';
 
 // Parse DATABASE_URL for Heroku
 const parseDbUrl = (url: string): PoolConfig => {

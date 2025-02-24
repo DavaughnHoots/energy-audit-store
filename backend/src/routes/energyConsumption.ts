@@ -1,7 +1,7 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth';
-import { AuthenticatedRequest } from '../types/auth';
-import { EnergyConsumptionService } from '../services/energyConsumptionService';
+import { authenticate } from '../middleware/auth.js';
+import { AuthenticatedRequest } from '../types/auth.js';
+import { EnergyConsumptionService } from '../services/energyConsumptionService.js';
 
 const router = express.Router();
 const energyConsumptionService = new EnergyConsumptionService();

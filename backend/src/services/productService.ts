@@ -1,6 +1,6 @@
 // src/services/productService.ts
 
-import { Product, ProductFilters } from '../types/product';
+import { Product, ProductFilters } from '../types/product.js';
 
 // Mock data - replace with actual API calls later
 const mockProducts: Product[] = [

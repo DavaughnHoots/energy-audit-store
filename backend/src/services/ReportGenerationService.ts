@@ -1,8 +1,8 @@
 import PDFDocument from 'pdfkit';
 import { createCanvas } from 'canvas';
-import { Chart } from 'chart.js/auto';
-import { EnergyAuditData, AuditRecommendation } from '../types/energyAudit';
-import { dashboardService } from './dashboardService';
+import { Chart, TooltipItem } from 'chart.js/auto';
+import { EnergyAuditData, AuditRecommendation } from '../types/energyAudit.js';
+import { dashboardService } from './dashboardService.js';
 
 export class ReportGenerationService {
   private async generateSavingsChart(
@@ -94,8 +94,8 @@ export class ReportGenerationService {
           },
           tooltip: {
             callbacks: {
-              label: (context: any) => {
-                const value = context.raw;
+              label: (tooltipItem: TooltipItem<'pie'>) => {
+                const value = tooltipItem.raw as number;
                 return `${value.toFixed(1)}% of total energy use`;
               }
             }
@@ -172,9 +172,9 @@ export class ReportGenerationService {
       .moveDown();
 
     // Sort recommendations by priority
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
     const sortedRecommendations = [...recommendations].sort(
-      (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
+      (a, b) => (priorityOrder[a.priority] ?? 0) - (priorityOrder[b.priority] ?? 0)
     );
 
     for (const rec of sortedRecommendations) {

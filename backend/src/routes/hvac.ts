@@ -1,7 +1,7 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth';
-import { AuthenticatedRequest } from '../types/auth';
-import { validateHVACData } from '../middleware/hvacValidators';
+import { authenticate } from '../middleware/auth.js';
+import { AuthenticatedRequest } from '../types/auth.js';
+import { validateHVACData } from '../middleware/hvacValidators.js';
 import { pool } from '../config/database.js';
 import { appLogger } from '../config/logger.js';
 

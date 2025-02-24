@@ -1,10 +1,10 @@
 // src/routes/auth.ts
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { UserAuthService, AuthError, ValidationError } from '../services/userAuthService';
+import { UserAuthService, AuthError, ValidationError } from '../services/userAuthService.js';
 import pool from '../config/database.js';
-import { authenticate, csrfProtection } from '../middleware/auth';
-import { authRateLimit } from '../middleware/rateLimit';
+import { authenticate, csrfProtection } from '../middleware/auth.js';
+import { authRateLimit } from '../middleware/rateLimit.js';
 
 // Cookie configuration
 const COOKIE_CONFIG = {
@@ -110,7 +110,7 @@ router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
       console.error('Auth error during login:', error.message);
       res.status(401).json({ error: error.message });
     } else {
-      console.error('Login error:', error);
+      console.error('Login error:', error instanceof Error ? error.message : String(error));
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -130,7 +130,7 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
     res.clearCookie('refreshToken', COOKIE_CONFIG);
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('Logout error:', error instanceof Error ? error.message : String(error));
     // Still clear cookies even if blacklisting failed
     res.clearCookie('accessToken', COOKIE_CONFIG);
     res.clearCookie('refreshToken', COOKIE_CONFIG);
@@ -161,9 +161,10 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
 
     res.json({ message: 'Tokens refreshed successfully' });
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof AuthError) {
       res.status(401).json({ error: error.message });
     } else {
+      console.error('Token refresh error:', error instanceof Error ? error.message : String(error));
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -192,14 +193,14 @@ router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => 
 
       res.json(result.rows[0]);
     } catch (dbError) {
-      console.error('Database error in profile fetch:', dbError);
+      console.error('Database error in profile fetch:', dbError instanceof Error ? dbError.message : String(dbError));
       return res.status(500).json({ 
         error: 'Database error',
         message: 'Failed to fetch user profile from database'
       });
     }
   } catch (error) {
-    console.error('Profile fetch error:', error);
+    console.error('Profile fetch error:', error instanceof Error ? error.message : String(error));
     res.status(500).json({ 
       error: 'Internal server error',
       message: 'An unexpected error occurred while fetching the profile'
@@ -233,7 +234,7 @@ router.put('/profile', authenticate, csrfProtection, async (req: AuthRequest, re
 
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Profile update error:', error);
+    console.error('Profile update error:', error instanceof Error ? error.message : String(error));
     res.status(500).json({ error: 'Failed to update profile' });
   }
 });
@@ -267,6 +268,7 @@ router.post('/password-reset-request', authRateLimit, async (req: Request, res: 
       res.json({ message: 'If an account exists, a reset link will be sent' });
     }
   } catch (error) {
+    console.error('Password reset request error:', error instanceof Error ? error.message : String(error));
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -295,6 +297,7 @@ router.post('/password-reset', authRateLimit, async (req: Request, res: Response
 
     res.json({ message: 'Password reset successful' });
   } catch (error) {
+    console.error('Password reset error:', error instanceof Error ? error.message : String(error));
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -1,8 +1,8 @@
 // backend/src/services/recommendationService.ts
 
 import { Pool } from 'pg';
-import { Product } from '../types/product';
-import { EnergyAuditData } from '../types/energyAudit';
+import { Product } from '../types/product.js';
+import { EnergyAuditData } from '../types/energyAudit.js';
 
 export interface Recommendation {
   id: string;

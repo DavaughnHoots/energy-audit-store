@@ -3,7 +3,7 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { emailService } from '../emailService';
+import { emailService } from '../emailService.js';
 
 const SALT_ROUNDS = 12;
 const VERIFICATION_EXPIRY = '24h';

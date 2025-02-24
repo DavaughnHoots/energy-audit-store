@@ -1,11 +1,11 @@
 // backend/src/routes/products.ts
 
 import express from 'express';
-import { authenticate } from '../middleware/auth';
-import { apiLimiter } from '../middleware/security';
-import ProductDataService from '../services/productDataService';
+import { authenticate } from '../middleware/auth.js';
+import { apiLimiter } from '../middleware/security.js';
+import ProductDataService from '../services/productDataService.js';
 import pool from '../config/database.js';
-import { AuthenticatedRequest } from '../types/auth';
+import { AuthenticatedRequest } from '../types/auth.js';
 
 const router = express.Router();
 const productService = new ProductDataService();

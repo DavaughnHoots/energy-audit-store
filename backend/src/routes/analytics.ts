@@ -1,9 +1,9 @@
 // backend/src/routes/analytics.ts
 
 import express from 'express';
-import { authenticate, requireRole } from '../middleware/auth';
-import { rateLimiter } from '../middleware/security';
-import { AnalyticsService } from '../services/analyticsService';
+import { authenticate, requireRole } from '../middleware/auth.js';
+import { rateLimiter } from '../middleware/security.js';
+import { AnalyticsService } from '../services/analyticsService.js';
 import { pool } from '../config/database.js';
 
 const router = express.Router();

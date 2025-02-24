@@ -1,9 +1,9 @@
 // src/routes/userSettings.ts
 
 import express, { Response } from 'express';
-import { authenticate, requireRole } from '../middleware/auth';
-import { AuthenticatedRequest } from '../types/auth';
-import { UserSettingsService } from '../services/userSettingsService';
+import { authenticate, requireRole } from '../middleware/auth.js';
+import { AuthenticatedRequest } from '../types/auth.js';
+import { UserSettingsService } from '../services/userSettingsService.js';
 import { pool } from '../config/database.js';
 import { appLogger } from '../config/logger.js';
 
