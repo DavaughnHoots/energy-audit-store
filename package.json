@@ -13,7 +13,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "start": "node backend/build/server.js",
-    "heroku-postbuild": "npm install && tsc -p backend/tsconfig.json && tsc && vite build"
+    "heroku-postbuild": "npm install && tsc && vite build",
+    "postinstall": "cd backend && npm install"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.5",
