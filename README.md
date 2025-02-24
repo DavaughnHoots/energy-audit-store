@@ -95,9 +95,9 @@ A marketplace platform that helps homeowners find energy-efficient products, per
    PORT=5000
    DB_HOST=localhost
    DB_PORT=5432
-   DB_NAME=energy_efficient_store
+   DB_NAME=postgres
    DB_USER=postgres
-   DB_PASSWORD=your_password
+   DB_PASSWORD=
    JWT_SECRET=your_secret_key
    ```
 
