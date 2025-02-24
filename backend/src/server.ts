@@ -106,8 +106,8 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Serve static files from the React app
-// In production, the frontend build is in ../../dist (relative to build/server.js)
-const staticPath = path.join(__dirname, '../../dist');
+// In production, the frontend build is in ../dist (relative to build/server.js)
+const staticPath = path.join(__dirname, '../dist');
 app.use(express.static(staticPath));
 
 // Sanitize error message to prevent sensitive data leakage
