@@ -1,7 +1,8 @@
 // src/config/api.ts
 
-// Base URL will be relative since we're using Vite's proxy
-const API_BASE_URL = '';
+// In production, API calls will be made to the same origin
+// In development, we use Vite's proxy
+const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : '';
 
 export const API_ENDPOINTS = {
   AUTH: {
