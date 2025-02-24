@@ -1,1 +1,1 @@
-web: bash build.sh && cd backend && node build/server.js
+web: bash build.sh && node backend/build/server.js
