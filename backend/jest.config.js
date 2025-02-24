@@ -1,8 +1,18 @@
-module.exports = {
-  transform: {
-    '^.+\\.ts$': 'ts-jest'
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+export default {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  extensionsToTreatAsEsm: ['.ts'],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  testRegex: '/src/__tests__/.*\\.test\\.ts$',
-  moduleFileExtensions: ['ts', 'js'],
-  testEnvironment: 'node'
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: './tsconfig.test.json'
+      },
+    ],
+  },
 };
