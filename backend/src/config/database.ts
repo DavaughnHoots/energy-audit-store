@@ -1,8 +1,10 @@
-import { Pool, PoolConfig } from 'pg';
+import pkg from 'pg';
 import { appLogger, createLogMetadata } from './logger.js';
 
+const { Pool } = pkg;
+
 // Parse DATABASE_URL for Heroku
-const parseDbUrl = (url: string): PoolConfig => {
+const parseDbUrl = (url: string): pkg.PoolConfig => {
   const pattern = /postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/;
   const matches = url.match(pattern);
   
@@ -27,7 +29,7 @@ const parseDbUrl = (url: string): PoolConfig => {
 };
 
 // Configure database connection based on environment
-export const dbConfig: PoolConfig = process.env.DATABASE_URL 
+export const dbConfig: pkg.PoolConfig = process.env.DATABASE_URL 
   ? parseDbUrl(process.env.DATABASE_URL)
   : {
       user: 'postgres',
