@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "ES2020",
     "module": "ESNext",
-    "lib": ["es6", "dom"],
+    "moduleResolution": "node",
+    "lib": ["ES2020", "dom"],
     "allowJs": true,
     "outDir": "build",
     "rootDir": "src",
@@ -11,8 +12,10 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "types": ["node", "jest", "express"],
-    "moduleResolution": "node",
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src/**/*"],

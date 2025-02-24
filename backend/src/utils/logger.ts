@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { Request, Response, NextFunction } from 'express';
 import { AsyncLocalStorage } from 'async_hooks';
-import { LogMetadata, LoggerConfig, DEFAULT_CONFIG, ILogger } from '../types/logger';
+import { LogMetadata, LoggerConfig, DEFAULT_CONFIG, ILogger } from '../types/logger.js';
 
 // Create the logger instance
 const logger = winston.createLogger({
