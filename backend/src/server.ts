@@ -8,19 +8,19 @@ declare global {
   }
 }
 
-import 'dotenv/config.js';
+import 'dotenv/config';
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import { appLogger, loggerContextMiddleware, LoggerInitializer, createLogMetadata } from './utils/logger.js';
+import { appLogger, loggerContextMiddleware, LoggerInitializer, createLogMetadata } from './utils/logger';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { standardLimiter, authLimiter, apiLimiter } from './middleware/rateLimitMiddleware.js';
-import { authenticate } from './middleware/auth.js';
-import authRoutes from './routes/auth.js';
-import dashboardRoutes from './routes/dashboard.js';
-import energyAuditRoutes from './routes/energyAudit.js';
-import userPropertySettingsRoutes from './routes/userPropertySettings.js';
-import recommendationsRoutes from './routes/recommendations.js';
+import { standardLimiter, authLimiter, apiLimiter } from './middleware/rateLimitMiddleware';
+import { authenticate } from './middleware/auth';
+import authRoutes from './routes/auth';
+import dashboardRoutes from './routes/dashboard';
+import energyAuditRoutes from './routes/energyAudit';
+import userPropertySettingsRoutes from './routes/userPropertySettings';
+import recommendationsRoutes from './routes/recommendations';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
