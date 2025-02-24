@@ -62,7 +62,7 @@ app.use(cors({
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
-    process.env.FRONTEND_URL || 'https://your-app-name.herokuapp.com'
+    'https://energy-audit-store-e66479ed4f2b.herokuapp.com'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -94,7 +94,7 @@ app.use('/api/products', apiLimiter);
 app.use('/api/recommendations', apiLimiter);
 app.use('/', standardLimiter);
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/energy-audit', energyAuditRoutes);
@@ -107,7 +107,9 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../../../dist')));
+// In production, the frontend build is in ../../dist (relative to build/server.js)
+const staticPath = path.join(__dirname, '../../dist');
+app.use(express.static(staticPath));
 
 // Sanitize error message to prevent sensitive data leakage
 const sanitizeErrorMessage = (message: string): string => {
@@ -163,7 +165,7 @@ app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../../../dist/index.html'));
+  res.sendFile(path.join(staticPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
