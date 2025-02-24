@@ -1,1 +1,1 @@
-web: cd backend && npm install && npm run build && cd .. && node backend/build/server.js
+web: cd backend && npm install && npm run build && node build/server.js
