@@ -17,8 +17,10 @@ const pool = new Pool({
 async function runMigration(migrationFile) {
   try {
     const migrationPath = migrationFile || join(__dirname, '../migrations/add_property_details.sql');
-    const migrationSQL = readFileSync(migrationPath, 'utf8');
+    // Enable UUID extension first
+    await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
     
+    const migrationSQL = readFileSync(migrationPath, 'utf8');
     await pool.query(migrationSQL);
     console.log('Migration completed successfully');
   } catch (error) {
