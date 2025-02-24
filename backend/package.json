@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "fix-imports": "node src/scripts/fix-imports.js",
-    "build": "rimraf build && tsc && cp -r src/migrations build/",
+    "build": "rimraf build && tsc && cp -r src/migrations build/ && cp -r src/config build/config/",
     "start": "node build/server.js",
     "postinstall": "npm run build",
     "test": "jest --config jest.config.js --detectOpenHandles",
