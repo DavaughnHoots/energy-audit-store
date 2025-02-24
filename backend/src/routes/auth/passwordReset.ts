@@ -1,10 +1,10 @@
 // backend/src/routes/auth/passwordReset.ts
 
 import express from 'express';
-import { PasswordResetService } from '../../services/auth/PasswordResetService';
+import { PasswordResetService } from '../../services/auth/PasswordResetService.js';
 import { pool } from '../../config/database.js';
-import { rateLimiter } from '../../middleware/security';
-import { validateRequest } from '../../middleware/validators';
+import { rateLimiter } from '../../middleware/security.js';
+import { validateRequest } from '../../middleware/validators.js';
 import { z } from 'zod';
 
 const router = express.Router();

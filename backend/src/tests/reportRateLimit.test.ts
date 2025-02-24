@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
 import { Request, Response, NextFunction } from 'express';
-import { reportRateLimit, trackReportGeneration } from '../middleware/reportRateLimit';
+import { reportRateLimit, trackReportGeneration } from '../middleware/reportRateLimit.js';
 import { appLogger } from '../config/logger.js';
 import '@types/jest';
 

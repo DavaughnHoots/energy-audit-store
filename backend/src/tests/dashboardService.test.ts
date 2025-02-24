@@ -1,8 +1,8 @@
 /// <reference types="jest" />
 
 import { Pool, QueryResult } from 'pg';
-import { dashboardService } from '../services/dashboardService';
-import { cache } from '../config/cache';
+import { dashboardService } from '../services/dashboardService.js';
+import { cache } from '../config/cache.js';
 import { appLogger } from '../config/logger.js';
 import '@types/jest';
 

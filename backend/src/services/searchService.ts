@@ -1,7 +1,7 @@
 // backend/src/services/searchService.ts
 
 import { Pool } from 'pg';
-import { Product } from '../types/product';
+import { Product } from '../types/product.js';
 
 interface SearchFilters {
   category?: string;

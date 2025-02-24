@@ -1,6 +1,6 @@
 // backend/src/services/calculationService.ts
 
-import { EnergyAuditData } from '../types/energyAudit';
+import { EnergyAuditData } from '../types/energyAudit.js';
 import { appLogger } from '../config/logger.js';
 
 /**

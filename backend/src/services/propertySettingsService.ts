@@ -6,7 +6,7 @@ import {
   WeatherizationMonitoring,
   UpdateWindowMaintenanceDto,
   UpdateWeatherizationDto
-} from '../types/propertySettings';
+} from '../types/propertySettings.js';
 
 class PropertySettingsService {
   private pool: Pool;

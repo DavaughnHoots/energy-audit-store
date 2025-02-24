@@ -1,7 +1,7 @@
 // backend/src/services/notificationService.ts
 
 import { Pool } from 'pg';
-import { emailService } from './emailService';
+import { emailService } from './emailService.js';
 
 interface NotificationPreferences {
   email: boolean;

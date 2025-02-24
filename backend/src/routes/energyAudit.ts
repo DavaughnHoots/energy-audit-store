@@ -1,14 +1,14 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { validateToken } from '../middleware/tokenValidation';
-import { optionalTokenValidation } from '../middleware/optionalTokenValidation';
-import { reportGenerationLimiter } from '../middleware/reportRateLimit';
-import { appLogger, createLogMetadata } from '../utils/logger';
-import { reportGenerationService } from '../services/ReportGenerationService';
-import { EnergyAuditService } from '../services/EnergyAuditService';
+import { validateToken } from '../middleware/tokenValidation.js';
+import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
+import { reportGenerationLimiter } from '../middleware/reportRateLimit.js';
+import { appLogger, createLogMetadata } from '../utils/logger.js';
+import { reportGenerationService } from '../services/ReportGenerationService.js';
+import { EnergyAuditService } from '../services/EnergyAuditService.js';
 import { cache } from '../config/cache.js';
 import { Pool } from 'pg';
-import { EnergyAuditData } from '../types/energyAudit';
-import { AuthenticatedRequest } from '../types/auth';
+import { EnergyAuditData } from '../types/energyAudit.js';
+import { AuthenticatedRequest } from '../types/auth.js';
 
 // Import the configured pool
 import pool from '../config/database.js';

@@ -2,7 +2,7 @@
 
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
-import { AuthError } from './auth/AuthService';
+import { AuthError } from './auth/AuthService.js';
 
 interface UserProfile {
   id: string;
