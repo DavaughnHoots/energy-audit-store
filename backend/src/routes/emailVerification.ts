@@ -1,7 +1,7 @@
 // src/routes/emailVerification.ts
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { pool } from '../config/database';
+import { pool } from '../config/database.js';
 import { authenticate } from '../middleware/auth';
 
 const router = express.Router();

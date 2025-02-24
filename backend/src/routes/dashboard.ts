@@ -1,8 +1,8 @@
 import express from 'express';
 import { AuthenticatedRequest } from '../types/auth';
 import { dashboardService } from '../services/dashboardService';
-import pool from '../config/database';
-import { appLogger } from '../config/logger';
+import pool from '../config/database.js';
+import { appLogger } from '../config/logger.js';
 
 const router = express.Router();
 

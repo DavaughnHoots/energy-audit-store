@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
-import { appLogger } from '../config/logger';
+import { appLogger } from '../config/logger.js';
 
 const heatingSystemSchema = z.object({
   type: z.enum(['furnace', 'boiler', 'heat-pump', 'electric-baseboard', 'other'], {

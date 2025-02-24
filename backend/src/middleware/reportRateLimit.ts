@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { appLogger } from '../config/logger';
+import { appLogger } from '../config/logger.js';
 
 // Extend Request type to include user property
 interface AuthenticatedRequest extends Request {

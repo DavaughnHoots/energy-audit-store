@@ -2,8 +2,8 @@ import express from 'express';
 import { authenticate } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/auth';
 import { validateHVACData } from '../middleware/hvacValidators';
-import { pool } from '../config/database';
-import { appLogger } from '../config/logger';
+import { pool } from '../config/database.js';
+import { appLogger } from '../config/logger.js';
 
 const router = express.Router();
 

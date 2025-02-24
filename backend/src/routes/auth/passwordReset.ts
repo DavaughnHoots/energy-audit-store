@@ -2,7 +2,7 @@
 
 import express from 'express';
 import { PasswordResetService } from '../../services/auth/PasswordResetService';
-import { pool } from '../../config/database';
+import { pool } from '../../config/database.js';
 import { rateLimiter } from '../../middleware/security';
 import { validateRequest } from '../../middleware/validators';
 import { z } from 'zod';

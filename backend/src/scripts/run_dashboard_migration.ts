@@ -1,8 +1,8 @@
 import { Pool } from 'pg';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { appLogger } from '../config/logger';
-import { dbConfig } from '../config/database';
+import { appLogger } from '../config/logger.js';
+import { dbConfig } from '../config/database.js';
 
 async function runMigration() {
   const pool = new Pool(dbConfig);

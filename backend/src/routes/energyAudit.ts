@@ -5,13 +5,13 @@ import { reportGenerationLimiter } from '../middleware/reportRateLimit';
 import { appLogger, createLogMetadata } from '../utils/logger';
 import { reportGenerationService } from '../services/ReportGenerationService';
 import { EnergyAuditService } from '../services/EnergyAuditService';
-import { cache } from '../config/cache';
+import { cache } from '../config/cache.js';
 import { Pool } from 'pg';
 import { EnergyAuditData } from '../types/energyAudit';
 import { AuthenticatedRequest } from '../types/auth';
 
 // Import the configured pool
-import pool from '../config/database';
+import pool from '../config/database.js';
 const energyAuditService = new EnergyAuditService(pool);
 
 const router = express.Router();

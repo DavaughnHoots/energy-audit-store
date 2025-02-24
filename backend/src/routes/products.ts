@@ -4,7 +4,7 @@ import express from 'express';
 import { authenticate } from '../middleware/auth';
 import { apiLimiter } from '../middleware/security';
 import ProductDataService from '../services/productDataService';
-import pool from '../config/database';
+import pool from '../config/database.js';
 import { AuthenticatedRequest } from '../types/auth';
 
 const router = express.Router();

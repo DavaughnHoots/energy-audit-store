@@ -3,7 +3,7 @@
 import { Pool, QueryResult } from 'pg';
 import { dashboardService } from '../services/dashboardService';
 import { cache } from '../config/cache';
-import { appLogger } from '../config/logger';
+import { appLogger } from '../config/logger.js';
 import '@types/jest';
 
 // Mock dependencies

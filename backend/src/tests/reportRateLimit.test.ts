@@ -2,7 +2,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { reportRateLimit, trackReportGeneration } from '../middleware/reportRateLimit';
-import { appLogger } from '../config/logger';
+import { appLogger } from '../config/logger.js';
 import '@types/jest';
 
 // Extend Express Request type

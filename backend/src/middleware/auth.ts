@@ -2,9 +2,9 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import pool from '../config/database';
-import { UserAuthService, AuthError } from '../services/userAuthService';
-import { AuthenticatedRequest, User } from '../types/auth';
+import pool from '../config/database.js';
+import { UserAuthService, AuthError } from '../services/userAuthService.js';
+import { AuthenticatedRequest, User } from '../types/auth.js';
 
 const authService = new UserAuthService(pool);
 
