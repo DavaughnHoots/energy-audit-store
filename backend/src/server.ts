@@ -22,6 +22,11 @@ import energyAuditRoutes from './routes/energyAudit.js';
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
 import recommendationsRoutes from './routes/recommendations.js';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface AppError extends Error {
   status?: number;
@@ -101,6 +106,9 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../../../dist')));
+
 // Sanitize error message to prevent sensitive data leakage
 const sanitizeErrorMessage = (message: string): string => {
   const sensitivePatterns = [
@@ -153,18 +161,9 @@ app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
   res.status(status).json(responseBody);
 });
 
-// Handle 404 errors with request ID
-app.use((req: Request, res: Response) => {
-  const requestId = req.id || uuidv4();
-  appLogger.warn('Route not found', createLogMetadata(req, {
-    type: '404_error'
-  }));
-
-  res.status(404).json({
-    error: 'Not Found',
-    message: `Cannot ${req.method} ${req.path}`,
-    requestId
-  });
+// The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
+app.get('*', (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../../../dist/index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
