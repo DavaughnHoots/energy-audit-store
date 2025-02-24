@@ -1,7 +1,7 @@
 // backend/src/validators/homeAudit.validator.ts
 
 import { z } from 'zod';
-import { appLogger } from '../config/logger';
+import { appLogger } from '../config/logger.js';
 
 // Basic info validation schema
 const basicInfoSchema = z.object({

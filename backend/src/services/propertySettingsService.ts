@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
-import pool from '../config/database';
-import { appLogger } from '../config/logger';
+import pool from '../config/database.js';
+import { appLogger } from '../config/logger.js';
 import {
   WindowMaintenance,
   WeatherizationMonitoring,

@@ -4,7 +4,7 @@ import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import { rateLimiter } from '../middleware/security';
 import { AnalyticsService } from '../services/analyticsService';
-import { pool } from '../config/database';
+import { pool } from '../config/database.js';
 
 const router = express.Router();
 const analyticsService = new AnalyticsService(pool);

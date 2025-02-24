@@ -4,8 +4,8 @@ import express, { Response } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/auth';
 import { UserSettingsService } from '../services/userSettingsService';
-import { pool } from '../config/database';
-import { appLogger } from '../config/logger';
+import { pool } from '../config/database.js';
+import { appLogger } from '../config/logger.js';
 
 const router = express.Router();
 const settingsService = new UserSettingsService(pool);

@@ -1,9 +1,9 @@
 import express from 'express';
 import { validateToken } from '../middleware/tokenValidation';
 import { AuthenticatedRequest } from '../types/auth';
-import { appLogger } from '../config/logger';
+import { appLogger } from '../config/logger.js';
 import { dashboardService } from '../services/dashboardService';
-import pool from '../config/database';
+import pool from '../config/database.js';
 
 const router = express.Router();
 

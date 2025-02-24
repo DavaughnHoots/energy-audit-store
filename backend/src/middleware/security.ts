@@ -3,7 +3,7 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { pool } from '../config/database';
+import { pool } from '../config/database.js';
 
 // Rate limiting configurations
 export const authLimiter = rateLimit({

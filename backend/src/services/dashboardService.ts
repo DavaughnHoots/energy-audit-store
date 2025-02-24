@@ -1,6 +1,6 @@
-import pool from '../config/database';
-import { cache } from '../config/cache';
-import { appLogger } from '../config/logger';
+import pool from '../config/database.js';
+import { cache } from '../config/cache.js';
+import { appLogger } from '../config/logger.js';
 
 interface DashboardStats {
   totalSavings: {

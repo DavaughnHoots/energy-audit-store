@@ -1,7 +1,7 @@
 // backend/src/validators/product.validator.ts
 
 import { z } from 'zod';
-import { appLogger } from '../config/logger';
+import { appLogger } from '../config/logger.js';
 
 // Regular expressions for validation
 const URL_REGEX = /^https?:\/\/.+/;

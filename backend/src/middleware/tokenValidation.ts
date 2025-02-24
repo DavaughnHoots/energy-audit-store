@@ -2,8 +2,8 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database';
-import { cache } from '../config/cache';
+import { pool } from '../config/database.js';
+import { cache } from '../config/cache.js';
 
 interface TokenValidationError extends Error {
   code?: string;

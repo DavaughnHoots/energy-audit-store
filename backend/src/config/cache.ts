@@ -1,5 +1,5 @@
 import NodeCache from 'node-cache';
-import { appLogger } from './logger';
+import { appLogger } from './logger.js';
 
 interface CacheService {
   get<T>(key: string): Promise<T | null>;

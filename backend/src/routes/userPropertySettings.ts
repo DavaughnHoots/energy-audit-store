@@ -5,8 +5,8 @@ import { authenticate } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/auth';
 import { rateLimiter } from '../middleware/security';
 import { z } from 'zod';
-import { pool } from '../config/database';
-import { appLogger } from '../config/logger';
+import { pool } from '../config/database.js';
+import { appLogger } from '../config/logger.js';
 import { propertySettingsService } from '../services/propertySettingsService';
 import { UpdateWindowMaintenanceDto, UpdateWeatherizationDto } from '../types/propertySettings';
 

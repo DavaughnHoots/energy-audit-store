@@ -1,7 +1,7 @@
 // backend/src/services/calculationService.ts
 
 import { EnergyAuditData } from '../types/energyAudit';
-import { appLogger } from '../config/logger';
+import { appLogger } from '../config/logger.js';
 
 /**
  * Constants for calculations
