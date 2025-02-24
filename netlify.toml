@@ -1,0 +1,20 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  base = "/"
+
+# Redirect API requests to the backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-backend-url.herokuapp.com/api/:splat"
+  status = 200
+  force = true
+
+# Handle client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "18"

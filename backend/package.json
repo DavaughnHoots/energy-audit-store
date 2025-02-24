@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "fix-imports": "node src/scripts/fix-imports.js",
+    "prebuild": "cd .. && npm install && npm run build",
     "build": "rimraf build && tsc && cp -r src/migrations build/ && cp -r src/config build/",
     "start": "node build/server.js",
     "postinstall": "npm run build",

@@ -11,16 +11,16 @@ declare global {
 import 'dotenv/config';
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import { appLogger, loggerContextMiddleware, LoggerInitializer, createLogMetadata } from './utils/logger';
+import { appLogger, loggerContextMiddleware, LoggerInitializer, createLogMetadata } from './utils/logger.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { standardLimiter, authLimiter, apiLimiter } from './middleware/rateLimitMiddleware';
-import { authenticate } from './middleware/auth';
-import authRoutes from './routes/auth';
-import dashboardRoutes from './routes/dashboard';
-import energyAuditRoutes from './routes/energyAudit';
-import userPropertySettingsRoutes from './routes/userPropertySettings';
-import recommendationsRoutes from './routes/recommendations';
+import { standardLimiter, authLimiter, apiLimiter } from './middleware/rateLimitMiddleware.js';
+import { authenticate } from './middleware/auth.js';
+import authRoutes from './routes/auth.js';
+import dashboardRoutes from './routes/dashboard.js';
+import energyAuditRoutes from './routes/energyAudit.js';
+import userPropertySettingsRoutes from './routes/userPropertySettings.js';
+import recommendationsRoutes from './routes/recommendations.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -57,13 +57,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(loggerContextMiddleware);
 
 // Security middleware
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? [process.env.FRONTEND_URL || 'https://energy-audit-store-e66479ed4f2b.herokuapp.com']
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'https://energy-audit-store-e66479ed4f2b.herokuapp.com'
-  ],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
