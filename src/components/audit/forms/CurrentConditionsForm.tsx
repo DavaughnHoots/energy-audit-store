@@ -119,7 +119,8 @@ const CurrentConditionsForm: React.FC<CurrentConditionsFormProps> = ({
                     { value: 'good', label: 'Good - No noticeable issues' },
                     { value: 'average', label: 'Average - Some minor issues' },
                     { value: 'poor', label: 'Poor - Noticeable problems' },
-                    { value: 'not-sure', label: 'Not Sure' }
+                    { value: 'not-sure', label: 'Not Sure' },
+                    { value: 'not-applicable', label: 'Not Applicable (N/A)' }
                   ]}
                 />
               ))}
