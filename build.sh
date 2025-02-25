@@ -4,7 +4,7 @@
 set -e
 
 echo "Building frontend..."
-npm install --no-optional
+npm install
 NODE_OPTIONS="--max_old_space_size=4096" npm run build
 
 echo "Moving frontend build to backend..."
@@ -13,7 +13,7 @@ cp -r dist/* backend/dist/
 
 echo "Building backend..."
 cd backend
-npm install --production --no-optional
+npm install --production
 
 # Set memory options for TypeScript compilation
 export NODE_OPTIONS="--max_old_space_size=4096"
