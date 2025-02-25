@@ -139,6 +139,76 @@ export const homeDefaults = {
       numRooms: 7,
       numFloors: 1
     }
+  },
+  'condominium': {
+    small: {
+      squareFootage: 750,
+      stories: 1,
+      bedrooms: 1,
+      bathrooms: 1,
+      wallLength: 30,
+      wallWidth: 25,
+      ceilingHeight: 8,
+      numRooms: 4,
+      numFloors: 1
+    },
+    medium: {
+      squareFootage: 1200,
+      stories: 1,
+      bedrooms: 2,
+      bathrooms: 2,
+      wallLength: 40,
+      wallWidth: 30,
+      ceilingHeight: 9,
+      numRooms: 6,
+      numFloors: 1
+    },
+    large: {
+      squareFootage: 1800,
+      stories: 2,
+      bedrooms: 3,
+      bathrooms: 2.5,
+      wallLength: 45,
+      wallWidth: 40,
+      ceilingHeight: 9,
+      numRooms: 8,
+      numFloors: 2
+    }
+  },
+  'apartment': {
+    small: {
+      squareFootage: 550,
+      stories: 1,
+      bedrooms: 1,
+      bathrooms: 1,
+      wallLength: 25,
+      wallWidth: 22,
+      ceilingHeight: 8,
+      numRooms: 3,
+      numFloors: 1
+    },
+    medium: {
+      squareFootage: 900,
+      stories: 1,
+      bedrooms: 2,
+      bathrooms: 1,
+      wallLength: 30,
+      wallWidth: 30,
+      ceilingHeight: 8,
+      numRooms: 5,
+      numFloors: 1
+    },
+    large: {
+      squareFootage: 1400,
+      stories: 1,
+      bedrooms: 3,
+      bathrooms: 2,
+      wallLength: 40,
+      wallWidth: 35,
+      ceilingHeight: 8,
+      numRooms: 7,
+      numFloors: 1
+    }
   }
 } as const;
 

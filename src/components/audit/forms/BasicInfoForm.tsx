@@ -61,7 +61,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             { value: 'townhouse', label: 'Townhouse' },
             { value: 'duplex', label: 'Duplex' },
             { value: 'apartment', label: 'Apartment' },
-            { value: 'condo', label: 'Condominium' },
+            { value: 'condominium', label: 'Condominium' },
             { value: 'mobile-home', label: 'Mobile Home' }
           ]}
           required
