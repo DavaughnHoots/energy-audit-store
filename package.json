@@ -21,6 +21,7 @@
     "axios": "^1.6.2",
     "chart.js": "^4.4.0",
     "clsx": "^2.0.0",
+    "lucide-react": "^0.344.0",
     "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
