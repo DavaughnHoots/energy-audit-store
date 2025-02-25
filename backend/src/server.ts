@@ -9,6 +9,8 @@ declare global {
 }
 
 import 'dotenv/config';
+// Check for required environment variables
+require('./scripts/check_env.js');
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { appLogger, loggerContextMiddleware, LoggerInitializer, createLogMetadata } from './utils/logger.js';
