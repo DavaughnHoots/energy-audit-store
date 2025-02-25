@@ -1,1 +1,1 @@
-web: bash build.sh && node backend/build/server.js
+web: cd backend && npm install && npm run build && npm start
