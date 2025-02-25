@@ -10,9 +10,9 @@ import { authRateLimit } from '../middleware/rateLimit.js';
 const COOKIE_CONFIG = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
   path: '/',
-  domain: 'localhost'
+  domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
 };
 
 const ACCESS_TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours

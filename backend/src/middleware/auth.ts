@@ -15,9 +15,9 @@ const REFRESH_THRESHOLD = 15 * 60 * 1000; // 15 minutes in milliseconds
 const COOKIE_CONFIG = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
   path: '/',
-  domain: 'localhost'
+  domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
 };
 
 export const authenticate = async (
