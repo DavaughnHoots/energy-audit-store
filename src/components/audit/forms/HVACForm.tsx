@@ -49,6 +49,7 @@ const HVACForm: React.FC<HVACFormProps> = ({
     const ranges = {
       'furnace': efficiencyRanges.furnace,
       'boiler': efficiencyRanges.boiler,
+      'central-heating': efficiencyRanges.centralHeating,
       'central-ac': efficiencyRanges.centralAC,
       'mini-split': efficiencyRanges.miniSplit,
       'window-units': efficiencyRanges.windowUnit
@@ -172,6 +173,7 @@ const HVACForm: React.FC<HVACFormProps> = ({
             { value: 'furnace', label: 'Furnace' },
             { value: 'heat-pump', label: 'Heat Pump' },
             { value: 'boiler', label: 'Boiler' },
+            { value: 'central-heating', label: 'Central Heating' },
             { value: 'electric-baseboard', label: 'Electric Baseboard' },
             { value: 'not-sure', label: 'Not Sure' }
           ]}
