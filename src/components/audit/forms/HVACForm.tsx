@@ -213,7 +213,8 @@ const HVACForm: React.FC<HVACFormProps> = ({
           options={[
             { value: 'manual', label: 'Manual' },
             { value: 'programmable', label: 'Programmable' },
-            { value: 'smart', label: 'Smart/WiFi' }
+            { value: 'smart', label: 'Smart/WiFi' },
+            { value: 'not-sure', label: 'Not Sure' }
           ]}
           required
         />
