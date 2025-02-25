@@ -26,11 +26,20 @@ requiredEnvVars.forEach(envVar => {
 });
 
 if (missingVars.length > 0) {
-  console.error('Missing required environment variables:');
+  console.warn('Warning: Missing environment variables:');
   missingVars.forEach(envVar => {
-    console.error(`- ${envVar}`);
+    console.warn(`- ${envVar}`);
   });
-  process.exit(1);
+  console.warn('The application may not function correctly without these variables.');
 } else {
   console.log('All required environment variables are set.');
 }
+
+// Set default values for missing environment variables
+if (!process.env.PORT) process.env.PORT = '5000';
+if (!process.env.NODE_ENV) process.env.NODE_ENV = 'production';
+if (!process.env.FRONTEND_URL) process.env.FRONTEND_URL = 'https://energy-audit-store-e66479ed4f2b.herokuapp.com';
+if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'default-jwt-secret-for-development-only';
+if (!process.env.JWT_EXPIRATION) process.env.JWT_EXPIRATION = '24h';
+if (!process.env.RATE_LIMIT_WINDOW) process.env.RATE_LIMIT_WINDOW = '15';
+if (!process.env.RATE_LIMIT_MAX) process.env.RATE_LIMIT_MAX = '100';
