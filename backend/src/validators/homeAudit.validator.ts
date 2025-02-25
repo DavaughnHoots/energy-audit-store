@@ -69,7 +69,7 @@ const currentConditionsSchema = z.object({
 // HVAC systems validation schema
 const hvacSchema = z.object({
   heatingSystem: z.object({
-    type: z.enum(['furnace', 'boiler', 'heat-pump', 'electric-baseboard', 'other']),
+    type: z.enum(['furnace', 'boiler', 'heat-pump', 'central-heating', 'electric-baseboard', 'other']),
     fuelType: z.enum(['natural-gas', 'oil', 'electric', 'propane', 'other']),
     age: z.number()
       .int('System age must be a whole number')

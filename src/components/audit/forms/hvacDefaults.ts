@@ -7,6 +7,12 @@ export const heatingSystemDefaults = {
     age: 10,
     lastService: new Date().toISOString().slice(0, 10)
   },
+  'central-heating': {
+    fuel: 'natural-gas' as const,
+    efficiency: 87, // AFUE rating
+    age: 12,
+    lastService: new Date().toISOString().slice(0, 10)
+  },
   'heat-pump': {
     fuel: 'electricity' as const,
     efficiency: 250, // HSPF rating
@@ -93,6 +99,7 @@ export const thermostatDefaults = {
 export const efficiencyRanges = {
   furnace: { min: 80, max: 98.5, unit: 'AFUE' },
   boiler: { min: 80, max: 95, unit: 'AFUE' },
+  centralHeating: { min: 80, max: 95, unit: 'AFUE' },
   heatPump: { 
     heating: { min: 7.7, max: 13.5, unit: 'HSPF' },
     cooling: { min: 13, max: 21, unit: 'SEER' }
