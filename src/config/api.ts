@@ -2,9 +2,7 @@
 
 // In production, API calls will be made to the Heroku backend
 // In development, we use Vite's proxy
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://energy-audit-store-e66479ed4f2b.herokuapp.com'
-  : '';
+const API_BASE_URL = 'https://energy-audit-store-e66479ed4f2b.herokuapp.com';
 
 export const API_ENDPOINTS = {
   AUTH: {
