@@ -34,7 +34,7 @@ const homeDetailsSchema = z.object({
     .int('Number of rooms must be a whole number')
     .min(1, 'Must have at least 1 room')
     .max(100, 'Number of rooms must not exceed 100'),
-  homeType: z.enum(['apartment', 'single-family', 'townhouse', 'duplex', 'other'], {
+  homeType: z.enum(['apartment', 'single-family', 'townhouse', 'duplex', 'condominium', 'other'], {
     errorMap: () => ({ message: 'Invalid home type selected' })
   }),
   numFloors: z.number()
