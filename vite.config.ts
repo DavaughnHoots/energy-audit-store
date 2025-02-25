@@ -21,6 +21,14 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    include: [
+      '@radix-ui/react-slot',
+      '@radix-ui/react-dialog',
+      'class-variance-authority',
+      'clsx',
+      'tailwind-merge',
+      'uuid'
+    ],
     exclude: ['@mapbox/node-pre-gyp', 'aws-sdk', 'mock-aws-s3', 'nock'],
   },
   server: {
