@@ -118,52 +118,117 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
           <FormGrid>
             <InputField
               label="Exact Square Footage"
-              type="number"
+              type="text"
               value={data.squareFootage || ''}
-              onChange={handleAdvancedChange('squareFootage')}
-              min={0}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (inputValue === '') {
+                  onInputChange('squareFootage', '');
+                } else {
+                  const value = parseInt(inputValue);
+                  if (!isNaN(value) && value >= 0) {
+                    onInputChange('squareFootage', value);
+                  }
+                }
+              }}
+              pattern="[0-9]*"
+              inputMode="numeric"
               helpText="Enter the exact square footage of your home"
             />
 
             <InputField
               label="Number of Bedrooms"
-              type="number"
+              type="text"
               value={data.bedrooms || ''}
-              onChange={handleAdvancedChange('bedrooms')}
-              min={0}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (inputValue === '') {
+                  onInputChange('bedrooms', '');
+                } else {
+                  const value = parseInt(inputValue);
+                  if (!isNaN(value) && value >= 0) {
+                    onInputChange('bedrooms', value);
+                  }
+                }
+              }}
+              pattern="[0-9]*"
+              inputMode="numeric"
             />
 
             <InputField
               label="Number of Bathrooms"
-              type="number"
+              type="text"
               value={data.bathrooms || ''}
-              onChange={handleAdvancedChange('bathrooms')}
-              min={0}
-              step={0.5}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (inputValue === '') {
+                  onInputChange('bathrooms', '');
+                } else {
+                  const value = parseFloat(inputValue);
+                  if (!isNaN(value) && value >= 0) {
+                    onInputChange('bathrooms', value);
+                  }
+                }
+              }}
+              pattern="[0-9]*\.?[0-9]*"
+              inputMode="decimal"
             />
 
             <InputField
               label="Wall Length (ft)"
-              type="number"
+              type="text"
               value={data.wallLength || ''}
-              onChange={handleAdvancedChange('wallLength')}
-              min={0}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (inputValue === '') {
+                  onInputChange('wallLength', '');
+                } else {
+                  const value = parseFloat(inputValue);
+                  if (!isNaN(value) && value >= 0) {
+                    onInputChange('wallLength', value);
+                  }
+                }
+              }}
+              pattern="[0-9]*\.?[0-9]*"
+              inputMode="decimal"
             />
 
             <InputField
               label="Wall Width (ft)"
-              type="number"
+              type="text"
               value={data.wallWidth || ''}
-              onChange={handleAdvancedChange('wallWidth')}
-              min={0}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (inputValue === '') {
+                  onInputChange('wallWidth', '');
+                } else {
+                  const value = parseFloat(inputValue);
+                  if (!isNaN(value) && value >= 0) {
+                    onInputChange('wallWidth', value);
+                  }
+                }
+              }}
+              pattern="[0-9]*\.?[0-9]*"
+              inputMode="decimal"
             />
 
             <InputField
               label="Ceiling Height (ft)"
-              type="number"
+              type="text"
               value={data.ceilingHeight || ''}
-              onChange={handleAdvancedChange('ceilingHeight')}
-              min={0}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (inputValue === '') {
+                  onInputChange('ceilingHeight', '');
+                } else {
+                  const value = parseFloat(inputValue);
+                  if (!isNaN(value) && value >= 0) {
+                    onInputChange('ceilingHeight', value);
+                  }
+                }
+              }}
+              pattern="[0-9]*\.?[0-9]*"
+              inputMode="decimal"
             />
           </FormGrid>
         </FormSectionAdvanced>

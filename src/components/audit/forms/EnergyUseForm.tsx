@@ -130,41 +130,59 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
             <FormGrid>
               <InputField
                 label="Monthly Electric Usage (kWh)"
-                type="number"
+                type="text"
                 value={data.electricBill || ''}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  const value = parseFloat(e.target.value);
-                  if (value >= 0) {
-                    handleAdvancedFieldChange('electricBill', value);
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('electricBill', '');
+                  } else {
+                    const value = parseFloat(inputValue);
+                    if (!isNaN(value) && value >= 0) {
+                      handleAdvancedFieldChange('electricBill', value);
+                    }
                   }
                 }}
-                min={0}
+                pattern="[0-9]*\.?[0-9]*"
+                inputMode="decimal"
               />
 
               <InputField
                 label="Monthly Gas Usage (therms)"
-                type="number"
+                type="text"
                 value={data.gasBill || ''}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  const value = parseFloat(e.target.value);
-                  if (value >= 0) {
-                    handleAdvancedFieldChange('gasBill', value);
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('gasBill', '');
+                  } else {
+                    const value = parseFloat(inputValue);
+                    if (!isNaN(value) && value >= 0) {
+                      handleAdvancedFieldChange('gasBill', value);
+                    }
                   }
                 }}
-                min={0}
+                pattern="[0-9]*\.?[0-9]*"
+                inputMode="decimal"
               />
 
               <InputField
                 label="Average Daily Power Consumption (kWh)"
-                type="number"
+                type="text"
                 value={data.powerConsumption || ''}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  const value = parseFloat(e.target.value);
-                  if (value >= 0) {
-                    handleAdvancedFieldChange('powerConsumption', value);
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('powerConsumption', '');
+                  } else {
+                    const value = parseFloat(inputValue);
+                    if (!isNaN(value) && value >= 0) {
+                      handleAdvancedFieldChange('powerConsumption', value);
+                    }
                   }
                 }}
-                min={0}
+                pattern="[0-9]*\.?[0-9]*"
+                inputMode="decimal"
               />
             </FormGrid>
           </FormSubsection>

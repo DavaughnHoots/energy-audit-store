@@ -240,20 +240,40 @@ const HVACForm: React.FC<HVACFormProps> = ({
 
               <InputField
                 label="System Age (years)"
-                type="number"
+                type="text"
                 value={data.heatingSystem.age || ''}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('heatingSystem', 'age', parseInt(e.target.value))}
-                min={0}
-                max={50}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('heatingSystem', 'age', '');
+                  } else {
+                    const value = parseInt(inputValue);
+                    if (!isNaN(value) && value >= 0 && value <= 50) {
+                      handleAdvancedFieldChange('heatingSystem', 'age', value);
+                    }
+                  }
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
               />
 
               <InputField
                 label="Efficiency Rating"
-                type="number"
+                type="text"
                 value={data.heatingSystem.efficiency || ''}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('heatingSystem', 'efficiency', parseInt(e.target.value))}
-                min={0}
-                max={400}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('heatingSystem', 'efficiency', '');
+                  } else {
+                    const value = parseInt(inputValue);
+                    if (!isNaN(value) && value >= 0 && value <= 400) {
+                      handleAdvancedFieldChange('heatingSystem', 'efficiency', value);
+                    }
+                  }
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
                 error={efficiencyError}
                 helpText={data.heatingSystem.type === 'heat-pump'
                   ? 'HSPF for heat pumps (8-13)'
@@ -275,20 +295,40 @@ const HVACForm: React.FC<HVACFormProps> = ({
               <FormGrid>
                 <InputField
                   label="System Age (years)"
-                  type="number"
+                  type="text"
                   value={data.coolingSystem.age || ''}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('coolingSystem', 'age', parseInt(e.target.value))}
-                  min={0}
-                  max={50}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('coolingSystem', 'age', '');
+                    } else {
+                      const value = parseInt(inputValue);
+                      if (!isNaN(value) && value >= 0 && value <= 50) {
+                        handleAdvancedFieldChange('coolingSystem', 'age', value);
+                      }
+                    }
+                  }}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                 />
 
                 <InputField
                   label="Efficiency Rating"
-                  type="number"
+                  type="text"
                   value={data.coolingSystem.efficiency || ''}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('coolingSystem', 'efficiency', parseInt(e.target.value))}
-                  min={0}
-                  max={30}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('coolingSystem', 'efficiency', '');
+                    } else {
+                      const value = parseInt(inputValue);
+                      if (!isNaN(value) && value >= 0 && value <= 30) {
+                        handleAdvancedFieldChange('coolingSystem', 'efficiency', value);
+                      }
+                    }
+                  }}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   error={efficiencyError}
                   helpText={data.coolingSystem.type === 'window-units'
                     ? 'EER for window units (9.8-12)'
@@ -303,11 +343,21 @@ const HVACForm: React.FC<HVACFormProps> = ({
             <FormGrid>
               <InputField
                 label="Number of HVAC Zones"
-                type="number"
-                value={data.zoneCount}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => handleBasicFieldChange('zoneCount', parseInt(e.target.value))}
-                min={1}
-                max={10}
+                type="text"
+                value={data.zoneCount || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleBasicFieldChange('zoneCount', '');
+                  } else {
+                    const value = parseInt(inputValue);
+                    if (!isNaN(value) && value >= 1 && value <= 10) {
+                      handleBasicFieldChange('zoneCount', value);
+                    }
+                  }
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
                 helpText="Number of independently controlled heating/cooling zones"
               />
             </FormGrid>

@@ -69,22 +69,42 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
 
         <InputField
           label="Year Built"
-          type="number"
+          type="text"
           value={data.yearBuilt || ''}
-          onChange={handleChange('yearBuilt')}
-          min={1800}
-          max={new Date().getFullYear()}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (inputValue === '') {
+              onInputChange('yearBuilt', '');
+            } else {
+              const value = parseInt(inputValue);
+              if (!isNaN(value) && value >= 1800 && value <= new Date().getFullYear()) {
+                onInputChange('yearBuilt', value);
+              }
+            }
+          }}
+          pattern="[0-9]*"
+          inputMode="numeric"
           required
           helpText="Enter the year your property was constructed"
         />
 
         <InputField
           label="Number of Occupants"
-          type="number"
+          type="text"
           value={data.occupants || ''}
-          onChange={handleChange('occupants')}
-          min={1}
-          max={20}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (inputValue === '') {
+              onInputChange('occupants', '');
+            } else {
+              const value = parseInt(inputValue);
+              if (!isNaN(value) && value >= 1 && value <= 20) {
+                onInputChange('occupants', value);
+              }
+            }
+          }}
+          pattern="[0-9]*"
+          inputMode="numeric"
           required
           helpText="How many people typically live in the property?"
         />
