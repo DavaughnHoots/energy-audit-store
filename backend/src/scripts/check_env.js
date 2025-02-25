@@ -43,3 +43,6 @@ if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'default-jwt-secret-for-de
 if (!process.env.JWT_EXPIRATION) process.env.JWT_EXPIRATION = '24h';
 if (!process.env.RATE_LIMIT_WINDOW) process.env.RATE_LIMIT_WINDOW = '15';
 if (!process.env.RATE_LIMIT_MAX) process.env.RATE_LIMIT_MAX = '100';
+
+// Export an empty object to make this a valid ES module
+export {};
