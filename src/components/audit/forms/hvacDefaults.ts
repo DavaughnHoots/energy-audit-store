@@ -92,6 +92,10 @@ export const thermostatDefaults = {
   'smart': {
     zoneCount: 1,
     estimatedSavings: 15 // Percentage
+  },
+  'not-sure': {
+    zoneCount: 1,
+    estimatedSavings: 0 // Conservative estimate
   }
 } as const;
 
