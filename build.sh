@@ -5,6 +5,8 @@ set -e
 
 echo "Building frontend..."
 npm install
+# Ensure tailwindcss and related packages are installed
+npm install tailwindcss autoprefixer postcss --no-save
 NODE_OPTIONS="--max_old_space_size=4096" npm run build
 
 echo "Moving frontend build to backend..."
