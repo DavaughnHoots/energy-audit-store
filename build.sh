@@ -20,7 +20,7 @@ export NODE_OPTIONS="--max_old_space_size=4096"
 
 # Run the build in smaller chunks to avoid memory issues
 echo "Cleaning build directory..."
-rimraf build
+rm -rf build
 
 echo "Running TypeScript compilation..."
 tsc
