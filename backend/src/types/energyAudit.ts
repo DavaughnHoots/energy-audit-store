@@ -173,7 +173,8 @@ export const insulationRatings = {
   average: 0.6,
   good: 0.8,
   excellent: 1.0,
-  'not-sure': 0.5
+  'not-sure': 0.5,
+  'not-applicable': 0.0
 } as const;
 
 export const windowRatings = {

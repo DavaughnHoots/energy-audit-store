@@ -24,6 +24,26 @@ export const windowCountDefaults = {
   }
 } as const;
 
+// Property type specific insulation defaults
+export const propertyTypeInsulationDefaults = {
+  'apartment': {
+    insulation: {
+      attic: 'not-applicable' as const,
+      walls: 'average' as const,
+      basement: 'not-applicable' as const,
+      floor: 'average' as const
+    }
+  },
+  'condominium': {
+    insulation: {
+      attic: 'not-applicable' as const,
+      walls: 'average' as const,
+      basement: 'not-applicable' as const,
+      floor: 'average' as const
+    }
+  }
+} as const;
+
 export const temperatureConsistencyDefaults = {
   'very-consistent': {
     insulation: {

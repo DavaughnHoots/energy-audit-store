@@ -49,7 +49,7 @@ const homeDetailsSchema = z.object({
 });
 
 // Current conditions validation schema
-const insulationRatingSchema = z.enum(['poor', 'average', 'good', 'excellent', 'not-sure']);
+const insulationRatingSchema = z.enum(['poor', 'average', 'good', 'excellent', 'not-sure', 'not-applicable']);
 
 const currentConditionsSchema = z.object({
   insulation: z.object({

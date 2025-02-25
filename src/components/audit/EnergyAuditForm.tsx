@@ -146,6 +146,26 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
     }
   }, [formData]);
 
+  // Update insulation values when property type changes
+  useEffect(() => {
+    const propertyType = formData.basicInfo.propertyType;
+    if (propertyType === 'apartment' || propertyType === 'condominium') {
+      // Import here to avoid circular dependency
+      import('./forms/conditionDefaults').then(({ propertyTypeInsulationDefaults }) => {
+        const defaults = propertyTypeInsulationDefaults[propertyType as 'apartment' | 'condominium'];
+        if (defaults) {
+          setFormData(prevData => ({
+            ...prevData,
+            currentConditions: {
+              ...prevData.currentConditions,
+              insulation: defaults.insulation
+            }
+          }));
+        }
+      });
+    }
+  }, [formData.basicInfo.propertyType]);
+
   const handleInputChange = <T extends keyof EnergyAuditData>(
     section: T,
     field: keyof EnergyAuditData[T],
