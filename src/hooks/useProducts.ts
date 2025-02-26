@@ -43,7 +43,7 @@ export function useProducts() {
         
         // Fetch categories
         try {
-          const categoriesResponse = await api.get('/products/categories');
+          const categoriesResponse = await api.get('/api/products/categories');
           if (categoriesResponse.data && 
               categoriesResponse.data.main && 
               Array.isArray(categoriesResponse.data.main)) {
@@ -56,7 +56,7 @@ export function useProducts() {
         
         // Fetch efficiency ratings
         try {
-          const ratingsResponse = await api.get('/products/efficiency-ratings');
+          const ratingsResponse = await api.get('/api/products/efficiency-ratings');
           if (ratingsResponse.data && Array.isArray(ratingsResponse.data)) {
             setEfficiencyRatings(ratingsResponse.data);
           }
@@ -105,7 +105,7 @@ export function useProducts() {
       
       // Make API request
       try {
-        const response = await api.get<any>(`/products?${params.toString()}`);
+        const response = await api.get<any>(`/api/products?${params.toString()}`);
         
         // Handle different response formats
         if (response.data) {
@@ -196,7 +196,7 @@ export function useProducts() {
   const getProduct = useCallback(async (id: string): Promise<Product | null> => {
     try {
       setIsLoading(true);
-      const response = await api.get<Product>(`/products/${id}`);
+      const response = await api.get<Product>(`/api/products/${id}`);
       setError(null);
       return response.data;
     } catch (err: any) {
