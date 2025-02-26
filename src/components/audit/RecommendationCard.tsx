@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { API_ENDPOINTS } from '@/config/api';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 interface Recommendation {
@@ -163,7 +163,11 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
         </div>
       </div>
 
-      <Dialog open={showSavingsDialog} onOpenChange={setShowSavingsDialog}>
+      <Dialog 
+        isOpen={showSavingsDialog} 
+        onClose={() => setShowSavingsDialog(false)}
+        title="Update Savings Information"
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Update Savings Information</DialogTitle>
