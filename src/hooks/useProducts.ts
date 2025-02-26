@@ -1,9 +1,9 @@
 // src/hooks/useProducts.ts
 import { useState, useEffect } from 'react';
 import { Product, ProductFilters } from '../../backend/src/types/product';
-import ProductDataService from '../../backend/src/services/productDataService';
+import ProductService from '../services/productService';
 
-const productService = new ProductDataService();
+const productService = new ProductService();
 
 export function useProducts() {
   const [isLoading, setIsLoading] = useState(true);
