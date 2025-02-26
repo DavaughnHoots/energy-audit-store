@@ -8,6 +8,19 @@ import {
 } from '../../backend/src/types/product';
 import { api } from '../config/api';
 
+// Mock data for when API calls fail
+const fallbackCategories = {
+  main: ['Appliances', 'Lighting', 'HVAC', 'Electronics'],
+  sub: {
+    'Appliances': ['Refrigerators', 'Dishwashers', 'Washing Machines'],
+    'Lighting': ['LED Bulbs', 'Smart Lighting', 'Fixtures'],
+    'HVAC': ['Thermostats', 'Air Conditioners', 'Heat Pumps'],
+    'Electronics': ['TVs', 'Computers', 'Audio Equipment']
+  }
+};
+
+const fallbackEfficiencyRatings = ['A+++', 'A++', 'A+', 'A', 'B', 'C'];
+
 export function useProducts() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,11 +28,12 @@ export function useProducts() {
   const [categories, setCategories] = useState<{
     main: string[];
     sub: { [key: string]: string[] };
-  }>({ main: [], sub: {} });
-  const [efficiencyRatings, setEfficiencyRatings] = useState<string[]>([]);
+  }>(fallbackCategories);
+  const [efficiencyRatings, setEfficiencyRatings] = useState<string[]>(fallbackEfficiencyRatings);
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dataInitialized, setDataInitialized] = useState(false);
 
   // Initialize categories and efficiency ratings
   useEffect(() => {
@@ -28,17 +42,36 @@ export function useProducts() {
         setIsLoading(true);
         
         // Fetch categories
-        const categoriesResponse = await api.get('/products/categories');
-        setCategories(categoriesResponse.data);
+        try {
+          const categoriesResponse = await api.get('/products/categories');
+          if (categoriesResponse.data && 
+              categoriesResponse.data.main && 
+              Array.isArray(categoriesResponse.data.main)) {
+            setCategories(categoriesResponse.data);
+          }
+        } catch (categoryErr) {
+          console.warn('Failed to load categories, using fallbacks:', categoryErr);
+          // Keep using fallback categories
+        }
         
         // Fetch efficiency ratings
-        const ratingsResponse = await api.get('/products/efficiency-ratings');
-        setEfficiencyRatings(ratingsResponse.data);
+        try {
+          const ratingsResponse = await api.get('/products/efficiency-ratings');
+          if (ratingsResponse.data && Array.isArray(ratingsResponse.data)) {
+            setEfficiencyRatings(ratingsResponse.data);
+          }
+        } catch (ratingErr) {
+          console.warn('Failed to load efficiency ratings, using fallbacks:', ratingErr);
+          // Keep using fallback ratings
+        }
         
         setError(null);
+        setDataInitialized(true);
       } catch (err) {
         console.error('Product data initialization error:', err);
         setError(err instanceof Error ? err.message : 'An error occurred loading product data');
+        // Still mark as initialized so the UI can render with fallbacks
+        setDataInitialized(true);
       } finally {
         setIsLoading(false);
       }
@@ -71,19 +104,40 @@ export function useProducts() {
       if (pagination?.sortOrder) params.append('sortOrder', pagination.sortOrder);
       
       // Make API request
-      const response = await api.get<PaginatedResponse<Product>>(`/products?${params.toString()}`);
-      
-      // Update state with response data
-      setProducts(response.data.items);
-      setTotalProducts(response.data.total);
-      setTotalPages(response.data.totalPages);
-      setCurrentPage(response.data.page);
-      setError(null);
-      
-      return response.data.items;
-    } catch (err) {
+      try {
+        const response = await api.get<PaginatedResponse<Product>>(`/products?${params.toString()}`);
+        
+        // Update state with response data
+        if (response.data && response.data.items) {
+          setProducts(response.data.items);
+          setTotalProducts(response.data.total || 0);
+          setTotalPages(response.data.totalPages || 1);
+          setCurrentPage(response.data.page || 1);
+          setError(null);
+          
+          return response.data.items;
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (error: any) {
+        console.error('API error fetching products:', error);
+        // Return empty array but don't set error if we're just unauthorized
+        // This allows the UI to render properly for non-logged in users
+        if (error.response && error.response.status === 401) {
+          console.warn('Unauthorized access, returning empty products array');
+          setProducts([]);
+          setTotalProducts(0);
+          setTotalPages(1);
+          setCurrentPage(1);
+          return [];
+        } else {
+          throw error; // Re-throw for the outer catch block
+        }
+      }
+    } catch (err: any) {
       console.error('Error fetching products:', err);
       setError(err instanceof Error ? err.message : 'An error occurred fetching products');
+      setProducts([]);
       return [];
     } finally {
       setIsLoading(false);
@@ -97,9 +151,12 @@ export function useProducts() {
       const response = await api.get<Product>(`/products/${id}`);
       setError(null);
       return response.data;
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Error fetching product ${id}:`, err);
-      setError(err instanceof Error ? err.message : 'An error occurred fetching the product');
+      // Don't set error if we're just unauthorized
+      if (err.response && err.response.status !== 401) {
+        setError(err instanceof Error ? err.message : 'An error occurred fetching the product');
+      }
       return null;
     } finally {
       setIsLoading(false);
@@ -110,11 +167,12 @@ export function useProducts() {
     isLoading,
     error,
     products,
-    categories,
-    efficiencyRatings,
+    categories: categories || fallbackCategories,
+    efficiencyRatings: efficiencyRatings || fallbackEfficiencyRatings,
     totalProducts,
     totalPages,
     currentPage,
+    dataInitialized,
     getFilteredProducts,
     getProduct
   };

@@ -35,6 +35,7 @@ const ProductsPage: React.FC = () => {
     totalProducts,
     totalPages,
     currentPage,
+    dataInitialized,
     getFilteredProducts 
   } = useProducts();
   
@@ -70,16 +71,24 @@ const ProductsPage: React.FC = () => {
   // Load products when filters or pagination changes
   useEffect(() => {
     const loadProducts = async () => {
-      const filteredProducts = await getFilteredProducts(filters, pagination);
-      setProducts(filteredProducts);
+      try {
+        const filteredProducts = await getFilteredProducts(filters, pagination);
+        setProducts(filteredProducts || []);
+      } catch (error) {
+        console.error('Error loading products:', error);
+        setProducts([]);
+      }
     };
     
-    loadProducts();
-  }, [filters, pagination, getFilteredProducts]);
+    // Only load products if data is initialized
+    if (dataInitialized) {
+      loadProducts();
+    }
+  }, [filters, pagination, getFilteredProducts, dataInitialized]);
   
   // Handle page change
   const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
+    if (newPage >= 1 && newPage <= (totalPages || 1)) {
       setPagination(prev => ({ ...prev, page: newPage }));
       // Scroll to top of product list
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -95,8 +104,8 @@ const ProductsPage: React.FC = () => {
     }));
   };
   
-  // Loading state
-  if (isLoading && products.length === 0) {
+  // Initial loading state
+  if (isLoading && !dataInitialized) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
@@ -104,8 +113,8 @@ const ProductsPage: React.FC = () => {
     );
   }
   
-  // Error state
-  if (error) {
+  // Error state - only show if it's not an auth error
+  if (error && !error.includes('unauthorized') && !error.includes('Unauthorized')) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-red-50 text-red-600 p-4 rounded-lg">
@@ -114,6 +123,20 @@ const ProductsPage: React.FC = () => {
       </div>
     );
   }
+
+  // Ensure categories and efficiencyRatings are arrays
+  const mainCategories = Array.isArray(categories?.main) ? categories.main : [];
+  
+  // Safely handle subcategories
+  let subCategories: string[] = [];
+  if (filters.mainCategory && categories?.sub) {
+    const subCats = categories.sub[filters.mainCategory];
+    if (Array.isArray(subCats)) {
+      subCategories = subCats;
+    }
+  }
+  
+  const ratings = Array.isArray(efficiencyRatings) ? efficiencyRatings : [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -153,7 +176,7 @@ const ProductsPage: React.FC = () => {
             }))}
           >
             <option value="">All Categories</option>
-            {categories.main.map((category) => (
+            {mainCategories.map((category) => (
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
@@ -168,7 +191,7 @@ const ProductsPage: React.FC = () => {
             disabled={!filters.mainCategory}
           >
             <option value="">All Sub-Categories</option>
-            {filters.mainCategory && categories.sub[filters.mainCategory]?.map((subCategory) => (
+            {subCategories.map((subCategory) => (
               <option key={subCategory} value={subCategory}>{subCategory}</option>
             ))}
           </select>
@@ -182,7 +205,7 @@ const ProductsPage: React.FC = () => {
             onChange={(e) => setFilters(prev => ({ ...prev, efficiency: e.target.value }))}
           >
             <option value="">All Efficiency Ratings</option>
-            {efficiencyRatings.map((rating) => (
+            {ratings.map((rating) => (
               <option key={rating} value={rating}>{rating}</option>
             ))}
           </select>
@@ -193,7 +216,7 @@ const ProductsPage: React.FC = () => {
       <div className="mb-4 flex justify-between items-center">
         <div className="text-sm text-gray-500">
           Showing {products.length > 0 ? ((pagination.page || 1) - 1) * (pagination.pageSize || 12) + 1 : 0}-
-          {Math.min((pagination.page || 1) * (pagination.pageSize || 12), totalProducts)} of {totalProducts} products
+          {Math.min((pagination.page || 1) * (pagination.pageSize || 12), totalProducts || 0)} of {totalProducts || 0} products
         </div>
         
         <div className="flex space-x-4">
@@ -230,7 +253,7 @@ const ProductsPage: React.FC = () => {
       </div>
 
       {/* Loading Overlay */}
-      {isLoading && products.length > 0 && (
+      {isLoading && dataInitialized && (
         <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
           <div className="bg-white p-4 rounded-lg shadow-lg">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
@@ -253,7 +276,7 @@ const ProductsPage: React.FC = () => {
               <p className="text-sm text-gray-500 mb-4">Model: {product.model}</p>
 
               <div className="mb-4">
-                {Object.entries(product.specifications).slice(0, 2).map(([key, value]) => (
+                {product.specifications && Object.entries(product.specifications).slice(0, 2).map(([key, value]) => (
                   <div key={key} className="text-sm">
                     <span className="text-gray-600">{key}:</span>{' '}
                     <span className="text-gray-900">{value}</span>
@@ -268,14 +291,16 @@ const ProductsPage: React.FC = () => {
                 >
                   View Details
                 </Link>
-                <a
-                  href={product.productUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-200 transition-colors duration-200"
-                >
-                  View on Site
-                </a>
+                {product.productUrl && (
+                  <a
+                    href={product.productUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-200 transition-colors duration-200"
+                  >
+                    View on Site
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -290,7 +315,7 @@ const ProductsPage: React.FC = () => {
       )}
       
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {(totalPages || 0) > 1 && (
         <div className="mt-8 flex justify-center">
           <nav className="flex items-center space-x-2">
             <button
@@ -308,16 +333,18 @@ const ProductsPage: React.FC = () => {
             
             {/* Page Numbers */}
             <div className="flex space-x-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, totalPages || 1) }, (_, i) => {
                 // Calculate which page numbers to show
                 let pageNum;
                 const currentPage = pagination.page || 1;
-                if (totalPages <= 5) {
+                const maxPages = totalPages || 1;
+                
+                if (maxPages <= 5) {
                   pageNum = i + 1;
                 } else if (currentPage <= 3) {
                   pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
+                } else if (currentPage >= maxPages - 2) {
+                  pageNum = maxPages - 4 + i;
                 } else {
                   pageNum = currentPage - 2 + i;
                 }
@@ -340,9 +367,9 @@ const ProductsPage: React.FC = () => {
             
             <button
               onClick={() => handlePageChange((pagination.page || 1) + 1)}
-              disabled={(pagination.page || 1) === totalPages}
+              disabled={(pagination.page || 1) === (totalPages || 1)}
               className={`p-2 rounded-md ${
-                (pagination.page || 1) === totalPages
+                (pagination.page || 1) === (totalPages || 1)
                   ? 'text-gray-400 cursor-not-allowed'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
