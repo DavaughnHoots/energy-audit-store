@@ -23,6 +23,7 @@ import dashboardRoutes from './routes/dashboard.js';
 import energyAuditRoutes from './routes/energyAudit.js';
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
 import recommendationsRoutes from './routes/recommendations.js';
+import userProfileRoutes from './routes/userProfile.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -101,6 +102,7 @@ app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/energy-audit', energyAuditRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
+app.use('/api/user-profile', userProfileRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
