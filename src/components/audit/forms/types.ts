@@ -4,6 +4,7 @@ export interface FormComponentProps<T> {
   data: T;
   onInputChange: (field: keyof T, value: any) => void;
   onValidate?: (isValid: boolean) => void;
+  autofilledFields?: string[];
 }
 
 export type BasicInfoFormProps = FormComponentProps<BasicInfo>;

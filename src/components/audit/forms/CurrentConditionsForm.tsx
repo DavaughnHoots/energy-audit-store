@@ -11,7 +11,8 @@ import {
 
 const CurrentConditionsForm: React.FC<CurrentConditionsFormProps> = ({
   data,
-  onInputChange
+  onInputChange,
+  autofilledFields = []
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -92,6 +93,7 @@ const CurrentConditionsForm: React.FC<CurrentConditionsFormProps> = ({
             { value: 'many', label: 'Many windows (more than 15)' }
           ]}
           required
+          isAutofilled={autofilledFields.includes('windowCount')}
         />
 
         <CheckboxGroup
@@ -100,6 +102,7 @@ const CurrentConditionsForm: React.FC<CurrentConditionsFormProps> = ({
           value={data.airLeaks}
           onChange={(value) => onInputChange('airLeaks', value)}
           helpText="Select all that apply"
+          isAutofilled={autofilledFields.includes('airLeaks')}
         />
       </FormGrid>
 

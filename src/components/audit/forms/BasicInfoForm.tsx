@@ -6,7 +6,8 @@ import { FormGrid, InputField, SelectField } from '../FormFields';
 
 const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
   data,
-  onInputChange
+  onInputChange,
+  autofilledFields = []
 }) => {
   const handleChange = (field: keyof typeof data) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -27,6 +28,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           value={data.fullName}
           onChange={handleChange('fullName')}
           required
+          isAutofilled={autofilledFields.includes('fullName')}
         />
 
         <InputField
@@ -35,6 +37,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           value={data.email}
           onChange={handleChange('email')}
           required
+          isAutofilled={autofilledFields.includes('email')}
         />
 
         <InputField
@@ -43,6 +46,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           value={data.phone}
           onChange={handleChange('phone')}
           required
+          isAutofilled={autofilledFields.includes('phone')}
         />
 
         <InputField
@@ -50,6 +54,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           value={data.address}
           onChange={handleChange('address')}
           required
+          isAutofilled={autofilledFields.includes('address')}
         />
 
         <SelectField
@@ -65,6 +70,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
             { value: 'mobile-home', label: 'Mobile Home' }
           ]}
           required
+          isAutofilled={autofilledFields.includes('propertyType')}
         />
 
         <InputField
