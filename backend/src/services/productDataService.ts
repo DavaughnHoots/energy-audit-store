@@ -40,10 +40,23 @@ class ProductDataService {
         return true;
       }
 
+      // Determine if the file path is absolute or relative
+      const isAbsoluteUrl = file.startsWith('http://') || file.startsWith('https://');
+      
       // Fetch and parse CSV data
-      const response = await fetch(file);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let response;
+      try {
+        response = await fetch(file);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      } catch (fetchError) {
+        appLogger.error('Error fetching CSV file', { 
+          file, 
+          error: fetchError,
+          isAbsoluteUrl
+        });
+        throw new Error(`Failed to fetch CSV file: ${(fetchError as Error).message}`);
       }
       
       const csvData = await response.text();
@@ -140,8 +153,21 @@ class ProductDataService {
     if (!this.isLoaded && this.products.length === 0) {
       const cachedProducts = await cache.get<Product[]>(this.PRODUCTS_CACHE_KEY);
       if (cachedProducts && cachedProducts.length > 0) {
+        appLogger.info('Using cached products in getProducts', { count: cachedProducts.length });
         this.products = cachedProducts;
         this.isLoaded = true;
+      } else {
+        // If no products in cache, try to load them from CSV
+        try {
+          appLogger.info('No products in cache, attempting to load from CSV');
+          const csvPath = process.env.NODE_ENV === 'production' 
+            ? 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/data/products.csv'
+            : '/data/products.csv';
+          await this.loadProductsFromCSV(csvPath);
+        } catch (error) {
+          appLogger.error('Failed to load products in getProducts', { error });
+          // Continue with empty products array
+        }
       }
     }
 
@@ -227,8 +253,21 @@ class ProductDataService {
     if (!this.isLoaded && this.products.length === 0) {
       const cachedProducts = await cache.get<Product[]>(this.PRODUCTS_CACHE_KEY);
       if (cachedProducts && cachedProducts.length > 0) {
+        appLogger.info('Using cached products in getProduct', { count: cachedProducts.length });
         this.products = cachedProducts;
         this.isLoaded = true;
+      } else {
+        // If no products in cache, try to load them from CSV
+        try {
+          appLogger.info('No products in cache, attempting to load from CSV in getProduct');
+          const csvPath = process.env.NODE_ENV === 'production' 
+            ? 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/data/products.csv'
+            : '/data/products.csv';
+          await this.loadProductsFromCSV(csvPath);
+        } catch (error) {
+          appLogger.error('Failed to load products in getProduct', { error });
+          // Continue with empty products array
+        }
       }
     }
 
@@ -259,8 +298,21 @@ class ProductDataService {
     if (!this.isLoaded && this.products.length === 0) {
       const cachedProducts = await cache.get<Product[]>(this.PRODUCTS_CACHE_KEY);
       if (cachedProducts && cachedProducts.length > 0) {
+        appLogger.info('Using cached products in getCategories', { count: cachedProducts.length });
         this.products = cachedProducts;
         this.isLoaded = true;
+      } else {
+        // If no products in cache, try to load them from CSV
+        try {
+          appLogger.info('No products in cache, attempting to load from CSV in getCategories');
+          const csvPath = process.env.NODE_ENV === 'production' 
+            ? 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/data/products.csv'
+            : '/data/products.csv';
+          await this.loadProductsFromCSV(csvPath);
+        } catch (error) {
+          appLogger.error('Failed to load products in getCategories', { error });
+          // Continue with empty products array
+        }
       }
     }
 
@@ -308,8 +360,21 @@ class ProductDataService {
     if (!this.isLoaded && this.products.length === 0) {
       const cachedProducts = await cache.get<Product[]>(this.PRODUCTS_CACHE_KEY);
       if (cachedProducts && cachedProducts.length > 0) {
+        appLogger.info('Using cached products in getEfficiencyRatings', { count: cachedProducts.length });
         this.products = cachedProducts;
         this.isLoaded = true;
+      } else {
+        // If no products in cache, try to load them from CSV
+        try {
+          appLogger.info('No products in cache, attempting to load from CSV in getEfficiencyRatings');
+          const csvPath = process.env.NODE_ENV === 'production' 
+            ? 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/data/products.csv'
+            : '/data/products.csv';
+          await this.loadProductsFromCSV(csvPath);
+        } catch (error) {
+          appLogger.error('Failed to load products in getEfficiencyRatings', { error });
+          // Continue with empty products array
+        }
       }
     }
 

@@ -13,6 +13,20 @@ import { ProductFilters, PaginationOptions } from '../types/product.js';
 const router = express.Router();
 const productService = new ProductDataService();
 
+// Initialize products on startup
+(async () => {
+  try {
+    appLogger.info('Initializing products on startup');
+    // Try to load products from CSV
+    await productService.loadProductsFromCSV(process.env.NODE_ENV === 'production' 
+      ? 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/data/products.csv'
+      : '/data/products.csv');
+    appLogger.info('Products loaded successfully on startup');
+  } catch (error) {
+    appLogger.error('Failed to load products on startup', { error });
+  }
+})();
+
 // Performance monitoring middleware
 const trackPerformance = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const startTime = Date.now();
@@ -184,12 +198,19 @@ router.get('/:id/recommendations', authenticate, async (req: AuthenticatedReques
 
 router.post('/sync', async (req, res) => {
   try {
-    const success = await productService.loadProductsFromCSV('/data/products.csv');
+    // Use absolute URL in production, relative path in development
+    const csvPath = process.env.NODE_ENV === 'production' 
+      ? 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/data/products.csv'
+      : '/data/products.csv';
+    
+    appLogger.info('Syncing products from CSV', { path: csvPath });
+    const success = await productService.loadProductsFromCSV(csvPath);
     if (!success) {
       return res.status(500).json({ error: 'Failed to sync products' });
     }
     res.json({ message: 'Products synced successfully' });
   } catch (error) {
+    appLogger.error('Error syncing products', { error });
     res.status(500).json({ error: (error as Error).message });
   }
 });
