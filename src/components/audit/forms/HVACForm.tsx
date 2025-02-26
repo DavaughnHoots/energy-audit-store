@@ -238,47 +238,56 @@ const HVACForm: React.FC<HVACFormProps> = ({
                 ]}
               />
 
-              <InputField
-                label="System Age (years)"
-                type="text"
-                value={data.heatingSystem.age || ''}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  const inputValue = e.target.value;
-                  if (inputValue === '') {
-                    handleAdvancedFieldChange('heatingSystem', 'age', '');
-                  } else {
-                    const value = parseInt(inputValue);
-                    if (!isNaN(value) && value >= 0 && value <= 50) {
+                <InputField
+                  label="System Age (years)"
+                  type="text"
+                  value={data.heatingSystem.age || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('heatingSystem', 'age', '');
+                    } else if (/^\d+$/.test(inputValue)) {
+                      const value = parseInt(inputValue);
                       handleAdvancedFieldChange('heatingSystem', 'age', value);
                     }
-                  }
-                }}
-                pattern="[0-9]*"
-                inputMode="numeric"
-              />
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    const value = parseInt(e.target.value);
+                    if (isNaN(value) || value < 0 || value > 50) {
+                      // Could add visual feedback here if needed
+                    }
+                  }}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  helpText="Age of system (0-50 years)"
+                />
 
-              <InputField
-                label="Efficiency Rating"
-                type="text"
-                value={data.heatingSystem.efficiency || ''}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  const inputValue = e.target.value;
-                  if (inputValue === '') {
-                    handleAdvancedFieldChange('heatingSystem', 'efficiency', '');
-                  } else {
-                    const value = parseInt(inputValue);
-                    if (!isNaN(value) && value >= 0 && value <= 400) {
+                <InputField
+                  label="Efficiency Rating"
+                  type="text"
+                  value={data.heatingSystem.efficiency || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('heatingSystem', 'efficiency', '');
+                    } else if (/^\d+$/.test(inputValue)) {
+                      const value = parseInt(inputValue);
                       handleAdvancedFieldChange('heatingSystem', 'efficiency', value);
                     }
-                  }
-                }}
-                pattern="[0-9]*"
-                inputMode="numeric"
-                error={efficiencyError}
-                helpText={data.heatingSystem.type === 'heat-pump'
-                  ? 'HSPF for heat pumps (8-13)'
-                  : 'AFUE for furnaces/boilers (80-98)'}
-              />
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    const value = parseInt(e.target.value);
+                    if (isNaN(value) || value < 0 || value > 400) {
+                      // Could add visual feedback here if needed
+                    }
+                  }}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  error={efficiencyError}
+                  helpText={data.heatingSystem.type === 'heat-pump'
+                    ? 'HSPF for heat pumps (8-13)'
+                    : 'AFUE for furnaces/boilers (80-98)'}
+                />
 
               <InputField
                 label="Last Service Date"
@@ -301,15 +310,20 @@ const HVACForm: React.FC<HVACFormProps> = ({
                     const inputValue = e.target.value;
                     if (inputValue === '') {
                       handleAdvancedFieldChange('coolingSystem', 'age', '');
-                    } else {
+                    } else if (/^\d+$/.test(inputValue)) {
                       const value = parseInt(inputValue);
-                      if (!isNaN(value) && value >= 0 && value <= 50) {
-                        handleAdvancedFieldChange('coolingSystem', 'age', value);
-                      }
+                      handleAdvancedFieldChange('coolingSystem', 'age', value);
+                    }
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    const value = parseInt(e.target.value);
+                    if (isNaN(value) || value < 0 || value > 50) {
+                      // Could add visual feedback here if needed
                     }
                   }}
                   pattern="[0-9]*"
                   inputMode="numeric"
+                  helpText="Age of system (0-50 years)"
                 />
 
                 <InputField
@@ -320,11 +334,15 @@ const HVACForm: React.FC<HVACFormProps> = ({
                     const inputValue = e.target.value;
                     if (inputValue === '') {
                       handleAdvancedFieldChange('coolingSystem', 'efficiency', '');
-                    } else {
+                    } else if (/^\d+$/.test(inputValue)) {
                       const value = parseInt(inputValue);
-                      if (!isNaN(value) && value >= 0 && value <= 30) {
-                        handleAdvancedFieldChange('coolingSystem', 'efficiency', value);
-                      }
+                      handleAdvancedFieldChange('coolingSystem', 'efficiency', value);
+                    }
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    const value = parseInt(e.target.value);
+                    if (isNaN(value) || value < 0 || value > 30) {
+                      // Could add visual feedback here if needed
                     }
                   }}
                   pattern="[0-9]*"
@@ -349,16 +367,20 @@ const HVACForm: React.FC<HVACFormProps> = ({
                   const inputValue = e.target.value;
                   if (inputValue === '') {
                     handleBasicFieldChange('zoneCount', '');
-                  } else {
+                  } else if (/^\d+$/.test(inputValue)) {
                     const value = parseInt(inputValue);
-                    if (!isNaN(value) && value >= 1 && value <= 10) {
-                      handleBasicFieldChange('zoneCount', value);
-                    }
+                    handleBasicFieldChange('zoneCount', value);
+                  }
+                }}
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                  const value = parseInt(e.target.value);
+                  if (isNaN(value) || value < 1 || value > 10) {
+                    // Could add visual feedback here if needed
                   }
                 }}
                 pattern="[0-9]*"
                 inputMode="numeric"
-                helpText="Number of independently controlled heating/cooling zones"
+                helpText="Number of independently controlled heating/cooling zones (1-10)"
               />
             </FormGrid>
           </FormSubsection>

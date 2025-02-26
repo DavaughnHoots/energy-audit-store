@@ -136,11 +136,17 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
                   const inputValue = e.target.value;
                   if (inputValue === '') {
                     handleAdvancedFieldChange('electricBill', '');
-                  } else {
+                  } else if (/^\d*\.?\d*$/.test(inputValue)) {
                     const value = parseFloat(inputValue);
-                    if (!isNaN(value) && value >= 0) {
+                    if (!isNaN(value)) {
                       handleAdvancedFieldChange('electricBill', value);
                     }
+                  }
+                }}
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                  const value = parseFloat(e.target.value);
+                  if (isNaN(value) || value < 0) {
+                    // Could add visual feedback here if needed
                   }
                 }}
                 pattern="[0-9]*\.?[0-9]*"
@@ -155,11 +161,17 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
                   const inputValue = e.target.value;
                   if (inputValue === '') {
                     handleAdvancedFieldChange('gasBill', '');
-                  } else {
+                  } else if (/^\d*\.?\d*$/.test(inputValue)) {
                     const value = parseFloat(inputValue);
-                    if (!isNaN(value) && value >= 0) {
+                    if (!isNaN(value)) {
                       handleAdvancedFieldChange('gasBill', value);
                     }
+                  }
+                }}
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                  const value = parseFloat(e.target.value);
+                  if (isNaN(value) || value < 0) {
+                    // Could add visual feedback here if needed
                   }
                 }}
                 pattern="[0-9]*\.?[0-9]*"
@@ -174,11 +186,17 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
                   const inputValue = e.target.value;
                   if (inputValue === '') {
                     handleAdvancedFieldChange('powerConsumption', '');
-                  } else {
+                  } else if (/^\d*\.?\d*$/.test(inputValue)) {
                     const value = parseFloat(inputValue);
-                    if (!isNaN(value) && value >= 0) {
+                    if (!isNaN(value)) {
                       handleAdvancedFieldChange('powerConsumption', value);
                     }
+                  }
+                }}
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                  const value = parseFloat(e.target.value);
+                  if (isNaN(value) || value < 0) {
+                    // Could add visual feedback here if needed
                   }
                 }}
                 pattern="[0-9]*\.?[0-9]*"

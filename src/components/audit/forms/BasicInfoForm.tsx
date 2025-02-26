@@ -79,19 +79,27 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           value={data.yearBuilt || ''}
           onChange={(e) => {
             const inputValue = e.target.value;
+            // Always update the input field to allow typing
             if (inputValue === '') {
               onInputChange('yearBuilt', '');
-            } else {
+            } else if (/^\d+$/.test(inputValue)) {
+              // Only parse and validate if it's a complete number
               const value = parseInt(inputValue);
-              if (!isNaN(value) && value >= 1800 && value <= new Date().getFullYear()) {
-                onInputChange('yearBuilt', value);
-              }
+              // Store the raw value, validation will happen on form submission
+              onInputChange('yearBuilt', value);
+            }
+          }}
+          onBlur={(e) => {
+            // Validate on blur for better user experience
+            const value = parseInt(e.target.value);
+            if (isNaN(value) || value < 1800 || value > new Date().getFullYear()) {
+              // Could add visual feedback here if needed
             }
           }}
           pattern="[0-9]*"
           inputMode="numeric"
           required
-          helpText="Enter the year your property was constructed"
+          helpText="Enter the year your property was constructed (1800-present)"
         />
 
         <InputField
@@ -100,19 +108,27 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           value={data.occupants || ''}
           onChange={(e) => {
             const inputValue = e.target.value;
+            // Always update the input field to allow typing
             if (inputValue === '') {
               onInputChange('occupants', '');
-            } else {
+            } else if (/^\d+$/.test(inputValue)) {
+              // Only parse and validate if it's a complete number
               const value = parseInt(inputValue);
-              if (!isNaN(value) && value >= 1 && value <= 20) {
-                onInputChange('occupants', value);
-              }
+              // Store the raw value, validation will happen on form submission
+              onInputChange('occupants', value);
+            }
+          }}
+          onBlur={(e) => {
+            // Validate on blur for better user experience
+            const value = parseInt(e.target.value);
+            if (isNaN(value) || value < 1 || value > 20) {
+              // Could add visual feedback here if needed
             }
           }}
           pattern="[0-9]*"
           inputMode="numeric"
           required
-          helpText="How many people typically live in the property?"
+          helpText="How many people typically live in the property? (1-20)"
         />
 
         <InputField

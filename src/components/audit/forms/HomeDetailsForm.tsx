@@ -124,11 +124,9 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
                 const inputValue = e.target.value;
                 if (inputValue === '') {
                   onInputChange('squareFootage', '');
-                } else {
+                } else if (/^\d+$/.test(inputValue)) {
                   const value = parseInt(inputValue);
-                  if (!isNaN(value) && value >= 0) {
-                    onInputChange('squareFootage', value);
-                  }
+                  onInputChange('squareFootage', value);
                 }
               }}
               pattern="[0-9]*"
@@ -144,11 +142,9 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
                 const inputValue = e.target.value;
                 if (inputValue === '') {
                   onInputChange('bedrooms', '');
-                } else {
+                } else if (/^\d+$/.test(inputValue)) {
                   const value = parseInt(inputValue);
-                  if (!isNaN(value) && value >= 0) {
-                    onInputChange('bedrooms', value);
-                  }
+                  onInputChange('bedrooms', value);
                 }
               }}
               pattern="[0-9]*"
@@ -163,9 +159,9 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
                 const inputValue = e.target.value;
                 if (inputValue === '') {
                   onInputChange('bathrooms', '');
-                } else {
+                } else if (/^\d*\.?\d*$/.test(inputValue)) {
                   const value = parseFloat(inputValue);
-                  if (!isNaN(value) && value >= 0) {
+                  if (!isNaN(value)) {
                     onInputChange('bathrooms', value);
                   }
                 }
@@ -182,9 +178,9 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
                 const inputValue = e.target.value;
                 if (inputValue === '') {
                   onInputChange('wallLength', '');
-                } else {
+                } else if (/^\d*\.?\d*$/.test(inputValue)) {
                   const value = parseFloat(inputValue);
-                  if (!isNaN(value) && value >= 0) {
+                  if (!isNaN(value)) {
                     onInputChange('wallLength', value);
                   }
                 }
@@ -201,9 +197,9 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
                 const inputValue = e.target.value;
                 if (inputValue === '') {
                   onInputChange('wallWidth', '');
-                } else {
+                } else if (/^\d*\.?\d*$/.test(inputValue)) {
                   const value = parseFloat(inputValue);
-                  if (!isNaN(value) && value >= 0) {
+                  if (!isNaN(value)) {
                     onInputChange('wallWidth', value);
                   }
                 }
@@ -220,9 +216,9 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
                 const inputValue = e.target.value;
                 if (inputValue === '') {
                   onInputChange('ceilingHeight', '');
-                } else {
+                } else if (/^\d*\.?\d*$/.test(inputValue)) {
                   const value = parseFloat(inputValue);
-                  if (!isNaN(value) && value >= 0) {
+                  if (!isNaN(value)) {
                     onInputChange('ceilingHeight', value);
                   }
                 }
