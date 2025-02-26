@@ -6,35 +6,98 @@ import { apiLimiter } from '../middleware/security.js';
 import ProductDataService from '../services/productDataService.js';
 import pool from '../config/database.js';
 import { AuthenticatedRequest } from '../types/auth.js';
+import { appLogger } from '../config/logger.js';
+import { cache } from '../config/cache.js';
+import { ProductFilters, PaginationOptions } from '../types/product.js';
 
 const router = express.Router();
 const productService = new ProductDataService();
 
+// Performance monitoring middleware
+const trackPerformance = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const startTime = Date.now();
+  
+  // Add a listener for when the response is finished
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    appLogger.info('API Performance', {
+      method: req.method,
+      path: req.path,
+      query: req.query,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`
+    });
+  });
+  
+  next();
+};
+
+// Apply performance tracking to all routes
+router.use(trackPerformance);
+
+// Get products with pagination, sorting, and filtering
 router.get('/', async (req, res) => {
   try {
-    const filters = {
+    // Extract pagination and sorting parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 20;
+    const sortBy = req.query.sortBy as string || 'name';
+    const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'asc';
+    
+    // Validate pagination parameters
+    if (page < 1 || pageSize < 1 || pageSize > 100) {
+      return res.status(400).json({ 
+        error: 'Invalid pagination parameters. Page must be >= 1 and pageSize must be between 1 and 100.' 
+      });
+    }
+    
+    // Extract filter parameters
+    const filters: ProductFilters = {
       mainCategory: req.query.category as string,
       subCategory: req.query.subcategory as string,
       search: req.query.search as string,
       efficiency: req.query.efficiency as string
     };
-
-    const products = await productService.getProducts(filters);
-    res.json(products);
+    
+    // Get products with pagination
+    const result = await productService.getProducts(
+      filters,
+      page,
+      pageSize,
+      sortBy,
+      sortOrder
+    );
+    
+    res.json(result);
   } catch (error) {
+    appLogger.error('Error fetching products', { error });
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
+// Get product categories
 router.get('/categories', async (req, res) => {
   try {
     const categories = await productService.getCategories();
     res.json(categories);
   } catch (error) {
+    appLogger.error('Error fetching categories', { error });
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
+// Get efficiency ratings
+router.get('/efficiency-ratings', async (req, res) => {
+  try {
+    const ratings = await productService.getEfficiencyRatings();
+    res.json(ratings);
+  } catch (error) {
+    appLogger.error('Error fetching efficiency ratings', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Get a single product by ID
 router.get('/:id', async (req, res) => {
   try {
     const product = await productService.getProduct(req.params.id);
@@ -43,6 +106,23 @@ router.get('/:id', async (req, res) => {
     }
     res.json(product);
   } catch (error) {
+    appLogger.error('Error fetching product', { id: req.params.id, error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Clear product cache (admin only)
+router.post('/clear-cache', authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Check if user is admin
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Unauthorized. Admin access required.' });
+    }
+    
+    await productService.clearCache();
+    res.json({ message: 'Product cache cleared successfully' });
+  } catch (error) {
+    appLogger.error('Error clearing product cache', { error });
     res.status(500).json({ error: (error as Error).message });
   }
 });

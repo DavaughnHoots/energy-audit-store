@@ -1,4 +1,5 @@
 // src/config/api.ts
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // In production, API calls will be made to the Heroku backend
 // In development, we use Vite's proxy
@@ -37,5 +38,40 @@ export const API_ENDPOINTS = {
 export const getApiUrl = (endpoint: string): string => {
   return `${API_BASE_URL}${endpoint}`;
 };
+
+// Create axios instance with default config
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000, // 10 seconds
+});
+
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config: AxiosRequestConfig) => {
+    const token = localStorage.getItem('token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error: AxiosError) => Promise.reject(error)
+);
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    // Handle token refresh or other error handling here
+    if (error.response?.status === 401) {
+      // Handle unauthorized error
+      // Could redirect to login or attempt token refresh
+      console.error('Unauthorized request:', error);
+    }
+    return Promise.reject(error);
+  }
+);
 
 export { API_BASE_URL };
