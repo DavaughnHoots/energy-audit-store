@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getApiUrl } from '@/config/api';
 import { EnergyAuditData } from '@/types/energyAudit';
 
 export interface UserProfileData {
@@ -27,7 +27,7 @@ export interface UserProfileData {
 
 export async function fetchUserProfileData(): Promise<UserProfileData | null> {
   try {
-    const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}/profile`, {
+    const response = await fetch(getApiUrl(`${API_ENDPOINTS.USER_PROFILE}/profile`), {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -56,7 +56,7 @@ export async function updateUserProfileFromAudit(
       fieldsToUpdate
     };
     
-    const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}/update-from-audit`, {
+    const response = await fetch(getApiUrl(`${API_ENDPOINTS.USER_PROFILE}/update-from-audit`), {
       method: 'POST',
       credentials: 'include',
       headers: {
