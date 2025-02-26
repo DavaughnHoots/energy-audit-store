@@ -184,8 +184,13 @@ export const windowRatings = {
   'not-sure': 0.5
 } as const;
 
+import { TooltipItem } from 'chart.js';
+
 // Chart.js tooltip context type
 export interface ChartTooltipContext {
   raw: number;
   parsed: number;
+  dataIndex: number;
+  dataset: TooltipItem<any>;
+  datasetIndex: number;
 }

@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
     WINDOWS: '/api/settings/property/windows',
     WEATHERIZATION: '/api/settings/property/weatherization'
   },
+  USER_PROFILE: '/api/user-profile',
   RECOMMENDATIONS: {
     UPDATE_STATUS: (id: string) => `/api/recommendations/${id}/status`,
     UPDATE_SAVINGS: (id: string) => `/api/recommendations/${id}/savings`
