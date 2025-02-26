@@ -37,7 +37,7 @@ const FormSectionIndicator: React.FC<FormSectionIndicatorProps> = ({
               {/* Line connecting sections */}
               {index !== sections.length - 1 && (
                 <div
-                  className={`absolute top-4 left-[50%] w-full border-t ${
+                  className={`absolute top-4 left-[calc(50%+4px)] w-[calc(100%-8px)] border-t ${
                     isComplete ? 'border-green-600' : 'border-gray-300'
                   }`}
                   aria-hidden="true"
