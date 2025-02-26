@@ -1,7 +1,7 @@
 // src/hooks/useProducts.ts
 import { useState, useEffect } from 'react';
 import { Product, ProductFilters } from '../../backend/src/types/product';
-import ProductDataService from '../../backend/src/services/productDataService';
+import ProductDataService from '../services/productDataService';
 
 const productService = new ProductDataService();
 

@@ -102,6 +102,18 @@ router.get('/:id/recommendations', authenticate, async (req: AuthenticatedReques
   }
 });
 
+router.get('/init', async (req, res) => {
+  try {
+    const success = await productService.loadProductsFromCSV('/data/products.csv');
+    if (!success) {
+      return res.status(500).json({ error: 'Failed to initialize products' });
+    }
+    res.json({ message: 'Products initialized successfully' });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
 router.post('/sync', async (req, res) => {
   try {
     const success = await productService.loadProductsFromCSV('/data/products.csv');
