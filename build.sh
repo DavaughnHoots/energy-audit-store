@@ -13,6 +13,10 @@ echo "Moving frontend build to backend..."
 mkdir -p backend/dist
 cp -r dist/* backend/dist/
 
+echo "Copying data files..."
+mkdir -p backend/dist/data
+cp -r public/data/* backend/dist/data/
+
 echo "Building backend..."
 cd backend
 npm install --production
