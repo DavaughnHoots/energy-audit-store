@@ -105,19 +105,61 @@ export function useProducts() {
       
       // Make API request
       try {
-        const response = await api.get<PaginatedResponse<Product>>(`/products?${params.toString()}`);
+        const response = await api.get<any>(`/products?${params.toString()}`);
         
-        // Update state with response data
-        if (response.data && response.data.items) {
-          setProducts(response.data.items);
-          setTotalProducts(response.data.total || 0);
-          setTotalPages(response.data.totalPages || 1);
-          setCurrentPage(response.data.page || 1);
-          setError(null);
-          
-          return response.data.items;
+        // Handle different response formats
+        if (response.data) {
+          // If response has the expected PaginatedResponse format
+          if (Array.isArray(response.data.items)) {
+            setProducts(response.data.items);
+            setTotalProducts(response.data.total || 0);
+            setTotalPages(response.data.totalPages || 1);
+            setCurrentPage(response.data.page || 1);
+            setError(null);
+            return response.data.items;
+          } 
+          // If response is an array directly
+          else if (Array.isArray(response.data)) {
+            setProducts(response.data);
+            setTotalProducts(response.data.length);
+            setTotalPages(1);
+            setCurrentPage(1);
+            setError(null);
+            return response.data;
+          }
+          // If response has some other format but contains products
+          else if (response.data.products && Array.isArray(response.data.products)) {
+            setProducts(response.data.products);
+            setTotalProducts(response.data.total || response.data.products.length);
+            setTotalPages(response.data.totalPages || 1);
+            setCurrentPage(response.data.page || 1);
+            setError(null);
+            return response.data.products;
+          }
+          // Empty but valid response
+          else if (Object.keys(response.data).length === 0) {
+            setProducts([]);
+            setTotalProducts(0);
+            setTotalPages(1);
+            setCurrentPage(1);
+            setError(null);
+            return [];
+          }
+          else {
+            console.warn('Unexpected API response format:', response.data);
+            setProducts([]);
+            setTotalProducts(0);
+            setTotalPages(1);
+            setCurrentPage(1);
+            return [];
+          }
         } else {
-          throw new Error('Invalid response format');
+          console.warn('Empty API response');
+          setProducts([]);
+          setTotalProducts(0);
+          setTotalPages(1);
+          setCurrentPage(1);
+          return [];
         }
       } catch (error: any) {
         console.error('API error fetching products:', error);
@@ -131,7 +173,13 @@ export function useProducts() {
           setCurrentPage(1);
           return [];
         } else {
-          throw error; // Re-throw for the outer catch block
+          // Log the error but don't throw it
+          console.error('Error details:', error);
+          setProducts([]);
+          setTotalProducts(0);
+          setTotalPages(1);
+          setCurrentPage(1);
+          return [];
         }
       }
     } catch (err: any) {
