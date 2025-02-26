@@ -10,7 +10,9 @@ import CurrentConditionsForm from './forms/CurrentConditionsForm';
 import HVACForm from './forms/HVACForm';
 import EnergyUseForm from './forms/EnergyUseForm';
 import AuditSubmissionModal from './AuditSubmissionModal';
+import Dialog from '@/components/ui/dialog';
 import { getStoredAuditData, storeAuditData, clearStoredAuditData } from '@/utils/auditStorage';
+import { fetchUserProfileData, updateUserProfileFromAudit } from '@/services/userProfileService';
 import { 
   EnergyAuditData,
   BasicInfo,
@@ -44,6 +46,19 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [submittedAuditId, setSubmittedAuditId] = useState<string | null>(null);
+  
+  // Auto-fill related state
+  const [userProfileData, setUserProfileData] = useState<any>(null);
+  const [userModified, setUserModified] = useState<Record<string, boolean>>({});
+  const [showUpdateProfileDialog, setShowUpdateProfileDialog] = useState(false);
+  const [fieldsToUpdate, setFieldsToUpdate] = useState<string[]>([]);
+  const [autofilledFields, setAutofilledFields] = useState<{
+    basicInfo: string[];
+    currentConditions: string[];
+  }>({
+    basicInfo: [],
+    currentConditions: []
+  });
 
   const [formData, setFormData] = useState<EnergyAuditData>({
     basicInfo: {
@@ -138,6 +153,74 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       }));
     }
   }, [initialData]);
+  
+  // Fetch user profile data for auto-fill
+  useEffect(() => {
+    if (isAuthenticated) {
+      const loadUserProfile = async () => {
+        const profileData = await fetchUserProfileData();
+        if (profileData) {
+          setUserProfileData(profileData);
+        }
+      };
+      
+      loadUserProfile();
+    }
+  }, [isAuthenticated]);
+  
+  // Auto-fill form with profile data
+  useEffect(() => {
+    if (userProfileData && !getStoredAuditData() && !initialData) {
+      // Only auto-fill if we don't have stored data or initial data
+      const newFormData = { ...formData };
+      const newAutofilledFields = { ...autofilledFields };
+      
+      // Auto-fill basic info
+      if (!userModified['basicInfo.fullName'] && userProfileData.fullName) {
+        newFormData.basicInfo.fullName = userProfileData.fullName;
+        newAutofilledFields.basicInfo.push('fullName');
+      }
+      if (!userModified['basicInfo.email'] && userProfileData.email) {
+        newFormData.basicInfo.email = userProfileData.email;
+        newAutofilledFields.basicInfo.push('email');
+      }
+      if (!userModified['basicInfo.phone'] && userProfileData.phone) {
+        newFormData.basicInfo.phone = userProfileData.phone;
+        newAutofilledFields.basicInfo.push('phone');
+      }
+      if (!userModified['basicInfo.address'] && userProfileData.address) {
+        newFormData.basicInfo.address = userProfileData.address;
+        newAutofilledFields.basicInfo.push('address');
+      }
+      
+      // Auto-fill current conditions
+      if (!userModified['currentConditions.numWindows'] && userProfileData.windowMaintenance) {
+        newFormData.currentConditions.numWindows = userProfileData.windowMaintenance.windowCount;
+        newAutofilledFields.currentConditions.push('numWindows');
+        
+        // Set window count category based on number
+        if (userProfileData.windowMaintenance.windowCount < 10) {
+          newFormData.currentConditions.windowCount = 'few';
+        } else if (userProfileData.windowMaintenance.windowCount > 15) {
+          newFormData.currentConditions.windowCount = 'many';
+        } else {
+          newFormData.currentConditions.windowCount = 'average';
+        }
+        newAutofilledFields.currentConditions.push('windowCount');
+      }
+      
+      // Auto-fill air leaks from draft locations
+      if (!userModified['currentConditions.airLeaks'] && 
+          userProfileData.weatherization?.draftLocations?.locations) {
+        newFormData.currentConditions.airLeaks = 
+          userProfileData.weatherization.draftLocations.locations;
+        newAutofilledFields.currentConditions.push('airLeaks');
+      }
+      
+      setFormData(newFormData);
+      setAutofilledFields(newAutofilledFields);
+    }
+  }, [userProfileData, initialData, userModified]);
 
   // Save form data to localStorage when it changes
   useEffect(() => {
@@ -171,6 +254,12 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
     field: keyof EnergyAuditData[T],
     value: any
   ) => {
+    // Track user modifications
+    setUserModified(prev => ({
+      ...prev,
+      [`${section}.${String(field)}`]: true
+    }));
+    
     setFormData(prevData => ({
       ...prevData,
       [section]: {
@@ -178,6 +267,45 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         [field]: value
       }
     }));
+  };
+  
+  // Handle showing profile update dialog
+  const handleShowUpdateProfileDialog = () => {
+    // Determine which fields were modified and could be updated in profile
+    const updatedFields = [];
+    
+    if (userModified['basicInfo.fullName'] || 
+        userModified['basicInfo.phone'] || 
+        userModified['basicInfo.address']) {
+      updatedFields.push('basicInfo');
+    }
+    
+    if (userModified['currentConditions.numWindows']) {
+      updatedFields.push('windowMaintenance');
+    }
+    
+    if (userModified['currentConditions.airLeaks']) {
+      updatedFields.push('weatherization');
+    }
+    
+    if (updatedFields.length > 0) {
+      setFieldsToUpdate(updatedFields);
+      setShowUpdateProfileDialog(true);
+    } else {
+      // No fields to update, just navigate
+      clearStoredAuditData();
+      navigate(`/dashboard?newAudit=${submittedAuditId}`);
+    }
+  };
+  
+  // Handle profile update confirmation
+  const handleUpdateProfile = async () => {
+    if (submittedAuditId) {
+      await updateUserProfileFromAudit(formData, fieldsToUpdate);
+    }
+    setShowUpdateProfileDialog(false);
+    clearStoredAuditData();
+    navigate(`/dashboard?newAudit=${submittedAuditId}`);
   };
 
   const validateCurrentSection = (): boolean => {
@@ -276,8 +404,8 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       setSubmittedAuditId(result.id);
       
       if (isAuthenticated) {
-        clearStoredAuditData();
-        navigate(`/dashboard?newAudit=${result.id}`);
+        // Show profile update dialog if user modified fields that could be updated in profile
+        handleShowUpdateProfileDialog();
       } else {
         setShowSubmissionModal(true);
       }
@@ -308,6 +436,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
           <BasicInfoForm
             data={formData.basicInfo}
             onInputChange={(field, value) => handleInputChange('basicInfo', field, value)}
+            autofilledFields={autofilledFields.basicInfo}
           />
         );
       case 2:
@@ -322,6 +451,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
           <CurrentConditionsForm
             data={formData.currentConditions}
             onInputChange={(field, value) => handleInputChange('currentConditions', field, value)}
+            autofilledFields={autofilledFields.currentConditions}
           />
         );
       case 4:
@@ -416,6 +546,104 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         auditId={submittedAuditId || ''}
         isAuthenticated={isAuthenticated}
       />
+      
+      {/* Profile update dialog */}
+      <Dialog
+        isOpen={showUpdateProfileDialog}
+        onClose={() => {
+          setShowUpdateProfileDialog(false);
+          clearStoredAuditData();
+          navigate(`/dashboard?newAudit=${submittedAuditId}`);
+        }}
+        title="Update Your Profile"
+        description="Would you like to update your profile with the information from this energy audit?"
+      >
+        <div className="mt-4 space-y-2">
+          {fieldsToUpdate.includes('basicInfo') && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="update-basic-info"
+                checked={fieldsToUpdate.includes('basicInfo')}
+                onChange={(e) => {
+                  setFieldsToUpdate(prev => 
+                    e.target.checked 
+                      ? [...prev, 'basicInfo'] 
+                      : prev.filter(f => f !== 'basicInfo')
+                  );
+                }}
+                className="mr-2"
+              />
+              <label htmlFor="update-basic-info">
+                Update contact information (name, phone, address)
+              </label>
+            </div>
+          )}
+          
+          {fieldsToUpdate.includes('windowMaintenance') && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="update-windows"
+                checked={fieldsToUpdate.includes('windowMaintenance')}
+                onChange={(e) => {
+                  setFieldsToUpdate(prev => 
+                    e.target.checked 
+                      ? [...prev, 'windowMaintenance'] 
+                      : prev.filter(f => f !== 'windowMaintenance')
+                  );
+                }}
+                className="mr-2"
+              />
+              <label htmlFor="update-windows">
+                Update window information
+              </label>
+            </div>
+          )}
+          
+          {fieldsToUpdate.includes('weatherization') && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="update-weatherization"
+                checked={fieldsToUpdate.includes('weatherization')}
+                onChange={(e) => {
+                  setFieldsToUpdate(prev => 
+                    e.target.checked 
+                      ? [...prev, 'weatherization'] 
+                      : prev.filter(f => f !== 'weatherization')
+                  );
+                }}
+                className="mr-2"
+              />
+              <label htmlFor="update-weatherization">
+                Update weatherization information
+              </label>
+            </div>
+          )}
+        </div>
+        
+        <div className="mt-6 flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={() => {
+              setShowUpdateProfileDialog(false);
+              clearStoredAuditData();
+              navigate(`/dashboard?newAudit=${submittedAuditId}`);
+            }}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Skip
+          </button>
+          <button
+            type="button"
+            onClick={handleUpdateProfile}
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
+          >
+            Update Profile
+          </button>
+        </div>
+      </Dialog>
     </>
   );
 };
