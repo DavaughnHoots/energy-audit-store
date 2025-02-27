@@ -30,6 +30,8 @@
     "clsx": "^2.0.0",
     "lucide-react": "^0.344.0",
     "papaparse": "^5.4.1",
+    "pg": "^8.11.3",
+    "csv-parse": "^5.5.5",
     "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
