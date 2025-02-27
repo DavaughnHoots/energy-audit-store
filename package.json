@@ -7,7 +7,8 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "npm run build",
+    "import-products-full": "cd backend && node src/scripts/import_products_full.js"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
