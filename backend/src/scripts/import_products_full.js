@@ -1,7 +1,12 @@
-const { Pool } = require('pg');
-const fs = require('fs');
-const { parse } = require('csv-parse');
-const path = require('path');
+import { Pool } from 'pg';
+import fs from 'fs';
+import { parse } from 'csv-parse';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the current file's directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Connect to the database
 const pool = new Pool({
