@@ -72,47 +72,71 @@ async function importProducts() {
     
     // Process each row
     for await (const row of parser) {
-      // Map CSV columns to database columns
-      const product = {
-        main_category: row['Main Category'] || null,
-        sub_category: row['Sub-Category'] || null,
-        most_efficient: row['Most_Efficient'] === 'Yes',
-        product_number: row['#'] || null,
-        product_url: row['Product URL'] || null,
-        product_name: row['Product Name'] || null,
-        model: row['Model'] || null,
-        description: row['Description'] || null,
-        efficiency: row['Efficiency'] || null,
-        features: row['Features'] || null,
-        size: row['Size'] || null,
-        lighting: row['Lighting'] || null,
-        market: row['Market'] || null,
-        additional_model_identification: row['Additional Model Identification'] || null,
-        energy_star_id: row['ENERGY STAR Unique ID'] || null,
-        upc_codes: row['UPC Codes'] || null,
-        additional_models: row['Additional Model Names and/or Numbers'] || null,
-        pdf_url: row['PDF File URL'] || null
+      // Function to truncate strings to fit in varchar(255)
+      const truncate = (str, maxLength = 255) => {
+        if (!str) return null;
+        return str.length > maxLength ? str.substring(0, maxLength) : str;
       };
       
-      // Insert into database
-      await pool.query(`
-        INSERT INTO products (
-          main_category, sub_category, most_efficient, product_number, 
-          product_url, product_name, model, description, 
-          efficiency, features, size, lighting, 
-          market, additional_model_identification, energy_star_id, 
-          upc_codes, additional_models, pdf_url
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
-          $11, $12, $13, $14, $15, $16, $17, $18
-        )
-      `, [
-        product.main_category, product.sub_category, product.most_efficient, product.product_number,
-        product.product_url, product.product_name, product.model, product.description,
-        product.efficiency, product.features, product.size, product.lighting,
-        product.market, product.additional_model_identification, product.energy_star_id,
-        product.upc_codes, product.additional_models, product.pdf_url
-      ]);
+      // Map CSV columns to database columns with truncation
+      const product = {
+        main_category: truncate(row['Main Category']),
+        sub_category: truncate(row['Sub-Category']),
+        most_efficient: row['Most_Efficient'] === 'Yes',
+        product_number: truncate(row['#']),
+        product_url: truncate(row['Product URL']),
+        product_name: truncate(row['Product Name']),
+        model: truncate(row['Model']),
+        description: truncate(row['Description']),
+        efficiency: truncate(row['Efficiency']),
+        features: truncate(row['Features']),
+        size: truncate(row['Size']),
+        lighting: truncate(row['Lighting']),
+        market: truncate(row['Market']),
+        additional_model_identification: truncate(row['Additional Model Identification']),
+        energy_star_id: truncate(row['ENERGY STAR Unique ID']),
+        upc_codes: truncate(row['UPC Codes']),
+        additional_models: truncate(row['Additional Model Names and/or Numbers']),
+        pdf_url: truncate(row['PDF File URL'])
+      };
+      
+      try {
+        // Check if product already exists to prevent duplicates
+        const existingProduct = await pool.query(
+          `SELECT id FROM products WHERE model = $1 AND product_name = $2 LIMIT 1`,
+          [product.model, product.product_name]
+        );
+        
+        if (existingProduct.rows.length > 0) {
+          // Product already exists, skip
+          console.log(`Skipping duplicate product: ${product.product_name} (${product.model})`);
+          continue;
+        }
+        
+        // Insert into database
+        await pool.query(`
+          INSERT INTO products (
+            main_category, sub_category, most_efficient, product_number, 
+            product_url, product_name, model, description, 
+            efficiency, features, size, lighting, 
+            market, additional_model_identification, energy_star_id, 
+            upc_codes, additional_models, pdf_url
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
+            $11, $12, $13, $14, $15, $16, $17, $18
+          )
+        `, [
+          product.main_category, product.sub_category, product.most_efficient, product.product_number,
+          product.product_url, product.product_name, product.model, product.description,
+          product.efficiency, product.features, product.size, product.lighting,
+          product.market, product.additional_model_identification, product.energy_star_id,
+          product.upc_codes, product.additional_models, product.pdf_url
+        ]);
+      } catch (err) {
+        console.error(`Error inserting product ${product.product_name}:`, err.message);
+        // Continue with next product instead of stopping the entire import
+        continue;
+      }
       
       count++;
       if (count % 100 === 0) {
