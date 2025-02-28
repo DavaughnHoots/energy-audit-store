@@ -4,22 +4,72 @@ import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { apiLimiter } from '../middleware/security.js';
 import ProductDataService from '../services/productDataService.js';
+import { SearchService } from '../services/searchService.js';
 import pool from '../config/database.js';
 import { AuthenticatedRequest } from '../types/auth.js';
+import { cache } from '../config/cache.js';
 
 const router = express.Router();
 const productService = new ProductDataService();
+const searchService = new SearchService(pool);
 
 router.get('/', async (req, res) => {
   try {
+    const search = req.query.search as string;
+    const category = req.query.category as string;
+    const subcategory = req.query.subcategory as string;
+    const efficiency = req.query.efficiency as string;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const sortBy = req.query.sortBy as string || 'relevance';
+    const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+
+    // Create a cache key based on the request parameters
+    const cacheKey = `products:${search || ''}:${category || ''}:${subcategory || ''}:${efficiency || ''}:${page}:${limit}:${sortBy}:${sortOrder}`;
+    
+    // Try to get from cache first
+    const cachedResult = await cache.get(cacheKey);
+    if (cachedResult) {
+      return res.json(cachedResult);
+    }
+
+    // If search term is provided, use the search service with full-text search
+    if (search) {
+      const filters: any = {};
+      if (category) filters.category = category;
+      if (subcategory) filters.subCategory = subcategory;
+      if (efficiency) filters.efficiencyRating = efficiency;
+
+      const searchResult = await searchService.searchProducts(
+        search,
+        filters,
+        {
+          limit,
+          offset: (page - 1) * limit,
+          sortBy,
+          sortOrder
+        }
+      );
+
+      // Cache the result for 5 minutes (300 seconds)
+      await cache.set(cacheKey, searchResult, 300);
+      
+      return res.json(searchResult);
+    }
+
+    // If no search term but other filters, use the regular product service
     const filters = {
-      mainCategory: req.query.category as string,
-      subCategory: req.query.subcategory as string,
-      search: req.query.search as string,
-      efficiency: req.query.efficiency as string
+      mainCategory: category,
+      subCategory: subcategory,
+      efficiency: efficiency
     };
 
-    const products = await productService.getProducts(filters);
+    // Get products with pagination
+    const products = await productService.getProductsPaginated(filters, page, limit, sortBy, sortOrder);
+    
+    // Cache the result for 5 minutes (300 seconds)
+    await cache.set(cacheKey, products, 300);
+    
     res.json(products);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });

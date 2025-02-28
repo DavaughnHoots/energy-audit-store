@@ -35,7 +35,7 @@ export class SearchService {
   }
 
   /**
-   * Search products with filters and pagination
+   * Search products with filters and pagination using optimized full-text search
    */
   async searchProducts(
     query: string,
@@ -50,19 +50,23 @@ export class SearchService {
     } = options;
 
     try {
-      // Build the base query
+      // Build the base query using the optimized search_vector column
       let queryString = `
         SELECT *,
-          ts_rank_cd(to_tsvector('english',
-            name || ' ' || description || ' ' || 
-            COALESCE(features::text, '') || ' ' || 
-            COALESCE(specifications::text, '')
-          ), plainto_tsquery('english', $1)) as relevance
+          ts_rank_cd(search_vector, to_tsquery('english', $1)) as relevance
         FROM products
         WHERE 1=1
       `;
 
-      const queryParams: any[] = [query];
+      // Convert the search query to a tsquery format
+      // Replace spaces with & for AND operations
+      const tsQuery = query.trim()
+        .split(/\s+/)
+        .filter(term => term.length > 0)
+        .map(term => term + ':*')  // Add :* for prefix matching
+        .join(' & ');
+
+      const queryParams: any[] = [tsQuery || ''];
       let paramCount = 2;
 
       // Add filters
@@ -72,13 +76,9 @@ export class SearchService {
       paramCount += filterParams.length;
 
       // Add full-text search condition if query is not empty
-      if (query.trim()) {
+      if (tsQuery) {
         queryString += `
-          AND to_tsvector('english',
-            name || ' ' || description || ' ' || 
-            COALESCE(features::text, '') || ' ' || 
-            COALESCE(specifications::text, '')
-          ) @@ plainto_tsquery('english', $1)
+          AND search_vector @@ to_tsquery('english', $1)
         `;
       }
 
@@ -90,18 +90,56 @@ export class SearchService {
       queryParams.push(limit, offset);
 
       // Execute search query
-      const [results, countResult] = await Promise.all([
-        this.pool.query(queryString, queryParams),
-        this.pool.query(
-          `SELECT COUNT(*) FROM (${queryString.split('LIMIT')[0]}) as count_query`,
-          queryParams.slice(0, -2)
-        )
-      ]);
+      const results = await this.pool.query(queryString, queryParams);
 
+      // Get total count for pagination - use a more efficient count query
+      let countQuery = `
+        SELECT COUNT(*) 
+        FROM products 
+        WHERE 1=1
+      `;
+      
+      const countParams = [];
+      
+      // Add filters to count query
+      if (Object.keys(filters).length > 0) {
+        const { whereClause, filterParams } = this.buildFilterClause(filters, 1);
+        countQuery += whereClause;
+        countParams.push(...filterParams);
+      }
+      
+      // Add search condition to count query if query is not empty
+      if (tsQuery) {
+        countQuery += ` AND search_vector @@ to_tsquery('english', $${countParams.length + 1})`;
+        countParams.push(tsQuery);
+      }
+      
+      const countResult = await this.pool.query(countQuery, countParams);
       const total = parseInt(countResult.rows[0].count);
 
+      // Map database rows to Product objects
+      const products = results.rows.map(row => ({
+        id: row.id.toString(),
+        productUrl: row.product_url || '',
+        mainCategory: row.main_category || 'Uncategorized',
+        subCategory: row.sub_category || 'General',
+        name: row.product_name || 'Unknown Product',
+        model: row.model || '',
+        description: row.description || '',
+        efficiency: row.efficiency || '',
+        features: typeof row.features === 'string' 
+          ? row.features.split('\n').filter(Boolean) 
+          : (row.features || []),
+        marketInfo: row.market || '',
+        energyStarId: row.energy_star_id || '',
+        upcCodes: row.upc_codes || '',
+        additionalModels: row.additional_models || '',
+        pdfUrl: row.pdf_url || '',
+        specifications: row.specifications || {}
+      }));
+
       return {
-        items: results.rows,
+        items: products,
         total,
         page: Math.floor(offset / limit) + 1,
         totalPages: Math.ceil(total / limit)
