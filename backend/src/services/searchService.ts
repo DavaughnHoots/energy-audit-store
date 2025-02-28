@@ -50,10 +50,13 @@ export class SearchService {
     } = options;
 
     try {
+      // Log the search request for debugging
+      console.log('Search request:', { query, filters, options });
+      
       // Build the base query using the optimized search_vector column
       let queryString = `
         SELECT *,
-          ts_rank_cd(search_vector, to_tsquery('english', $1)) as relevance
+          ts_rank_cd(search_vector, plainto_tsquery('english', $1)) as relevance
         FROM products
         WHERE 1=1
       `;
@@ -68,12 +71,8 @@ export class SearchService {
           .toLowerCase();
           
         if (cleanedQuery) {
-          // Split into terms and add prefix matching
-          tsQuery = cleanedQuery
-            .split(/\s+/)
-            .filter(term => term.length > 0)
-            .map(term => term + ':*')  // Add :* for prefix matching
-            .join(' & ');
+          // Use a simpler approach with plainto_tsquery for better compatibility
+          tsQuery = cleanedQuery;
         }
       } catch (error) {
         console.error('Error formatting search query:', error);
@@ -82,7 +81,7 @@ export class SearchService {
       }
 
       // If the query is empty after processing, use a default that will match everything
-      const finalTsQuery = tsQuery || 'a | the';
+      const finalTsQuery = tsQuery || '';
       console.log('Processed search query:', { original: query, processed: finalTsQuery });
       
       const queryParams: any[] = [finalTsQuery];
@@ -95,16 +94,19 @@ export class SearchService {
       paramCount += filterParams.length;
 
       // Add full-text search condition
-      // Use plainto_tsquery for safer query parsing if the query is complex
-      queryString += `
-        AND (
-          search_vector @@ to_tsquery('english', $1)
-          OR product_name ILIKE '%' || $${paramCount} || '%'
-          OR model ILIKE '%' || $${paramCount} || '%'
-        )
-      `;
-      queryParams.push(query.trim()); // Add the original query for ILIKE fallback
-      paramCount++;
+      // Use plainto_tsquery for safer query parsing
+      if (finalTsQuery) {
+        queryString += `
+          AND (
+            search_vector @@ plainto_tsquery('english', $1)
+            OR product_name ILIKE '%' || $${paramCount} || '%'
+            OR model ILIKE '%' || $${paramCount} || '%'
+            OR description ILIKE '%' || $${paramCount} || '%'
+          )
+        `;
+        queryParams.push(query.trim()); // Add the original query for ILIKE fallback
+        paramCount++;
+      }
 
       // Add sorting
       queryString += this.buildSortClause(sortBy, sortOrder);
@@ -112,6 +114,9 @@ export class SearchService {
       // Add pagination
       queryString += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
       queryParams.push(limit, offset);
+
+      // Log the final query for debugging
+      console.log('Search query:', { sql: queryString, params: queryParams });
 
       // Execute search query
       const results = await this.pool.query(queryString, queryParams);
@@ -133,14 +138,17 @@ export class SearchService {
       }
       
       // Add search condition to count query
-      countQuery += ` 
-        AND (
-          search_vector @@ to_tsquery('english', $${countParams.length + 1})
-          OR product_name ILIKE '%' || $${countParams.length + 2} || '%'
-          OR model ILIKE '%' || $${countParams.length + 2} || '%'
-        )
-      `;
-      countParams.push(finalTsQuery, query.trim());
+      if (finalTsQuery) {
+        countQuery += ` 
+          AND (
+            search_vector @@ plainto_tsquery('english', $${countParams.length + 1})
+            OR product_name ILIKE '%' || $${countParams.length + 2} || '%'
+            OR model ILIKE '%' || $${countParams.length + 2} || '%'
+            OR description ILIKE '%' || $${countParams.length + 2} || '%'
+          )
+        `;
+        countParams.push(finalTsQuery, query.trim());
+      }
       
       const countResult = await this.pool.query(countQuery, countParams);
       const total = parseInt(countResult.rows[0].count);
@@ -173,6 +181,7 @@ export class SearchService {
         totalPages: Math.ceil(total / limit)
       };
     } catch (error) {
+      console.error('Search error:', error);
       if (error instanceof Error) {
         throw new SearchError(`Failed to search products: ${error.message}`);
       }
@@ -327,7 +336,7 @@ export class SearchService {
     let paramCount = startParamCount;
 
     if (filters.category) {
-      clauses.push(`category = $${paramCount}`);
+      clauses.push(`main_category = $${paramCount}`);
       params.push(filters.category);
       paramCount++;
     }
@@ -379,9 +388,9 @@ export class SearchService {
       case 'efficiency':
         return ` ORDER BY efficiency_rating ${sortOrder}`;
       case 'relevance':
-        return ` ORDER BY relevance ${sortOrder}, name ASC`;
+        return ` ORDER BY relevance ${sortOrder}, product_name ASC`;
       default:
-        return ` ORDER BY name ASC`;
+        return ` ORDER BY product_name ASC`;
     }
   }
 

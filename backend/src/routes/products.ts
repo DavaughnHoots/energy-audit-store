@@ -24,14 +24,21 @@ router.get('/', async (req, res) => {
     const sortBy = req.query.sortBy as string || 'relevance';
     const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
 
+    // Log the request parameters for debugging
+    console.log('Product request:', { 
+      search, category, subcategory, efficiency, page, limit, sortBy, sortOrder 
+    });
+
     // Create a cache key based on the request parameters
     const cacheKey = `products:${search || ''}:${category || ''}:${subcategory || ''}:${efficiency || ''}:${page}:${limit}:${sortBy}:${sortOrder}`;
     
     // Try to get from cache first
     const cachedResult = await cache.get(cacheKey);
     if (cachedResult) {
+      console.log('Cache hit for:', cacheKey);
       return res.json(cachedResult);
     }
+    console.log('Cache miss for:', cacheKey);
 
     // If search term is provided, use the search service with full-text search
     if (search) {
@@ -40,21 +47,37 @@ router.get('/', async (req, res) => {
       if (subcategory) filters.subCategory = subcategory;
       if (efficiency) filters.efficiencyRating = efficiency;
 
-      const searchResult = await searchService.searchProducts(
-        search,
-        filters,
-        {
-          limit,
-          offset: (page - 1) * limit,
-          sortBy,
-          sortOrder
-        }
-      );
+      try {
+        const searchResult = await searchService.searchProducts(
+          search,
+          filters,
+          {
+            limit,
+            offset: (page - 1) * limit,
+            sortBy,
+            sortOrder
+          }
+        );
 
-      // Cache the result for 5 minutes (300 seconds)
-      await cache.set(cacheKey, searchResult, 300);
-      
-      return res.json(searchResult);
+        // Cache the result for 5 minutes (300 seconds)
+        await cache.set(cacheKey, searchResult, 300);
+        
+        return res.json(searchResult);
+      } catch (searchError) {
+        console.error('Search error:', searchError);
+        
+        // Fallback to regular product service if search fails
+        console.log('Falling back to regular product service');
+        const filters = {
+          mainCategory: category,
+          subCategory: subcategory,
+          efficiency: efficiency,
+          search: search // Pass search term for client-side filtering
+        };
+        
+        const products = await productService.getProductsPaginated(filters, page, limit, sortBy, sortOrder);
+        return res.json(products);
+      }
     }
 
     // If no search term but other filters, use the regular product service
