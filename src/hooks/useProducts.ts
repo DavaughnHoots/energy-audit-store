@@ -5,6 +5,13 @@ import ProductService from '../services/productService';
 
 const productService = new ProductService();
 
+interface PaginatedProducts {
+  items: Product[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export function useProducts() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,12 +54,36 @@ export function useProducts() {
     initializeProducts();
   }, []);
 
-  const getFilteredProducts = async (filters?: ProductFilters) => {
+  /**
+   * Get filtered products with pagination support
+   */
+  const getFilteredProducts = async (
+    filters?: ProductFilters,
+    page: number = 1,
+    limit: number = 20,
+    sortBy: string = 'relevance',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ): Promise<PaginatedProducts> => {
     try {
-      return await productService.getProducts(filters);
+      // Use the paginated API endpoint
+      const result = await productService.getProductsPaginated(
+        filters,
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      );
+      return result;
     } catch (err) {
+      console.error('Error getting filtered products:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
-      return [];
+      // Return empty result with pagination info
+      return {
+        items: [],
+        total: 0,
+        page,
+        totalPages: 0
+      };
     }
   };
 

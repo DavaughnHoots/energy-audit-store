@@ -263,6 +263,142 @@ class ProductService {
     return this.products;
   }
 
+  /**
+   * Get products with pagination and sorting
+   */
+  async getProductsPaginated(
+    filters?: ProductFilters,
+    page: number = 1,
+    limit: number = 20,
+    sortBy: string = 'relevance',
+    sortOrder: 'asc' | 'desc' = 'desc'
+  ): Promise<{
+    items: Product[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    if (!this.initialized) {
+      await this.loadProductsFromCSV(''); // Parameter is ignored now
+    }
+
+    try {
+      // Build query string with pagination parameters
+      const params = new URLSearchParams();
+      if (filters?.mainCategory) params.append('category', filters.mainCategory);
+      if (filters?.subCategory) params.append('subcategory', filters.subCategory);
+      if (filters?.search) params.append('search', filters.search);
+      if (filters?.efficiency) params.append('efficiency', filters.efficiency);
+      
+      // Add pagination and sorting parameters
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      params.append('sortBy', sortBy);
+      params.append('sortOrder', sortOrder);
+      
+      const url = `${getApiUrl(API_ENDPOINTS.PRODUCTS)}?${params.toString()}`;
+      console.log('Fetching paginated products from:', url);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn(`API returned non-JSON response: ${contentType}`);
+        // Fall back to client-side pagination
+        return this.clientSidePagination(filters, page, limit, sortBy, sortOrder);
+      }
+      
+      if (!response.ok) {
+        throw new Error(`API error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching paginated products:', error);
+      // Fall back to client-side pagination
+      return this.clientSidePagination(filters, page, limit, sortBy, sortOrder);
+    }
+  }
+
+  /**
+   * Fallback client-side pagination when API fails
+   */
+  private clientSidePagination(
+    filters?: ProductFilters,
+    page: number = 1,
+    limit: number = 20,
+    sortBy: string = 'name',
+    sortOrder: 'asc' | 'desc' = 'asc'
+  ): {
+    items: Product[];
+    total: number;
+    page: number;
+    totalPages: number;
+  } {
+    // Filter products
+    let filteredProducts = [...this.products];
+    
+    if (filters) {
+      if (filters.mainCategory) {
+        filteredProducts = filteredProducts.filter(
+          p => p.mainCategory.toLowerCase() === filters.mainCategory?.toLowerCase()
+        );
+      }
+
+      if (filters.subCategory) {
+        filteredProducts = filteredProducts.filter(
+          p => p.subCategory.toLowerCase() === filters.subCategory?.toLowerCase()
+        );
+      }
+
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filteredProducts = filteredProducts.filter(p =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.description.toLowerCase().includes(searchLower) ||
+          p.model.toLowerCase().includes(searchLower)
+        );
+      }
+    }
+    
+    // Sort products
+    filteredProducts.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'relevance':
+          // For client-side, we don't have a true relevance score
+          // Just use name as default
+          comparison = a.name.localeCompare(b.name);
+          break;
+        default:
+          comparison = a.name.localeCompare(b.name);
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    // Apply pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = Math.min(startIndex + limit, filteredProducts.length);
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+    
+    return {
+      items: paginatedProducts,
+      total: filteredProducts.length,
+      page,
+      totalPages: Math.ceil(filteredProducts.length / limit)
+    };
+  }
+
   async getProduct(id: string): Promise<Product | null> {
     if (!this.initialized) {
       await this.loadProductsFromCSV(''); // Parameter is ignored now
