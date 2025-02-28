@@ -28,6 +28,7 @@ import productsRoutes from './routes/products.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { runSearchMigration } from './scripts/heroku_migration.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +44,17 @@ try {
 } catch (error) {
   console.error('Failed to initialize logger:', error);
   process.exit(1);
+}
+
+// Run database migrations for production environment
+if (process.env.NODE_ENV === 'production') {
+  runSearchMigration()
+    .then(() => {
+      appLogger.info('Search migration completed on startup');
+    })
+    .catch(error => {
+      appLogger.error('Error running search migration on startup', { error });
+    });
 }
 
 const app = express();
