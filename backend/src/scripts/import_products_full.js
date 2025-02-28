@@ -17,33 +17,44 @@ const pool = new Pool({
 
 async function importProducts() {
   try {
-    // Path to your CSV file - using the path you provided
-    let csvFilePath = path.join(process.cwd(), 'public', 'data', 'products_full.csv');
-    console.log(`Looking for CSV file at: ${csvFilePath}`);
+    // Try multiple possible locations for the CSV file
+    const possibleLocations = [
+      path.join(process.cwd(), 'public', 'data', 'products_full.csv'),
+      path.join(process.cwd(), 'public', 'data', 'products.csv'),
+      path.join('/app', 'public', 'data', 'products_full.csv'),
+      path.join('/app', 'public', 'data', 'products.csv'),
+      './public/data/products_full.csv',
+      './public/data/products.csv',
+      '../public/data/products_full.csv',
+      '../public/data/products.csv'
+    ];
     
-    // Check if file exists
-    if (!fs.existsSync(csvFilePath)) {
-      console.error(`CSV file not found at ${csvFilePath}`);
-      console.log('Searching for CSV file in other locations...');
+    let csvFilePath = null;
+    
+    for (const location of possibleLocations) {
+      console.log(`Checking for CSV file at: ${location}`);
+      if (fs.existsSync(location)) {
+        console.log(`Found CSV file at: ${location}`);
+        csvFilePath = location;
+        break;
+      }
+    }
+    
+    if (!csvFilePath) {
+      console.error('Could not find CSV file in any of the expected locations');
+      console.log('Current working directory:', process.cwd());
+      console.log('Directory contents:', fs.readdirSync(process.cwd()));
       
-      // Try alternative locations
-      const possibleLocations = [
-        path.join(process.cwd(), 'public', 'data', 'products.csv'),
-        './public/data/products_full.csv',
-        './public/data/products.csv'
-      ];
-      
-      for (const location of possibleLocations) {
-        if (fs.existsSync(location)) {
-          console.log(`Found CSV file at: ${location}`);
-          csvFilePath = location;
-          break;
-        }
+      // Try to list the contents of /app directory
+      try {
+        console.log('/app directory contents:', fs.readdirSync('/app'));
+        console.log('/app/public directory contents:', fs.readdirSync('/app/public'));
+        console.log('/app/public/data directory contents:', fs.readdirSync('/app/public/data'));
+      } catch (err) {
+        console.error('Error listing /app directory:', err.message);
       }
       
-      if (!fs.existsSync(csvFilePath)) {
-        throw new Error('Could not find CSV file');
-      }
+      throw new Error('Could not find CSV file');
     }
     
     console.log('Starting CSV import...');
