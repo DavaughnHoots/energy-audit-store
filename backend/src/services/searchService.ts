@@ -59,14 +59,33 @@ export class SearchService {
       `;
 
       // Convert the search query to a tsquery format
-      // Replace spaces with & for AND operations
-      const tsQuery = query.trim()
-        .split(/\s+/)
-        .filter(term => term.length > 0)
-        .map(term => term + ':*')  // Add :* for prefix matching
-        .join(' & ');
+      // Handle the search query more safely
+      let tsQuery = '';
+      try {
+        // Clean and normalize the search query
+        const cleanedQuery = query.trim()
+          .replace(/[^\w\s]/gi, '') // Remove special characters
+          .toLowerCase();
+          
+        if (cleanedQuery) {
+          // Split into terms and add prefix matching
+          tsQuery = cleanedQuery
+            .split(/\s+/)
+            .filter(term => term.length > 0)
+            .map(term => term + ':*')  // Add :* for prefix matching
+            .join(' & ');
+        }
+      } catch (error) {
+        console.error('Error formatting search query:', error);
+        // Fallback to a simple query if there's an error
+        tsQuery = '';
+      }
 
-      const queryParams: any[] = [tsQuery || ''];
+      // If the query is empty after processing, use a default that will match everything
+      const finalTsQuery = tsQuery || 'a | the';
+      console.log('Processed search query:', { original: query, processed: finalTsQuery });
+      
+      const queryParams: any[] = [finalTsQuery];
       let paramCount = 2;
 
       // Add filters
@@ -75,12 +94,17 @@ export class SearchService {
       queryParams.push(...filterParams);
       paramCount += filterParams.length;
 
-      // Add full-text search condition if query is not empty
-      if (tsQuery) {
-        queryString += `
-          AND search_vector @@ to_tsquery('english', $1)
-        `;
-      }
+      // Add full-text search condition
+      // Use plainto_tsquery for safer query parsing if the query is complex
+      queryString += `
+        AND (
+          search_vector @@ to_tsquery('english', $1)
+          OR product_name ILIKE '%' || $${paramCount} || '%'
+          OR model ILIKE '%' || $${paramCount} || '%'
+        )
+      `;
+      queryParams.push(query.trim()); // Add the original query for ILIKE fallback
+      paramCount++;
 
       // Add sorting
       queryString += this.buildSortClause(sortBy, sortOrder);
@@ -108,11 +132,15 @@ export class SearchService {
         countParams.push(...filterParams);
       }
       
-      // Add search condition to count query if query is not empty
-      if (tsQuery) {
-        countQuery += ` AND search_vector @@ to_tsquery('english', $${countParams.length + 1})`;
-        countParams.push(tsQuery);
-      }
+      // Add search condition to count query
+      countQuery += ` 
+        AND (
+          search_vector @@ to_tsquery('english', $${countParams.length + 1})
+          OR product_name ILIKE '%' || $${countParams.length + 2} || '%'
+          OR model ILIKE '%' || $${countParams.length + 2} || '%'
+        )
+      `;
+      countParams.push(finalTsQuery, query.trim());
       
       const countResult = await this.pool.query(countQuery, countParams);
       const total = parseInt(countResult.rows[0].count);
