@@ -340,6 +340,12 @@ class ProductService {
     page: number;
     totalPages: number;
   } {
+    // Ensure this.products is always an array
+    if (!Array.isArray(this.products)) {
+      console.warn('Products array is not initialized, using empty array for fallback pagination');
+      this.products = [];
+    }
+    
     // Filter products
     let filteredProducts = [...this.products];
     
