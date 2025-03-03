@@ -2,7 +2,7 @@
 
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { apiLimiter } from '../middleware/security.js';
+import { productsLimiter } from '../middleware/rateLimitMiddleware.js';
 import ProductDataService from '../services/productDataService.js';
 import { SearchService } from '../services/searchService.js';
 import { pool } from '../config/database.js';
@@ -13,7 +13,7 @@ const router = express.Router();
 const productService = new ProductDataService();
 const searchService = new SearchService(pool);
 
-router.get('/', async (req, res) => {
+router.get('/', productsLimiter, async (req, res) => {
   try {
     const search = req.query.search as string;
     const category = req.query.category as string;
@@ -104,7 +104,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/categories', async (req, res) => {
+router.get('/categories', productsLimiter, async (req, res) => {
   try {
     // Try to get categories from cache first
     const cacheKey = 'products:categories';
@@ -131,7 +131,7 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', productsLimiter, async (req, res) => {
   try {
     const productId = req.params.id;
     
@@ -181,7 +181,7 @@ router.post('/:id/view', authenticate, async (req: AuthenticatedRequest, res) =>
   }
 });
 
-router.get('/:id/similar', async (req, res) => {
+router.get('/:id/similar', productsLimiter, async (req, res) => {
   try {
     const product = await productService.getProduct(req.params.id);
     if (!product) {
@@ -203,7 +203,7 @@ router.get('/:id/similar', async (req, res) => {
   }
 });
 
-router.get('/:id/recommendations', authenticate, async (req: AuthenticatedRequest, res) => {
+router.get('/:id/recommendations', authenticate, productsLimiter, async (req: AuthenticatedRequest, res) => {
   try {
     const result = await pool.query(
       `SELECT r.* FROM recommendations r
@@ -230,7 +230,7 @@ router.post('/sync', async (req, res) => {
   }
 });
 
-router.get('/:id/energy-savings', async (req, res) => {
+router.get('/:id/energy-savings', productsLimiter, async (req, res) => {
   try {
     const product = await productService.getProduct(req.params.id);
     if (!product) {
