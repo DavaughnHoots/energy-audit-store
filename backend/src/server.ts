@@ -140,6 +140,18 @@ if (!fs.existsSync(staticPath)) {
   console.log('Trying alternative path 2:', altPath2);
   console.log('Alt path 2 exists check:', fs.existsSync(altPath2));
   
+  const altPath3 = path.join(process.cwd(), 'public');
+  console.log('Trying alternative path 3:', altPath3);
+  console.log('Alt path 3 exists check:', fs.existsSync(altPath3));
+  
+  const altPath4 = path.join(process.cwd(), 'dist');
+  console.log('Trying alternative path 4:', altPath4);
+  console.log('Alt path 4 exists check:', fs.existsSync(altPath4));
+  
+  const altPath5 = path.join(process.cwd(), 'backend/public');
+  console.log('Trying alternative path 5:', altPath5);
+  console.log('Alt path 5 exists check:', fs.existsSync(altPath5));
+  
   // Use the first alternative path that exists
   if (fs.existsSync(altPath1)) {
     staticPath = altPath1;
@@ -147,6 +159,15 @@ if (!fs.existsSync(staticPath)) {
   } else if (fs.existsSync(altPath2)) {
     staticPath = altPath2;
     console.log('Using alternative path 2');
+  } else if (fs.existsSync(altPath3)) {
+    staticPath = altPath3;
+    console.log('Using alternative path 3');
+  } else if (fs.existsSync(altPath4)) {
+    staticPath = altPath4;
+    console.log('Using alternative path 4');
+  } else if (fs.existsSync(altPath5)) {
+    staticPath = altPath5;
+    console.log('Using alternative path 5');
   }
 }
 

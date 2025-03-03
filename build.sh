@@ -24,6 +24,12 @@ ls -la backend/build
 echo "Listing backend/build/public directory contents:"
 ls -la backend/build/public
 
+# Create additional symlinks to ensure files are found
+echo "Creating additional symlinks for compatibility..."
+mkdir -p backend/public
+cp -r dist/* backend/public/
+chmod -R 755 backend/public
+
 # Copy data files
 echo "Copying data files..."
 mkdir -p backend/build/public/data
