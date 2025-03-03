@@ -69,6 +69,12 @@ const UserDashboardPage: React.FC = () => {
         throw new Error(data.error || 'Failed to fetch dashboard data');
       }
 
+      console.log('Dashboard data received:', {
+        hasLatestAuditId: !!data.latestAuditId,
+        latestAuditId: data.latestAuditId,
+        completedAudits: data.completedAudits
+      });
+      
       setStats(data);
       setError(null);
       return data.refreshInterval;
