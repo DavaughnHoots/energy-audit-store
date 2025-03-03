@@ -23,11 +23,12 @@ const ProductsPage: React.FC = () => {
   const [searchInput, setSearchInput] = useState('');
   const productsPerPage = 20;
 
-  // Debounced search function
+  // Debounced filter change function
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(
-    debounce((searchTerm: string) => {
-      setFilters(prev => ({ ...prev, search: searchTerm }));
+  const debouncedFilterChange = useCallback(
+    debounce((filterName: string, value: string) => {
+      setFilters(prev => ({ ...prev, [filterName]: value }));
+      setCurrentPage(1); // Reset to first page when filters change
     }, 500),
     []
   );
@@ -36,13 +37,14 @@ const ProductsPage: React.FC = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchInput(value);
-    debouncedSearch(value);
+    debouncedFilterChange('search', value);
   };
 
-  // Handle filter changes
+  // Handle filter changes with debounce
   const handleFilterChange = (filterName: string, value: string) => {
-    setFilters(prev => ({ ...prev, [filterName]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
+    // For UI responsiveness, update the select element immediately
+    // but debounce the actual API call
+    debouncedFilterChange(filterName, value);
   };
 
   // Load products with pagination

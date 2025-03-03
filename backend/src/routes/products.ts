@@ -33,12 +33,17 @@ router.get('/', async (req, res) => {
     const cacheKey = `products:${search || ''}:${category || ''}:${subcategory || ''}:${efficiency || ''}:${page}:${limit}:${sortBy}:${sortOrder}`;
     
     // Try to get from cache first
-    const cachedResult = await cache.get(cacheKey);
-    if (cachedResult) {
-      console.log('Cache hit for:', cacheKey);
-      return res.json(cachedResult);
+    try {
+      const cachedResult = await cache.get(cacheKey);
+      if (cachedResult) {
+        console.log('Cache hit for:', cacheKey);
+        return res.json(cachedResult);
+      }
+      console.log('Cache miss for:', cacheKey);
+    } catch (cacheError) {
+      console.error('Cache error:', cacheError);
+      // Continue with the request even if cache fails
     }
-    console.log('Cache miss for:', cacheKey);
 
     // If search term is provided, use the search service with full-text search
     if (search) {
@@ -59,8 +64,8 @@ router.get('/', async (req, res) => {
           }
         );
 
-        // Cache the result for 5 minutes (300 seconds)
-        await cache.set(cacheKey, searchResult, 300);
+        // Cache the result for 15 minutes (900 seconds)
+        await cache.set(cacheKey, searchResult, 900);
         
         return res.json(searchResult);
       } catch (searchError) {
@@ -90,8 +95,8 @@ router.get('/', async (req, res) => {
     // Get products with pagination
     const products = await productService.getProductsPaginated(filters, page, limit, sortBy, sortOrder);
     
-    // Cache the result for 5 minutes (300 seconds)
-    await cache.set(cacheKey, products, 300);
+    // Cache the result for 15 minutes (900 seconds)
+    await cache.set(cacheKey, products, 900);
     
     res.json(products);
   } catch (error) {
@@ -101,7 +106,25 @@ router.get('/', async (req, res) => {
 
 router.get('/categories', async (req, res) => {
   try {
+    // Try to get categories from cache first
+    const cacheKey = 'products:categories';
+    try {
+      const cachedCategories = await cache.get(cacheKey);
+      if (cachedCategories) {
+        console.log('Cache hit for categories');
+        return res.json(cachedCategories);
+      }
+      console.log('Cache miss for categories');
+    } catch (cacheError) {
+      console.error('Cache error for categories:', cacheError);
+      // Continue with the request even if cache fails
+    }
+
     const categories = await productService.getCategories();
+    
+    // Cache categories for 30 minutes (1800 seconds) since they rarely change
+    await cache.set(cacheKey, categories, 1800);
+    
     res.json(categories);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
@@ -110,10 +133,30 @@ router.get('/categories', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const product = await productService.getProduct(req.params.id);
+    const productId = req.params.id;
+    
+    // Try to get product from cache first
+    const cacheKey = `product:${productId}`;
+    try {
+      const cachedProduct = await cache.get(cacheKey);
+      if (cachedProduct) {
+        console.log('Cache hit for product:', productId);
+        return res.json(cachedProduct);
+      }
+      console.log('Cache miss for product:', productId);
+    } catch (cacheError) {
+      console.error('Cache error for product:', cacheError);
+      // Continue with the request even if cache fails
+    }
+    
+    const product = await productService.getProduct(productId);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
+    
+    // Cache product for 1 hour (3600 seconds) since product details rarely change
+    await cache.set(cacheKey, product, 3600);
+    
     res.json(product);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
