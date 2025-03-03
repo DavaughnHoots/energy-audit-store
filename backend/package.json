@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "fix-imports": "node src/scripts/fix-imports.js",
-    "build": "rimraf build && tsc && cp -r src/migrations build/ && cp -r src/config build/config/ && cp -r src/scripts build/scripts/",
+    "build": "rimraf build && tsc && (if [ \"$NODE_ENV\" = \"production\" ]; then cp -r src/migrations build/ && cp -r src/config build/config/ && cp -r src/scripts build/scripts/; else xcopy /E /I src\\migrations build\\migrations && xcopy /E /I src\\config build\\config && xcopy /E /I src\\scripts build\\scripts; fi)",
     "start": "node build/server.js",
     "test": "jest --config jest.config.js --detectOpenHandles",
     "test:watch": "jest --watch --config jest.config.js",

@@ -1,42 +1,24 @@
 #!/bin/bash
 
-# Exit on error
-set -e
-
+# Build frontend
 echo "Building frontend..."
 npm install
-# Ensure tailwindcss and related packages are installed
-npm install tailwindcss autoprefixer postcss --no-save
-NODE_OPTIONS="--max_old_space_size=4096" npm run build
+npm run build
 
+# Move frontend build to backend
 echo "Moving frontend build to backend..."
-mkdir -p backend/dist
-cp -r dist/* backend/dist/
+mkdir -p backend/build/public
+cp -r dist/* backend/build/public/
 
+# Copy data files
 echo "Copying data files..."
-mkdir -p backend/dist/data
-cp -r public/data/* backend/dist/data/
+mkdir -p backend/build/public/data
+cp -r public/data/* backend/build/public/data/
 
+# Build backend
 echo "Building backend..."
 cd backend
 npm install --production
-
-# Set memory options for TypeScript compilation
-export NODE_OPTIONS="--max_old_space_size=4096"
-
-# Run the build in smaller chunks to avoid memory issues
-echo "Cleaning build directory..."
-rm -rf build
-
-echo "Running TypeScript compilation..."
-tsc
-
-echo "Copying migration files..."
-mkdir -p build/migrations
-cp -r src/migrations/* build/migrations/
-
-echo "Copying config files..."
-mkdir -p build/config
-cp -r src/config/* build/config/
+npm run build
 
 echo "Build completed successfully"
