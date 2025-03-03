@@ -5,7 +5,7 @@ import { authenticate } from '../middleware/auth.js';
 import { apiLimiter } from '../middleware/security.js';
 import ProductDataService from '../services/productDataService.js';
 import { SearchService } from '../services/searchService.js';
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 import { AuthenticatedRequest } from '../types/auth.js';
 import { cache } from '../config/cache.js';
 

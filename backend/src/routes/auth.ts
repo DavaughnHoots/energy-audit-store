@@ -2,7 +2,7 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { UserAuthService, AuthError, ValidationError } from '../services/userAuthService.js';
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 import { authenticate, csrfProtection } from '../middleware/auth.js';
 import { authRateLimit } from '../middleware/rateLimit.js';
 

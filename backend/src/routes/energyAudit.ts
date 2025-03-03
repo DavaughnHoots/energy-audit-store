@@ -11,7 +11,7 @@ import { EnergyAuditData } from '../types/energyAudit.js';
 import { AuthenticatedRequest } from '../types/auth.js';
 
 // Import the configured pool
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 const energyAuditService = new EnergyAuditService(pool);
 
 const router = express.Router();

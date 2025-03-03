@@ -2,7 +2,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 import { UserAuthService, AuthError } from '../services/userAuthService.js';
 import { AuthenticatedRequest, User } from '../types/auth.js';
 
