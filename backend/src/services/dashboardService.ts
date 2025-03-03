@@ -30,6 +30,7 @@ interface DashboardStats {
   }>;
   lastUpdated?: string;
   refreshInterval?: number;
+  latestAuditId?: string | null;
 }
 
 interface SavingsUpdate {
@@ -140,6 +141,23 @@ class DashboardService {
           END,
           ar.updated_at DESC
       `, [userId]);
+      
+      // Get the latest audit ID for the user
+      const latestAuditQuery = await pool.query(`
+        SELECT id
+        FROM energy_audits
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 1
+      `, [userId]);
+      
+      // Log whether we found a latest audit ID for debugging
+      appLogger.debug('Latest audit query result:', { 
+        userId,
+        hasLatestAudit: latestAuditQuery.rows.length > 0,
+        latestAuditId: latestAuditQuery.rows[0]?.id || 'none',
+        context: 'DashboardService.getUserStats'
+      });
 
       const stats: DashboardStats = {
         totalSavings: {
@@ -167,6 +185,7 @@ class DashboardService {
           implementationCost: row.implementation_cost ? parseFloat(row.implementation_cost) : null,
           lastUpdate: row.last_update
         })),
+        latestAuditId: latestAuditQuery.rows[0]?.id || null,
         lastUpdated: statsQuery.rows[0]?.last_updated || new Date().toISOString(),
         refreshInterval: this.REFRESH_INTERVAL
       };

@@ -45,6 +45,14 @@ router.get('/stats', async (req: AuthenticatedRequest, res) => {
       refreshInterval: 300000 // 5 minutes in milliseconds
     };
 
+    // Log the response for debugging
+    appLogger.debug('Dashboard response:', {
+      userId,
+      hasLatestAuditId: !!response.latestAuditId,
+      completedAudits: response.completedAudits,
+      context: 'dashboard.stats'
+    });
+
     res.json(response);
 
   } catch (error) {
