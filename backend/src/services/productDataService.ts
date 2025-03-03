@@ -1,7 +1,7 @@
 // src/services/productDataService.ts
 import Papa from 'papaparse';
 import { Product, ProductFilters } from '../types/product.js';
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 
 class ProductDataService {
   private products: Product[] = [];

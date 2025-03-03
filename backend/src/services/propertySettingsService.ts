@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 import { appLogger } from '../config/logger.js';
 import {
   WindowMaintenance,

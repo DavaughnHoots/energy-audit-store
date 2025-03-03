@@ -2,7 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 import { appLogger } from '../config/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);

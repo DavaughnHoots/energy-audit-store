@@ -1,4 +1,4 @@
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 import { cache } from '../config/cache.js';
 import { appLogger } from '../config/logger.js';
 

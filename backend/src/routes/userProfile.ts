@@ -2,7 +2,7 @@ import express from 'express';
 import { UserSettingsService } from '../services/userSettingsService.js';
 import { propertySettingsService } from '../services/propertySettingsService.js';
 import { authenticate } from '../middleware/auth.js';
-import pool from '../config/database.js';
+import { pool } from '../config/database.js';
 
 const router = express.Router();
 const userSettingsService = new UserSettingsService(pool);
