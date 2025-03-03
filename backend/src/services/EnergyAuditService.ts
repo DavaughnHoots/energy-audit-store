@@ -12,6 +12,8 @@ import {
   RecommendationStatus,
   RecommendationPriority
 } from '../types/energyAudit.js';
+import { reportGenerationService } from './ReportGenerationService.js';
+import { calculationService } from './calculateService.js';
 
 interface DbRecommendation {
   id: string;
@@ -231,21 +233,30 @@ export class EnergyAuditService {
     const windows = this.calculateWindowScore(auditData.currentConditions);
     const hvac = this.calculateHVACScore(auditData.heatingCooling);
 
+    // Calculate potential savings using calculationService
+    const savingsPotential = calculationService.calculateSavingsPotential(auditData);
+    
     const recommendations: DbRecommendation[] = [];
     const now = new Date().toISOString();
 
-    // Generate recommendations based on scores
+    // Generate recommendations based on scores and calculated savings
     if (insulation < 2) {
+      // Calculate insulation-specific savings
+      const envelopeSavings = savingsPotential.breakdowns.envelope;
+      const estimatedSavings = Math.round(envelopeSavings * 0.12); // Convert kWh to dollars using average rate
+      const estimatedCost = 2000; // Base cost for insulation upgrades
+      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
+      
       recommendations.push({
         id: `INS-${Date.now()}`,
         category: 'Insulation',
         title: 'Improve Home Insulation',
-        description: 'Add or upgrade insulation in walls and attic',
+        description: 'Add or upgrade insulation in walls and attic to reduce heat transfer and improve energy efficiency.',
         priority: 'high',
         status: 'active',
-        estimatedSavings: 500,
-        estimatedCost: 2000,
-        paybackPeriod: 4,
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod,
         actualSavings: 0,
         implementationDate: null,
         implementationCost: 0,
@@ -254,16 +265,27 @@ export class EnergyAuditService {
     }
 
     if (windows < 1.5) {
+      // Calculate window-specific savings
+      // Windows typically account for about 30% of envelope losses
+      const windowSavings = savingsPotential.breakdowns.envelope * 0.3;
+      const estimatedSavings = Math.round(windowSavings * 0.12); // Convert kWh to dollars
+      
+      // Window costs vary by home size
+      const windowCount = auditData.currentConditions.numWindows || 
+                          Math.ceil(auditData.homeDetails.squareFootage / 100); // Estimate 1 window per 100 sq ft
+      const estimatedCost = windowCount * 500; // Average cost per window
+      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
+      
       recommendations.push({
         id: `WIN-${Date.now()}`,
         category: 'Windows',
         title: 'Upgrade Windows',
-        description: 'Replace single-pane windows with double-pane',
+        description: 'Replace single-pane windows with energy-efficient double-pane windows to reduce heat loss and improve comfort.',
         priority: 'medium',
         status: 'active',
-        estimatedSavings: 300,
-        estimatedCost: 5000,
-        paybackPeriod: 16.7,
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod,
         actualSavings: 0,
         implementationDate: null,
         implementationCost: 0,
@@ -272,16 +294,49 @@ export class EnergyAuditService {
     }
 
     if (hvac < 2) {
+      // Calculate HVAC-specific savings
+      const hvacSavings = savingsPotential.breakdowns.hvac;
+      const estimatedSavings = Math.round(hvacSavings * 0.12); // Convert kWh to dollars
+      
+      // HVAC costs depend on system type and home size
+      const homeSize = auditData.homeDetails.squareFootage;
+      const estimatedCost = Math.max(1000, Math.round(homeSize * 7)); // $7 per sq ft with $1000 minimum
+      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
+      
       recommendations.push({
         id: `HVAC-${Date.now()}`,
         category: 'HVAC',
         title: 'HVAC Maintenance/Upgrade',
-        description: 'Schedule HVAC maintenance or consider upgrade',
+        description: 'Schedule professional HVAC maintenance or consider upgrading to a more efficient system to improve performance and reduce energy use.',
         priority: 'high',
         status: 'active',
-        estimatedSavings: 400,
-        estimatedCost: 1000,
-        paybackPeriod: 2.5,
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod,
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
+      });
+    }
+
+    // Add lighting recommendation if not already covered
+    if (savingsPotential.breakdowns.lighting > 100) { // Only if significant savings potential
+      const lightingSavings = savingsPotential.breakdowns.lighting;
+      const estimatedSavings = Math.round(lightingSavings * 0.12); // Convert kWh to dollars
+      const estimatedCost = Math.round(auditData.homeDetails.squareFootage * 0.5); // $0.50 per sq ft for LED upgrades
+      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
+      
+      recommendations.push({
+        id: `LIGHT-${Date.now()}`,
+        category: 'Lighting',
+        title: 'Upgrade to LED Lighting',
+        description: 'Replace conventional light bulbs with energy-efficient LED lighting throughout your home.',
+        priority: estimatedSavings > 200 ? 'high' : 'medium',
+        status: 'active',
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod,
         actualSavings: 0,
         implementationDate: null,
         implementationCost: 0,
@@ -408,9 +463,11 @@ export class EnergyAuditService {
 
       await client.query('COMMIT');
 
-      // Generate PDF report (implementation depends on your PDF generation library)
-      // This is a placeholder - you'll need to implement the actual PDF generation
-      return Buffer.from('PDF Report');
+      // Get the recommendations
+      const recommendations = await this.getRecommendations(auditId);
+      
+      // Use the reportGenerationService to generate the PDF
+      return await reportGenerationService.generateReport(auditData, recommendations);
 
     } catch (error) {
       await client.query('ROLLBACK');
