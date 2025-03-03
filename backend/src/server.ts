@@ -16,7 +16,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { appLogger, loggerContextMiddleware, LoggerInitializer, createLogMetadata } from './utils/logger.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { standardLimiter, authLimiter, apiLimiter } from './middleware/rateLimitMiddleware.js';
+import { standardLimiter, authLimiter, apiLimiter, productsLimiter } from './middleware/rateLimitMiddleware.js';
 import { authenticate } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
@@ -105,7 +105,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
 app.use('/api/auth', authLimiter);
-app.use('/api/products', apiLimiter);
+app.use('/api/products', productsLimiter); // Using the products-specific limiter with higher limits
 app.use('/api/recommendations', apiLimiter);
 app.use('/', standardLimiter);
 
