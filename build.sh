@@ -10,6 +10,12 @@ echo "Moving frontend build to backend..."
 mkdir -p backend/build/public
 cp -r dist/* backend/build/public/
 
+# Create a symlink for backward compatibility
+echo "Creating symlink for backward compatibility..."
+cd backend/build
+ln -sf public dist
+cd ../..
+
 # Copy data files
 echo "Copying data files..."
 mkdir -p backend/build/public/data
