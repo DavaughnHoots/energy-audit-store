@@ -125,7 +125,35 @@ app.get('/health', (req: Request, res: Response) => {
 
 // Serve static files from the React app
 // In production, the frontend build is in ./public (relative to build/server.js)
-const staticPath = path.join(__dirname, './public');
+let staticPath = path.join(__dirname, './public');
+console.log('Primary static files path:', staticPath);
+console.log('Primary directory exists check:', require('fs').existsSync(staticPath));
+
+// If the primary path doesn't exist, try alternative paths
+if (!require('fs').existsSync(staticPath)) {
+  const altPath1 = path.join(__dirname, '../public');
+  console.log('Trying alternative path 1:', altPath1);
+  console.log('Alt path 1 exists check:', require('fs').existsSync(altPath1));
+  
+  const altPath2 = path.join(__dirname, '../dist');
+  console.log('Trying alternative path 2:', altPath2);
+  console.log('Alt path 2 exists check:', require('fs').existsSync(altPath2));
+  
+  // Use the first alternative path that exists
+  if (require('fs').existsSync(altPath1)) {
+    staticPath = altPath1;
+    console.log('Using alternative path 1');
+  } else if (require('fs').existsSync(altPath2)) {
+    staticPath = altPath2;
+    console.log('Using alternative path 2');
+  }
+}
+
+// List the contents of the static directory if it exists
+if (require('fs').existsSync(staticPath)) {
+  console.log('Static directory contents:', require('fs').readdirSync(staticPath));
+}
+
 app.use(express.static(staticPath));
 
 // Sanitize error message to prevent sensitive data leakage
@@ -182,7 +210,20 @@ app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(staticPath, 'index.html'));
+  const indexPath = path.join(staticPath, 'index.html');
+  console.log('Trying to serve index.html from:', indexPath);
+  console.log('File exists check:', require('fs').existsSync(indexPath));
+  
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    // List the contents of the directory to help debug
+    console.log('Directory contents:', require('fs').readdirSync(__dirname));
+    if (require('fs').existsSync(path.join(__dirname, 'public'))) {
+      console.log('Public directory contents:', require('fs').readdirSync(path.join(__dirname, 'public')));
+    }
+    res.status(404).send('Index file not found. Check server logs for details.');
+  }
 });
 
 const PORT = process.env.PORT || 5000;
