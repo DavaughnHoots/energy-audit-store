@@ -16,6 +16,9 @@ router.get('/stats', async (req: AuthenticatedRequest, res) => {
         code: 'AUTH_REQUIRED'
       });
     }
+    
+    // Check if a specific audit ID is requested
+    const newAuditId = req.query.newAudit as string | undefined;
 
     // Check if user has completed initial setup
     const userSetupResult = await pool.query(
@@ -36,7 +39,8 @@ router.get('/stats', async (req: AuthenticatedRequest, res) => {
       });
     }
 
-    const stats = await dashboardService.getUserStats(userId);
+    // Get dashboard stats, passing the newAuditId if provided
+    const stats = await dashboardService.getUserStats(userId, newAuditId);
 
     // Add last updated timestamp
     const response = {

@@ -55,7 +55,10 @@ const UserDashboardPage: React.FC = () => {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${document.cookie.split('token=')[1]?.split(';')[0]}`
+            'Authorization': `Bearer ${document.cookie
+              .split('; ')
+              .find(row => row.startsWith('accessToken='))
+              ?.split('=')[1] || ''}`
           }
         }
       );
@@ -72,7 +75,9 @@ const UserDashboardPage: React.FC = () => {
       console.log('Dashboard data received:', {
         hasLatestAuditId: !!data.latestAuditId,
         latestAuditId: data.latestAuditId,
-        completedAudits: data.completedAudits
+        newAuditFromUrl: auditIdFromUrl,
+        completedAudits: data.completedAudits,
+        requestUrl: `${API_ENDPOINTS.DASHBOARD.STATS}${auditIdFromUrl ? `?newAudit=${auditIdFromUrl}` : ''}`
       });
       
       setStats(data);
@@ -149,7 +154,10 @@ const UserDashboardPage: React.FC = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${document.cookie.split('token=')[1]?.split(';')[0]}`
+          'Authorization': `Bearer ${document.cookie
+            .split('; ')
+            .find(row => row.startsWith('accessToken='))
+            ?.split('=')[1] || ''}`
         }
       });
 

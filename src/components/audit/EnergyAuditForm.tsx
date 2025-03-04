@@ -367,7 +367,17 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         'Content-Type': 'application/json'
       };
 
-      // No need to manually extract token from cookies
+      // Add Authorization header if we have an access token in cookies
+      const accessToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('accessToken='))
+        ?.split('=')[1];
+      
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+        console.log('Added Authorization header with access token');
+      }
+
       // The fetch API will automatically include cookies with credentials: 'include'
       console.log('Using credentials: include to send auth cookies automatically');
 
