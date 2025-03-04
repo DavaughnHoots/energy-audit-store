@@ -132,8 +132,9 @@ export class EnergyAuditService {
     userId?: string,
     clientId?: string
   ): Promise<string> {
-    // Ensure clientId is always set
-    const finalClientId = clientId || `anonymous-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    // For authenticated users, clientId should be null
+    // For anonymous users, ensure clientId is set
+    const finalClientId = clientId !== undefined ? clientId : `anonymous-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
     
     // Log the audit creation attempt
     console.log('Creating energy audit:', { 

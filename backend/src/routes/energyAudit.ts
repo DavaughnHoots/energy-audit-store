@@ -68,8 +68,8 @@ router.get('/:id', optionalTokenValidation, async (req: AuthenticatedRequest, re
 router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    // Generate a client ID if one is not provided
-    const clientId = req.body.clientId || `anonymous-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    // Only generate a client ID for anonymous users
+    const clientId = userId ? null : (req.body.clientId || `anonymous-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`);
     
     appLogger.info('Processing energy audit submission:', createLogMetadata(req, {
       hasUserId: !!userId,
