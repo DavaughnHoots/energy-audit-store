@@ -12,7 +12,7 @@ interface TokenValidationError extends Error {
 }
 
 export async function optionalTokenValidation(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  const token = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
 
   // Log token validation attempt
   appLogger.debug('Token validation attempt:', createLogMetadata(req, {
