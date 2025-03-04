@@ -27,12 +27,25 @@ export interface UserProfileData {
 
 export async function fetchUserProfileData(): Promise<UserProfileData | null> {
   try {
+    // Get accessToken from cookies
+    const accessToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('accessToken='))
+      ?.split('=')[1];
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    // Add Authorization header if we have an access token in cookies
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
     const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}/profile`, {
       method: 'GET',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers
     });
     
     if (!response.ok) {
@@ -51,6 +64,21 @@ export async function updateUserProfileFromAudit(
   fieldsToUpdate: string[]
 ): Promise<boolean> {
   try {
+    // Get accessToken from cookies
+    const accessToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('accessToken='))
+      ?.split('=')[1];
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    // Add Authorization header if we have an access token in cookies
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
     const payload = {
       auditData,
       fieldsToUpdate
@@ -59,9 +87,7 @@ export async function updateUserProfileFromAudit(
     const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}/update-from-audit`, {
       method: 'POST',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers,
       body: JSON.stringify(payload)
     });
     
