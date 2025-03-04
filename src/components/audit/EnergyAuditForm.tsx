@@ -367,19 +367,9 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         'Content-Type': 'application/json'
       };
 
-      if (isAuthenticated) {
-        // Get token from cookie using a more robust method
-        const cookies = document.cookie.split('; ');
-        const tokenCookie = cookies.find(cookie => cookie.startsWith('accessToken='));
-        const token = tokenCookie ? tokenCookie.split('=')[1] : null;
-
-        console.log('Token found:', !!token);
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        } else {
-          console.warn('No auth token found in cookies');
-        }
-      }
+      // No need to manually extract token from cookies
+      // The fetch API will automatically include cookies with credentials: 'include'
+      console.log('Using credentials: include to send auth cookies automatically');
 
       console.log('Submitting audit data to:', API_ENDPOINTS.ENERGY_AUDIT);
       const response = await fetch(API_ENDPOINTS.ENERGY_AUDIT, {
