@@ -47,11 +47,13 @@ class DashboardService {
     await cache.del(`dashboard_stats:${userId}`);
   }
 
-  async getUserStats(userId: string): Promise<DashboardStats> {
+  async getUserStats(userId: string, newAuditId?: string): Promise<DashboardStats> {
     const cacheKey = `dashboard_stats:${userId}`;
-    const cachedStats = await cache.get<DashboardStats>(cacheKey);
     
-    if (cachedStats) {
+    // Skip cache if newAuditId is provided
+    const cachedStats = newAuditId ? null : await cache.get<DashboardStats>(cacheKey);
+    
+    if (cachedStats && !newAuditId) {
       return cachedStats;
     }
 
@@ -185,7 +187,8 @@ class DashboardService {
           implementationCost: row.implementation_cost ? parseFloat(row.implementation_cost) : null,
           lastUpdate: row.last_update
         })),
-        latestAuditId: latestAuditQuery.rows[0]?.id || null,
+        // Use newAuditId if provided, otherwise use the latest audit ID from the database
+        latestAuditId: newAuditId || latestAuditQuery.rows[0]?.id || null,
         lastUpdated: statsQuery.rows[0]?.last_updated || new Date().toISOString(),
         refreshInterval: this.REFRESH_INTERVAL
       };

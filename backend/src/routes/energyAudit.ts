@@ -73,9 +73,14 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
     
     appLogger.info('Processing energy audit submission:', createLogMetadata(req, {
       hasUserId: !!userId,
+      userId: userId || 'none',
       hasClientId: !!clientId,
+      clientId: clientId || 'none',
       authHeader: !!req.headers.authorization,
-      contentType: req.headers['content-type']
+      contentType: req.headers['content-type'],
+      cookies: Object.keys(req.cookies),
+      hasAccessToken: !!req.cookies.accessToken,
+      user: req.user || 'none'
     }));
 
     if (!req.body.auditData) {

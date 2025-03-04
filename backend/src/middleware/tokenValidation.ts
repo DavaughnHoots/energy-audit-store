@@ -10,7 +10,7 @@ interface TokenValidationError extends Error {
 }
 
 export async function validateToken(req: Request, res: Response, next: NextFunction) {
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  const token = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
 
   if (!token) {
     return res.status(401).json({ error: 'No token provided' });
@@ -45,17 +45,17 @@ export async function validateToken(req: Request, res: Response, next: NextFunct
 
     if (tokenAge > refreshThreshold) {
       const newToken = await refreshToken(decoded.userId);
-      res.cookie('token', newToken, {
+      res.cookie('accessToken', newToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
     }
 
     // Add user data to request
     req.user = {
-      userId: decoded.userId,
+      id: decoded.userId,
       email: decoded.email,
       role: decoded.role
     };
@@ -135,5 +135,5 @@ export async function validateEmailToken(token: string): Promise<boolean> {
 }
 
 export function getTokenFromRequest(req: Request): string | null {
-  return req.cookies.token || req.headers.authorization?.split(' ')[1] || null;
+  return req.cookies.accessToken || req.headers.authorization?.split(' ')[1] || null;
 }

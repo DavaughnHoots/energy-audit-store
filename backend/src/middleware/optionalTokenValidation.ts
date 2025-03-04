@@ -14,12 +14,14 @@ interface TokenValidationError extends Error {
 export async function optionalTokenValidation(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const token = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
 
-  // Log token validation attempt
-  appLogger.debug('Token validation attempt:', createLogMetadata(req, {
+  // Log token validation attempt with more details
+  appLogger.debug('Optional token validation attempt:', createLogMetadata(req, {
     hasAuthHeader: !!req.headers.authorization,
     hasToken: !!token,
     path: req.path,
-    method: req.method
+    method: req.method,
+    cookies: Object.keys(req.cookies),
+    hasAccessToken: !!req.cookies.accessToken
   }));
 
   // If no token is present, continue without authentication
