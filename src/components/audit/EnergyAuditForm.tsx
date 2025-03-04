@@ -370,7 +370,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       if (isAuthenticated) {
         // Get token from cookie using a more robust method
         const cookies = document.cookie.split('; ');
-        const tokenCookie = cookies.find(cookie => cookie.startsWith('token='));
+        const tokenCookie = cookies.find(cookie => cookie.startsWith('accessToken='));
         const token = tokenCookie ? tokenCookie.split('=')[1] : null;
 
         console.log('Token found:', !!token);
