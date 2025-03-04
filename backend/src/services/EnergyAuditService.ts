@@ -132,6 +132,16 @@ export class EnergyAuditService {
     userId?: string,
     clientId?: string
   ): Promise<string> {
+    // Ensure clientId is always set
+    const finalClientId = clientId || `anonymous-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    
+    // Log the audit creation attempt
+    console.log('Creating energy audit:', { 
+      hasUserId: !!userId, 
+      clientId: finalClientId,
+      auditDataSections: Object.keys(auditData)
+    });
+    
     // Validate input data
     const basicInfoErrors = validateBasicInfo(auditData.basicInfo);
     const homeDetailsErrors = validateHomeDetails(auditData.homeDetails);
@@ -169,8 +179,8 @@ export class EnergyAuditService {
 
       console.log('Executing query:', insertQuery);
       console.log('Query parameters:', [
-        userId || null,
-        clientId || null,
+          userId || null,
+          finalClientId,
         jsonData.basic_info,
         jsonData.home_details,
         jsonData.current_conditions,
@@ -182,7 +192,7 @@ export class EnergyAuditService {
         insertQuery,
         [
           userId || null,
-          clientId || null,
+          finalClientId,
           jsonData.basic_info,
           jsonData.home_details,
           jsonData.current_conditions,
