@@ -30,6 +30,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import fs from 'fs';
+import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,6 +57,27 @@ if (process.env.NODE_ENV === 'production') {
     .catch(error => {
       appLogger.error('Error running search migration on startup', { error });
     });
+    
+  // Run initial orphaned audit association
+  associateOrphanedAudits()
+    .then(result => {
+      appLogger.info('Initial orphaned audit association completed', { result });
+    })
+    .catch(error => {
+      appLogger.error('Error running initial orphaned audit association', { error });
+    });
+    
+  // Set up periodic orphaned audit association (every hour)
+  setInterval(() => {
+    appLogger.info('Running scheduled orphaned audit association');
+    associateOrphanedAudits()
+      .then(result => {
+        appLogger.info('Scheduled orphaned audit association completed', { result });
+      })
+      .catch(error => {
+        appLogger.error('Error running scheduled orphaned audit association', { error });
+      });
+  }, 60 * 60 * 1000); // Run every hour
 }
 
 const app = express();

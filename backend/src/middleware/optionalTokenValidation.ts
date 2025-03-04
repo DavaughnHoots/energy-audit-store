@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../config/database.js';
 import { cache } from '../config/cache.js';
 import { AuthenticatedRequest } from '../types/auth.js';
+import { appLogger, createLogMetadata } from '../utils/logger.js';
 
 interface TokenValidationError extends Error {
   code?: string;
@@ -22,8 +23,17 @@ interface RequestWithUser extends Request {
 export async function optionalTokenValidation(req: RequestWithUser, res: Response, next: NextFunction) {
   const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
+  // Log token validation attempt
+  appLogger.debug('Token validation attempt:', createLogMetadata(req, {
+    hasAuthHeader: !!req.headers.authorization,
+    hasToken: !!token,
+    path: req.path,
+    method: req.method
+  }));
+
   // If no token is present, continue without authentication
   if (!token) {
+    appLogger.debug('No token present, continuing as anonymous', createLogMetadata(req));
     return next();
   }
 
@@ -54,9 +64,16 @@ export async function optionalTokenValidation(req: RequestWithUser, res: Respons
       role: decoded.role
     };
 
+    appLogger.debug('User authenticated:', createLogMetadata(req, { 
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role
+    }));
+
     next();
   } catch (error) {
     // On any token validation error, continue without authentication
+    appLogger.debug('Token validation error, continuing as anonymous:', createLogMetadata(req, { error }));
     next();
   }
 }

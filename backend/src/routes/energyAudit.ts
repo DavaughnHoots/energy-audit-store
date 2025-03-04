@@ -68,8 +68,12 @@ router.get('/:id', optionalTokenValidation, async (req: AuthenticatedRequest, re
 router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    // Generate a client ID if one is not provided
+    const clientId = req.body.clientId || `anonymous-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    
     appLogger.info('Processing energy audit submission:', createLogMetadata(req, {
-      hasClientId: !!req.body.clientId,
+      hasUserId: !!userId,
+      hasClientId: !!clientId,
       authHeader: !!req.headers.authorization,
       contentType: req.headers['content-type']
     }));
@@ -79,14 +83,13 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
       return res.status(400).json({ error: 'Audit data is required' });
     }
 
-    const { auditData, clientId } = req.body as { 
+    const { auditData } = req.body as { 
       auditData: EnergyAuditData;
-      clientId?: string;
     };
 
     // Log the request data for debugging
     appLogger.debug('Audit submission details:', createLogMetadata(req, {
-      clientId,
+      clientId: clientId,
       auditDataSections: Object.keys(auditData),
       dbConfig: {
         database: pool.options.database,
@@ -101,7 +104,11 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
       appLogger.info('Database connection verified before audit creation');
       
       const audit = await energyAuditService.createAudit(auditData, userId, clientId);
-      appLogger.info('Energy audit created successfully:', createLogMetadata(req, { auditId: audit }));
+      appLogger.info('Energy audit created successfully:', createLogMetadata(req, { 
+        auditId: audit,
+        userId: userId || 'anonymous',
+        clientId
+      }));
 
       if (userId) {
         // Invalidate relevant caches for authenticated users
@@ -109,11 +116,12 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
         await cache.del(`dashboard_stats:${userId}`);
       }
 
-      res.status(201).json({ id: audit });
+      res.status(201).json({ id: audit, clientId });
     } catch (serviceError) {
       appLogger.error('Service error creating energy audit:', createLogMetadata(req, {
         error: serviceError,
-        clientId
+        clientId,
+        userId: userId || 'anonymous'
       }));
       
       // Check if it's a validation error
@@ -127,9 +135,13 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
       throw serviceError; // Re-throw for general error handling
     }
   } catch (error) {
+    const clientId = req.body?.clientId || 'unknown';
+    const userId = req.user?.id;
+    
     appLogger.error('Unhandled error in energy audit creation:', createLogMetadata(req, {
       error,
-      clientId: req.body?.clientId
+      clientId,
+      userId: userId || 'anonymous'
     }));
     
     res.status(500).json({ 
