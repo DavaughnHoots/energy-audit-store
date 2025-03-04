@@ -11,16 +11,7 @@ interface TokenValidationError extends Error {
   code?: string;
 }
 
-// Extend Request to include user property
-interface RequestWithUser extends Request {
-  user?: {
-    userId: string;
-    email: string;
-    role: string;
-  };
-}
-
-export async function optionalTokenValidation(req: RequestWithUser, res: Response, next: NextFunction) {
+export async function optionalTokenValidation(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
   // Log token validation attempt
@@ -59,7 +50,7 @@ export async function optionalTokenValidation(req: RequestWithUser, res: Respons
 
     // Add user data to request if token is valid
     req.user = {
-      userId: decoded.userId,
+      id: decoded.userId, // Use 'id' instead of 'userId' to match route expectations
       email: decoded.email,
       role: decoded.role
     };
