@@ -152,6 +152,7 @@ const UserDashboardPage: React.FC = () => {
     try {
       const response = await fetch(`${API_ENDPOINTS.ENERGY_AUDIT}/${stats.latestAuditId}/report`, {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${document.cookie
