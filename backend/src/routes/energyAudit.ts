@@ -255,7 +255,22 @@ router.get('/:id/report', [validateToken, ...reportGenerationLimiter], async (re
     }
 
     recommendations = await energyAuditService.getRecommendations(auditId);
-    const report = await reportGenerationService.generateReport(audit, recommendations);
+    
+    // Transform the audit data to match the expected format for ReportGenerationService
+    const transformedAudit = {
+      basicInfo: typeof audit.basic_info === 'string' ? JSON.parse(audit.basic_info) : audit.basic_info,
+      homeDetails: typeof audit.home_details === 'string' ? JSON.parse(audit.home_details) : audit.home_details,
+      currentConditions: typeof audit.current_conditions === 'string' ? JSON.parse(audit.current_conditions) : audit.current_conditions,
+      heatingCooling: typeof audit.heating_cooling === 'string' ? JSON.parse(audit.heating_cooling) : audit.heating_cooling,
+      energyConsumption: typeof audit.energy_consumption === 'string' ? JSON.parse(audit.energy_consumption) : audit.energy_consumption
+    };
+    
+    appLogger.debug('Transformed audit data for report generation:', createLogMetadata(req, {
+      originalKeys: Object.keys(audit),
+      transformedKeys: Object.keys(transformedAudit)
+    }));
+    
+    const report = await reportGenerationService.generateReport(transformedAudit, recommendations);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=energy-audit-report-${auditId}.pdf`);
