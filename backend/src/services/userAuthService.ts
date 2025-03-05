@@ -119,6 +119,13 @@ export class UserAuthService {
           [refreshToken, result.rows[0].id]
         );
 
+        // Store access token in sessions table
+        await client.query(
+          `INSERT INTO sessions (token, user_id, expires_at)
+           VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
+          [token, result.rows[0].id]
+        );
+
         // If auditId is provided, associate it with the new user
         if (auditId) {
           await client.query(
@@ -214,6 +221,13 @@ export class UserAuthService {
         [refreshToken, user.id]
       );
 
+      // Store access token in sessions table
+      await client.query(
+        `INSERT INTO sessions (token, user_id, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
+        [token, user.id]
+      );
+
       await client.query('COMMIT');
 
       return {
@@ -246,6 +260,12 @@ export class UserAuthService {
       await client.query(
         'DELETE FROM refresh_tokens WHERE token = $1',
         [refreshToken]
+      );
+
+      // Remove access token from sessions table
+      await client.query(
+        'DELETE FROM sessions WHERE token = $1',
+        [token]
       );
 
       // Add access token to blacklist with its remaining TTL
@@ -372,6 +392,13 @@ export class UserAuthService {
         [newRefreshToken, user.id]
       );
 
+      // Store new access token in sessions table
+      await client.query(
+        `INSERT INTO sessions (token, user_id, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
+        [newToken, user.id]
+      );
+
       await client.query('COMMIT');
 
       return { token: newToken, refreshToken: newRefreshToken };
@@ -399,6 +426,9 @@ export class UserAuthService {
 
       // Clean up expired blacklisted tokens
       await client.query('DELETE FROM token_blacklist WHERE expires_at < NOW()');
+
+      // Clean up expired sessions
+      await client.query('DELETE FROM sessions WHERE expires_at < NOW()');
 
       await client.query('COMMIT');
     } catch (error) {
