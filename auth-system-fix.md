@@ -20,6 +20,23 @@ We will modify the UserAuthService to store access tokens in the sessions table 
    - Update refreshToken method to store new access token in sessions table
    - Update logout method to remove access token from sessions table
 
+2. Create sessions table in the database:
+   - The sessions table was missing from the database
+   - Created the table with the following structure:
+     ```sql
+     CREATE TABLE IF NOT EXISTS sessions (
+         token TEXT PRIMARY KEY,
+         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+         expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+     );
+     ```
+
+3. Add missing chart.js dependency:
+   - After fixing the authentication issue, we encountered a 500 error in PDF generation
+   - The backend was missing the chart.js dependency needed for report generation
+   - Added chart.js to backend/package.json
+
 ## Testing
 
 After implementing these changes, we will test:
@@ -38,3 +55,13 @@ After implementing these changes, we will test:
   - Modified refreshToken method to store new access token in sessions table
   - Modified logout method to remove access token from sessions table
   - Modified cleanupExpiredTokens method to clean up expired sessions
+- [3/5/2025] Deployed changes to Heroku:
+  - Created commit with changes
+  - Pushed fix-report-download branch to Heroku main branch
+  - Successfully deployed to https://energy-audit-store-e66479ed4f2b.herokuapp.com/
+- [3/5/2025] Fixed 401 Unauthorized error:
+  - Created sessions table in the database
+  - Verified that authentication now works correctly
+- [3/5/2025] Fixed 500 Internal Server Error in PDF generation:
+  - Added chart.js dependency to backend/package.json
+  - Created migration file for sessions table (backend/src/migrations/add_sessions_table.sql)
