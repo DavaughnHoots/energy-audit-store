@@ -70,3 +70,8 @@ After implementing these changes, we will test:
   - Added try-catch blocks around each section of the PDF generation process
   - Enhanced error reporting in energyAudit.ts route handler
   - Added graceful fallbacks for chart generation failures
+- [3/5/2025] Fixed PDF generation data structure mismatch:
+  - Added data transformation step in energyAudit.ts route handler
+  - Converts database snake_case fields to camelCase format expected by ReportGenerationService
+  - Added type checking to handle both string and object formats
+  - Added additional logging to track transformation process
