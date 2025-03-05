@@ -25,6 +25,7 @@ import userPropertySettingsRoutes from './routes/userPropertySettings.js';
 import recommendationsRoutes from './routes/recommendations.js';
 import userProfileRoutes from './routes/userProfile.js';
 import productsRoutes from './routes/products.js';
+import visualizationRoutes from './routes/visualization.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -140,6 +141,7 @@ app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
 app.use('/api/user-profile', userProfileRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/visualization', visualizationRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
