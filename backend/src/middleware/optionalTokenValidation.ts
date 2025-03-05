@@ -40,15 +40,8 @@ export async function optionalTokenValidation(req: AuthenticatedRequest, res: Re
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload;
 
-    // Check database for valid session
-    const session = await pool.query(
-      'SELECT * FROM sessions WHERE token = $1 AND expires_at > NOW()',
-      [token]
-    );
-
-    if (session.rows.length === 0) {
-      return next(); // Skip invalid session but continue
-    }
+    // Note: We're skipping the session check for optional validation
+    // This allows valid JWT tokens to be accepted even if they're not in the sessions table
 
     // Add user data to request if token is valid
     req.user = {

@@ -1,0 +1,161 @@
+# Authentication System Documentation
+
+## Overview
+
+The Energy Audit Store application uses a hybrid JWT (JSON Web Token) and session-based authentication system. This document explains how tokens and sessions are handled throughout the application, identifies current issues, and provides recommendations for improvements.
+
+## Authentication Components
+
+1. **JWT Tokens**: The system uses two types of tokens:
+   - Access Token: Short-lived token (24 hours) used for API authentication
+   - Refresh Token: Long-lived token (7 days) used to obtain new access tokens
+
+2. **Database Tables**:
+   - `sessions`: Stores active sessions with token, user_id, and expiration
+   - `refresh_tokens`: Stores refresh tokens with token, user_id, and expiration
+   - `token_blacklist`: Stores revoked tokens until their original expiration
+
+3. **Middleware**:
+   - `validateToken`: Strict token validation for protected routes
+   - `optionalTokenValidation`: Flexible token validation that allows anonymous access
+
+4. **Services**:
+   - `UserAuthService`: Handles user registration, login, and token management
+
+## Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthRoutes
+    participant UserAuthService
+    participant TokenValidation
+    participant Database
+
+    %% Login Flow
+    Client->>AuthRoutes: POST /auth/signin
+    AuthRoutes->>UserAuthService: loginUser(email, password)
+    UserAuthService->>Database: Verify credentials
+    UserAuthService->>UserAuthService: Generate tokens
+    UserAuthService->>Database: Store refresh token
+    Note right of UserAuthService: Access token not stored in sessions table
+    UserAuthService-->>AuthRoutes: Return tokens
+    AuthRoutes->>Client: Set cookies & return user data
+
+    %% Protected Route Access
+    Client->>+TokenValidation: Request protected route
+    TokenValidation->>TokenValidation: Extract token from cookies/header
+    TokenValidation->>TokenValidation: Verify JWT signature
+    TokenValidation->>Database: Check sessions table
+    Note right of TokenValidation: Session check fails - token not in table
+    Database-->>TokenValidation: No session found
+    TokenValidation-->>Client: 401 Unauthorized
+```
+
+## Current Issue: Session-Token Mismatch
+
+The primary issue in the current implementation is a mismatch between token generation and validation:
+
+1. When a user logs in or registers, the system:
+   - Generates an access token and refresh token
+   - Stores the refresh token in the `refresh_tokens` table
+   - Sets both tokens as cookies
+   - **Does not store the access token in the `sessions` table**
+
+2. When validating tokens (in both `validateToken` and `optionalTokenValidation`), the system:
+   - Extracts the token from cookies or Authorization header
+   - Verifies the JWT signature
+   - **Checks for the token in the `sessions` table**
+   - Fails validation if the token is not found in the sessions table
+
+This creates a situation where tokens are valid JWTs but fail validation because they don't exist in the sessions table.
+
+## Impact on Energy Audit Submissions
+
+This issue directly affects energy audit submissions:
+
+1. When a user submits an energy audit while authenticated:
+   - The frontend correctly sends the access token in cookies and Authorization header
+   - The `optionalTokenValidation` middleware extracts and verifies the token
+   - The session check fails because the token isn't in the sessions table
+   - The middleware continues without setting `req.user`
+   - The energy audit is created with `user_id = null` instead of the authenticated user's ID
+
+2. This causes:
+   - Energy audits not appearing in the user's dashboard
+   - Inability to associate anonymous audits with user accounts
+   - Loss of user-specific analytics and recommendations
+
+## Solutions
+
+### Option 1: Store Access Tokens in Sessions Table (Recommended)
+
+Modify the authentication flow to store access tokens in the sessions table:
+
+```javascript
+// In UserAuthService.js after generating tokens
+await client.query(
+  `INSERT INTO sessions (token, user_id, expires_at)
+   VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
+  [token, user.id]
+);
+```
+
+### Option 2: Remove Session Table Dependency
+
+Modify the token validation middleware to rely solely on JWT verification:
+
+```javascript
+// In optionalTokenValidation.ts
+// Remove this block:
+const session = await pool.query(
+  'SELECT * FROM sessions WHERE token = $1 AND expires_at > NOW()',
+  [token]
+);
+
+if (session.rows.length === 0) {
+  return next(); // Skip invalid session but continue
+}
+```
+
+### Option 3: Hybrid Approach
+
+Keep session validation for strict routes (`validateToken`) but remove it for optional routes (`optionalTokenValidation`).
+
+## Recommendations
+
+1. **Implement Option 1**: Store access tokens in the sessions table to maintain the security benefits of session-based authentication while fixing the current issue.
+
+2. **Add Logging**: Enhance logging around token validation to quickly identify authentication issues.
+
+3. **Create Database Indexes**: Add indexes to the sessions and refresh_tokens tables for faster lookups.
+
+4. **Implement Token Rotation**: Consider implementing token rotation for enhanced security.
+
+5. **Add Session Management UI**: Allow users to view and manage their active sessions.
+
+## SQL Queries for Troubleshooting
+
+### Check User's Energy Audits
+```sql
+SELECT * FROM energy_audits WHERE user_id = 'user-id-here';
+```
+
+### Check Anonymous Energy Audits
+```sql
+SELECT * FROM energy_audits WHERE client_id = 'client-id-here';
+```
+
+### Check Active Sessions
+```sql
+SELECT * FROM sessions WHERE user_id = 'user-id-here';
+```
+
+### Check Refresh Tokens
+```sql
+SELECT * FROM refresh_tokens WHERE user_id = 'user-id-here';
+```
+
+### Associate Anonymous Audit with User
+```sql
+UPDATE energy_audits SET user_id = 'user-id-here' WHERE id = 'audit-id-here';
