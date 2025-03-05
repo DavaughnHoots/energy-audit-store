@@ -1,0 +1,118 @@
+# Energy Audit Data Requirements
+
+This document outlines all the data fields required to implement the functionality from the Python `energy_audit_tool.py` onto our website. It serves as a checklist to ensure our energy audit form collects all necessary data.
+
+## 1. Basic Energy Analysis Data
+
+- [x] Power consumed (kW) - Already collected as powerConsumption
+- [ ] Duration hours - Need to add to form
+- [ ] Seasonal factor (0.8-1.2) - Need to calculate from seasonalVariation
+- [ ] Occupancy factor (0.6-1.0) - Need to calculate from occupancyPattern
+- [ ] Power factor (0.8-1.0) - Need to add to form
+
+## 2. HVAC Analysis Data
+
+- [x] Heating system type - Already collected
+- [x] Heating system fuel - Already collected
+- [x] Heating system age - Already collected
+- [x] Heating system efficiency - Already collected
+- [ ] Heating system output capacity - Need to add to form
+- [ ] Heating system input power - Need to add to form
+- [ ] Heating system target efficiency - Need to add to form
+- [x] Cooling system type - Already collected
+- [x] Cooling system age - Already collected
+- [x] Cooling system efficiency - Already collected
+- [ ] Cooling system output capacity - Need to add to form
+- [ ] Cooling system input power - Need to add to form
+- [ ] Cooling system target efficiency - Need to add to form
+- [ ] Temperature difference (indoor vs. outdoor) - Need to add to form
+- [ ] Air density (default: 1.225 kg/m³) - Can use default
+- [ ] Specific heat (default: 1005 J/kg·K) - Can use default
+- [x] Home dimensions - Already collected (can calculate volume)
+
+## 3. Lighting Analysis Data
+
+- [ ] Lighting fixtures data - Need to add to form
+  - [ ] Fixture name
+  - [ ] Watts per fixture
+  - [ ] Hours of use per day
+  - [ ] Lumens output
+  - [ ] Electricity rate ($/kWh)
+
+## 4. Humidity Analysis Data
+
+- [x] Home volume - Can calculate from existing dimensions
+- [ ] Current humidity (%) - Need to add to form
+- [ ] Target humidity (%) - Need to add to form
+- [ ] Indoor temperature - Need to add to form
+
+## 5. Product Recommendation Data
+
+- [ ] Product preferences - Need to add to form
+  - [ ] Preferred product categories
+  - [ ] Preferred product features
+  - [ ] Budget constraints
+
+## 6. Financial Analysis Data
+
+Most of this data is derived from other inputs or can use defaults:
+
+- [ ] Electricity rate ($/kWh) - Need to add to form or use default
+- [ ] Implementation cost estimates - Can use defaults based on recommendation type
+- [ ] Expected lifespan of improvements - Can use defaults based on recommendation type
+
+## 7. Form Updates Required
+
+Based on the above requirements, we need to add the following sections to our energy audit form:
+
+1. **Extended Energy Consumption Section**
+   - Duration hours field
+   - Power factor field
+
+2. **Extended HVAC Section**
+   - Output capacity fields for heating and cooling
+   - Input power fields for heating and cooling
+   - Target efficiency fields for heating and cooling
+   - Temperature difference field
+
+3. **New Lighting Section**
+   - Fixture management interface (add/edit/remove)
+   - Fields for fixture details
+
+4. **New Humidity Section**
+   - Current humidity field
+   - Target humidity field
+   - Indoor temperature field
+
+5. **New Product Preferences Section**
+   - Category preference selection
+   - Feature preference selection
+   - Budget constraint field
+
+6. **Financial Inputs Section**
+   - Electricity rate field
+
+## 8. Database Updates Required
+
+The database already has JSONB fields that can store this additional data:
+
+1. Extend `energy_consumption` JSONB to include:
+   - seasonalFactor
+   - occupancyFactor
+   - powerFactor
+   - durationHours
+
+2. Extend `heating_cooling` JSONB to include:
+   - Extended heating system data (outputCapacity, inputPower, targetEfficiency)
+   - Extended cooling system data (outputCapacity, inputPower, targetEfficiency)
+   - temperatureDifference
+   - airDensity
+   - specificHeat
+
+3. Extend `current_conditions` JSONB to include:
+   - humidity data (currentHumidity, targetHumidity, temperature)
+   - lighting data (fixtures array)
+
+4. Add `product_preferences` to basic_info JSONB
+
+5. Create new `visualization_data` table for storing visualization data
