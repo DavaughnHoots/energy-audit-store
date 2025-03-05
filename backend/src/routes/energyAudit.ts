@@ -238,20 +238,23 @@ router.delete('/:id', validateToken, async (req: AuthenticatedRequest, res: Resp
 
 // Generate PDF report
 router.get('/:id/report', [validateToken, ...reportGenerationLimiter], async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    const auditId = req.params.id;
+  // Define variables outside try/catch for error logging
+  const userId = req.user?.id;
+  const auditId = req.params.id;
+  let audit: any = null;
+  let recommendations: any[] = [];
 
+  try {
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const audit = await energyAuditService.getAuditById(auditId);
+    audit = await energyAuditService.getAuditById(auditId);
     if (!audit || (audit.userId && audit.userId !== userId)) {
       return res.status(404).json({ error: 'Audit not found' });
     }
 
-    const recommendations = await energyAuditService.getRecommendations(auditId);
+    recommendations = await energyAuditService.getRecommendations(auditId);
     const report = await reportGenerationService.generateReport(audit, recommendations);
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -260,8 +263,25 @@ router.get('/:id/report', [validateToken, ...reportGenerationLimiter], async (re
 
     appLogger.info('Report generated successfully:', createLogMetadata(req, { auditId }));
   } catch (error) {
-    appLogger.error('Error generating report:', createLogMetadata(req, { error }));
-    res.status(500).json({ error: 'Failed to generate report' });
+    // Enhanced error logging for PDF generation
+    appLogger.error('Error generating report:', createLogMetadata(req, { 
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : String(error),
+      auditId: auditId,
+      userId: userId,
+      recommendationsCount: recommendations ? recommendations.length : 0,
+      auditDataKeys: audit ? Object.keys(audit) : []
+    }));
+    
+    // Return detailed error message in development
+    const errorMessage = process.env.NODE_ENV === 'production' 
+      ? 'Failed to generate report' 
+      : `Failed to generate report: ${error instanceof Error ? error.message : String(error)}`;
+    
+    res.status(500).json({ error: errorMessage });
   }
 });
 
