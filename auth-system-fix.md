@@ -65,3 +65,8 @@ After implementing these changes, we will test:
 - [3/5/2025] Fixed 500 Internal Server Error in PDF generation:
   - Added chart.js dependency to backend/package.json
   - Created migration file for sessions table (backend/src/migrations/add_sessions_table.sql)
+- [3/5/2025] Enhanced logging for PDF generation:
+  - Added detailed step-by-step logging in ReportGenerationService.ts
+  - Added try-catch blocks around each section of the PDF generation process
+  - Enhanced error reporting in energyAudit.ts route handler
+  - Added graceful fallbacks for chart generation failures
