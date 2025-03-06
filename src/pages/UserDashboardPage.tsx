@@ -174,15 +174,18 @@ const UserDashboardPage: React.FC = () => {
         throw new Error('Invalid audit ID');
       }
       
-      const response = await fetch(`${API_ENDPOINTS.ENERGY_AUDIT}/${auditId}/report`, {
+      // Use the full URL with the API_BASE_URL to ensure cookies are sent to the correct domain
+      const { API_BASE_URL } = await import('@/config/api');
+      const reportUrl = `${API_BASE_URL}${API_ENDPOINTS.ENERGY_AUDIT}/${auditId}/report`;
+      
+      console.log('Fetching report from:', reportUrl);
+      
+      const response = await fetch(reportUrl, {
         method: 'GET',
-        credentials: 'include',
+        credentials: 'include', // This ensures cookies are sent with the request
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${document.cookie
-            .split('; ')
-            .find(row => row.startsWith('accessToken='))
-            ?.split('=')[1] || ''}`
+          'Content-Type': 'application/json'
+          // Let the browser handle sending the cookies automatically
         }
       });
 

@@ -237,7 +237,7 @@ router.delete('/:id', validateToken, async (req: AuthenticatedRequest, res: Resp
 });
 
 // Generate PDF report
-router.get('/:id/report', [validateToken, ...reportGenerationLimiter], async (req: AuthenticatedRequest, res: Response) => {
+router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter], async (req: AuthenticatedRequest, res: Response) => {
   // Define variables outside try/catch for error logging
   const userId = req.user?.id;
   const auditId = req.params.id;
@@ -245,9 +245,8 @@ router.get('/:id/report', [validateToken, ...reportGenerationLimiter], async (re
   let recommendations: any[] = [];
 
   try {
-    if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
+    // No longer requiring authentication for report generation
+    // This allows both authenticated and anonymous users to download reports
 
     // Validate audit ID
     if (!auditId || auditId === 'null' || auditId === 'undefined') {
@@ -255,8 +254,18 @@ router.get('/:id/report', [validateToken, ...reportGenerationLimiter], async (re
     }
 
     audit = await energyAuditService.getAuditById(auditId);
-    if (!audit || (audit.userId && audit.userId !== userId)) {
+    if (!audit) {
       return res.status(404).json({ error: 'Audit not found' });
+    }
+    
+    // Only check ownership if the user is authenticated and the audit belongs to a user
+    if (userId && audit.userId && audit.userId !== userId) {
+      appLogger.warn('Unauthorized access attempt to audit report:', createLogMetadata(req, {
+        auditId,
+        requestUserId: userId,
+        auditUserId: audit.userId
+      }));
+      return res.status(403).json({ error: 'Not authorized to access this audit' });
     }
 
     recommendations = await energyAuditService.getRecommendations(auditId);
