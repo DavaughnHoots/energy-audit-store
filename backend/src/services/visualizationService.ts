@@ -1,4 +1,5 @@
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { appLogger } from '../utils/logger.js';
 import { EnergyAuditData } from '../types/energyAudit.js';
 import { createCanvas } from 'canvas';
@@ -31,9 +32,9 @@ export interface VisualizationData {
  * Service for generating and storing visualization data
  */
 export class VisualizationService {
-  private pool: Pool;
+  private pool: typeof Pool;
 
-  constructor(pool: Pool) {
+  constructor(pool: typeof Pool) {
     this.pool = pool;
   }
 
