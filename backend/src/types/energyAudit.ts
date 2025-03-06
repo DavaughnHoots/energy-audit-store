@@ -86,6 +86,8 @@ export interface EnergyConsumption {
   peakUsageTimes: string[];
   monthlyBill: number;
   season: string;
+  durationHours?: number; // Duration hours for energy consumption calculation
+  powerFactor?: number; // Power factor (0.8-1.0) for energy consumption calculation
 }
 
 export interface EnergyAuditData {

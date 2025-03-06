@@ -120,11 +120,49 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
           ]}
           required
         />
+        
+        <InputField
+          label="Daily Usage Hours"
+          type="number"
+          value={data.durationHours || ''}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            const value = parseInt(e.target.value);
+            if (!isNaN(value) && value >= 0 && value <= 24) {
+              handleBasicFieldChange('durationHours', value);
+            }
+          }}
+          min="0"
+          max="24"
+          placeholder="Hours per day (0-24)"
+          helpText="Average number of hours your equipment is used daily"
+        />
       </FormGrid>
 
       {/* Advanced Fields */}
       {showAdvanced && (
         <FormSectionAdvanced>
+          {/* Power Factor */}
+          <FormSubsection title="Advanced Energy Parameters">
+            <FormGrid>
+              <InputField
+                label="Power Factor (0.8-1.0)"
+                type="number"
+                value={data.powerFactor || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value) && value >= 0.8 && value <= 1.0) {
+                    handleAdvancedFieldChange('powerFactor', value);
+                  }
+                }}
+                step="0.01"
+                min="0.8"
+                max="1.0"
+                placeholder="0.8-1.0"
+                helpText="Power factor affects real power consumption (0.9 is typical for residential)"
+              />
+            </FormGrid>
+          </FormSubsection>
+          
           {/* Energy Bills */}
           <FormSubsection title="Detailed Energy Bills">
             <FormGrid>
