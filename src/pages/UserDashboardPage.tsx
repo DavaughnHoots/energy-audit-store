@@ -146,11 +146,35 @@ const UserDashboardPage: React.FC = () => {
   }, [fetchDashboardData, refreshKey]);
 
   const handleDownloadReport = async () => {
-    if (!stats || !stats.latestAuditId) return;
+    if (!stats || !stats.latestAuditId) {
+      setError(
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No Audit Available</h2>
+          <p className="text-gray-600 mb-4">
+            There is no audit available to generate a report. Please complete an energy audit first.
+          </p>
+          <Button
+            onClick={() => navigate('/energy-audit')}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            Start New Audit
+          </Button>
+        </div>
+      );
+      return;
+    }
     
     setIsGeneratingReport(true);
     try {
-      const response = await fetch(`${API_ENDPOINTS.ENERGY_AUDIT}/${stats.latestAuditId}/report`, {
+      // Ensure auditId is not null or "null" string
+      const auditId = stats.latestAuditId === "null" ? null : stats.latestAuditId;
+      
+      if (!auditId) {
+        throw new Error('Invalid audit ID');
+      }
+      
+      const response = await fetch(`${API_ENDPOINTS.ENERGY_AUDIT}/${auditId}/report`, {
         method: 'GET',
         credentials: 'include',
         headers: {
