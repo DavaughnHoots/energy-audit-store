@@ -111,16 +111,24 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         fuelType: '',
         age: 0,
         efficiency: 0,
-        lastService: ''
+        lastService: '',
+        outputCapacity: 0,
+        inputPower: 0,
+        targetEfficiency: 0
       },
       coolingSystem: {
         type: '',
         age: 0,
-        efficiency: 0
+        efficiency: 0,
+        outputCapacity: 0,
+        inputPower: 0,
+        targetEfficiency: 0
       },
       thermostatType: '',
       zoneCount: 1,
-      systemPerformance: 'works-well'
+      systemPerformance: 'works-well',
+      temperatureDifferenceCategory: 'moderate',
+      temperatureDifference: 15
     },
     energyConsumption: {
       electricBill: 0,
