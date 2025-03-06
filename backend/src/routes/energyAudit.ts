@@ -249,6 +249,11 @@ router.get('/:id/report', [validateToken, ...reportGenerationLimiter], async (re
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    // Validate audit ID
+    if (!auditId || auditId === 'null' || auditId === 'undefined') {
+      return res.status(400).json({ error: 'Invalid audit ID' });
+    }
+
     audit = await energyAuditService.getAuditById(auditId);
     if (!audit || (audit.userId && audit.userId !== userId)) {
       return res.status(404).json({ error: 'Audit not found' });
