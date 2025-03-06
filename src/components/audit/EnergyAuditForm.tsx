@@ -9,6 +9,7 @@ import HomeDetailsForm from './forms/HomeDetailsForm';
 import CurrentConditionsForm from './forms/CurrentConditionsForm';
 import HVACForm from './forms/HVACForm';
 import EnergyUseForm from './forms/EnergyUseForm';
+import LightingForm from './forms/LightingForm';
 import AuditSubmissionModal from './AuditSubmissionModal';
 import Dialog from '@/components/ui/Dialog';
 import { getStoredAuditData, storeAuditData, clearStoredAuditData } from '@/utils/auditStorage';
@@ -144,7 +145,9 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       monthlyBill: 0,
       season: '',
       durationHours: 0,
-      powerFactor: 0.9 // Default power factor value
+      powerFactor: 0.9, // Default power factor value
+      seasonalFactor: 1.0, // Default seasonal factor value
+      occupancyFactor: 0.8  // Default occupancy factor value
     }
   });
 
@@ -347,9 +350,12 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
 
     // Validate all sections
     console.log('Validating all sections...');
-    const allSectionErrors = Object.keys(formData).flatMap(section =>
-      validateSection(section as keyof EnergyAuditData, formData)
-    );
+    const allSectionErrors = [
+      ...Object.keys(formData).flatMap(section =>
+        validateSection(section as keyof EnergyAuditData, formData)
+      ),
+      ...validateSection('lighting', formData) // Add lighting validation
+    ];
 
     if (allSectionErrors.length > 0) {
       console.error('Validation errors:', allSectionErrors);
@@ -478,6 +484,13 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
             onInputChange={(field, value) => handleInputChange('energyConsumption', field, value)}
           />
         );
+      case 6:
+        return (
+          <LightingForm
+            data={formData.currentConditions}
+            onInputChange={(field, value) => handleInputChange('currentConditions', field, value)}
+          />
+        );
       default:
         return null;
     }
@@ -507,7 +520,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
                 Previous
               </button>
             )}
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <button
                 type="button"
                 onClick={handleNext}

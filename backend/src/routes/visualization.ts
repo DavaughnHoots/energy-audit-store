@@ -1,9 +1,18 @@
 import express from 'express';
-import { visualizationService } from '../services/visualizationService.js';
+import { visualizationService, VisualizationType } from '../services/visualizationService.js';
 import { extendedCalculationService } from '../services/extendedCalculationService.js';
 import { appLogger } from '../utils/logger.js';
 import { validateToken } from '../middleware/tokenValidation.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
+import { Pool } from 'pg';
+import { dbConfig } from '../config/database.js';
+import { EnergyAuditService } from '../services/EnergyAuditService.js';
+
+// Create a database pool
+const pool = new Pool(dbConfig);
+
+// Create an instance of the EnergyAuditService
+const energyAuditService = new EnergyAuditService(pool);
 
 const router = express.Router();
 
@@ -22,11 +31,45 @@ router.get('/:auditId', validateToken, async (req, res) => {
     }
     
     // Get visualization data
-    const visualizations = await visualizationService.getVisualizationData(auditId);
+    const visualizations = await visualizationService.getVisualizationsByAuditId(auditId);
     
     return res.status(200).json(visualizations);
   } catch (error) {
-    appLogger.error('Error getting visualization data', { error });
+    appLogger.error('Error getting visualization data', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+/**
+ * @route GET /api/visualization/id/:id
+ * @description Get visualization data by ID
+ * @access Private
+ */
+router.get('/id/:id', validateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Validate ID
+    if (!id) {
+      return res.status(400).json({ message: 'Visualization ID is required' });
+    }
+    
+    // Get visualization data
+    const visualization = await visualizationService.getVisualizationById(id);
+    
+    if (!visualization) {
+      return res.status(404).json({ message: 'Visualization data not found' });
+    }
+    
+    return res.status(200).json(visualization);
+  } catch (error) {
+    appLogger.error('Error getting visualization by ID', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return res.status(500).json({ message: 'Server error' });
   }
 });
@@ -36,7 +79,7 @@ router.get('/:auditId', validateToken, async (req, res) => {
  * @description Get visualization data of a specific type for an audit
  * @access Private
  */
-router.get('/:auditId/:type', validateToken, async (req, res) => {
+router.get('/:auditId/type/:type', validateToken, async (req, res) => {
   try {
     const { auditId, type } = req.params;
     
@@ -50,127 +93,124 @@ router.get('/:auditId/:type', validateToken, async (req, res) => {
     }
     
     // Validate visualization type
-    const validTypes = ['energy', 'hvac', 'lighting', 'humidity', 'savings'];
-    if (!validTypes.includes(type)) {
+    if (!Object.values(VisualizationType).includes(type as VisualizationType)) {
       return res.status(400).json({ message: 'Invalid visualization type' });
     }
     
-    // Get visualization data
-    const visualizations = await visualizationService.getVisualizationData(auditId, type);
+    // Get all visualizations for the audit
+    const visualizations = await visualizationService.getVisualizationsByAuditId(auditId);
     
-    if (visualizations.length === 0) {
+    // Filter by type
+    const filteredVisualizations = visualizations.filter(v => v.visualizationType === type);
+    
+    if (filteredVisualizations.length === 0) {
       return res.status(404).json({ message: 'Visualization data not found' });
     }
     
-    return res.status(200).json(visualizations[0]);
+    return res.status(200).json(filteredVisualizations[0]);
   } catch (error) {
-    appLogger.error('Error getting visualization data', { error });
+    appLogger.error('Error getting visualization data by type', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return res.status(500).json({ message: 'Server error' });
   }
 });
 
 /**
  * @route POST /api/visualization/:auditId/generate
- * @description Generate visualizations from audit results
+ * @description Generate visualizations from audit data
  * @access Private
  */
 router.post('/:auditId/generate', validateToken, async (req, res) => {
   try {
     const { auditId } = req.params;
-    const { auditData } = req.body;
+    const { types } = req.body;
     
     // Validate parameters
     if (!auditId) {
       return res.status(400).json({ message: 'Audit ID is required' });
     }
     
+    // Get audit data
+    const auditData = await energyAuditService.getAuditById(auditId);
+    
     if (!auditData) {
-      return res.status(400).json({ message: 'Audit data is required' });
+      return res.status(404).json({ message: 'Audit not found' });
     }
     
-    // Perform comprehensive analysis
-    const auditResults = extendedCalculationService.performComprehensiveAnalysis(auditData);
+    // Determine which visualization types to generate
+    let visualizationTypes = Object.values(VisualizationType);
+    if (types && Array.isArray(types) && types.length > 0) {
+      visualizationTypes = types.filter(type => 
+        Object.values(VisualizationType).includes(type as VisualizationType)
+      ) as VisualizationType[];
+    }
     
     // Generate visualizations
-    const visualizationIds = await visualizationService.generateVisualizations(auditId, auditResults);
+    const results = [];
+    for (const type of visualizationTypes) {
+      const visualization = await visualizationService.generateVisualization(
+        auditId,
+        auditData,
+        type as VisualizationType
+      );
+      results.push(visualization);
+    }
     
     return res.status(201).json({
       message: 'Visualizations generated successfully',
-      visualizationIds,
-      auditResults
+      visualizations: results
     });
   } catch (error) {
-    appLogger.error('Error generating visualizations', { error });
+    appLogger.error('Error generating visualizations', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return res.status(500).json({ message: 'Server error' });
   }
 });
 
 /**
- * @route POST /api/visualization/:auditId/:type
- * @description Save visualization data
+ * @route GET /api/visualization/:id/image
+ * @description Get visualization as an image
  * @access Private
  */
-router.post('/:auditId/:type', validateToken, async (req, res) => {
-  try {
-    const { auditId, type } = req.params;
-    const visualizationData = req.body;
-    
-    // Validate parameters
-    if (!auditId) {
-      return res.status(400).json({ message: 'Audit ID is required' });
-    }
-    
-    if (!type) {
-      return res.status(400).json({ message: 'Visualization type is required' });
-    }
-    
-    // Validate visualization type
-    const validTypes = ['energy', 'hvac', 'lighting', 'humidity', 'savings'];
-    if (!validTypes.includes(type)) {
-      return res.status(400).json({ message: 'Invalid visualization type' });
-    }
-    
-    if (!visualizationData) {
-      return res.status(400).json({ message: 'Visualization data is required' });
-    }
-    
-    // Save visualization data
-    const id = await visualizationService.saveVisualizationData(auditId, type, visualizationData);
-    
-    return res.status(201).json({
-      message: 'Visualization data saved successfully',
-      id
-    });
-  } catch (error) {
-    appLogger.error('Error saving visualization data', { error });
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
-/**
- * @route DELETE /api/visualization/:id
- * @description Delete visualization data
- * @access Private
- */
-router.delete('/:id', validateToken, async (req, res) => {
+router.get('/:id/image', validateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const { width, height } = req.query;
     
     // Validate ID
     if (!id) {
       return res.status(400).json({ message: 'Visualization ID is required' });
     }
     
-    // Delete visualization data
-    const deleted = await visualizationService.deleteVisualizationData(id);
+    // Get visualization data
+    const visualization = await visualizationService.getVisualizationById(id);
     
-    if (!deleted) {
+    if (!visualization) {
       return res.status(404).json({ message: 'Visualization data not found' });
     }
     
-    return res.status(200).json({ message: 'Visualization data deleted successfully' });
+    // Generate chart image
+    const chartImage = await visualizationService.generateChartImage(
+      visualization,
+      width ? parseInt(width as string) : undefined,
+      height ? parseInt(height as string) : undefined
+    );
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Length', chartImage.length);
+    
+    // Send image
+    return res.send(chartImage);
   } catch (error) {
-    appLogger.error('Error deleting visualization data', { error });
+    appLogger.error('Error generating chart image', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return res.status(500).json({ message: 'Server error' });
   }
 });

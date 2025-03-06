@@ -39,6 +39,9 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
         updateIfNotModified('powerConsumption', defaults.powerConsumption);
         updateIfNotModified('occupancyHours', defaults.occupancyHours);
         updateIfNotModified('peakUsageTimes', defaults.peakUsageTimes);
+        
+        // Update occupancy factor from defaults
+        updateIfNotModified('occupancyFactor', defaults.occupancyFactor);
       }
     }
 
@@ -55,6 +58,9 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
         updateIfNotModified('powerConsumption', 
           Math.round(data.powerConsumption * defaults.powerConsumptionMultiplier)
         );
+        
+        // Update seasonal factor from defaults
+        updateIfNotModified('seasonalFactor', defaults.seasonalFactor);
       }
     }
 
