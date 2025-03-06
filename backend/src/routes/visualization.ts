@@ -4,7 +4,8 @@ import { extendedCalculationService } from '../services/extendedCalculationServi
 import { appLogger } from '../utils/logger.js';
 import { validateToken } from '../middleware/tokenValidation.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { dbConfig } from '../config/database.js';
 import { EnergyAuditService } from '../services/EnergyAuditService.js';
 
