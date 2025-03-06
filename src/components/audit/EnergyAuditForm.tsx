@@ -134,7 +134,9 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       },
       peakUsageTimes: [],
       monthlyBill: 0,
-      season: ''
+      season: '',
+      durationHours: 0,
+      powerFactor: 0.9 // Default power factor value
     }
   });
 
