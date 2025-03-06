@@ -2,6 +2,13 @@
 
 This document outlines the comprehensive plan for implementing the functionality from the Python `energy_audit_tool.py` onto our website. It serves as a roadmap and checklist to ensure all required components are properly implemented.
 
+## BRANCH INFORMATION
+
+For rollback purposes, here's a list of branches used in this implementation:
+
+- `feature/energy-audit-tool-db-analysis`: Database analysis and visualization infrastructure
+- `feature/energy-audit-tool-form-updates`: Form updates and frontend visualization components
+
 ## 1. OVERVIEW
 
 ### Current Website Functionality:
@@ -291,50 +298,97 @@ After analyzing the database structure, we found:
   - [  ] Recommendation details
   - [  ] Product recommendations with links
 
-## 7. IMPLEMENTATION PLAN
+## 7. REFINED IMPLEMENTATION PLAN
 
-### Phase 1: Data Collection Updates
+### Form Update Approach
 
-1. [  ] Update energy audit form to include missing fields
-   - [  ] Add lighting section
-   - [  ] Add humidity section
-   - [  ] Add advanced HVAC fields
-   - [  ] Add energy factors fields
-   - [  ] Add product preference fields
+We'll take an incremental approach to form updates, categorizing new fields as either "basic" or "advanced":
 
-2. [  ] Update database schema
-   - [  ] Modify existing tables
-   - [  ] Create new tables
-   - [  ] Update migrations
+- **Basic Questions**:
+  - Simple UI components (dropdowns, radio buttons, sliders)
+  - Placed in existing sections where possible
+  - Focus on user-friendly experience
+  - Prioritized for implementation
 
-### Phase 2: Calculation Implementation
+- **Advanced Questions**:
+  - Numeric input fields with validation
+  - Grouped in collapsible "Advanced" sections
+  - Technical fields for detailed analysis
+  - Implemented after basic fields
 
-3. [  ] Implement energy analysis calculations
-4. [  ] Implement HVAC analysis calculations
-5. [  ] Implement lighting analysis calculations
-6. [  ] Implement humidity analysis calculations
-7. [  ] Implement efficiency score calculations
-8. [  ] Implement financial analysis calculations
+### Phase 1: Form Updates (Incremental)
 
-### Phase 3: Product Recommendation System
+1. [  ] Energy Consumption Section Updates:
+   - [  ] Add duration hours field (basic)
+   - [  ] Add power factor field (advanced)
+   - [  ] Calculate seasonal factor from existing seasonalVariation
+   - [  ] Calculate occupancy factor from existing occupancyPattern
 
-9. [  ] Set up product database
-10. [  ] Implement recommendation engine
-11. [  ] Integrate with audit process
+2. [  ] HVAC Section Updates:
+   - [  ] Add output capacity fields (advanced)
+   - [  ] Add input power fields (advanced)
+   - [  ] Add target efficiency fields (advanced)
+   - [  ] Add temperature difference field (basic)
+   - [  ] Use defaults for air density and specific heat
 
-### Phase 4: Report Generation
+3. [  ] New Lighting Section:
+   - [  ] Create fixture management interface (add/edit/remove)
+   - [  ] Include fields for fixture details
+   - [  ] Place in advanced section
 
-12. [  ] Implement visualization generation
-13. [  ] Enhance PDF report generation
-14. [  ] Create interactive web report
+4. [  ] New Humidity Section:
+   - [  ] Add current humidity field (basic)
+   - [  ] Add target humidity field (basic)
+   - [  ] Add indoor temperature field (basic)
+
+5. [  ] Product Preferences Section:
+   - [  ] Add category preference selection (basic)
+   - [  ] Add feature preference selection (basic)
+   - [  ] Add budget constraint field (basic)
+
+6. [  ] Financial Inputs Section:
+   - [  ] Add electricity rate field (basic)
+   - [  ] Use defaults for implementation costs and lifespans
+
+### Phase 2: Calculation Integration
+
+7. [  ] Connect form data to extendedCalculationService
+   - [  ] Process calculations on form submission
+   - [  ] Store results in database
+   - [  ] Implement all calculation methods (already created)
+
+### Phase 3: Visualization Implementation
+
+8. [  ] Implement Chart.js visualizations in audit report page:
+   - [  ] Energy consumption breakdown
+   - [  ] HVAC efficiency comparison
+   - [  ] Lighting efficiency metrics
+   - [  ] Humidity analysis
+   - [  ] Financial projections
+
+9. [  ] Enhance dashboard with visualization components:
+   - [  ] Summary statistics from all audits
+   - [  ] Efficiency trends
+   - [  ] Savings potential visualizations
+   - [  ] Key performance indicators
+
+### Phase 4: PDF Report Generation
+
+10. [  ] Update PDF report generation to include:
+    - [  ] Executive summary
+    - [  ] Detailed analysis sections
+    - [  ] Recommendations with financial analysis
+    - [  ] Product recommendations
+    - [  ] Embedded visualizations
+    - [  ] Financial projections
 
 ### Phase 5: Testing and Deployment
 
-15. [  ] Test data collection
-16. [  ] Test calculations
-17. [  ] Test product recommendations
-18. [  ] Test report generation
-19. [  ] Deploy to production
+11. [  ] Test form updates
+12. [  ] Test calculation integration
+13. [  ] Test visualizations
+14. [  ] Test PDF report generation
+15. [  ] Deploy to production
 
 ## 8. DATABASE ANALYSIS RESULTS
 
@@ -433,8 +487,10 @@ Results:
 
 ## 9. NOTES AND CONSIDERATIONS
 
-- The Python tool uses numpy, pandas, matplotlib, and seaborn for calculations and visualizations. We'll need to implement equivalent functionality in JavaScript or use server-side processing.
-- The product recommendation system requires a comprehensive product database. We'll need to ensure this data is available and properly formatted.
-- The visualization generation may require additional libraries on the frontend or backend.
+- The Python tool uses numpy, pandas, matplotlib, and seaborn for calculations and visualizations. We'll implement equivalent functionality using Chart.js for frontend visualizations and server-side processing for complex calculations.
+- Calculations will happen on form submission rather than in real-time to ensure all data is available.
+- Visualizations will be embedded directly in the PDF report rather than providing links to interactive versions.
+- We'll use the existing product database and extend it as needed for the recommendation system.
+- Basic questions will use user-friendly UI components, while advanced questions will use numeric inputs with validation.
 - The financial analysis calculations should be validated against the Python implementation to ensure consistency.
 - Consider performance implications of more complex calculations, especially for larger datasets.
