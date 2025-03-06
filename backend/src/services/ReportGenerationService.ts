@@ -261,14 +261,26 @@ export class ReportGenerationService {
           .moveDown(0.5)
           .fontSize(12)
           .text(`Average Monthly Electric: ${auditData.energyConsumption.electricBill} kWh`)
-          .text(`Average Monthly Gas: ${auditData.energyConsumption.gasBill} therms`)
-          .moveDown();
+          .text(`Average Monthly Gas: ${auditData.energyConsumption.gasBill} therms`);
+        
+        // Add new fields if they exist
+        if (auditData.energyConsumption.durationHours !== undefined) {
+          doc.text(`Daily Usage Hours: ${auditData.energyConsumption.durationHours} hours`);
+        }
+        
+        if (auditData.energyConsumption.powerFactor !== undefined) {
+          doc.text(`Power Factor: ${auditData.energyConsumption.powerFactor.toFixed(2)}`);
+        }
+        
+        doc.moveDown();
       } catch (error) {
         appLogger.error('Error adding energy consumption section', { 
           error,
           energyConsumption: {
             hasElectricBill: !!auditData.energyConsumption.electricBill,
-            hasGasBill: !!auditData.energyConsumption.gasBill
+            hasGasBill: !!auditData.energyConsumption.gasBill,
+            hasDurationHours: auditData.energyConsumption.durationHours !== undefined,
+            hasPowerFactor: auditData.energyConsumption.powerFactor !== undefined
           }
         });
         throw error;

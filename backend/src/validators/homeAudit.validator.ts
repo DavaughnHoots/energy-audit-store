@@ -89,20 +89,13 @@ const hvacSchema = z.object({
 
 // Energy consumption validation schema
 const energyConsumptionSchema = z.object({
-  powerConsumption: z.string()
-    .regex(/^\d+-\d+kW$/, 'Power consumption must be in format "X-YkW"'),
+  powerConsumption: z.number()
+    .positive('Power consumption must be positive'),
   occupancyHours: z.object({
-    weekdays: z.enum(['0-6', '7-12', '13-18', '19-24']),
-    weekends: z.enum(['0-6', '7-12', '13-18', '19-24'])
+    weekday: z.string(),
+    weekend: z.string()
   }),
-  season: z.enum([
-    'mild-winter',
-    'moderate-winter',
-    'mild-summer',
-    'moderate-summer',
-    'peak-summer',
-    'spring-fall'
-  ]),
+  season: z.string().optional(),
   occupancyPattern: z.string()
     .min(3, 'Occupancy pattern description required')
     .max(200, 'Occupancy pattern description too long'),
@@ -110,8 +103,21 @@ const energyConsumptionSchema = z.object({
     .positive('Monthly bill must be positive')
     .max(10000, 'Monthly bill seems unusually high'),
   peakUsageTimes: z.array(z.string())
-    .min(1, 'At least one peak usage time required')
-    .max(24, 'Too many peak usage times specified')
+    .optional(),
+  electricBill: z.number()
+    .nonnegative('Electric bill cannot be negative'),
+  gasBill: z.number()
+    .nonnegative('Gas bill cannot be negative'),
+  seasonalVariation: z.string(),
+  // New fields
+  durationHours: z.number()
+    .min(0, 'Duration hours cannot be negative')
+    .max(24, 'Duration hours cannot exceed 24')
+    .optional(),
+  powerFactor: z.number()
+    .min(0.8, 'Power factor must be at least 0.8')
+    .max(1.0, 'Power factor cannot exceed 1.0')
+    .optional()
 });
 
 // Complete audit data validation schema
