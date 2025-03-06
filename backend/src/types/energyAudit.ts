@@ -33,6 +33,27 @@ export interface InsulationInfo {
   floor: string;
 }
 
+// New interfaces for lighting data
+export interface LightingFixture {
+  name?: string;
+  watts?: number;
+  hoursPerDay?: number;
+  lumens?: number;
+}
+
+export interface LightingPatterns {
+  morning: 'most' | 'some' | 'few' | 'none';
+  day: 'most' | 'some' | 'few' | 'none';
+  evening: 'most' | 'some' | 'few' | 'none';
+  night: 'most' | 'some' | 'few' | 'none';
+}
+
+export interface BulbPercentages {
+  led: number;
+  cfl: number;
+  incandescent: number;
+}
+
 export interface CurrentConditions {
   insulation: InsulationInfo;
   windowType: string;
@@ -44,6 +65,14 @@ export interface CurrentConditions {
   weatherStripping: string;
   temperatureConsistency: 'very-consistent' | 'some-variations' | 'large-variations';
   comfortIssues: string[];
+  
+  // New lighting fields
+  primaryBulbType?: 'mostly-led' | 'mixed' | 'mostly-incandescent';
+  naturalLight?: 'good' | 'moderate' | 'limited';
+  lightingControls?: 'basic' | 'some-advanced' | 'smart';
+  bulbPercentages?: BulbPercentages;
+  lightingPatterns?: LightingPatterns;
+  fixtures?: LightingFixture[];
 }
 
 export interface HeatingSystem {
@@ -96,6 +125,8 @@ export interface EnergyConsumption {
   season: string;
   durationHours?: number; // Duration hours for energy consumption calculation
   powerFactor?: number; // Power factor (0.8-1.0) for energy consumption calculation
+  seasonalFactor?: number; // Seasonal factor (0.8-1.2) calculated from seasonalVariation
+  occupancyFactor?: number; // Occupancy factor (0.6-1.0) calculated from occupancyPattern
 }
 
 export interface EnergyAuditData {

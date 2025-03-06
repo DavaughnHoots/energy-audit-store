@@ -1,118 +1,152 @@
 # Energy Audit Data Requirements
 
-This document outlines all the data fields required to implement the functionality from the Python `energy_audit_tool.py` onto our website. It serves as a checklist to ensure our energy audit form collects all necessary data.
+This document outlines all the data fields required to fully implement the functionality from energy_audit_tool.py in our web application. These fields should be collected through our energy audit forms to ensure comprehensive analysis and accurate recommendations.
 
-## 1. Basic Energy Analysis Data
+## Basic Information
+- Full Name
+- Email
+- Phone
+- Address
+- Property Type
+- Year Built
+- Number of Occupants
+- Audit Date
 
-- [x] Power consumed (kW) - Already collected as powerConsumption
-- [ ] Duration hours - Need to add to form
-- [ ] Seasonal factor (0.8-1.2) - Need to calculate from seasonalVariation
-- [ ] Occupancy factor (0.6-1.0) - Need to calculate from occupancyPattern
-- [ ] Power factor (0.8-1.0) - Need to add to form
+## Home Details
+- Square Footage
+- Number of Stories
+- Number of Bedrooms
+- Number of Bathrooms
+- Home Type (single-family, townhouse, apartment, etc.)
+- Home Size (in square feet)
+- Construction Period (before-1980, 1980-2000, after-2000)
+- Number of Rooms
+- Number of Floors
+- Wall Length
+- Wall Width
+- Ceiling Height
+- Basement Type (finished, unfinished, none)
+- Basement Heating (heated, unheated)
 
-## 2. HVAC Analysis Data
+## Current Conditions
 
-- [x] Heating system type - Already collected
-- [x] Heating system fuel - Already collected
-- [x] Heating system age - Already collected
-- [x] Heating system efficiency - Already collected
-- [ ] Heating system output capacity - Need to add to form
-- [ ] Heating system input power - Need to add to form
-- [ ] Heating system target efficiency - Need to add to form
-- [x] Cooling system type - Already collected
-- [x] Cooling system age - Already collected
-- [x] Cooling system efficiency - Already collected
-- [ ] Cooling system output capacity - Need to add to form
-- [ ] Cooling system input power - Need to add to form
-- [ ] Cooling system target efficiency - Need to add to form
-- [ ] Temperature difference (indoor vs. outdoor) - Need to add to form
-- [ ] Air density (default: 1.225 kg/m³) - Can use default
-- [ ] Specific heat (default: 1005 J/kg·K) - Can use default
-- [x] Home dimensions - Already collected (can calculate volume)
+### Insulation
+- Attic Insulation (poor, average, good, excellent, not-sure)
+- Wall Insulation (poor, average, good, excellent, not-sure)
+- Basement Insulation (poor, average, good, excellent, not-sure)
+- Floor Insulation (poor, average, good, excellent, not-sure)
 
-## 3. Lighting Analysis Data
+### Windows
+- Window Type (single, double, triple, not-sure)
+- Window Condition (poor, fair, good, excellent)
+- Number of Windows
+- Window Count Category (few, average, many)
 
-- [ ] Lighting fixtures data - Need to add to form
-  - [ ] Fixture name
-  - [ ] Watts per fixture
-  - [ ] Hours of use per day
-  - [ ] Lumens output
-  - [ ] Electricity rate ($/kWh)
+### Doors
+- Door Count
 
-## 4. Humidity Analysis Data
+### Air Leaks
+- Air Leak Locations (array of strings)
+- Weather Stripping Type
 
-- [x] Home volume - Can calculate from existing dimensions
-- [ ] Current humidity (%) - Need to add to form
-- [ ] Target humidity (%) - Need to add to form
-- [ ] Indoor temperature - Need to add to form
+### Comfort
+- Temperature Consistency (very-consistent, some-variations, large-variations)
+- Comfort Issues (array of strings)
 
-## 5. Product Recommendation Data
+### Lighting (New Fields)
+- Primary Bulb Type (mostly-led, mixed, mostly-incandescent)
+- Natural Light (good, moderate, limited)
+- Lighting Controls (basic, some-advanced, smart)
+- Bulb Percentages:
+  - LED (%)
+  - CFL (%)
+  - Incandescent (%)
+- Lighting Patterns:
+  - Morning (most, some, few, none)
+  - Day (most, some, few, none)
+  - Evening (most, some, few, none)
+  - Night (most, some, few, none)
+- Fixtures (array of objects):
+  - Name
+  - Watts
+  - Hours Per Day
+  - Lumens
 
-- [ ] Product preferences - Need to add to form
-  - [ ] Preferred product categories
-  - [ ] Preferred product features
-  - [ ] Budget constraints
+## Heating & Cooling
 
-## 6. Financial Analysis Data
+### Heating System
+- Type
+- Fuel
+- Fuel Type
+- Age (years)
+- Efficiency
+- Last Service Date
+- Output Capacity (BTU/hr) - New field
+- Input Power (kW) - New field
+- Target Efficiency (%) - New field
 
-Most of this data is derived from other inputs or can use defaults:
+### Cooling System
+- Type
+- Age (years)
+- Efficiency
+- Output Capacity (BTU/hr) - New field
+- Input Power (kW) - New field
+- Target Efficiency (SEER) - New field
 
-- [ ] Electricity rate ($/kWh) - Need to add to form or use default
-- [ ] Implementation cost estimates - Can use defaults based on recommendation type
-- [ ] Expected lifespan of improvements - Can use defaults based on recommendation type
+### General HVAC
+- Thermostat Type
+- Zone Count
+- System Performance (works-well, some-problems, needs-attention)
+- Temperature Difference (°F) - New field
+- Temperature Difference Category (small, moderate, large, extreme) - New field
 
-## 7. Form Updates Required
+## Energy Consumption
+- Electric Bill (monthly kWh)
+- Gas Bill (monthly therms)
+- Oil Bill (optional)
+- Propane Bill (optional)
+- Seasonal Variation
+- Power Consumption (kW)
+- Occupancy Pattern
+- Occupancy Hours:
+  - Weekday
+  - Weekend
+- Peak Usage Times (array of strings)
+- Monthly Bill Amount
+- Season
+- Duration Hours (hours per day) - New field
+- Power Factor (0.8-1.0) - New field
+- Seasonal Factor (0.8-1.2) - New field, calculated from seasonalVariation
+- Occupancy Factor (0.6-1.0) - New field, calculated from occupancyPattern
 
-Based on the above requirements, we need to add the following sections to our energy audit form:
+## Product Preferences (New Section)
+- Categories (array of strings)
+- Features (array of strings)
+- Budget Constraint (number)
 
-1. **Extended Energy Consumption Section**
-   - Duration hours field
-   - Power factor field
+## Implementation Status
+For each recommendation:
+- Status (active, implemented)
+- Actual Savings (if implemented)
+- Implementation Date (if implemented)
+- Implementation Cost (if implemented)
+- Notes
 
-2. **Extended HVAC Section**
-   - Output capacity fields for heating and cooling
-   - Input power fields for heating and cooling
-   - Target efficiency fields for heating and cooling
-   - Temperature difference field
+## Data Validation Requirements
+- Basic Info validation (name, email, phone, address required)
+- Home Details validation (square footage, stories, bedrooms, bathrooms required)
+- Energy consumption values must be positive numbers
+- Seasonal factor must be between 0.8 and 1.2
+- Occupancy factor must be between 0.6 and 1.0
+- Power factor must be between 0.8 and 1.0
 
-3. **New Lighting Section**
-   - Fixture management interface (add/edit/remove)
-   - Fields for fixture details
-
-4. **New Humidity Section**
-   - Current humidity field
-   - Target humidity field
-   - Indoor temperature field
-
-5. **New Product Preferences Section**
-   - Category preference selection
-   - Feature preference selection
-   - Budget constraint field
-
-6. **Financial Inputs Section**
-   - Electricity rate field
-
-## 8. Database Updates Required
-
-The database already has JSONB fields that can store this additional data:
-
-1. Extend `energy_consumption` JSONB to include:
-   - seasonalFactor
-   - occupancyFactor
-   - powerFactor
-   - durationHours
-
-2. Extend `heating_cooling` JSONB to include:
-   - Extended heating system data (outputCapacity, inputPower, targetEfficiency)
-   - Extended cooling system data (outputCapacity, inputPower, targetEfficiency)
-   - temperatureDifference
-   - airDensity
-   - specificHeat
-
-3. Extend `current_conditions` JSONB to include:
-   - humidity data (currentHumidity, targetHumidity, temperature)
-   - lighting data (fixtures array)
-
-4. Add `product_preferences` to basic_info JSONB
-
-5. Create new `visualization_data` table for storing visualization data
+## Calculation Fields
+These fields are calculated by the system and not directly input by users:
+- Insulation Score
+- Window Score
+- HVAC Score
+- Energy Efficiency Score
+- Potential Savings
+- Payback Period
+- ROI
+- Carbon Reduction

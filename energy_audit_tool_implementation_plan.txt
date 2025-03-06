@@ -1,496 +1,148 @@
-# ENERGY AUDIT TOOL IMPLEMENTATION PLAN
-
-This document outlines the comprehensive plan for implementing the functionality from the Python `energy_audit_tool.py` onto our website. It serves as a roadmap and checklist to ensure all required components are properly implemented.
-
-## BRANCH INFORMATION
-
-For rollback purposes, here's a list of branches used in this implementation:
-
-- `feature/energy-audit-tool-db-analysis`: Database analysis and visualization infrastructure
-- `feature/energy-audit-tool-form-updates`: Form updates and frontend visualization components
-
-## 1. OVERVIEW
-
-### Current Website Functionality:
-- Multi-step energy audit form collecting basic data
-- Backend storage in PostgreSQL with JSONB fields
-- Basic recommendation generation
-- Simple PDF report generation
-
-### Python Tool Additional Functionality:
-- Comprehensive analysis (energy, HVAC, lighting, humidity)
-- Product recommendations
-- Detailed financial analysis
-- Advanced visualizations
-- Enhanced report generation
-
-## 2. DATA REQUIREMENTS AND GAP ANALYSIS
-
-### 2.1 Energy Analysis Data
-
-#### Required Data from Python Tool:
-- [  ] Power consumed (kW)
-- [  ] Duration hours
-- [  ] Seasonal factor (0.8-1.2)
-- [  ] Occupancy factor (0.6-1.0)
-- [  ] Power factor (0.8-1.0)
-
-#### Current Website Form Fields:
-- [x] Electric bill (kWh)
-- [x] Gas bill (therms)
-- [x] Seasonal variation (highest-summer, highest-winter, consistent)
-- [x] Occupancy pattern (home-all-day, work-hours, evenings-weekends, variable)
-- [x] Power consumption (kWh)
-
-#### Gaps to Address:
-- [  ] Add seasonal factor field (numeric input, 0.8-1.2)
-- [  ] Add occupancy factor field (numeric input, 0.6-1.0)
-- [  ] Add power factor field (numeric input, 0.8-1.0)
-- [  ] Convert seasonal variation to numeric seasonal factor
-- [  ] Convert occupancy pattern to numeric occupancy factor
-
-### 2.2 HVAC Analysis Data
-
-#### Required Data from Python Tool:
-- [  ] Output capacity
-- [  ] Input power
-- [  ] Target efficiency
-- [  ] System efficiency
-- [  ] Air density (default: 1.225 kg/m³)
-- [  ] Specific heat (default: 1005 J/kg·K)
-- [  ] Temperature difference
-- [  ] Volume (calculated from home dimensions)
-
-#### Current Website Form Fields:
-- [x] Heating system type
-- [x] Heating system fuel
-- [x] Heating system age
-- [x] Heating system efficiency
-- [x] Cooling system type
-- [x] Cooling system age
-- [x] Cooling system efficiency
-- [x] System performance (works-well, some-problems, needs-attention)
-
-#### Gaps to Address:
-- [  ] Add output capacity field for heating system
-- [  ] Add input power field for heating system
-- [  ] Add target efficiency field for heating system
-- [  ] Add temperature difference field (indoor vs. outdoor)
-- [  ] Calculate volume from existing home dimensions
-
-### 2.3 Lighting Analysis Data
-
-#### Required Data from Python Tool:
-- [  ] Fixtures data (array of fixtures)
-- [  ] For each fixture:
-  - [  ] Name
-  - [  ] Watts
-  - [  ] Hours of use
-  - [  ] Lumens
-  - [  ] Electricity rate
-
-#### Current Website Form Fields:
-- [x] None specifically for lighting
-
-#### Gaps to Address:
-- [  ] Add new lighting section to form
-- [  ] Add fixture management (add/edit/remove fixtures)
-- [  ] Add fields for fixture details (name, watts, hours, lumens)
-- [  ] Add electricity rate field (or use default)
-
-### 2.4 Humidity Analysis Data
-
-#### Required Data from Python Tool:
-- [  ] Volume (calculated from home dimensions)
-- [  ] Current humidity
-- [  ] Target humidity
-- [  ] Temperature (for dew point calculations)
-
-#### Current Website Form Fields:
-- [x] None specifically for humidity
-
-#### Gaps to Address:
-- [  ] Add new humidity section to form
-- [  ] Add current humidity field
-- [  ] Add target humidity field
-- [  ] Add temperature field
-- [  ] Use volume calculated from home dimensions
-
-### 2.5 Product Recommendation Data
-
-#### Required Data from Python Tool:
-- [  ] Product database (CSV file)
-- [  ] Product categories
-- [  ] Efficiency metrics
-- [  ] Features
-- [  ] Budget constraints
-
-#### Current Website Form Fields:
-- [x] None specifically for product preferences
-
-#### Gaps to Address:
-- [  ] Add product preference section to form
-- [  ] Add category preference fields
-- [  ] Add feature preference fields
-- [  ] Add budget constraint field
-- [  ] Create or import product database
-
-## 3. DATABASE SCHEMA UPDATES
-
-### 3.1 Database Analysis Results
-
-After analyzing the database structure, we found:
-
-1. **Energy Audits Table**:
-   - Uses JSONB fields for storing structured data (basic_info, home_details, current_conditions, heating_cooling, energy_consumption)
-   - Has report generation tracking fields
-   - Has client_id for anonymous users
-
-2. **Audit Recommendations Table**:
-   - Already has implementation_date, actual_savings, implementation_cost, payback_period fields
-   - Has a products JSONB field for related products
-   - Has status tracking fields
-
-3. **Products Table**:
-   - Already exists with a comprehensive structure
-   - Has fields for product_name, model, description, efficiency, features
-   - Has main_category and sub_category fields
-   - Has a specifications JSONB field for additional data
-
-### 3.2 Energy Audits Table Updates
-
-- [  ] Extend existing JSONB fields in energy_audits table:
-  - [  ] Add seasonal_factor, occupancy_factor, power_factor to energy_consumption JSONB
-  - [  ] Add humidity_data to current_conditions JSONB
-  - [  ] Add lighting_data to current_conditions JSONB
-  - [  ] Add product_preferences to a new JSONB field or extend basic_info
-
-### 3.3 New Tables Required
-
-- [  ] Create visualization_data table:
-  ```sql
-  CREATE TABLE IF NOT EXISTS visualization_data (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      audit_id UUID REFERENCES energy_audits(id) ON DELETE CASCADE,
-      visualization_type VARCHAR(100) NOT NULL,
-      data JSONB NOT NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-  );
-  ```
-
-### 3.4 Existing Tables Verification
-
-- [  ] Verify products table has necessary fields for product recommendation:
-  - [x] Has product_name, model, description fields
-  - [x] Has efficiency and features fields
-  - [x] Has main_category and sub_category fields
-  - [  ] May need to add or calculate efficiency_value field for numeric comparisons
-
-## 4. CALCULATION IMPLEMENTATIONS
-
-### 4.1 Energy Analysis Calculations
-
-- [  ] Implement _perform_energy_analysis method:
-  - [  ] Calculate base energy (Ebase = power_consumed * duration_hours)
-  - [  ] Calculate seasonal adjusted energy (Eseasonal = Ebase * seasonal_factor)
-  - [  ] Calculate occupancy adjusted energy (Eoccupied = Eseasonal * occupancy_factor)
-  - [  ] Calculate real energy consumption (Ereal = Eoccupied * power_factor)
-  - [  ] Calculate efficiency metrics
-
-### 4.2 HVAC Analysis Calculations
-
-- [  ] Implement _perform_hvac_analysis method:
-  - [  ] Calculate system efficiency
-  - [  ] Calculate efficiency gap
-  - [  ] Calculate heat transfer
-  - [  ] Calculate HVAC energy consumption
-
-### 4.3 Lighting Analysis Calculations
-
-- [  ] Implement _perform_lighting_analysis method:
-  - [  ] Calculate consumption for each fixture
-  - [  ] Calculate efficiency for each fixture
-  - [  ] Calculate annual cost for each fixture
-  - [  ] Calculate total consumption
-  - [  ] Calculate average efficiency
-  - [  ] Calculate total annual consumption
-  - [  ] Calculate total annual cost
-
-### 4.4 Humidity Analysis Calculations
-
-- [  ] Implement _perform_humidity_analysis method:
-  - [  ] Calculate current humidity status
-  - [  ] Determine humidity requirements
-  - [  ] Calculate dehumidification needs
-  - [  ] Calculate humidity ratio
-  - [  ] Calculate dew point
-  - [  ] Calculate vapor pressure
-
-### 4.5 Overall Efficiency Score Calculations
-
-- [  ] Implement _calculate_overall_efficiency_score method:
-  - [  ] Calculate energy score
-  - [  ] Calculate HVAC score
-  - [  ] Calculate lighting score
-  - [  ] Calculate humidity score
-  - [  ] Calculate weighted average score
-  - [  ] Interpret efficiency score
-
-### 4.6 Financial Analysis Calculations
-
-- [  ] Implement _perform_financial_analysis method:
-  - [  ] Calculate total investment required
-  - [  ] Calculate annual savings potential
-  - [  ] Calculate simple payback period
-  - [  ] Calculate ROI
-  - [  ] Analyze each component's financials
-
-## 5. PRODUCT RECOMMENDATION SYSTEM
-
-### 5.1 Product Database Setup
-
-- [  ] Create product database structure
-- [  ] Import product data from CSV
-- [  ] Categorize products
-- [  ] Extract efficiency metrics
-
-### 5.2 Recommendation Engine
-
-- [  ] Implement ProductRecommender class:
-  - [  ] load_database method
-  - [  ] _get_efficiency_metrics method
-  - [  ] recommend_products method
-  - [  ] get_category_stats method
-  - [  ] generate_product_recommendations_report method
-
-### 5.3 Integration with Audit Process
-
-- [  ] Update audit submission process to generate product recommendations
-- [  ] Store recommendations in database
-- [  ] Link recommendations to audit recommendations
-
-## 6. REPORT GENERATION ENHANCEMENTS
-
-### 6.1 Visualization Generation
-
-- [  ] Implement visualization generation methods:
-  - [  ] _create_energy_visualizations
-  - [  ] _create_hvac_visualizations
-  - [  ] _create_lighting_visualizations
-  - [  ] _create_humidity_visualizations
-  - [  ] _create_savings_visualizations
-
-### 6.2 PDF Report Enhancements
-
-- [  ] Update report generation to include:
-  - [  ] Executive summary
-  - [  ] Detailed analysis sections
-  - [  ] Recommendations with financial analysis
-  - [  ] Product recommendations
-  - [  ] Visualizations
-  - [  ] Financial projections
-
-### 6.3 Interactive Web Report
-
-- [  ] Create interactive web version of report:
-  - [  ] Dashboard with key metrics
-  - [  ] Interactive charts
-  - [  ] Recommendation details
-  - [  ] Product recommendations with links
-
-## 7. REFINED IMPLEMENTATION PLAN
-
-### Form Update Approach
-
-We'll take an incremental approach to form updates, categorizing new fields as either "basic" or "advanced":
-
-- **Basic Questions**:
-  - Simple UI components (dropdowns, radio buttons, sliders)
-  - Placed in existing sections where possible
-  - Focus on user-friendly experience
-  - Prioritized for implementation
-
-- **Advanced Questions**:
-  - Numeric input fields with validation
-  - Grouped in collapsible "Advanced" sections
-  - Technical fields for detailed analysis
-  - Implemented after basic fields
-
-### Phase 1: Form Updates (Incremental)
-
-1. [  ] Energy Consumption Section Updates:
-   - [  ] Add duration hours field (basic)
-   - [  ] Add power factor field (advanced)
-   - [  ] Calculate seasonal factor from existing seasonalVariation
-   - [  ] Calculate occupancy factor from existing occupancyPattern
-
-2. [  ] HVAC Section Updates:
-   - [  ] Add output capacity fields (advanced)
-   - [  ] Add input power fields (advanced)
-   - [  ] Add target efficiency fields (advanced)
-   - [  ] Add temperature difference field (basic)
-   - [  ] Use defaults for air density and specific heat
-
-3. [  ] New Lighting Section:
-   - [  ] Create fixture management interface (add/edit/remove)
-   - [  ] Include fields for fixture details
-   - [  ] Place in advanced section
-
-4. [  ] New Humidity Section:
-   - [  ] Add current humidity field (basic)
-   - [  ] Add target humidity field (basic)
-   - [  ] Add indoor temperature field (basic)
-
-5. [  ] Product Preferences Section:
-   - [  ] Add category preference selection (basic)
-   - [  ] Add feature preference selection (basic)
-   - [  ] Add budget constraint field (basic)
-
-6. [  ] Financial Inputs Section:
-   - [  ] Add electricity rate field (basic)
-   - [  ] Use defaults for implementation costs and lifespans
-
-### Phase 2: Calculation Integration
-
-7. [  ] Connect form data to extendedCalculationService
-   - [  ] Process calculations on form submission
-   - [  ] Store results in database
-   - [  ] Implement all calculation methods (already created)
-
-### Phase 3: Visualization Implementation
-
-8. [  ] Implement Chart.js visualizations in audit report page:
-   - [  ] Energy consumption breakdown
-   - [  ] HVAC efficiency comparison
-   - [  ] Lighting efficiency metrics
-   - [  ] Humidity analysis
-   - [  ] Financial projections
-
-9. [  ] Enhance dashboard with visualization components:
-   - [  ] Summary statistics from all audits
-   - [  ] Efficiency trends
-   - [  ] Savings potential visualizations
-   - [  ] Key performance indicators
-
-### Phase 4: PDF Report Generation
-
-10. [  ] Update PDF report generation to include:
-    - [  ] Executive summary
-    - [  ] Detailed analysis sections
-    - [  ] Recommendations with financial analysis
-    - [  ] Product recommendations
-    - [  ] Embedded visualizations
-    - [  ] Financial projections
-
-### Phase 5: Testing and Deployment
-
-11. [  ] Test form updates
-12. [  ] Test calculation integration
-13. [  ] Test visualizations
-14. [  ] Test PDF report generation
-15. [  ] Deploy to production
-
-## 8. DATABASE ANALYSIS RESULTS
-
-### Energy Audits Table Structure
-```sql
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'energy_audits';
-```
-
-Results:
-```
-      column_name      |        data_type
------------------------+--------------------------
- id                    | uuid
- user_id               | uuid
- basic_info            | jsonb
- home_details          | jsonb
- current_conditions    | jsonb
- heating_cooling       | jsonb
- energy_consumption    | jsonb
- created_at            | timestamp with time zone
- report_generated      | boolean
- report_generated_at   | timestamp with time zone
- report_download_count | integer
- status                | character varying
- client_id             | character varying
-```
-
-### Audit Recommendations Table Structure
-```sql
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'audit_recommendations';
-```
-
-Results:
-```
-      column_name      |        data_type
------------------------+--------------------------
- id                    | uuid
- audit_id              | uuid
- created_at            | timestamp with time zone
- updated_at            | timestamp with time zone
- actual_savings        | numeric
- last_savings_update   | timestamp with time zone
- implementation_cost   | numeric
- implementation_date   | timestamp with time zone
- estimated_savings     | numeric
- estimated_cost        | numeric
- payback_period        | numeric
- products              | jsonb
- category              | character varying
- priority              | character varying
- title                 | text
- description           | text
- status                | character varying
- implementation_status | character varying
-```
-
-### Products Table Structure
-```sql
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'products';
-```
-
-Results:
-```
-           column_name           |          data_type
----------------------------------+-----------------------------
- id                              | integer
- most_efficient                  | boolean
- specifications                  | jsonb
- created_at                      | timestamp without time zone
- updated_at                      | timestamp without time zone
- search_vector                   | tsvector
- product_name                    | character varying
- model                           | character varying
- description                     | text
- efficiency                      | character varying
- features                        | text
- size                            | text
- lighting                        | text
- market                          | text
- additional_model_identification | text
- energy_star_id                  | character varying
- upc_codes                       | text
- additional_models               | text
- main_category                   | character varying
- sub_category                    | character varying
- pdf_url                         | text
- product_number                  | character varying
- product_url                     | text
-```
-
-## 9. NOTES AND CONSIDERATIONS
-
-- The Python tool uses numpy, pandas, matplotlib, and seaborn for calculations and visualizations. We'll implement equivalent functionality using Chart.js for frontend visualizations and server-side processing for complex calculations.
-- Calculations will happen on form submission rather than in real-time to ensure all data is available.
-- Visualizations will be embedded directly in the PDF report rather than providing links to interactive versions.
-- We'll use the existing product database and extend it as needed for the recommendation system.
-- Basic questions will use user-friendly UI components, while advanced questions will use numeric inputs with validation.
-- The financial analysis calculations should be validated against the Python implementation to ensure consistency.
-- Consider performance implications of more complex calculations, especially for larger datasets.
+# Energy Audit Tool Implementation Plan
+
+This document outlines the steps needed to fully implement the functionality from energy_audit_tool.py into our web application. The implementation is divided into several phases to ensure a smooth integration.
+
+## Phase 1: Database Schema Updates
+
+1. **Add New Fields to Energy Audit Tables**
+   - Update the `energy_audits` table to include new fields for extended data
+   - Add support for lighting fixtures as a JSON array in the `current_conditions` column
+   - Add support for lighting patterns in the `current_conditions` column
+   - Add new fields to the `heating_cooling` column for extended HVAC data
+   - Add new fields to the `energy_consumption` column for extended energy data
+
+2. **Create Visualization Data Table**
+   - Create a new table `visualization_data` to store chart data and visualization outputs
+   - Schema should include:
+     - `id` (UUID, primary key)
+     - `audit_id` (UUID, foreign key to energy_audits)
+     - `visualization_type` (VARCHAR)
+     - `data` (JSONB)
+     - `created_at` (TIMESTAMP)
+
+3. **Migration Script**
+   - Create a migration script to apply these schema changes
+   - Include default values for existing records
+
+## Phase 2: Backend Service Updates
+
+1. **Create Extended Types**
+   - Create `energyAuditExtended.ts` with extended types for the new data fields
+   - Ensure backward compatibility with existing types
+
+2. **Implement Extended Calculation Service**
+   - Create `extendedCalculationService.ts` to implement the advanced calculations from energy_audit_tool.py
+   - Include methods for:
+     - Comprehensive energy analysis
+     - Detailed lighting calculations
+     - Advanced HVAC efficiency calculations
+     - ROI and payback period calculations
+     - Carbon footprint calculations
+
+3. **Update Energy Audit Service**
+   - Modify `EnergyAuditService.ts` to use the extended calculation service
+   - Add methods to convert standard audit data to extended format
+   - Enhance recommendation generation to use detailed lighting data
+   - Implement fallback to basic calculations if extended data is not available
+
+4. **Enhance Report Generation Service**
+   - Update `ReportGenerationService.ts` to include detailed lighting analysis in PDF reports
+   - Add efficiency metrics and potential savings calculations
+   - Include visualization of lighting usage patterns
+
+5. **Create Visualization Service**
+   - Implement `visualizationService.ts` to generate and store visualization data
+   - Support various chart types (bar, pie, line) for different metrics
+   - Include methods to retrieve and format visualization data for the frontend
+
+## Phase 3: Frontend Updates
+
+1. **Update Energy Audit Form Components**
+   - Enhance `LightingForm.tsx` to collect detailed lighting fixture data
+   - Update `HVACForm.tsx` to collect extended HVAC data
+   - Update `EnergyUseForm.tsx` to collect extended energy consumption data
+   - Add validation for new fields
+
+2. **Create Visualization Components**
+   - Implement chart components for various visualization types
+   - Create dashboard widgets to display energy metrics
+   - Add interactive elements to explore energy data
+
+3. **Update Audit Report Page**
+   - Enhance the report page to display detailed lighting analysis
+   - Add visualization of energy usage patterns
+   - Include interactive elements to explore recommendations
+
+## Phase 4: API Routes and Integration
+
+1. **Create Visualization API Routes**
+   - Implement `visualization.ts` routes to handle visualization data
+   - Add endpoints for generating and retrieving visualizations
+
+2. **Update Energy Audit Routes**
+   - Enhance `energyAudit.ts` routes to handle extended audit data
+   - Add validation for new fields
+
+3. **Implement Data Export/Import**
+   - Add functionality to export audit data in various formats (CSV, JSON)
+   - Support importing data from external sources
+
+## Phase 5: Testing and Validation
+
+1. **Unit Testing**
+   - Create tests for extended calculation service
+   - Test visualization service
+   - Validate recommendation generation with various input scenarios
+
+2. **Integration Testing**
+   - Test end-to-end flow from form submission to report generation
+   - Validate visualization data generation and display
+   - Test with various device types and screen sizes
+
+3. **Performance Testing**
+   - Benchmark calculation performance with large datasets
+   - Optimize database queries for visualization data
+   - Ensure responsive UI with complex visualizations
+
+## Phase 6: Deployment and Monitoring
+
+1. **Database Migration**
+   - Run migration scripts on production database
+   - Verify data integrity after migration
+
+2. **Phased Rollout**
+   - Deploy backend changes first
+   - Roll out frontend changes incrementally
+   - Monitor for errors and performance issues
+
+3. **User Feedback Collection**
+   - Implement feedback mechanism for new features
+   - Track usage patterns of new visualization tools
+   - Collect data on recommendation effectiveness
+
+## Timeline
+
+- Phase 1: 1 week
+- Phase 2: 2 weeks
+- Phase 3: 2 weeks
+- Phase 4: 1 week
+- Phase 5: 1 week
+- Phase 6: 1 week
+
+Total estimated time: 8 weeks
+
+## Resources Required
+
+- Backend developer: 1 full-time
+- Frontend developer: 1 full-time
+- Database administrator: 0.5 full-time
+- QA tester: 0.5 full-time
+- UX designer: 0.5 full-time
+
+## Success Metrics
+
+- 100% of energy_audit_tool.py functionality implemented in web application
+- Report generation time under 5 seconds
+- Visualization rendering time under 2 seconds
+- User satisfaction rating of 4/5 or higher for new features
+- 20% increase in recommendation implementation rate

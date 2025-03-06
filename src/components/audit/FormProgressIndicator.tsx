@@ -5,6 +5,7 @@ import {
   Thermometer, 
   Fan, 
   Zap,
+  Lightbulb,
   CheckCircle2,
   Circle
 } from 'lucide-react';
@@ -18,7 +19,8 @@ const sections = [
   { id: 2, name: 'Home Details', icon: Home },
   { id: 3, name: 'Current Conditions', icon: Thermometer },
   { id: 4, name: 'HVAC Systems', icon: Fan },
-  { id: 5, name: 'Energy Usage', icon: Zap }
+  { id: 5, name: 'Energy Usage', icon: Zap },
+  { id: 6, name: 'Lighting', icon: Lightbulb }
 ] as const;
 
 const FormProgressIndicator: React.FC<FormProgressIndicatorProps> = ({

@@ -349,6 +349,14 @@ export class ReportGenerationService {
           doc.text(`Power Factor: ${auditData.energyConsumption.powerFactor.toFixed(2)}`);
         }
         
+        if (auditData.energyConsumption.seasonalFactor !== undefined) {
+          doc.text(`Seasonal Factor: ${auditData.energyConsumption.seasonalFactor.toFixed(2)}`);
+        }
+        
+        if (auditData.energyConsumption.occupancyFactor !== undefined) {
+          doc.text(`Occupancy Factor: ${auditData.energyConsumption.occupancyFactor.toFixed(2)}`);
+        }
+        
         doc.moveDown();
       } catch (error) {
         appLogger.error('Error adding energy consumption section', { 
@@ -357,7 +365,9 @@ export class ReportGenerationService {
             hasElectricBill: !!auditData.energyConsumption.electricBill,
             hasGasBill: !!auditData.energyConsumption.gasBill,
             hasDurationHours: auditData.energyConsumption.durationHours !== undefined,
-            hasPowerFactor: auditData.energyConsumption.powerFactor !== undefined
+            hasPowerFactor: auditData.energyConsumption.powerFactor !== undefined,
+            hasSeasonalFactor: auditData.energyConsumption.seasonalFactor !== undefined,
+            hasOccupancyFactor: auditData.energyConsumption.occupancyFactor !== undefined
           }
         });
         throw error;
@@ -381,6 +391,124 @@ export class ReportGenerationService {
           .fontSize(12)
           .text('Energy breakdown chart could not be generated')
           .moveDown();
+      }
+      
+      // Lighting Assessment
+      try {
+        appLogger.debug('Adding lighting assessment section');
+        if (auditData.currentConditions.primaryBulbType) {
+          doc
+            .fontSize(16)
+            .text('Lighting Assessment')
+            .moveDown(0.5)
+            .fontSize(12);
+            
+          // Primary lighting information
+          const bulbTypeText = {
+            'mostly-led': 'Mostly LED/Efficient Bulbs',
+            'mixed': 'Mix of Bulb Types',
+            'mostly-incandescent': 'Mostly Older Bulb Types'
+          };
+          
+          const naturalLightText = {
+            'good': 'Good Natural Light',
+            'moderate': 'Moderate Natural Light',
+            'limited': 'Limited Natural Light'
+          };
+          
+          const controlsText = {
+            'basic': 'Basic Switches Only',
+            'some-advanced': 'Some Advanced Controls',
+            'smart': 'Smart/Automated Lighting'
+          };
+          
+          doc
+            .text(`Primary Bulb Types: ${bulbTypeText[auditData.currentConditions.primaryBulbType as keyof typeof bulbTypeText] || 'Not specified'}`)
+            .text(`Natural Light: ${naturalLightText[auditData.currentConditions.naturalLight as keyof typeof naturalLightText] || 'Not specified'}`)
+            .text(`Lighting Controls: ${controlsText[auditData.currentConditions.lightingControls as keyof typeof controlsText] || 'Not specified'}`);
+          
+          // Add detailed bulb percentages if available
+          if (auditData.currentConditions.bulbPercentages) {
+            doc.moveDown(0.5).text('Bulb Type Distribution:');
+            const { led, cfl, incandescent } = auditData.currentConditions.bulbPercentages;
+            if (led !== undefined) doc.text(`  LED: ${led}%`);
+            if (cfl !== undefined) doc.text(`  CFL: ${cfl}%`);
+            if (incandescent !== undefined) doc.text(`  Incandescent: ${incandescent}%`);
+          }
+          
+          // Add lighting fixtures if available
+          if (auditData.currentConditions.fixtures && auditData.currentConditions.fixtures.length > 0) {
+            doc.moveDown(0.5).text('Lighting Fixtures:');
+            
+            // Calculate total energy usage and efficiency metrics
+            let totalWattage = 0;
+            let totalLumens = 0;
+            let totalHours = 0;
+            let totalEnergyUsage = 0;
+            
+            auditData.currentConditions.fixtures.forEach((fixture, index) => {
+              const watts = fixture.watts || 0;
+              const hours = fixture.hoursPerDay || 0;
+              const lumens = fixture.lumens || 0;
+              const efficiency = watts > 0 ? lumens / watts : 0;
+              
+              totalWattage += watts;
+              totalLumens += lumens;
+              totalHours += hours;
+              totalEnergyUsage += (watts * hours * 365) / 1000; // kWh per year
+              
+              if (fixture.name) {
+                doc.text(`  ${index + 1}. ${fixture.name}: ${watts}W, ${hours} hours/day, ${lumens} lumens`);
+                doc.text(`     Efficiency: ${efficiency.toFixed(1)} lm/W, Annual Usage: ${((watts * hours * 365) / 1000).toFixed(1)} kWh`);
+              }
+            });
+            
+            // Add summary of lighting efficiency and energy usage
+            const avgEfficiency = totalWattage > 0 ? totalLumens / totalWattage : 0;
+            const annualCost = totalEnergyUsage * 0.12; // Assuming $0.12/kWh
+            
+            doc.moveDown(0.5)
+              .text('Lighting Efficiency Summary:')
+              .text(`  Average Efficiency: ${avgEfficiency.toFixed(1)} lm/W (LED Target: 100+ lm/W)`)
+              .text(`  Total Annual Energy Usage: ${totalEnergyUsage.toFixed(1)} kWh`)
+              .text(`  Estimated Annual Cost: $${annualCost.toFixed(2)}`);
+            
+            // Calculate potential savings with LED upgrade
+            if (avgEfficiency < 80) { // Only show if efficiency is below LED standard
+              const potentialSavings = totalEnergyUsage * 0.6 * 0.12; // 60% savings with LED at $0.12/kWh
+              doc.text(`  Potential Annual Savings with LED Upgrade: $${potentialSavings.toFixed(2)}`);
+            }
+          }
+          
+          // Add lighting usage patterns if available
+          if (auditData.currentConditions.lightingPatterns) {
+            doc.moveDown(0.5).text('Lighting Usage Patterns:');
+            const patternText = {
+              'most': 'Most Lights',
+              'some': 'Some Lights',
+              'few': 'Few Lights',
+              'none': 'No Lights'
+            };
+            
+            const { morning, day, evening, night } = auditData.currentConditions.lightingPatterns;
+            if (morning) doc.text(`  Morning (5am-9am): ${patternText[morning as keyof typeof patternText]}`);
+            if (day) doc.text(`  Day (9am-5pm): ${patternText[day as keyof typeof patternText]}`);
+            if (evening) doc.text(`  Evening (5pm-10pm): ${patternText[evening as keyof typeof patternText]}`);
+            if (night) doc.text(`  Night (10pm-5am): ${patternText[night as keyof typeof patternText]}`);
+          }
+          
+          doc.moveDown();
+        }
+      } catch (error) {
+        appLogger.error('Error adding lighting assessment section', { 
+          error,
+          lightingData: {
+            hasPrimaryBulbType: !!auditData.currentConditions.primaryBulbType,
+            hasNaturalLight: !!auditData.currentConditions.naturalLight,
+            hasLightingControls: !!auditData.currentConditions.lightingControls
+          }
+        });
+        // Continue without lighting section
       }
 
       // Recommendations

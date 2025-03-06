@@ -10,10 +10,20 @@ import {
   validateHomeDetails,
   AuditRecommendation,
   RecommendationStatus,
-  RecommendationPriority
+  RecommendationPriority,
+  LightingFixture
 } from '../types/energyAudit.js';
+import { 
+  ExtendedEnergyAuditData,
+  ExtendedCurrentConditions,
+  ExtendedHeatingCooling,
+  ExtendedEnergyConsumption,
+  LightingData,
+  HumidityData
+} from '../types/energyAuditExtended.js';
 import { reportGenerationService } from './ReportGenerationService.js';
 import { calculationService } from './calculateService.js';
+import { extendedCalculationService } from './extendedCalculationService.js';
 
 interface DbRecommendation {
   id: string;
@@ -238,7 +248,358 @@ export class EnergyAuditService {
     }
   }
 
+  /**
+   * Convert standard audit data to extended audit data format
+   * This allows us to use the extended calculation service
+   */
+  private convertToExtendedAuditData(auditData: EnergyAuditData): ExtendedEnergyAuditData {
+    // Create extended energy consumption
+    const extendedEnergyConsumption: ExtendedEnergyConsumption = {
+      ...auditData.energyConsumption,
+      seasonalFactor: this._calculateSeasonalFactor(auditData.energyConsumption.seasonalVariation),
+      occupancyFactor: this._calculateOccupancyFactor(auditData.energyConsumption.occupancyPattern),
+      powerFactor: auditData.energyConsumption.powerFactor || 0.9,
+      durationHours: auditData.energyConsumption.durationHours || 8760 // Default to 24 hours * 365 days
+    };
+    
+    // Create extended heating/cooling
+    const extendedHeatingCooling: ExtendedHeatingCooling = {
+      ...auditData.heatingCooling,
+      heatingSystem: {
+        ...auditData.heatingCooling.heatingSystem,
+        outputCapacity: auditData.heatingCooling.heatingSystem.outputCapacity || 0,
+        inputPower: auditData.heatingCooling.heatingSystem.inputPower || 0,
+        targetEfficiency: auditData.heatingCooling.heatingSystem.targetEfficiency || 95
+      },
+      coolingSystem: {
+        ...auditData.heatingCooling.coolingSystem,
+        outputCapacity: auditData.heatingCooling.coolingSystem.outputCapacity || 0,
+        inputPower: auditData.heatingCooling.coolingSystem.inputPower || 0,
+        targetEfficiency: auditData.heatingCooling.coolingSystem.targetEfficiency || 16
+      },
+      temperatureDifference: auditData.heatingCooling.temperatureDifference || 15,
+      airDensity: 1.225,
+      specificHeat: 1005
+    };
+    
+    // Create lighting data
+    const lightingData: LightingData = {
+      fixtures: this._createLightingFixtures(auditData.currentConditions)
+    };
+    
+    // Create humidity data
+    const humidityData: HumidityData = {
+      currentHumidity: 50, // Default value
+      targetHumidity: 40, // Default value
+      temperature: 22 // Default value in Celsius
+    };
+    
+    // Create extended current conditions
+    const extendedCurrentConditions: ExtendedCurrentConditions = {
+      ...auditData.currentConditions,
+      humidity: humidityData,
+      lighting: lightingData
+    };
+    
+    return {
+      ...auditData,
+      currentConditions: extendedCurrentConditions,
+      heatingCooling: extendedHeatingCooling,
+      energyConsumption: extendedEnergyConsumption,
+      productPreferences: {
+        categories: [],
+        features: [],
+        budgetConstraint: 5000
+      }
+    };
+  }
+
+  /**
+   * Create lighting fixtures from current conditions data
+   */
+  private _createLightingFixtures(currentConditions: CurrentConditions): import('../types/energyAuditExtended.js').LightingFixture[] {
+    // If we already have fixtures, use them
+    if (currentConditions.fixtures && currentConditions.fixtures.length > 0) {
+      return currentConditions.fixtures.map(fixture => ({
+        name: fixture.name || 'Unknown',
+        watts: fixture.watts || 0,
+        hours: fixture.hoursPerDay || 0,
+        lumens: fixture.lumens || 0,
+        electricityRate: 0.12 // Default electricity rate
+      }));
+    }
+    
+    // Otherwise, create default fixtures based on bulb type
+    const fixtures: import('../types/energyAuditExtended.js').LightingFixture[] = [];
+    const bulbType = currentConditions.primaryBulbType || 'mixed';
+    
+    // Create different fixture profiles based on bulb type
+    if (bulbType === 'mostly-led') {
+      fixtures.push(
+        { name: 'Living Room', watts: 10, hours: 5, lumens: 800, electricityRate: 0.12 },
+        { name: 'Kitchen', watts: 12, hours: 4, lumens: 1000, electricityRate: 0.12 },
+        { name: 'Bedroom', watts: 8, hours: 2, lumens: 600, electricityRate: 0.12 }
+      );
+    } else if (bulbType === 'mostly-incandescent') {
+      fixtures.push(
+        { name: 'Living Room', watts: 60, hours: 5, lumens: 800, electricityRate: 0.12 },
+        { name: 'Kitchen', watts: 75, hours: 4, lumens: 1000, electricityRate: 0.12 },
+        { name: 'Bedroom', watts: 40, hours: 2, lumens: 600, electricityRate: 0.12 }
+      );
+    } else { // mixed
+      fixtures.push(
+        { name: 'Living Room', watts: 30, hours: 5, lumens: 800, electricityRate: 0.12 },
+        { name: 'Kitchen', watts: 40, hours: 4, lumens: 1000, electricityRate: 0.12 },
+        { name: 'Bedroom', watts: 20, hours: 2, lumens: 600, electricityRate: 0.12 }
+      );
+    }
+    
+    return fixtures;
+  }
+
+  /**
+   * Calculate seasonal factor from seasonal variation
+   */
+  private _calculateSeasonalFactor(seasonalVariation: string): number {
+    switch (seasonalVariation) {
+      case 'highest-summer': return 1.2;
+      case 'highest-winter': return 1.2;
+      case 'consistent': return 1.0;
+      default: return 1.0;
+    }
+  }
+
+  /**
+   * Calculate occupancy factor from occupancy pattern
+   */
+  private _calculateOccupancyFactor(occupancyPattern: string): number {
+    switch (occupancyPattern) {
+      case 'home-all-day': return 1.0;
+      case 'away-during-day': return 0.7;
+      case 'minimal-occupancy': return 0.6;
+      default: return 0.8;
+    }
+  }
+
+  /**
+   * Generate recommendations using both basic and extended calculation services
+   */
   async generateRecommendations(auditData: EnergyAuditData): Promise<DbRecommendation[]> {
+    try {
+      // Try to use extended calculation service first
+      const extendedAuditData = this.convertToExtendedAuditData(auditData);
+      const analysisResults = extendedCalculationService.performComprehensiveAnalysis(extendedAuditData);
+      
+      // Extract recommendations from analysis results
+      const recommendations: DbRecommendation[] = [];
+      const now = new Date().toISOString();
+      
+      // Process immediate actions
+      if (analysisResults.recommendations.immediate_actions) {
+        for (const rec of analysisResults.recommendations.immediate_actions) {
+          recommendations.push({
+            id: `${rec.category.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            category: rec.category,
+            title: rec.title,
+            description: rec.description,
+            priority: rec.priority as RecommendationPriority,
+            status: 'active' as RecommendationStatus,
+            estimatedSavings: rec.estimated_savings,
+            estimatedCost: rec.implementation_cost,
+            paybackPeriod: rec.estimated_savings > 0 ? rec.implementation_cost / rec.estimated_savings : 0,
+            actualSavings: 0,
+            implementationDate: null,
+            implementationCost: 0,
+            lastUpdate: now
+          });
+        }
+      }
+      
+      // Process short-term actions
+      if (analysisResults.recommendations.short_term) {
+        for (const rec of analysisResults.recommendations.short_term) {
+          recommendations.push({
+            id: `${rec.category.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            category: rec.category,
+            title: rec.title,
+            description: rec.description,
+            priority: 'medium' as RecommendationPriority,
+            status: 'active' as RecommendationStatus,
+            estimatedSavings: rec.estimated_savings,
+            estimatedCost: rec.implementation_cost,
+            paybackPeriod: rec.estimated_savings > 0 ? rec.implementation_cost / rec.estimated_savings : 0,
+            actualSavings: 0,
+            implementationDate: null,
+            implementationCost: 0,
+            lastUpdate: now
+          });
+        }
+      }
+      
+      // Process long-term actions
+      if (analysisResults.recommendations.long_term) {
+        for (const rec of analysisResults.recommendations.long_term) {
+          recommendations.push({
+            id: `${rec.category.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            category: rec.category,
+            title: rec.title,
+            description: rec.description,
+            priority: 'low' as RecommendationPriority,
+            status: 'active' as RecommendationStatus,
+            estimatedSavings: rec.estimated_savings,
+            estimatedCost: rec.implementation_cost,
+            paybackPeriod: rec.estimated_savings > 0 ? rec.implementation_cost / rec.estimated_savings : 0,
+            actualSavings: 0,
+            implementationDate: null,
+            implementationCost: 0,
+            lastUpdate: now
+          });
+        }
+      }
+      
+      // Add lighting-specific recommendations based on bulb type
+      this._addLightingRecommendations(auditData, recommendations, now);
+      
+      // If no recommendations were generated, fall back to the original method
+      if (recommendations.length === 0) {
+        return this._generateBasicRecommendations(auditData);
+      }
+      
+      return recommendations;
+    } catch (error) {
+      console.error('Error using extended calculation service:', error);
+      // Fall back to basic recommendations
+      return this._generateBasicRecommendations(auditData);
+    }
+  }
+  
+  /**
+   * Add lighting-specific recommendations based on bulb type
+   */
+  private _addLightingRecommendations(
+    auditData: EnergyAuditData, 
+    recommendations: DbRecommendation[], 
+    now: string
+  ): void {
+    // Calculate potential savings using calculationService
+    const savingsPotential = calculationService.calculateSavingsPotential(auditData);
+    const lightingSavings = savingsPotential.breakdowns.lighting;
+    
+    // Only add lighting recommendations if there's significant savings potential
+    if (lightingSavings <= 100) {
+      return;
+    }
+    
+    // Check if we already have a lighting recommendation
+    const hasLightingRec = recommendations.some(rec => rec.category.toLowerCase() === 'lighting');
+    if (hasLightingRec) {
+      return;
+    }
+    
+    // Add recommendations based on bulb type
+    if (auditData.currentConditions.primaryBulbType === 'mostly-incandescent') {
+      // Higher savings for incandescent-heavy homes
+      const adjustedSavings = Math.round(lightingSavings * 0.12 * 1.5); // 50% more savings potential
+      recommendations.push({
+        id: `LIGHT-${Date.now()}`,
+        category: 'Lighting',
+        title: 'Upgrade to LED Lighting',
+        description: 'Replace conventional incandescent bulbs with energy-efficient LED lighting throughout your home.',
+        priority: 'high',
+        status: 'active',
+        estimatedSavings: adjustedSavings,
+        estimatedCost: Math.round(auditData.homeDetails.squareFootage * 0.5), // $0.50 per sq ft for LED upgrades
+        paybackPeriod: 0, // Will be calculated below
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
+      });
+    } else if (auditData.currentConditions.primaryBulbType === 'mixed') {
+      // Medium savings for mixed bulb types
+      const adjustedSavings = Math.round(lightingSavings * 0.12);
+      recommendations.push({
+        id: `LIGHT-${Date.now()}`,
+        category: 'Lighting',
+        title: 'Complete LED Lighting Conversion',
+        description: 'Convert all remaining conventional bulbs to energy-efficient LED lighting for maximum savings.',
+        priority: 'medium',
+        status: 'active',
+        estimatedSavings: adjustedSavings,
+        estimatedCost: Math.round(auditData.homeDetails.squareFootage * 0.3), // $0.30 per sq ft for partial LED upgrades
+        paybackPeriod: 0, // Will be calculated below
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
+      });
+    } else if (!auditData.currentConditions.primaryBulbType || auditData.currentConditions.primaryBulbType === 'mostly-led') {
+      // Lower savings for LED-heavy homes, but still recommend smart controls
+      const adjustedSavings = Math.round(lightingSavings * 0.12 * 0.5); // 50% less savings potential
+      recommendations.push({
+        id: `LIGHT-CTRL-${Date.now()}`,
+        category: 'Lighting',
+        title: 'Install Smart Lighting Controls',
+        description: 'Add motion sensors and smart controls to further reduce energy use from your efficient lighting.',
+        priority: 'low',
+        status: 'active',
+        estimatedSavings: adjustedSavings,
+        estimatedCost: Math.round(auditData.homeDetails.squareFootage * 0.2), // $0.20 per sq ft for controls
+        paybackPeriod: 0, // Will be calculated below
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
+      });
+    }
+    
+    // Calculate payback periods for all recommendations
+    for (const rec of recommendations) {
+      if (rec.category === 'Lighting' && rec.paybackPeriod === 0 && rec.estimatedSavings > 0) {
+        rec.paybackPeriod = calculationService.calculatePaybackPeriod(rec.estimatedCost, rec.estimatedSavings);
+      }
+    }
+    
+    // If we have detailed fixture data, add specific recommendations
+    if (auditData.currentConditions.fixtures && auditData.currentConditions.fixtures.length > 0) {
+      // Calculate inefficient fixtures (less than 50 lm/W is inefficient)
+      const inefficientFixtures = auditData.currentConditions.fixtures.filter(
+        fixture => (fixture.watts || 0) > 0 && (fixture.lumens || 0) / (fixture.watts || 1) < 50
+      );
+      
+      if (inefficientFixtures.length > 0) {
+        const fixtureSavings = Math.round(
+          inefficientFixtures.reduce(
+            (sum, f) => sum + (f.watts || 0) * (f.hoursPerDay || 0) * 365 * 0.12 / 1000 * 0.7, 
+            0
+          )
+        ); // 70% savings
+        
+        const fixtureCost = inefficientFixtures.length * 25; // $25 per fixture
+        
+        recommendations.push({
+          id: `LIGHT-FIXTURE-${Date.now()}`,
+          category: 'Lighting',
+          title: 'Replace Inefficient Light Fixtures',
+          description: `Replace ${inefficientFixtures.length} inefficient light fixtures with high-efficiency LED alternatives.`,
+          priority: 'medium',
+          status: 'active',
+          estimatedSavings: fixtureSavings,
+          estimatedCost: fixtureCost,
+          paybackPeriod: calculationService.calculatePaybackPeriod(fixtureCost, fixtureSavings),
+          actualSavings: 0,
+          implementationDate: null,
+          implementationCost: 0,
+          lastUpdate: now
+        });
+      }
+    }
+  }
+
+  /**
+   * Generate basic recommendations (original implementation as fallback)
+   */
+  private _generateBasicRecommendations(auditData: EnergyAuditData): DbRecommendation[] {
     // Calculate component scores
     const insulation = this.calculateInsulationScore(auditData.currentConditions);
     const windows = this.calculateWindowScore(auditData.currentConditions);

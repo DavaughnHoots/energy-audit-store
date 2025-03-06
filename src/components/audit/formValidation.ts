@@ -33,6 +33,15 @@ const validateCurrentConditions = (data: EnergyAuditData['currentConditions']): 
   );
 };
 
+// Lighting validation
+const validateLighting = (data: EnergyAuditData['currentConditions']): boolean => {
+  return !!(
+    data.primaryBulbType &&
+    data.naturalLight &&
+    data.lightingControls
+  );
+};
+
 // HVAC validation
 const validateHVAC = (data: EnergyAuditData['heatingCooling']): boolean => {
   return !!(
@@ -54,7 +63,7 @@ const validateEnergyUse = (data: EnergyAuditData['energyConsumption']): boolean 
 
 // Validate a specific section
 export const validateSection = (
-  section: keyof EnergyAuditData,
+  section: keyof EnergyAuditData | 'lighting',
   data: EnergyAuditData
 ): string[] => {
   return getSectionErrors(section, data);
@@ -62,7 +71,7 @@ export const validateSection = (
 
 // Get validation errors for a section
 export const getSectionErrors = (
-  section: keyof EnergyAuditData,
+  section: keyof EnergyAuditData | 'lighting',
   data: EnergyAuditData
 ): string[] => {
   const errors: string[] = [];
@@ -88,6 +97,12 @@ export const getSectionErrors = (
       if (!data.currentConditions.temperatureConsistency) errors.push('Temperature consistency is required');
       if (!data.currentConditions.windowCount) errors.push('Window count is required');
       break;
+      
+    case 'lighting':
+      if (!data.currentConditions.primaryBulbType) errors.push('Primary bulb type is required');
+      if (!data.currentConditions.naturalLight) errors.push('Natural light assessment is required');
+      if (!data.currentConditions.lightingControls) errors.push('Lighting controls information is required');
+      break;
 
     case 'heatingCooling':
       if (!data.heatingCooling.heatingSystem.type) errors.push('Heating system type is required');
@@ -107,7 +122,7 @@ export const getSectionErrors = (
 };
 
 // Map section number to section key
-export const getSectionKey = (step: number): keyof EnergyAuditData => {
+export const getSectionKey = (step: number): keyof EnergyAuditData | 'lighting' => {
   switch (step) {
     case 1:
       return 'basicInfo';
@@ -119,7 +134,29 @@ export const getSectionKey = (step: number): keyof EnergyAuditData => {
       return 'heatingCooling';
     case 5:
       return 'energyConsumption';
+    case 6:
+      return 'lighting';
     default:
       return 'basicInfo'; // Default to first section
+  }
+};
+
+// Get the section name for display purposes
+export const getSectionName = (step: number): string => {
+  switch (step) {
+    case 1:
+      return 'Basic Info';
+    case 2:
+      return 'Home Details';
+    case 3:
+      return 'Current Conditions';
+    case 4:
+      return 'HVAC Systems';
+    case 5:
+      return 'Energy Usage';
+    case 6:
+      return 'Lighting';
+    default:
+      return 'Basic Info';
   }
 };
