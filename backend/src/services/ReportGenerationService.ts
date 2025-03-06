@@ -252,6 +252,83 @@ export class ReportGenerationService {
         throw error;
       }
 
+      // HVAC System Details
+      try {
+        appLogger.debug('Adding HVAC system details section');
+        doc
+          .fontSize(16)
+          .text('HVAC System Details')
+          .moveDown(0.5)
+          .fontSize(12);
+
+        // Heating System
+        doc.text('Heating System:')
+          .text(`  Type: ${auditData.heatingCooling.heatingSystem.type}`)
+          .text(`  Efficiency: ${auditData.heatingCooling.heatingSystem.efficiency}`);
+        
+        // Add new heating system fields if they exist
+        if (auditData.heatingCooling.heatingSystem.outputCapacity) {
+          doc.text(`  Output Capacity: ${auditData.heatingCooling.heatingSystem.outputCapacity} BTU/hr`);
+        }
+        if (auditData.heatingCooling.heatingSystem.inputPower) {
+          doc.text(`  Input Power: ${auditData.heatingCooling.heatingSystem.inputPower} kW`);
+        }
+        if (auditData.heatingCooling.heatingSystem.targetEfficiency) {
+          doc.text(`  Target Efficiency: ${auditData.heatingCooling.heatingSystem.targetEfficiency}%`);
+        }
+
+        doc.moveDown(0.5);
+
+        // Cooling System
+        if (auditData.heatingCooling.coolingSystem.type !== 'none') {
+          doc.text('Cooling System:')
+            .text(`  Type: ${auditData.heatingCooling.coolingSystem.type}`)
+            .text(`  Efficiency: ${auditData.heatingCooling.coolingSystem.efficiency}`);
+          
+          // Add new cooling system fields if they exist
+          if (auditData.heatingCooling.coolingSystem.outputCapacity) {
+            doc.text(`  Output Capacity: ${auditData.heatingCooling.coolingSystem.outputCapacity} BTU/hr`);
+          }
+          if (auditData.heatingCooling.coolingSystem.inputPower) {
+            doc.text(`  Input Power: ${auditData.heatingCooling.coolingSystem.inputPower} kW`);
+          }
+          if (auditData.heatingCooling.coolingSystem.targetEfficiency) {
+            doc.text(`  Target Efficiency: ${auditData.heatingCooling.coolingSystem.targetEfficiency} SEER`);
+          }
+        } else {
+          doc.text('Cooling System: None');
+        }
+
+        // Temperature Difference
+        if (auditData.heatingCooling.temperatureDifference) {
+          doc.moveDown(0.5)
+            .text(`Temperature Difference: ${auditData.heatingCooling.temperatureDifference}°F`);
+        } else if (auditData.heatingCooling.temperatureDifferenceCategory) {
+          const categoryMap: Record<string, string> = {
+            'small': 'Small (less than 10°F)',
+            'moderate': 'Moderate (10-20°F)',
+            'large': 'Large (20-30°F)',
+            'extreme': 'Extreme (more than 30°F)'
+          };
+          doc.moveDown(0.5)
+            .text(`Temperature Difference: ${categoryMap[auditData.heatingCooling.temperatureDifferenceCategory] || auditData.heatingCooling.temperatureDifferenceCategory}`);
+        }
+        
+        doc.moveDown();
+      } catch (error) {
+        appLogger.error('Error adding HVAC system details section', { 
+          error,
+          heatingCooling: {
+            hasHeatingSystem: !!auditData.heatingCooling.heatingSystem,
+            hasCoolingSystem: !!auditData.heatingCooling.coolingSystem,
+            hasTemperatureDifference: !!auditData.heatingCooling.temperatureDifference,
+            hasTemperatureDifferenceCategory: !!auditData.heatingCooling.temperatureDifferenceCategory
+          }
+        });
+        // Continue without HVAC details
+        doc.moveDown();
+      }
+
       // Energy Usage
       try {
         appLogger.debug('Adding energy consumption section');

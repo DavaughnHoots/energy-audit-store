@@ -76,15 +76,41 @@ const hvacSchema = z.object({
       .min(0, 'System age cannot be negative')
       .max(100, 'System age seems too high'),
     lastService: z.string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+    outputCapacity: z.number()
+      .positive('Output capacity must be positive')
+      .optional(),
+    inputPower: z.number()
+      .positive('Input power must be positive')
+      .optional(),
+    targetEfficiency: z.number()
+      .positive('Target efficiency must be positive')
+      .max(100, 'Efficiency cannot exceed 100%')
+      .optional()
   }),
   coolingSystem: z.object({
     type: z.enum(['central', 'window-unit', 'portable', 'none']),
     age: z.number()
       .int('System age must be a whole number')
       .min(0, 'System age cannot be negative')
-      .max(100, 'System age seems too high')
-  })
+      .max(100, 'System age seems too high'),
+    outputCapacity: z.number()
+      .positive('Output capacity must be positive')
+      .optional(),
+    inputPower: z.number()
+      .positive('Input power must be positive')
+      .optional(),
+    targetEfficiency: z.number()
+      .positive('Target efficiency must be positive')
+      .max(100, 'Efficiency cannot exceed 100%')
+      .optional()
+  }),
+  temperatureDifference: z.number()
+    .min(0, 'Temperature difference cannot be negative')
+    .max(50, 'Temperature difference seems too high')
+    .optional(),
+  temperatureDifferenceCategory: z.enum(['small', 'moderate', 'large', 'extreme'])
+    .optional()
 });
 
 // Energy consumption validation schema

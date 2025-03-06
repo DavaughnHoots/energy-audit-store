@@ -218,6 +218,19 @@ const HVACForm: React.FC<HVACFormProps> = ({
           ]}
           required
         />
+
+        <SelectField
+          label="Temperature Difference"
+          value={data.temperatureDifferenceCategory || ''}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => handleBasicFieldChange('temperatureDifferenceCategory', e.target.value)}
+          options={[
+            { value: 'small', label: 'Small (less than 10°F/5°C difference)' },
+            { value: 'moderate', label: 'Moderate (10-20°F/5-10°C difference)' },
+            { value: 'large', label: 'Large (20-30°F/10-15°C difference)' },
+            { value: 'extreme', label: 'Extreme (more than 30°F/15°C difference)' }
+          ]}
+          helpText="Typical temperature difference between inside and outside during heating/cooling seasons"
+        />
       </FormGrid>
 
       {/* Advanced Fields */}
@@ -295,6 +308,60 @@ const HVACForm: React.FC<HVACFormProps> = ({
                 value={data.heatingSystem.lastService || ''}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => handleAdvancedFieldChange('heatingSystem', 'lastService', e.target.value)}
               />
+
+              <InputField
+                label="Output Capacity (BTU/hr)"
+                type="text"
+                value={data.heatingSystem.outputCapacity || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('heatingSystem', 'outputCapacity', '');
+                  } else if (/^\d+$/.test(inputValue)) {
+                    const value = parseInt(inputValue);
+                    handleAdvancedFieldChange('heatingSystem', 'outputCapacity', value);
+                  }
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                helpText="Heating output capacity in BTU/hr (e.g., 60000 for a 60,000 BTU furnace)"
+              />
+
+              <InputField
+                label="Input Power (kW)"
+                type="text"
+                value={data.heatingSystem.inputPower || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('heatingSystem', 'inputPower', '');
+                  } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                    const value = parseFloat(inputValue);
+                    handleAdvancedFieldChange('heatingSystem', 'inputPower', value);
+                  }
+                }}
+                pattern="[0-9]*\.?[0-9]*"
+                inputMode="decimal"
+                helpText="Power consumption in kilowatts"
+              />
+
+              <InputField
+                label="Target Efficiency (%)"
+                type="text"
+                value={data.heatingSystem.targetEfficiency || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('heatingSystem', 'targetEfficiency', '');
+                  } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                    const value = parseFloat(inputValue);
+                    handleAdvancedFieldChange('heatingSystem', 'targetEfficiency', value);
+                  }
+                }}
+                pattern="[0-9]*\.?[0-9]*"
+                inputMode="decimal"
+                helpText="Target efficiency percentage for system upgrades (e.g., 95 for 95% AFUE)"
+              />
             </FormGrid>
           </FormSubsection>
 
@@ -352,6 +419,60 @@ const HVACForm: React.FC<HVACFormProps> = ({
                     ? 'EER for window units (9.8-12)'
                     : 'SEER rating (13-21 for central AC/heat pump, 15-30 for mini-splits)'}
                 />
+
+                <InputField
+                  label="Output Capacity (BTU/hr)"
+                  type="text"
+                  value={data.coolingSystem.outputCapacity || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('coolingSystem', 'outputCapacity', '');
+                    } else if (/^\d+$/.test(inputValue)) {
+                      const value = parseInt(inputValue);
+                      handleAdvancedFieldChange('coolingSystem', 'outputCapacity', value);
+                    }
+                  }}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  helpText="Cooling output capacity in BTU/hr (e.g., 24000 for a 2-ton AC unit)"
+                />
+
+                <InputField
+                  label="Input Power (kW)"
+                  type="text"
+                  value={data.coolingSystem.inputPower || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('coolingSystem', 'inputPower', '');
+                    } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                      const value = parseFloat(inputValue);
+                      handleAdvancedFieldChange('coolingSystem', 'inputPower', value);
+                    }
+                  }}
+                  pattern="[0-9]*\.?[0-9]*"
+                  inputMode="decimal"
+                  helpText="Power consumption in kilowatts"
+                />
+
+                <InputField
+                  label="Target Efficiency (SEER)"
+                  type="text"
+                  value={data.coolingSystem.targetEfficiency || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('coolingSystem', 'targetEfficiency', '');
+                    } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                      const value = parseFloat(inputValue);
+                      handleAdvancedFieldChange('coolingSystem', 'targetEfficiency', value);
+                    }
+                  }}
+                  pattern="[0-9]*\.?[0-9]*"
+                  inputMode="decimal"
+                  helpText="Target efficiency for system upgrades (e.g., 16 for 16 SEER)"
+                />
               </FormGrid>
             </FormSubsection>
           )}
@@ -381,6 +502,41 @@ const HVACForm: React.FC<HVACFormProps> = ({
                 pattern="[0-9]*"
                 inputMode="numeric"
                 helpText="Number of independently controlled heating/cooling zones (1-10)"
+              />
+
+              <InputField
+                label="Exact Temperature Difference (°F)"
+                type="text"
+                value={data.temperatureDifference || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    handleAdvancedFieldChange('temperatureDifference', '', '');
+                  } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                    const value = parseFloat(inputValue);
+                    handleAdvancedFieldChange('temperatureDifference', '', value);
+                    
+                    // Update the category based on the exact value
+                    let category: 'small' | 'moderate' | 'large' | 'extreme';
+                    if (value < 10) {
+                      category = 'small';
+                    } else if (value < 20) {
+                      category = 'moderate';
+                    } else if (value < 30) {
+                      category = 'large';
+                    } else {
+                      category = 'extreme';
+                    }
+                    
+                    // Only update if the user hasn't explicitly chosen a category
+                    if (!userModified['temperatureDifferenceCategory']) {
+                      handleBasicFieldChange('temperatureDifferenceCategory', category);
+                    }
+                  }
+                }}
+                pattern="[0-9]*\.?[0-9]*"
+                inputMode="decimal"
+                helpText="Precise temperature difference between indoor and outdoor (°F)"
               />
             </FormGrid>
           </FormSubsection>

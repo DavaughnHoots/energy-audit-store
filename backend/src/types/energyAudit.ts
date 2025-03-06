@@ -53,12 +53,18 @@ export interface HeatingSystem {
   age: number;
   efficiency: number;
   lastService: string;
+  outputCapacity?: number; // BTU/hr or kW
+  inputPower?: number; // kW
+  targetEfficiency?: number; // %
 }
 
 export interface CoolingSystem {
   type: string;
   age: number;
   efficiency: number;
+  outputCapacity?: number; // BTU/hr or kW
+  inputPower?: number; // kW
+  targetEfficiency?: number; // %
 }
 
 export interface HeatingCooling {
@@ -67,6 +73,8 @@ export interface HeatingCooling {
   thermostatType: string;
   zoneCount: number;
   systemPerformance: 'works-well' | 'some-problems' | 'needs-attention';
+  temperatureDifference?: number; // °F or °C
+  temperatureDifferenceCategory?: 'small' | 'moderate' | 'large' | 'extreme';
 }
 
 export interface OccupancyHours {
