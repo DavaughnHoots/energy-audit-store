@@ -6,6 +6,7 @@ import {
   Fan, 
   Zap,
   Lightbulb,
+  ShoppingBag,
   CheckCircle2,
   Circle
 } from 'lucide-react';
@@ -20,7 +21,8 @@ const sections = [
   { id: 3, name: 'Current Conditions', icon: Thermometer },
   { id: 4, name: 'HVAC Systems', icon: Fan },
   { id: 5, name: 'Energy Usage', icon: Zap },
-  { id: 6, name: 'Lighting', icon: Lightbulb }
+  { id: 6, name: 'Lighting', icon: Lightbulb },
+  { id: 7, name: 'Product Preferences', icon: ShoppingBag }
 ] as const;
 
 const FormProgressIndicator: React.FC<FormProgressIndicatorProps> = ({

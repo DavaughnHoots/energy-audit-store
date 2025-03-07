@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Thermometer } from 'lucide-react';
 import { CurrentConditionsFormProps } from './types';
 import FormSection, { FormSectionAdvanced } from '../FormSection';
-import { FormGrid, SelectField, CheckboxGroup, FormSubsection } from '../FormFields';
+import { FormGrid, SelectField, CheckboxGroup, FormSubsection, InputField } from '../FormFields';
 import {
   windowCountDefaults,
   temperatureConsistencyDefaults,
@@ -168,6 +168,59 @@ const CurrentConditionsForm: React.FC<CurrentConditionsFormProps> = ({
                   { value: 'metal', label: 'Metal' },
                   { value: 'none', label: 'None' }
                 ]}
+              />
+            </FormGrid>
+          </FormSubsection>
+
+          {/* Humidity Data */}
+          <FormSubsection title="Humidity Data">
+            <FormGrid>
+              <InputField
+                label="Current Humidity (%)"
+                type="number"
+                value={data.currentHumidity || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value) && value >= 0 && value <= 100) {
+                    onInputChange('currentHumidity', value);
+                  }
+                }}
+                min="0"
+                max="100"
+                placeholder="0-100"
+                helpText="Current relative humidity percentage in your home"
+              />
+              
+              <InputField
+                label="Target Humidity (%)"
+                type="number"
+                value={data.targetHumidity || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value) && value >= 0 && value <= 100) {
+                    onInputChange('targetHumidity', value);
+                  }
+                }}
+                min="0"
+                max="100"
+                placeholder="0-100"
+                helpText="Desired relative humidity percentage (typically 30-50%)"
+              />
+              
+              <InputField
+                label="Indoor Temperature (°F)"
+                type="number"
+                value={data.humidityTemperature || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value) && value >= 32 && value <= 100) {
+                    onInputChange('humidityTemperature', value);
+                  }
+                }}
+                min="32"
+                max="100"
+                placeholder="32-100"
+                helpText="Indoor temperature for dew point calculations"
               />
             </FormGrid>
           </FormSubsection>

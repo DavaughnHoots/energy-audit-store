@@ -1,4 +1,4 @@
-import { BasicInfo, HomeDetails, CurrentConditions, HeatingCooling, EnergyConsumption } from '@/types/energyAudit';
+import { BasicInfo, HomeDetails, CurrentConditions, HeatingCooling, EnergyConsumption, ProductPreferences } from '@/types/energyAudit';
 
 export interface FormComponentProps<T> {
   data: T;
@@ -12,3 +12,4 @@ export type HomeDetailsFormProps = FormComponentProps<HomeDetails>;
 export type CurrentConditionsFormProps = FormComponentProps<CurrentConditions>;
 export type HVACFormProps = FormComponentProps<HeatingCooling>;
 export type EnergyUseFormProps = FormComponentProps<EnergyConsumption>;
+export type ProductPreferencesFormProps = FormComponentProps<ProductPreferences>;

@@ -73,6 +73,11 @@ export interface CurrentConditions {
   bulbPercentages?: BulbPercentages;
   lightingPatterns?: LightingPatterns;
   fixtures?: LightingFixture[];
+  
+  // Humidity fields
+  currentHumidity?: number; // Current relative humidity percentage
+  targetHumidity?: number; // Target relative humidity percentage
+  humidityTemperature?: number; // Temperature for dew point calculations
 }
 
 export interface HeatingSystem {
@@ -129,12 +134,20 @@ export interface EnergyConsumption {
   occupancyFactor?: number; // Occupancy factor (0.6-1.0) calculated from occupancyPattern
 }
 
+// Product preferences interface
+export interface ProductPreferences {
+  categories: string[]; // Preferred product categories
+  features: string[]; // Preferred product features
+  budgetConstraint: number; // Maximum budget
+}
+
 export interface EnergyAuditData {
   basicInfo: BasicInfo;
   homeDetails: HomeDetails;
   currentConditions: CurrentConditions;
   heatingCooling: HeatingCooling;
   energyConsumption: EnergyConsumption;
+  productPreferences?: ProductPreferences;
 }
 
 export type RecommendationPriority = 'high' | 'medium' | 'low';

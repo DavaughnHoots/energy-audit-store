@@ -10,6 +10,7 @@ import CurrentConditionsForm from './forms/CurrentConditionsForm';
 import HVACForm from './forms/HVACForm';
 import EnergyUseForm from './forms/EnergyUseForm';
 import LightingForm from './forms/LightingForm';
+import ProductPreferencesForm from './forms/ProductPreferencesForm';
 import AuditSubmissionModal from './AuditSubmissionModal';
 import Dialog from '@/components/ui/Dialog';
 import { getStoredAuditData, storeAuditData, clearStoredAuditData } from '@/utils/auditStorage';
@@ -20,7 +21,8 @@ import {
   HomeDetails,
   CurrentConditions,
   HeatingCooling,
-  EnergyConsumption
+  EnergyConsumption,
+  ProductPreferences
 } from '@/types/energyAudit';
 import {
   validateSection,
@@ -148,6 +150,11 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       powerFactor: 0.9, // Default power factor value
       seasonalFactor: 1.0, // Default seasonal factor value
       occupancyFactor: 0.8  // Default occupancy factor value
+    },
+    productPreferences: {
+      categories: [],
+      features: [],
+      budgetConstraint: 5000 // Default budget
     }
   });
 
@@ -491,6 +498,41 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
             onInputChange={(field, value) => handleInputChange('currentConditions', field, value)}
           />
         );
+      case 7:
+        // Ensure productPreferences is initialized
+        if (!formData.productPreferences) {
+          setFormData(prevData => ({
+            ...prevData,
+            productPreferences: {
+              categories: [],
+              features: [],
+              budgetConstraint: 5000
+            }
+          }));
+        }
+        
+        // Create a separate handler for product preferences
+        const handleProductPreferencesChange = (field: keyof ProductPreferences, value: any) => {
+          setUserModified(prev => ({
+            ...prev,
+            [`productPreferences.${String(field)}`]: true
+          }));
+          
+          setFormData(prevData => ({
+            ...prevData,
+            productPreferences: {
+              ...prevData.productPreferences!,
+              [field]: value
+            }
+          }));
+        };
+        
+        return (
+          <ProductPreferencesForm
+            data={formData.productPreferences || { categories: [], features: [], budgetConstraint: 5000 }}
+            onInputChange={handleProductPreferencesChange}
+          />
+        );
       default:
         return null;
     }
@@ -520,7 +562,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
                 Previous
               </button>
             )}
-            {currentStep < 6 ? (
+            {currentStep < 7 ? (
               <button
                 type="button"
                 onClick={handleNext}
