@@ -1,0 +1,154 @@
+# Energy Audit Documentation Map
+
+This document provides an overview of all documentation files related to the Energy Audit Tool implementation and shows how they are connected to each other.
+
+## Documentation Files Overview
+
+### 1. energy_audit_data_requirements.txt
+- **Purpose**: Defines all data fields needed for the energy audit tool
+- **Content**: Comprehensive list of data fields organized by form section
+- **Created**: Before implementation began
+- **Last Updated**: When product preferences were added
+
+### 2. energy_audit_tool_implementation_plan.txt
+- **Purpose**: Outlines the overall implementation plan across 7 phases
+- **Content**: High-level plan with phases, timeline, resources, and risks
+- **Created**: At project initiation
+- **Last Updated**: When Phase 2 was completed
+
+### 3. energy_audit_calculation_implementation.txt
+- **Purpose**: Detailed implementation plan for Phase 3 (Calculation and Recommendation Engine)
+- **Content**: Mapping of Python functions to TypeScript, implementation tasks, integration plan
+- **Created**: March 6, 2025
+- **Last Updated**: March 6, 2025
+
+## Document Relationships
+
+```
+                                 ┌───────────────────────────┐
+                                 │                           │
+                                 │  Python energy_audit_tool.py  │
+                                 │  (Original Implementation) │
+                                 │                           │
+                                 └───────────┬───────────────┘
+                                             │
+                                             │ Analyzed to create
+                                             ▼
+┌───────────────────────────┐      ┌────────────────────────┐      ┌───────────────────────────────┐
+│                           │      │                        │      │                               │
+│ energy_audit_data_requirements.txt │◄─────┤ energy_audit_tool_implementation_plan.txt │◄─────┤ energy_audit_calculation_implementation.txt │
+│ (What data we need)       │      │ (How we'll implement it)│      │ (Detailed Phase 3 plan)      │
+│                           │      │                        │      │                               │
+└───────────┬───────────────┘      └────────────┬───────────┘      └───────────────┬───────────────┘
+            │                                    │                                  │
+            │                                    │                                  │
+            ▼                                    ▼                                  ▼
+┌───────────────────────────┐      ┌────────────────────────┐      ┌───────────────────────────────┐
+│                           │      │                        │      │                               │
+│ Database Schema           │      │ Frontend Components    │      │ Backend Services              │
+│ - energy_audits table     │      │ - EnergyAuditForm      │      │ - ExtendedCalculationService  │
+│ - product_preferences col │      │ - ProductPreferencesForm│      │ - ProductRecommendationService│
+│                           │      │                        │      │ - ReportGenerationService     │
+└───────────────────────────┘      └────────────────────────┘      └───────────────────────────────┘
+```
+
+## Document Dependencies
+
+### energy_audit_data_requirements.txt
+- **Depends on**: Python energy_audit_tool.py (for understanding required data)
+- **Used by**: 
+  - energy_audit_tool_implementation_plan.txt (for planning implementation)
+  - Database schema design (for creating tables and columns)
+  - Frontend form components (for creating form fields)
+  - TypeScript interfaces (for defining data types)
+
+### energy_audit_tool_implementation_plan.txt
+- **Depends on**: 
+  - energy_audit_data_requirements.txt (for understanding what to implement)
+  - Python energy_audit_tool.py (for understanding functionality)
+- **Used by**:
+  - Project management (for tracking progress)
+  - energy_audit_calculation_implementation.txt (for detailed Phase 3 planning)
+  - Development team (for implementation guidance)
+
+### energy_audit_calculation_implementation.txt
+- **Depends on**:
+  - energy_audit_tool_implementation_plan.txt (for high-level Phase 3 plan)
+  - energy_audit_data_requirements.txt (for understanding data fields)
+  - Python energy_audit_tool.py (for understanding calculation functions)
+- **Used by**:
+  - Development team (for implementing Phase 3)
+  - Testing team (for creating test cases)
+  - Code reviewers (for verifying implementation)
+
+## Implementation Status Tracking
+
+### Phase 1: Data Structure and Database Updates
+- **Status**: Completed
+- **Documentation**: energy_audit_tool_implementation_plan.txt
+- **Key Deliverables**: 
+  - Updated database schema
+  - TypeScript interfaces
+  - Database migration scripts
+
+### Phase 2: Frontend Form Updates
+- **Status**: In Progress
+- **Documentation**: energy_audit_tool_implementation_plan.txt
+- **Key Deliverables**:
+  - ProductPreferencesForm component
+  - Updated EnergyAuditForm
+  - Updated FormProgressIndicator
+
+### Phase 3: Calculation and Recommendation Engine
+- **Status**: Partially Completed
+- **Documentation**: energy_audit_calculation_implementation.txt
+- **Key Deliverables**:
+  - ✅ ProductRecommendationService
+  - ✅ Updated ReportGenerationService
+  - ⬜ Ported calculation functions (In Progress)
+
+### Phase 4: API and Integration
+- **Status**: Partially Completed
+- **Documentation**: energy_audit_calculation_implementation.txt
+- **Key Deliverables**:
+  - ✅ Product recommendation API endpoints
+  - ✅ Integration with product database
+  - ⬜ Update energyAudit routes (Pending)
+
+## How to Use This Documentation
+
+1. **For New Team Members**:
+   - Start with energy_audit_tool_implementation_plan.txt for a high-level overview
+   - Review energy_audit_data_requirements.txt to understand the data model
+   - Check energy_audit_calculation_implementation.txt for current implementation details
+
+2. **For Developers Implementing Phase 3**:
+   - Use energy_audit_calculation_implementation.txt as your primary guide
+   - Reference energy_audit_data_requirements.txt for data field details
+   - Check Python energy_audit_tool.py for original implementation details
+
+3. **For Project Managers**:
+   - Use energy_audit_tool_implementation_plan.txt to track overall progress
+   - Use energy_audit_calculation_implementation.txt to track Phase 3 progress
+   - Update documentation as phases are completed
+
+## Keeping Documentation Updated
+
+To ensure documentation remains accurate and useful:
+
+1. Update energy_audit_tool_implementation_plan.txt when:
+   - A phase is completed
+   - Timeline changes
+   - Resources change
+   - New risks are identified
+
+2. Update energy_audit_data_requirements.txt when:
+   - New data fields are added
+   - Existing data fields are modified
+   - Data validation rules change
+
+3. Update energy_audit_calculation_implementation.txt when:
+   - Implementation status changes
+   - New tasks are identified
+   - Integration details change
+   - Testing strategy changes
