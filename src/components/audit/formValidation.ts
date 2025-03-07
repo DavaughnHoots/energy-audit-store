@@ -61,9 +61,20 @@ const validateEnergyUse = (data: EnergyAuditData['energyConsumption']): boolean 
   );
 };
 
+// Product Preferences validation
+const validateProductPreferences = (data: EnergyAuditData['productPreferences']): boolean => {
+  if (!data) return false;
+  
+  return !!(
+    data.categories &&
+    data.categories.length > 0 &&
+    data.budgetConstraint
+  );
+};
+
 // Validate a specific section
 export const validateSection = (
-  section: keyof EnergyAuditData | 'lighting',
+  section: keyof EnergyAuditData | 'lighting' | 'productPreferences',
   data: EnergyAuditData
 ): string[] => {
   return getSectionErrors(section, data);
@@ -71,7 +82,7 @@ export const validateSection = (
 
 // Get validation errors for a section
 export const getSectionErrors = (
-  section: keyof EnergyAuditData | 'lighting',
+  section: keyof EnergyAuditData | 'lighting' | 'productPreferences',
   data: EnergyAuditData
 ): string[] => {
   const errors: string[] = [];
@@ -116,13 +127,23 @@ export const getSectionErrors = (
       if (!data.energyConsumption.seasonalVariation) errors.push('Seasonal variation is required');
       if (!data.energyConsumption.monthlyBill) errors.push('Monthly bill range is required');
       break;
+      
+    case 'productPreferences':
+      if (!data.productPreferences) errors.push('Product preferences are required');
+      else {
+        if (!data.productPreferences.categories || data.productPreferences.categories.length === 0) {
+          errors.push('At least one product category is required');
+        }
+        if (!data.productPreferences.budgetConstraint) errors.push('Budget constraint is required');
+      }
+      break;
   }
 
   return errors;
 };
 
 // Map section number to section key
-export const getSectionKey = (step: number): keyof EnergyAuditData | 'lighting' => {
+export const getSectionKey = (step: number): keyof EnergyAuditData | 'lighting' | 'productPreferences' => {
   switch (step) {
     case 1:
       return 'basicInfo';
@@ -136,6 +157,8 @@ export const getSectionKey = (step: number): keyof EnergyAuditData | 'lighting' 
       return 'energyConsumption';
     case 6:
       return 'lighting';
+    case 7:
+      return 'productPreferences';
     default:
       return 'basicInfo'; // Default to first section
   }
@@ -156,6 +179,8 @@ export const getSectionName = (step: number): string => {
       return 'Energy Usage';
     case 6:
       return 'Lighting';
+    case 7:
+      return 'Product Preferences';
     default:
       return 'Basic Info';
   }

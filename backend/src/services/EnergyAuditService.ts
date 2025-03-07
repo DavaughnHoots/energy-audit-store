@@ -173,7 +173,12 @@ export class EnergyAuditService {
         home_details: JSON.stringify(auditData.homeDetails),
         current_conditions: JSON.stringify(auditData.currentConditions),
         heating_cooling: JSON.stringify(auditData.heatingCooling),
-        energy_consumption: JSON.stringify(auditData.energyConsumption)
+        energy_consumption: JSON.stringify(auditData.energyConsumption),
+        product_preferences: JSON.stringify(auditData.productPreferences || {
+          categories: [],
+          features: [],
+          budgetConstraint: 5000
+        })
       };
 
       console.log('Formatted JSONB data:', jsonData);
@@ -183,8 +188,8 @@ export class EnergyAuditService {
         INSERT INTO energy_audits (
           user_id, client_id, basic_info, home_details,
           current_conditions, heating_cooling,
-          energy_consumption, created_at
-        ) VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb, $6::jsonb, $7::jsonb, CURRENT_TIMESTAMP)
+          energy_consumption, product_preferences, created_at
+        ) VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb, $6::jsonb, $7::jsonb, $8::jsonb, CURRENT_TIMESTAMP)
         RETURNING id
       `;
 
@@ -196,7 +201,8 @@ export class EnergyAuditService {
         jsonData.home_details,
         jsonData.current_conditions,
         jsonData.heating_cooling,
-        jsonData.energy_consumption
+        jsonData.energy_consumption,
+        jsonData.product_preferences
       ]);
 
       const auditResult = await client.query(
@@ -208,7 +214,8 @@ export class EnergyAuditService {
           jsonData.home_details,
           jsonData.current_conditions,
           jsonData.heating_cooling,
-          jsonData.energy_consumption
+          jsonData.energy_consumption,
+          jsonData.product_preferences
         ]
       );
 
@@ -306,7 +313,7 @@ export class EnergyAuditService {
       currentConditions: extendedCurrentConditions,
       heatingCooling: extendedHeatingCooling,
       energyConsumption: extendedEnergyConsumption,
-      productPreferences: {
+      productPreferences: auditData.productPreferences || {
         categories: [],
         features: [],
         budgetConstraint: 5000
@@ -872,8 +879,9 @@ export class EnergyAuditService {
             current_conditions = COALESCE($3, current_conditions),
             heating_cooling = COALESCE($4, heating_cooling),
             energy_consumption = COALESCE($5, energy_consumption),
+            product_preferences = COALESCE($6, product_preferences),
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $6 AND user_id = $7
+        WHERE id = $7 AND user_id = $8
         RETURNING *`,
         [
           auditData.basicInfo || null,
@@ -881,6 +889,7 @@ export class EnergyAuditService {
           auditData.currentConditions || null,
           auditData.heatingCooling || null,
           auditData.energyConsumption || null,
+          auditData.productPreferences || null,
           auditId,
           userId
         ]

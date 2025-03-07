@@ -1,13 +1,13 @@
 # Energy Audit Data Requirements
 
-This document outlines all the data fields required to fully implement the functionality from energy_audit_tool.py in our web application. These fields should be collected through our energy audit forms to ensure comprehensive analysis and accurate recommendations.
+This document outlines the data requirements for the energy audit tool implementation based on the Python energy_audit_tool.py file.
 
 ## Basic Information
 - Full Name
 - Email
 - Phone
 - Address
-- Property Type
+- Property Type (house, apartment, condominium, etc.)
 - Year Built
 - Number of Occupants
 - Audit Date
@@ -17,136 +17,99 @@ This document outlines all the data fields required to fully implement the funct
 - Number of Stories
 - Number of Bedrooms
 - Number of Bathrooms
-- Home Type (single-family, townhouse, apartment, etc.)
-- Home Size (in square feet)
-- Construction Period (before-1980, 1980-2000, after-2000)
+- Home Type (detached, semi-detached, townhouse, etc.)
+- Home Size (small, medium, large)
+- Construction Period (pre-1950, 1950-1980, 1980-2000, after-2000)
 - Number of Rooms
 - Number of Floors
 - Wall Length
 - Wall Width
 - Ceiling Height
-- Basement Type (finished, unfinished, none)
+- Basement Type (none, unfinished, finished, crawlspace)
 - Basement Heating (heated, unheated)
 
 ## Current Conditions
-
-### Insulation
-- Attic Insulation (poor, average, good, excellent, not-sure)
-- Wall Insulation (poor, average, good, excellent, not-sure)
-- Basement Insulation (poor, average, good, excellent, not-sure)
-- Floor Insulation (poor, average, good, excellent, not-sure)
-
-### Windows
+- Insulation
+  - Attic Insulation (poor, average, good, excellent, not-sure)
+  - Wall Insulation (poor, average, good, excellent, not-sure)
+  - Basement Insulation (poor, average, good, excellent, not-sure)
+  - Floor Insulation (poor, average, good, excellent, not-sure)
 - Window Type (single, double, triple, not-sure)
 - Window Condition (poor, fair, good, excellent)
 - Number of Windows
 - Window Count Category (few, average, many)
+- Number of Doors
+- Air Leaks (list of locations)
+- Weather Stripping (none, partial, complete)
+- Temperature Consistency (consistent, some-variations, significant-variations)
+- Comfort Issues (list of issues)
 
-### Doors
-- Door Count
-
-### Air Leaks
-- Air Leak Locations (array of strings)
-- Weather Stripping Type
-
-### Comfort
-- Temperature Consistency (very-consistent, some-variations, large-variations)
-- Comfort Issues (array of strings)
-
-### Lighting (New Fields)
-- Primary Bulb Type (mostly-led, mixed, mostly-incandescent)
-- Natural Light (good, moderate, limited)
-- Lighting Controls (basic, some-advanced, smart)
-- Bulb Percentages:
-  - LED (%)
-  - CFL (%)
-  - Incandescent (%)
-- Lighting Patterns:
-  - Morning (most, some, few, none)
-  - Day (most, some, few, none)
-  - Evening (most, some, few, none)
-  - Night (most, some, few, none)
-- Fixtures (array of objects):
+## Lighting
+- Primary Bulb Type (mostly-incandescent, mixed, mostly-led)
+- Natural Light (poor, adequate, good, excellent)
+- Lighting Controls (manual, programmable, smart)
+- Fixtures (list of fixtures with details)
   - Name
   - Watts
   - Hours Per Day
   - Lumens
 
-## Heating & Cooling
-
-### Heating System
-- Type
-- Fuel
-- Fuel Type
-- Age (years)
-- Efficiency
-- Last Service Date
-- Output Capacity (BTU/hr) - New field
-- Input Power (kW) - New field
-- Target Efficiency (%) - New field
-
-### Cooling System
-- Type
-- Age (years)
-- Efficiency
-- Output Capacity (BTU/hr) - New field
-- Input Power (kW) - New field
-- Target Efficiency (SEER) - New field
-
-### General HVAC
-- Thermostat Type
-- Zone Count
-- System Performance (works-well, some-problems, needs-attention)
-- Temperature Difference (°F) - New field
-- Temperature Difference Category (small, moderate, large, extreme) - New field
+## Heating and Cooling
+- Heating System
+  - Type (furnace, boiler, heat-pump, electric-baseboard, etc.)
+  - Fuel (gas, electric, oil, propane, etc.)
+  - Fuel Type (natural-gas, electricity, heating-oil, propane, etc.)
+  - Age (years)
+  - Efficiency (percentage)
+  - Last Service Date
+  - Output Capacity (BTU)
+  - Input Power (kW)
+  - Target Efficiency (percentage)
+- Cooling System
+  - Type (central-ac, window-units, mini-split, none, etc.)
+  - Age (years)
+  - Efficiency (SEER rating)
+  - Output Capacity (BTU)
+  - Input Power (kW)
+  - Target Efficiency (SEER rating)
+- Thermostat Type (manual, programmable, smart)
+- Zone Count (number of zones)
+- System Performance (works-well, needs-maintenance, needs-replacement)
+- Temperature Difference Category (minimal, moderate, significant)
+- Temperature Difference (degrees)
 
 ## Energy Consumption
-- Electric Bill (monthly kWh)
-- Gas Bill (monthly therms)
-- Oil Bill (optional)
-- Propane Bill (optional)
-- Seasonal Variation
-- Power Consumption (kW)
-- Occupancy Pattern
-- Occupancy Hours:
-  - Weekday
-  - Weekend
-- Peak Usage Times (array of strings)
-- Monthly Bill Amount
-- Season
-- Duration Hours (hours per day) - New field
-- Power Factor (0.8-1.0) - New field
-- Seasonal Factor (0.8-1.2) - New field, calculated from seasonalVariation
-- Occupancy Factor (0.6-1.0) - New field, calculated from occupancyPattern
+- Electric Bill (monthly average in dollars)
+- Gas Bill (monthly average in dollars)
+- Seasonal Variation (consistent, highest-summer, highest-winter)
+- Power Consumption (kWh)
+- Occupancy Pattern (home-all-day, away-during-day, minimal-occupancy)
+- Occupancy Hours
+  - Weekday (hours at home)
+  - Weekend (hours at home)
+- Peak Usage Times (list of times)
+- Monthly Bill (dollars)
+- Season (summer, winter, spring, fall)
+- Duration Hours (hours of operation per year)
+- Power Factor (0.0-1.0)
+- Seasonal Factor (0.0-2.0)
+- Occupancy Factor (0.0-1.0)
 
-## Product Preferences (New Section)
-- Categories (array of strings)
-- Features (array of strings)
-- Budget Constraint (number)
+## Product Preferences
+- Categories (list of product categories of interest)
+- Features (list of desired product features)
+- Budget Constraint (dollars)
 
-## Implementation Status
-For each recommendation:
-- Status (active, implemented)
-- Actual Savings (if implemented)
-- Implementation Date (if implemented)
-- Implementation Cost (if implemented)
-- Notes
-
-## Data Validation Requirements
-- Basic Info validation (name, email, phone, address required)
-- Home Details validation (square footage, stories, bedrooms, bathrooms required)
-- Energy consumption values must be positive numbers
-- Seasonal factor must be between 0.8 and 1.2
-- Occupancy factor must be between 0.6 and 1.0
-- Power factor must be between 0.8 and 1.0
-
-## Calculation Fields
-These fields are calculated by the system and not directly input by users:
-- Insulation Score
-- Window Score
-- HVAC Score
-- Energy Efficiency Score
-- Potential Savings
-- Payback Period
-- ROI
-- Carbon Reduction
+## Recommendations
+- Category (insulation, windows, hvac, lighting, etc.)
+- Title
+- Description
+- Priority (high, medium, low)
+- Status (active, in-progress, implemented, dismissed)
+- Estimated Savings (dollars per year)
+- Estimated Cost (dollars)
+- Payback Period (years)
+- Actual Savings (dollars per year)
+- Implementation Date
+- Implementation Cost (dollars)
+- Last Update (date)

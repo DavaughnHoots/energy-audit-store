@@ -1,148 +1,96 @@
 # Energy Audit Tool Implementation Plan
 
-This document outlines the steps needed to fully implement the functionality from energy_audit_tool.py into our web application. The implementation is divided into several phases to ensure a smooth integration.
+This document outlines the plan for implementing the energy audit tool functionality from the Python script into our web application.
 
-## Phase 1: Database Schema Updates
+## Phase 1: Data Structure and Database Updates (Completed)
 
-1. **Add New Fields to Energy Audit Tables**
-   - Update the `energy_audits` table to include new fields for extended data
-   - Add support for lighting fixtures as a JSON array in the `current_conditions` column
-   - Add support for lighting patterns in the `current_conditions` column
-   - Add new fields to the `heating_cooling` column for extended HVAC data
-   - Add new fields to the `energy_consumption` column for extended energy data
+1. ✅ Analyze the Python energy_audit_tool.py to identify all required data fields
+2. ✅ Create a comprehensive data requirements document
+3. ✅ Update the TypeScript interfaces in energyAudit.ts to include all required fields
+4. ✅ Add ProductPreferences interface to support product recommendations
+5. ✅ Create database migration to add product_preferences column to energy_audits table
+6. ✅ Update EnergyAuditService to handle the new product_preferences data
 
-2. **Create Visualization Data Table**
-   - Create a new table `visualization_data` to store chart data and visualization outputs
-   - Schema should include:
-     - `id` (UUID, primary key)
-     - `audit_id` (UUID, foreign key to energy_audits)
-     - `visualization_type` (VARCHAR)
-     - `data` (JSONB)
-     - `created_at` (TIMESTAMP)
+## Phase 2: Frontend Form Updates (In Progress)
 
-3. **Migration Script**
-   - Create a migration script to apply these schema changes
-   - Include default values for existing records
+1. ✅ Add ProductPreferencesForm component to collect user preferences
+2. ✅ Update EnergyAuditForm to include the new form step
+3. ✅ Update FormProgressIndicator to show the new step
+4. ✅ Update form validation to validate product preferences
+5. ⬜ Test the form flow to ensure all data is collected correctly
 
-## Phase 2: Backend Service Updates
+## Phase 3: Calculation and Recommendation Engine
 
-1. **Create Extended Types**
-   - Create `energyAuditExtended.ts` with extended types for the new data fields
-   - Ensure backward compatibility with existing types
+1. ⬜ Port the Python calculation functions to TypeScript
+   - Energy usage calculations
+   - Cost savings calculations
+   - ROI calculations
+   - Payback period calculations
+2. ⬜ Implement product recommendation algorithm
+   - Match user preferences with product database
+   - Filter by budget constraints
+   - Sort by energy efficiency and ROI
+3. ⬜ Update ReportGenerationService to include product recommendations in reports
 
-2. **Implement Extended Calculation Service**
-   - Create `extendedCalculationService.ts` to implement the advanced calculations from energy_audit_tool.py
-   - Include methods for:
-     - Comprehensive energy analysis
-     - Detailed lighting calculations
-     - Advanced HVAC efficiency calculations
-     - ROI and payback period calculations
-     - Carbon footprint calculations
+## Phase 4: API and Integration
 
-3. **Update Energy Audit Service**
-   - Modify `EnergyAuditService.ts` to use the extended calculation service
-   - Add methods to convert standard audit data to extended format
-   - Enhance recommendation generation to use detailed lighting data
-   - Implement fallback to basic calculations if extended data is not available
+1. ⬜ Create new API endpoints for product recommendations
+   - GET /api/recommendations/products?auditId={id}
+   - GET /api/recommendations/products/categories
+   - GET /api/recommendations/products/features
+2. ⬜ Update energyAudit routes to handle product preferences
+3. ⬜ Integrate with product database for real-time recommendations
 
-4. **Enhance Report Generation Service**
-   - Update `ReportGenerationService.ts` to include detailed lighting analysis in PDF reports
-   - Add efficiency metrics and potential savings calculations
-   - Include visualization of lighting usage patterns
+## Phase 5: UI for Recommendations
 
-5. **Create Visualization Service**
-   - Implement `visualizationService.ts` to generate and store visualization data
-   - Support various chart types (bar, pie, line) for different metrics
-   - Include methods to retrieve and format visualization data for the frontend
+1. ⬜ Create ProductRecommendationsPage component
+2. ⬜ Implement filtering and sorting UI for recommendations
+3. ⬜ Add product comparison feature
+4. ⬜ Create detailed product view with energy savings information
 
-## Phase 3: Frontend Updates
+## Phase 6: Testing and Deployment
 
-1. **Update Energy Audit Form Components**
-   - Enhance `LightingForm.tsx` to collect detailed lighting fixture data
-   - Update `HVACForm.tsx` to collect extended HVAC data
-   - Update `EnergyUseForm.tsx` to collect extended energy consumption data
-   - Add validation for new fields
+1. ⬜ Write unit tests for calculation functions
+2. ⬜ Write integration tests for recommendation engine
+3. ⬜ Perform end-to-end testing of the entire flow
+4. ⬜ Deploy database migrations to production
+5. ⬜ Deploy updated application to production
 
-2. **Create Visualization Components**
-   - Implement chart components for various visualization types
-   - Create dashboard widgets to display energy metrics
-   - Add interactive elements to explore energy data
+## Phase 7: Analytics and Optimization
 
-3. **Update Audit Report Page**
-   - Enhance the report page to display detailed lighting analysis
-   - Add visualization of energy usage patterns
-   - Include interactive elements to explore recommendations
-
-## Phase 4: API Routes and Integration
-
-1. **Create Visualization API Routes**
-   - Implement `visualization.ts` routes to handle visualization data
-   - Add endpoints for generating and retrieving visualizations
-
-2. **Update Energy Audit Routes**
-   - Enhance `energyAudit.ts` routes to handle extended audit data
-   - Add validation for new fields
-
-3. **Implement Data Export/Import**
-   - Add functionality to export audit data in various formats (CSV, JSON)
-   - Support importing data from external sources
-
-## Phase 5: Testing and Validation
-
-1. **Unit Testing**
-   - Create tests for extended calculation service
-   - Test visualization service
-   - Validate recommendation generation with various input scenarios
-
-2. **Integration Testing**
-   - Test end-to-end flow from form submission to report generation
-   - Validate visualization data generation and display
-   - Test with various device types and screen sizes
-
-3. **Performance Testing**
-   - Benchmark calculation performance with large datasets
-   - Optimize database queries for visualization data
-   - Ensure responsive UI with complex visualizations
-
-## Phase 6: Deployment and Monitoring
-
-1. **Database Migration**
-   - Run migration scripts on production database
-   - Verify data integrity after migration
-
-2. **Phased Rollout**
-   - Deploy backend changes first
-   - Roll out frontend changes incrementally
-   - Monitor for errors and performance issues
-
-3. **User Feedback Collection**
-   - Implement feedback mechanism for new features
-   - Track usage patterns of new visualization tools
-   - Collect data on recommendation effectiveness
+1. ⬜ Implement tracking for recommendation conversions
+2. ⬜ Analyze user interaction with recommendations
+3. ⬜ Optimize recommendation algorithm based on user behavior
+4. ⬜ Implement A/B testing for different recommendation strategies
 
 ## Timeline
 
-- Phase 1: 1 week
-- Phase 2: 2 weeks
-- Phase 3: 2 weeks
-- Phase 4: 1 week
-- Phase 5: 1 week
-- Phase 6: 1 week
-
-Total estimated time: 8 weeks
+- Phase 1: Completed
+- Phase 2: In progress (Expected completion: March 10, 2025)
+- Phase 3: March 11-20, 2025
+- Phase 4: March 21-25, 2025
+- Phase 5: March 26-31, 2025
+- Phase 6: April 1-5, 2025
+- Phase 7: April 6-15, 2025
 
 ## Resources Required
 
-- Backend developer: 1 full-time
-- Frontend developer: 1 full-time
-- Database administrator: 0.5 full-time
-- QA tester: 0.5 full-time
-- UX designer: 0.5 full-time
+- Frontend Developer: 1 full-time
+- Backend Developer: 1 full-time
+- Database Administrator: 0.5 full-time (for migrations and optimization)
+- QA Engineer: 1 full-time (during testing phases)
+- Product Manager: 0.5 full-time (for requirements and coordination)
 
-## Success Metrics
+## Risks and Mitigations
 
-- 100% of energy_audit_tool.py functionality implemented in web application
-- Report generation time under 5 seconds
-- Visualization rendering time under 2 seconds
-- User satisfaction rating of 4/5 or higher for new features
-- 20% increase in recommendation implementation rate
+1. **Risk**: Complex calculations may not translate well from Python to TypeScript
+   **Mitigation**: Start with simple calculations and gradually add complexity, with thorough testing at each step
+
+2. **Risk**: Database performance issues with large product catalog
+   **Mitigation**: Implement proper indexing and pagination for product recommendations
+
+3. **Risk**: User experience issues with longer form flow
+   **Mitigation**: Implement save/resume functionality and progress indicators
+
+4. **Risk**: Integration with external product APIs may be unreliable
+   **Mitigation**: Implement caching and fallback mechanisms for product data
