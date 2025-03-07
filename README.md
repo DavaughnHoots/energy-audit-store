@@ -162,6 +162,69 @@ cd backend
 npm test
 ```
 
+## 🚀 Deploying to Heroku
+
+The application is optimized for deployment to Heroku with the following features:
+
+1. **Production Mode**
+   - The `Procfile` sets `NODE_ENV=production` to enable production optimizations
+   - The build script automatically removes development dependencies and test files in production
+
+2. **Optimized Build Process**
+   - Development files are excluded from the production build
+   - Test files and documentation are not included in the deployed application
+   - Only necessary scripts are included in the production build
+
+3. **Deployment Steps**
+
+   a. **Install the Heroku CLI**
+   ```bash
+   npm install -g heroku
+   ```
+
+   b. **Login to Heroku**
+   ```bash
+   heroku login
+   ```
+
+   c. **Create a new Heroku app**
+   ```bash
+   heroku create your-app-name
+   ```
+
+   d. **Add PostgreSQL addon**
+   ```bash
+   heroku addons:create heroku-postgresql:hobby-dev
+   ```
+
+   e. **Configure environment variables**
+   ```bash
+   heroku config:set JWT_SECRET=your_secret_key
+   heroku config:set NODE_ENV=production
+   ```
+
+   f. **Deploy the application**
+   ```bash
+   git push heroku main
+   ```
+
+   g. **Run database migrations**
+   ```bash
+   heroku run bash
+   cd backend
+   node build/scripts/heroku_migration.js
+   ```
+
+4. **Monitoring and Scaling**
+   - Use Heroku Dashboard to monitor application performance
+   - Scale dynos as needed based on traffic
+   - Monitor PostgreSQL connection limits and upgrade plan if necessary
+
+5. **Troubleshooting**
+   - Check logs with `heroku logs --tail`
+   - Restart the application with `heroku restart`
+   - Verify environment variables with `heroku config`
+
 ## 🤝 Contributing
 
 1. Fork the repository

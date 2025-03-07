@@ -14,13 +14,25 @@ This document provides an overview of all documentation files related to the Ene
 - **Purpose**: Outlines the overall implementation plan across 7 phases
 - **Content**: High-level plan with phases, timeline, resources, and risks
 - **Created**: At project initiation
-- **Last Updated**: When Phase 2 was completed
+- **Last Updated**: March 7, 2025 (Phase 3 completed)
 
 ### 3. energy_audit_calculation_implementation.txt
 - **Purpose**: Detailed implementation plan for Phase 3 (Calculation and Recommendation Engine)
 - **Content**: Mapping of Python functions to TypeScript, implementation tasks, integration plan
 - **Created**: March 6, 2025
-- **Last Updated**: March 6, 2025
+- **Last Updated**: March 7, 2025 (Updated with modular architecture)
+
+### 4. energy_audit_calculation_detailed_plan.txt
+- **Purpose**: Detailed implementation plan for calculation functions in Phase 3
+- **Content**: Function-by-function implementation details, testing strategy, timeline
+- **Created**: March 7, 2025
+- **Last Updated**: March 7, 2025
+
+### 5. energy_audit_calculation_testing.md
+- **Purpose**: Documentation for the energy audit calculation testing framework
+- **Content**: Overview of test components, instructions for running tests, test output explanation
+- **Created**: March 7, 2025
+- **Last Updated**: March 7, 2025
 
 ## Document Relationships
 
@@ -41,15 +53,40 @@ This document provides an overview of all documentation files related to the Ene
 │                           │      │                        │      │                               │
 └───────────┬───────────────┘      └────────────┬───────────┘      └───────────────┬───────────────┘
             │                                    │                                  │
+            │                                    │                                  ▼
+            │                                    │                  ┌───────────────────────────────┐
+            │                                    │                  │                               │
+            │                                    │                  │ energy_audit_calculation_detailed_plan.txt │
+            │                                    │                  │ (Function-by-function plan)   │
+            │                                    │                  │                               │
+            │                                    │                  └───────────────┬───────────────┘
             │                                    │                                  │
-            ▼                                    ▼                                  ▼
-┌───────────────────────────┐      ┌────────────────────────┐      ┌───────────────────────────────┐
-│                           │      │                        │      │                               │
-│ Database Schema           │      │ Frontend Components    │      │ Backend Services              │
-│ - energy_audits table     │      │ - EnergyAuditForm      │      │ - ExtendedCalculationService  │
-│ - product_preferences col │      │ - ProductPreferencesForm│      │ - ProductRecommendationService│
-│                           │      │                        │      │ - ReportGenerationService     │
-└───────────────────────────┘      └────────────────────────┘      └───────────────────────────────┘
+            │                                    │                                  ├───────────────┐
+            │                                    │                                  │               │
+            │                                    │                                  ▼               ▼
+            │                                    │                  ┌───────────────────────────┐   ┌───────────────────────────┐
+            │                                    │                  │                           │   │                           │
+            │                                    │                  │ Modular Backend Services  │   │ energy_audit_calculation_testing.md │
+            │                                    │                  │ - ExtendedCalculationService │   │ (Testing framework docs)   │
+            │                                    │                  │ - EnergyAnalysisService   │   │                           │
+            │                                    │                  │ - HvacAnalysisService     │   └───────────────────────────┘
+            │                                    │                  │ - LightingAnalysisService │
+            │                                    │                  │ - HumidityAnalysisService │
+            │                                    │                  │ - EfficiencyScoreService  │
+            │                                    │                  │ - RecommendationService   │
+            │                                    │                  │ - FinancialAnalysisService│
+            │                                    │                  │ - ProductRecommendationService │
+            │                                    │                  │ - ReportGenerationService │
+            │                                    │                  └───────────────────────────┘
+            │                                    │
+            ▼                                    ▼                  
+┌───────────────────────────┐      ┌────────────────────────┐      
+│                           │      │                        │      
+│ Database Schema           │      │ Frontend Components    │      
+│ - energy_audits table     │      │ - EnergyAuditForm      │      
+│ - product_preferences col │      │ - ProductPreferencesForm│      
+│                           │      │                        │      
+└───────────────────────────┘      └────────────────────────┘      
 ```
 
 ## Document Dependencies
@@ -80,6 +117,29 @@ This document provides an overview of all documentation files related to the Ene
   - Development team (for implementing Phase 3)
   - Testing team (for creating test cases)
   - Code reviewers (for verifying implementation)
+  - energy_audit_calculation_detailed_plan.txt (for detailed function implementation)
+
+### energy_audit_calculation_detailed_plan.txt
+- **Depends on**:
+  - energy_audit_calculation_implementation.txt (for high-level Phase 3 implementation plan)
+  - Python energy_audit_tool.py (for understanding calculation functions in detail)
+  - Modular service files (for current implementation status)
+- **Used by**:
+  - Development team (for implementing calculation functions)
+  - Testing team (for creating detailed test cases)
+  - Code reviewers (for verifying function-level implementation)
+  - energy_audit_calculation_testing.md (for test implementation)
+
+### energy_audit_calculation_testing.md
+- **Depends on**:
+  - energy_audit_calculation_detailed_plan.txt (for understanding what to test)
+  - Modular service files (for understanding implementation details)
+  - test_calculations.js (for test implementation details)
+  - calculationServices.test.ts (for test implementation details)
+- **Used by**:
+  - Development team (for running tests)
+  - QA team (for verifying test coverage)
+  - New team members (for understanding testing approach)
 
 ## Implementation Status Tracking
 
@@ -87,33 +147,101 @@ This document provides an overview of all documentation files related to the Ene
 - **Status**: Completed
 - **Documentation**: energy_audit_tool_implementation_plan.txt
 - **Key Deliverables**: 
-  - Updated database schema
-  - TypeScript interfaces
-  - Database migration scripts
+  - ✅ Updated database schema
+  - ✅ TypeScript interfaces
+  - ✅ Database migration scripts
 
 ### Phase 2: Frontend Form Updates
-- **Status**: In Progress
+- **Status**: Completed
 - **Documentation**: energy_audit_tool_implementation_plan.txt
 - **Key Deliverables**:
-  - ProductPreferencesForm component
-  - Updated EnergyAuditForm
-  - Updated FormProgressIndicator
+  - ✅ ProductPreferencesForm component
+  - ✅ Updated EnergyAuditForm
+  - ✅ Updated FormProgressIndicator
 
 ### Phase 3: Calculation and Recommendation Engine
-- **Status**: Partially Completed
+- **Status**: Completed
 - **Documentation**: energy_audit_calculation_implementation.txt
 - **Key Deliverables**:
+  - ✅ Modular calculation services architecture
   - ✅ ProductRecommendationService
   - ✅ Updated ReportGenerationService
-  - ⬜ Ported calculation functions (In Progress)
+  - ✅ Ported calculation functions
 
 ### Phase 4: API and Integration
-- **Status**: Partially Completed
+- **Status**: Completed
 - **Documentation**: energy_audit_calculation_implementation.txt
 - **Key Deliverables**:
   - ✅ Product recommendation API endpoints
   - ✅ Integration with product database
-  - ⬜ Update energyAudit routes (Pending)
+  - ✅ Updated energyAudit routes
+
+### Phase 5: UI for Recommendations
+- **Status**: Partially Completed
+- **Documentation**: energy_audit_tool_implementation_plan.txt
+- **Key Deliverables**:
+  - ✅ ProductRecommendationsPage component
+  - ✅ Filtering and sorting UI
+  - ⬜ Product comparison feature (Pending)
+  - ⬜ Detailed product view (Pending)
+
+### Phase 6: Testing and Deployment
+- **Status**: Partially Completed
+- **Documentation**: energy_audit_tool_implementation_plan.txt
+- **Key Deliverables**:
+  - ✅ Unit tests for calculation functions
+  - ⬜ Integration tests (Pending)
+  - ⬜ End-to-end testing (Pending)
+  - ⬜ Production deployment (Pending)
+
+## Modular Architecture Overview
+
+The calculation system has been refactored into a modular architecture with specialized services:
+
+### 1. ExtendedCalculationService
+- **Purpose**: Coordinates the comprehensive analysis by delegating to specialized services
+- **Location**: backend/src/services/extendedCalculationService.ts
+- **Dependencies**: All specialized analysis services
+
+### 2. EnergyAnalysisService
+- **Purpose**: Handles energy consumption analysis
+- **Location**: backend/src/services/energyAnalysisService.ts
+- **Key Functions**: performEnergyAnalysis, calculateEnergyScore
+
+### 3. HvacAnalysisService
+- **Purpose**: Handles HVAC system analysis
+- **Location**: backend/src/services/hvacAnalysisService.ts
+- **Key Functions**: performHvacAnalysis, calculateHeatTransfer, calculateHvacEnergy
+
+### 4. LightingAnalysisService
+- **Purpose**: Handles lighting system analysis
+- **Location**: backend/src/services/lightingAnalysisService.ts
+- **Key Functions**: performLightingAnalysis, calculateLightingScore
+
+### 5. HumidityAnalysisService
+- **Purpose**: Handles humidity control analysis
+- **Location**: backend/src/services/humidityAnalysisService.ts
+- **Key Functions**: performHumidityAnalysis, calculateHumidityScore
+
+### 6. EfficiencyScoreService
+- **Purpose**: Calculates efficiency scores
+- **Location**: backend/src/services/efficiencyScoreService.ts
+- **Key Functions**: calculateOverallEfficiencyScore, interpretEfficiencyScore
+
+### 7. RecommendationService
+- **Purpose**: Generates recommendations
+- **Location**: backend/src/services/recommendationService.ts
+- **Key Functions**: generateComprehensiveRecommendations, categorizeRecommendations
+
+### 8. FinancialAnalysisService
+- **Purpose**: Performs financial analysis
+- **Location**: backend/src/services/financialAnalysisService.ts
+- **Key Functions**: performFinancialAnalysis, analyzeCategoryFinancials, calculateTotalSavings
+
+### 9. ProductRecommendationService
+- **Purpose**: Recommends products based on user preferences
+- **Location**: backend/src/services/productRecommendationService.ts
+- **Key Functions**: getRecommendedProducts, filterByPreferences, sortByEfficiency
 
 ## How to Use This Documentation
 
@@ -121,13 +249,21 @@ This document provides an overview of all documentation files related to the Ene
    - Start with energy_audit_tool_implementation_plan.txt for a high-level overview
    - Review energy_audit_data_requirements.txt to understand the data model
    - Check energy_audit_calculation_implementation.txt for current implementation details
+   - Review the Modular Architecture Overview to understand the service structure
 
-2. **For Developers Implementing Phase 3**:
-   - Use energy_audit_calculation_implementation.txt as your primary guide
-   - Reference energy_audit_data_requirements.txt for data field details
-   - Check Python energy_audit_tool.py for original implementation details
+2. **For Developers Implementing New Features**:
+   - Identify the appropriate service for your feature
+   - Review the existing functions in that service
+   - Follow the modular architecture pattern for new implementations
+   - Add tests in calculationServices.test.ts for your new functions
 
-3. **For Project Managers**:
+3. **For Testing Team**:
+   - Use energy_audit_calculation_testing.md as your primary guide
+   - Run the test scripts using the provided runner scripts
+   - Review test output to verify calculation correctness
+   - Add new test cases as needed for new functionality
+
+4. **For Project Managers**:
    - Use energy_audit_tool_implementation_plan.txt to track overall progress
    - Use energy_audit_calculation_implementation.txt to track Phase 3 progress
    - Update documentation as phases are completed
@@ -152,3 +288,17 @@ To ensure documentation remains accurate and useful:
    - New tasks are identified
    - Integration details change
    - Testing strategy changes
+   - Modular architecture is modified
+
+4. Update energy_audit_calculation_detailed_plan.txt when:
+   - Function implementation status changes
+   - New implementation details are identified
+   - Testing approach changes
+   - Implementation timeline changes
+
+5. Update energy_audit_calculation_testing.md when:
+   - New test cases are added
+   - Test scripts are modified
+   - Test runner scripts are updated
+   - Testing approach changes
+   - Test output format changes
