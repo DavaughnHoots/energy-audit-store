@@ -871,29 +871,72 @@ export class EnergyAuditService {
         return null;
       }
 
-      // Update audit data
-      const result = await client.query(
-        `UPDATE energy_audits
-        SET basic_info = COALESCE($1, basic_info),
-            home_details = COALESCE($2, home_details),
-            current_conditions = COALESCE($3, current_conditions),
-            heating_cooling = COALESCE($4, heating_cooling),
-            energy_consumption = COALESCE($5, energy_consumption),
-            product_preferences = COALESCE($6, product_preferences),
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $7 AND user_id = $8
-        RETURNING *`,
-        [
-          auditData.basicInfo || null,
-          auditData.homeDetails || null,
-          auditData.currentConditions || null,
-          auditData.heatingCooling || null,
-          auditData.energyConsumption || null,
-          auditData.productPreferences || null,
-          auditId,
-          userId
-        ]
-      );
+      // Format data as JSONB for the fields that are provided
+      const jsonData: Record<string, string | null> = {};
+      
+      if (auditData.basicInfo) {
+        jsonData.basic_info = JSON.stringify(auditData.basicInfo);
+      }
+      
+      if (auditData.homeDetails) {
+        jsonData.home_details = JSON.stringify(auditData.homeDetails);
+      }
+      
+      if (auditData.currentConditions) {
+        jsonData.current_conditions = JSON.stringify(auditData.currentConditions);
+      }
+      
+      if (auditData.heatingCooling) {
+        jsonData.heating_cooling = JSON.stringify(auditData.heatingCooling);
+      }
+      
+      if (auditData.energyConsumption) {
+        jsonData.energy_consumption = JSON.stringify(auditData.energyConsumption);
+      }
+      
+      if (auditData.productPreferences) {
+        jsonData.product_preferences = JSON.stringify(auditData.productPreferences);
+      }
+
+      // Build the SQL query dynamically based on what fields are provided
+      const setClauses = [];
+      const queryParams = [];
+      let paramIndex = 1;
+      
+      for (const [key, value] of Object.entries(jsonData)) {
+        if (value !== null) {
+          setClauses.push(`${key} = $${paramIndex}::jsonb`);
+          queryParams.push(value);
+          paramIndex++;
+        }
+      }
+      
+      // Always add updated_at
+      setClauses.push(`updated_at = CURRENT_TIMESTAMP`);
+      
+      // Add the WHERE clause parameters
+      queryParams.push(auditId);
+      queryParams.push(userId);
+      
+      // If no fields to update, just return the current audit
+      if (setClauses.length === 1) { // Only updated_at
+        const currentAudit = await client.query(
+          'SELECT * FROM energy_audits WHERE id = $1',
+          [auditId]
+        );
+        await client.query('COMMIT');
+        return currentAudit.rows[0];
+      }
+      
+      // Build and execute the query
+      const updateQuery = `
+        UPDATE energy_audits
+        SET ${setClauses.join(', ')}
+        WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1}
+        RETURNING *
+      `;
+      
+      const result = await client.query(updateQuery, queryParams);
 
       await client.query('COMMIT');
       return result.rows[0];

@@ -66,3 +66,34 @@ trunk/
 *.pack
 *.sample
 *.git
+
+# Test files
+**/*.test.ts
+**/*.test.js
+**/__tests__/
+**/tests/
+backend/src/scripts/test_*.js
+backend/src/scripts/run_*_tests.*
+
+# Documentation files
+*.md
+*.txt
+!README.md
+
+# Development scripts and utilities
+backend/src/scripts/
+!backend/src/scripts/heroku_*.js
+!backend/src/scripts/heroku_*.ts
+
+# Migration scripts (only needed during development)
+# Keep the migrations directory but exclude specific files
+# that are only needed for development
+backend/src/migrations/*_fix_*.sql
+backend/src/migrations/*_test_*.sql
+
+# PDF and other large files
+*.pdf
+
+# Editor config files
+.eslintrc*
+.prettierrc*

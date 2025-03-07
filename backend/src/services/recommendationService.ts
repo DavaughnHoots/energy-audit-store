@@ -1,256 +1,234 @@
-// backend/src/services/recommendationService.ts
+import { appLogger } from '../config/logger.js';
+import { ExtendedEnergyAuditData } from '../types/energyAuditExtended.js';
+import { generateLightingRecommendations } from './lightingAnalysisService.js';
+import { generateHumidityRecommendations } from './humidityAnalysisService.js';
+import { estimateEnergySavings, estimateSeasonalSavings, performEnergyAnalysis } from './energyAnalysisService.js';
+import { estimateHvacSavings, performHvacAnalysis } from './hvacAnalysisService.js';
+import { calculateTotalSavings, estimateImplementationCost } from './financialAnalysisService.js';
 
-import { Pool } from 'pg';
-import { Product } from '../types/product.js';
-import { EnergyAuditData } from '../types/energyAudit.js';
-
-export interface Recommendation {
-  id: string;
-  userId: string;
-  productId: string;
-  type: 'product' | 'improvement';
-  priority: 'high' | 'medium' | 'low';
-  reason: string;
-  potentialSavings: number;
-  createdAt: Date;
-}
-
-interface EnergyProfile {
-  heatingEfficiency: number;
-  coolingEfficiency: number;
-  insulationScore: number;
-  windowEfficiency: number;
-  applianceAge: number;
-}
-
-export class RecommendationService {
-  private pool: Pool;
-
-  constructor(pool: Pool) {
-    this.pool = pool;
-  }
-
-  async generateRecommendations(userId: string, auditData: EnergyAuditData): Promise<Recommendation[]> {
-    const recommendations: Recommendation[] = [];
+/**
+ * Generate comprehensive recommendations (matching Python tool's _generate_comprehensive_recommendations)
+ * 
+ * This function generates a comprehensive set of recommendations based on the energy audit data.
+ * It coordinates the generation of specific recommendations for each category:
+ * - Energy recommendations: Based on energy consumption and efficiency
+ * - HVAC recommendations: Based on heating and cooling system analysis
+ * - Lighting recommendations: Based on lighting fixture analysis
+ * - Humidity recommendations: Based on humidity control analysis
+ * 
+ * Recommendations are categorized by priority:
+ * - Immediate actions: High priority recommendations that should be implemented immediately
+ * - Short-term: Medium priority recommendations that should be implemented in the near future
+ * - Long-term: Low priority recommendations that can be implemented over time
+ * 
+ * The function also calculates estimated savings for each recommendation category.
+ * 
+ * @param auditData - Complete energy audit data with all components
+ * @returns Structured recommendations object with actions and estimated savings
+ */
+export function generateComprehensiveRecommendations(auditData: ExtendedEnergyAuditData) {
+  appLogger.info('Generating comprehensive recommendations');
+  
+  // Initialize recommendations structure
+  const recommendations: any = {
+    immediate_actions: [],
+    short_term: [],
+    long_term: [],
+    product_recommendations: {},
+    estimated_savings: {},
+  };
+  
+  try {
+    appLogger.debug('Starting recommendation generation process');
     
-    // Get user's energy profile
-    const energyProfile = await this.analyzeEnergyProfile(auditData);
-    
-    // Get matching products
-    const products = await this.findMatchingProducts(energyProfile);
-    
-    // Generate product recommendations
-    for (const product of products) {
-      const savings = await this.calculatePotentialSavings(product, auditData);
-      
-      if (savings > 0) {
-        recommendations.push({
-          id: crypto.randomUUID(),
-          userId,
-          productId: product.id,
-          type: 'product',
-          priority: this.calculatePriority(savings),
-          reason: this.generateRecommendationReason(product, savings),
-          potentialSavings: savings,
-          createdAt: new Date()
-        });
+    // Generate and categorize energy recommendations
+    if (auditData.energyConsumption) {
+      appLogger.debug('Generating energy recommendations');
+      const energyRecs = generateEnergyRecommendations(auditData);
+      if (energyRecs && energyRecs.length > 0) {
+        appLogger.debug(`Found ${energyRecs.length} energy recommendations`);
+        categorizeRecommendations(energyRecs, recommendations);
       }
     }
-
+    
+    // Generate and categorize HVAC recommendations
+    if (auditData.heatingCooling) {
+      appLogger.debug('Generating HVAC recommendations');
+      const hvacRecs = generateHvacRecommendations(auditData);
+      if (hvacRecs && hvacRecs.length > 0) {
+        appLogger.debug(`Found ${hvacRecs.length} HVAC recommendations`);
+        categorizeRecommendations(hvacRecs, recommendations);
+      }
+    }
+    
+    // Generate and categorize lighting recommendations
+    if (auditData.currentConditions.lighting) {
+      appLogger.debug('Generating lighting recommendations');
+      const lightingRecs = generateLightingRecommendations(auditData.currentConditions.lighting);
+      if (lightingRecs && lightingRecs.length > 0) {
+        appLogger.debug(`Found ${lightingRecs.length} lighting recommendations`);
+        categorizeRecommendations(lightingRecs, recommendations);
+      }
+    }
+    
+    // Generate and categorize humidity recommendations
+    if (auditData.currentConditions.humidity) {
+      appLogger.debug('Generating humidity recommendations');
+      const humidityRecs = generateHumidityRecommendations(auditData.currentConditions);
+      if (humidityRecs && humidityRecs.length > 0) {
+        appLogger.debug(`Found ${humidityRecs.length} humidity recommendations`);
+        categorizeRecommendations(humidityRecs, recommendations);
+      }
+    }
+    
+    // Add product recommendations if available
+    if (auditData.productPreferences) {
+      appLogger.debug('Adding product recommendations based on preferences');
+      recommendations.product_recommendations = generateProductRecommendations(
+        auditData.productPreferences
+      );
+    }
+    
+    // Calculate total estimated savings across all recommendation categories
+    recommendations.estimated_savings = calculateTotalSavings(recommendations);
+    
+    // Log recommendation summary
+    appLogger.info(`Generated ${recommendations.immediate_actions.length} immediate, ${recommendations.short_term.length} short-term, and ${recommendations.long_term.length} long-term recommendations`);
+    
     return recommendations;
-  }
-
-  private async analyzeEnergyProfile(auditData: EnergyAuditData): Promise<EnergyProfile> {
-    const profile: EnergyProfile = {
-      heatingEfficiency: this.calculateHeatingEfficiency(auditData),
-      coolingEfficiency: this.calculateCoolingEfficiency(auditData),
-      insulationScore: this.calculateInsulationScore(auditData),
-      windowEfficiency: this.calculateWindowEfficiency(auditData),
-      applianceAge: this.getApplianceAge(auditData)
+  } catch (error) {
+    appLogger.error('Recommendation generation failed', { error });
+    // Return empty recommendations structure in case of error
+    return {
+      immediate_actions: [],
+      short_term: [],
+      long_term: [],
+      product_recommendations: {},
+      estimated_savings: {},
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
-
-    return profile;
   }
+}
 
-  private calculateHeatingEfficiency(auditData: EnergyAuditData): number {
-    const { heatingSystem } = auditData.heatingCooling;
-    let efficiency = 1.0;
+/**
+ * Generate product recommendations based on user preferences
+ * 
+ * This is a placeholder function that would normally integrate with a product database
+ * to recommend specific products based on user preferences.
+ * 
+ * @param preferences - User product preferences
+ * @returns Product recommendations object (currently a placeholder)
+ */
+export function generateProductRecommendations(preferences: any) {
+  appLogger.debug('Generating product recommendations based on preferences');
+  
+  // This is a placeholder - in a real implementation, this would query a product database
+  // based on the user's preferences and return actual product recommendations
+  return {
+    categories: preferences.categories || [],
+    features: preferences.features || [],
+    budget_constraint: preferences.budgetConstraint || 0,
+    // Placeholder for actual product recommendations
+    recommended_products: []
+  };
+}
 
-    // Reduce efficiency based on system age
-    if (heatingSystem.age > 15) efficiency *= 0.7;
-    else if (heatingSystem.age > 10) efficiency *= 0.85;
-
-    // Factor in fuel type efficiency
-    const fuelEfficiency: Record<string, number> = {
-      'natural-gas': 0.95,
-      'oil': 0.85,
-      'electric': 1.0,
-      'propane': 0.90
-    };
-    efficiency *= fuelEfficiency[heatingSystem.fuelType as keyof typeof fuelEfficiency] || 0.85;
-
-    return efficiency;
+/**
+ * Generate energy recommendations (matching Python tool's _generate_energy_recommendations)
+ * 
+ * @param auditData - Energy audit data
+ * @returns Array of energy recommendations
+ */
+export function generateEnergyRecommendations(auditData: ExtendedEnergyAuditData) {
+  const recommendations = [];
+  const energyConsumption = auditData.energyConsumption;
+  
+  // Perform energy analysis to get efficiency metrics
+  const energyResults = performEnergyAnalysis(energyConsumption);
+  
+  // Check overall efficiency
+  if (energyResults.efficiency_metrics.overall_efficiency < 80) {
+    recommendations.push({
+      category: "energy",
+      priority: "high",
+      title: "Improve Overall Energy Efficiency",
+      description: "Implementation of energy management system recommended",
+      estimated_savings: estimateEnergySavings(energyConsumption),
+      implementation_cost: estimateImplementationCost("energy_management"),
+      payback_period: null, // Will be calculated later
+    });
   }
+  
+  // Check seasonal impact
+  if (Math.abs(energyResults.efficiency_metrics.seasonal_impact) > 20) {
+    recommendations.push({
+      category: "energy",
+      priority: "medium",
+      title: "Optimize Seasonal Energy Usage",
+      description: "Implement seasonal adjustment strategies",
+      estimated_savings: estimateSeasonalSavings(energyConsumption),
+      implementation_cost: estimateImplementationCost("seasonal_optimization"),
+      payback_period: null,
+    });
+  }
+  
+  return recommendations;
+}
 
-  private calculateCoolingEfficiency(auditData: EnergyAuditData): number {
-    const { coolingSystem } = auditData.heatingCooling;
-    let efficiency = 1.0;
+/**
+ * Generate HVAC recommendations (matching Python tool's _generate_hvac_recommendations)
+ * 
+ * @param auditData - Energy audit data
+ * @returns Array of HVAC recommendations
+ */
+export function generateHvacRecommendations(auditData: ExtendedEnergyAuditData) {
+  const recommendations = [];
+  const hvacData = auditData.heatingCooling;
+  
+  // Perform HVAC analysis to get efficiency metrics
+  const hvacResults = performHvacAnalysis(hvacData);
+  
+  // Check system efficiency
+  if (hvacResults.system_efficiency.efficiency_gap > 10) {
+    recommendations.push({
+      category: "hvac",
+      priority: "high",
+      title: "HVAC System Upgrade Required",
+      description: "Current system operating below optimal efficiency",
+      estimated_savings: estimateHvacSavings(hvacData),
+      implementation_cost: estimateImplementationCost("hvac_upgrade"),
+      payback_period: null,
+    });
+  }
+  
+  return recommendations;
+}
 
-    // Adjust based on system type and age
-    if (coolingSystem.type === 'central') {
-      if (coolingSystem.age > 10) efficiency *= 0.75;
-      else if (coolingSystem.age > 5) efficiency *= 0.9;
-    } else if (coolingSystem.type === 'window-unit') {
-      efficiency *= 0.8;
+/**
+ * Categorize recommendations (matching Python tool's _categorize_recommendations)
+ * 
+ * This function categorizes recommendations by priority:
+ * - High priority recommendations go to immediate_actions
+ * - Medium priority recommendations go to short_term
+ * - Low priority recommendations go to long_term
+ * 
+ * @param recommendationsList - Array of recommendations to categorize
+ * @param recommendationsDict - Recommendations object to populate
+ */
+export function categorizeRecommendations(recommendationsList: any[], recommendationsDict: any) {
+  if (!recommendationsList || recommendationsList.length === 0) {
+    return;
+  }
+  
+  for (const rec of recommendationsList) {
+    const priority = (rec.priority || "medium").toLowerCase();
+    
+    if (priority === "high") {
+      recommendationsDict.immediate_actions.push(rec);
+    } else if (priority === "medium") {
+      recommendationsDict.short_term.push(rec);
+    } else {
+      recommendationsDict.long_term.push(rec);
     }
-
-    return efficiency;
-  }
-
-  private calculateInsulationScore(auditData: EnergyAuditData): number {
-    const { insulation } = auditData.currentConditions;
-    const scores: Record<string, number> = {
-      'poor': 0,
-      'average': 1,
-      'good': 2,
-      'excellent': 3
-    };
-
-    return (
-      scores[insulation.attic as keyof typeof scores] +
-      scores[insulation.walls as keyof typeof scores] +
-      scores[insulation.basement as keyof typeof scores] +
-      scores[insulation.floor as keyof typeof scores]
-    ) / 12; // Normalize to 0-1 scale
-  }
-
-  private calculateWindowEfficiency(auditData: EnergyAuditData): number {
-    const { windowType, windowCondition } = auditData.currentConditions;
-    
-    const typeScores: Record<string, number> = {
-      'single': 0.3,
-      'double': 0.7,
-      'triple': 1.0,
-      'not-sure': 0.5
-    };
-
-    const conditionScores: Record<string, number> = {
-      'poor': 0.3,
-      'fair': 0.6,
-      'good': 0.8,
-      'excellent': 1.0
-    };
-
-    const typeScore = typeScores[windowType as keyof typeof typeScores] || 0.5;
-    const conditionScore = conditionScores[windowCondition as keyof typeof conditionScores] || 0.5;
-
-    return (typeScore + conditionScore) / 2;
-  }
-
-  private getApplianceAge(auditData: EnergyAuditData): number {
-    // Average age of major appliances
-    return auditData.heatingCooling.heatingSystem.age;
-  }
-
-  private async findMatchingProducts(energyProfile: EnergyProfile): Promise<Product[]> {
-    // Query database for products matching the energy profile
-    const result = await this.pool.query(
-      `SELECT * FROM products WHERE 
-       category = ANY($1) AND 
-       efficiency_rating >= $2
-       ORDER BY efficiency_rating DESC
-       LIMIT 10`,
-      [this.determineRelevantCategories(energyProfile), 
-       this.calculateMinEfficiencyThreshold(energyProfile)]
-    );
-
-    return result.rows;
-  }
-
-  private determineRelevantCategories(profile: EnergyProfile): string[] {
-    const categories: string[] = [];
-    
-    if (profile.heatingEfficiency < 0.8) categories.push('heating');
-    if (profile.coolingEfficiency < 0.8) categories.push('cooling');
-    if (profile.insulationScore < 0.7) categories.push('insulation');
-    if (profile.windowEfficiency < 0.6) categories.push('windows');
-    
-    return categories;
-  }
-
-  private calculateMinEfficiencyThreshold(profile: EnergyProfile): number {
-    // Dynamic threshold based on current efficiency levels
-    const values = Object.values(profile) as number[];
-    return Math.min(...values) + 0.2;
-  }
-
-  private async calculatePotentialSavings(product: Product, auditData: EnergyAuditData): Promise<number> {
-    // Calculate potential annual savings based on product specs and current usage
-    const baselineUsage = this.calculateBaselineUsage(auditData);
-    const projectedUsage = this.calculateProjectedUsage(baselineUsage, product);
-    const energyRate = await this.getEnergyRate(auditData.basicInfo.address);
-    
-    return (baselineUsage - projectedUsage) * energyRate;
-  }
-
-  private calculateBaselineUsage(auditData: EnergyAuditData): number {
-    return auditData.energyConsumption.monthlyBill * 12;
-  }
-
-  private calculateProjectedUsage(baselineUsage: number, product: Product): number {
-    const efficiencyImprovement = parseFloat(product.efficiency.replace(/[^0-9.]/g, '')) / 100;
-    return baselineUsage * (1 - efficiencyImprovement);
-  }
-
-  private async getEnergyRate(address: string): Promise<number> {
-    // Lookup energy rate by location
-    // For now, using US average
-    return 0.14; // $0.14 per kWh
-  }
-
-  private calculatePriority(savings: number): 'high' | 'medium' | 'low' {
-    if (savings > 500) return 'high';
-    if (savings > 200) return 'medium';
-    return 'low';
-  }
-
-  private generateRecommendationReason(product: Product, savings: number): string {
-    return `Based on your energy audit, replacing your current ${product.mainCategory.toLowerCase()} ` +
-           `with this ${product.name} could save you $${Math.round(savings)} annually`;
-  }
-
-  async storeRecommendations(recommendations: Recommendation[]): Promise<void> {
-    const client = await this.pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      for (const rec of recommendations) {
-        await client.query(
-          `INSERT INTO recommendations (
-            id, user_id, product_id, type, priority,
-            reason, potential_savings, created_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [rec.id, rec.userId, rec.productId, rec.type, rec.priority,
-           rec.reason, rec.potentialSavings, rec.createdAt]
-        );
-      }
-
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
-  }
-
-  async getUserRecommendations(userId: string): Promise<Recommendation[]> {
-    const result = await this.pool.query(
-      `SELECT * FROM recommendations 
-       WHERE user_id = $1 
-       ORDER BY created_at DESC`,
-      [userId]
-    );
-    return result.rows;
   }
 }

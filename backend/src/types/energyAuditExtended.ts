@@ -41,6 +41,14 @@ export interface ExtendedCoolingSystem extends CoolingSystem {
   targetEfficiency: number; // Target efficiency percentage
 }
 
+// Surface data for heat transfer calculations
+export interface BuildingSurface {
+  name: string;
+  uValue: number; // Thermal transmittance (W/m²K)
+  area: number; // Surface area (m²)
+  type?: string; // Wall, roof, floor, window, etc.
+}
+
 // Extended HVAC with additional fields from Python tool
 export interface ExtendedHeatingCooling extends HeatingCooling {
   heatingSystem: ExtendedHeatingSystem;
@@ -48,6 +56,7 @@ export interface ExtendedHeatingCooling extends HeatingCooling {
   temperatureDifference: number; // Indoor vs. outdoor temperature difference
   airDensity: number; // Default: 1.225 kg/m³
   specificHeat: number; // Default: 1005 J/kg·K
+  surfaces?: BuildingSurface[]; // Building surfaces for heat transfer calculations
 }
 
 // Lighting fixture data
