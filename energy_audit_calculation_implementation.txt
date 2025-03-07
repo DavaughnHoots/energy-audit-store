@@ -1,0 +1,214 @@
+# Energy Audit Calculation Implementation Plan
+
+This document provides a detailed implementation plan for Phase 3 of the Energy Audit Tool implementation, focusing on the Calculation and Recommendation Engine. It connects the existing documentation with the specific implementation details.
+
+## Document Connections
+
+- **Builds on**: energy_audit_data_requirements.txt (defines data fields needed)
+- **Extends**: energy_audit_tool_implementation_plan.txt (Phase 3 details)
+- **Implements**: Python energy_audit_tool.py functionality in TypeScript
+
+## Phase 3: Calculation and Recommendation Engine
+
+### 1. Port Python Calculation Functions to TypeScript
+
+#### 1.1 Energy Analysis Functions
+
+| Python Function | TypeScript Implementation | Status | Description |
+|-----------------|---------------------------|--------|-------------|
+| `_perform_energy_analysis` | `_performEnergyAnalysis` in extendedCalculationService.ts | Partially Implemented | Calculates base energy consumption with seasonal and occupancy factors |
+| `_calculate_energy_score` | `_calculateEnergyScore` in extendedCalculationService.ts | Partially Implemented | Calculates energy efficiency score |
+
+**Implementation Tasks:**
+- Complete the implementation of `_performEnergyAnalysis` to match Python functionality
+- Add proper error handling and validation
+- Add unit tests to verify calculations match Python implementation
+
+#### 1.2 HVAC Analysis Functions
+
+| Python Function | TypeScript Implementation | Status | Description |
+|-----------------|---------------------------|--------|-------------|
+| `_perform_hvac_analysis` | `_performHvacAnalysis` in extendedCalculationService.ts | Partially Implemented | Analyzes HVAC system efficiency |
+| `_calculate_hvac_energy` | `_calculateHvacEnergy` in extendedCalculationService.ts | Partially Implemented | Calculates HVAC energy consumption |
+| `_calculate_hvac_score` | `_calculateHvacScore` in extendedCalculationService.ts | Partially Implemented | Calculates HVAC efficiency score |
+
+**Implementation Tasks:**
+- Complete the implementation of HVAC analysis functions
+- Add heat transfer calculations
+- Add unit tests for HVAC calculations
+
+#### 1.3 Lighting Analysis Functions
+
+| Python Function | TypeScript Implementation | Status | Description |
+|-----------------|---------------------------|--------|-------------|
+| `_perform_lighting_analysis` | `_performLightingAnalysis` in extendedCalculationService.ts | Partially Implemented | Analyzes lighting fixtures for efficiency |
+| `_calculate_lighting_score` | `_calculateLightingScore` in extendedCalculationService.ts | Partially Implemented | Calculates lighting efficiency score |
+
+**Implementation Tasks:**
+- Complete the implementation of lighting analysis functions
+- Add fixture-specific calculations
+- Add unit tests for lighting calculations
+
+#### 1.4 Humidity Analysis Functions
+
+| Python Function | TypeScript Implementation | Status | Description |
+|-----------------|---------------------------|--------|-------------|
+| `_perform_humidity_analysis` | `_performHumidityAnalysis` in extendedCalculationService.ts | Partially Implemented | Analyzes humidity control needs |
+| `_calculate_humidity_score` | `_calculateHumidityScore` in extendedCalculationService.ts | Partially Implemented | Calculates humidity control score |
+
+**Implementation Tasks:**
+- Complete the implementation of humidity analysis functions
+- Add dehumidification needs calculations
+- Add unit tests for humidity calculations
+
+#### 1.5 Overall Efficiency Score Functions
+
+| Python Function | TypeScript Implementation | Status | Description |
+|-----------------|---------------------------|--------|-------------|
+| `_calculate_overall_efficiency_score` | `_calculateOverallEfficiencyScore` in extendedCalculationService.ts | Partially Implemented | Calculates overall building efficiency score |
+| `_interpret_efficiency_score` | `_interpretEfficiencyScore` in extendedCalculationService.ts | Implemented | Interprets the efficiency score |
+
+**Implementation Tasks:**
+- Complete the implementation of overall efficiency score calculation
+- Add weighting factors for different components
+- Add unit tests for overall score calculation
+
+### 2. Implement Product Recommendation Algorithm
+
+#### 2.1 Create ProductRecommendationService
+
+Created a new service in `backend/src/services/productRecommendationService.ts` that implements the functionality of the Python `ProductRecommender` class.
+
+The implementation includes:
+- Loading and categorizing products from the database
+- Extracting efficiency metrics for each product category
+- Recommending products based on user preferences
+- Filtering products by features and budget constraints
+- Sorting products by efficiency and price
+- Calculating potential savings from recommended products
+- Generating product recommendations for reports
+
+**Status: Completed**
+
+#### 2.2 Recommendation Generation Functions
+
+| Python Function | TypeScript Implementation | Status | Description |
+|-----------------|---------------------------|--------|-------------|
+| `_generate_comprehensive_recommendations` | `_generateComprehensiveRecommendations` in extendedCalculationService.ts | Partially Implemented | Generates all recommendations |
+| `_generate_energy_recommendations` | `_generateEnergyRecommendations` in extendedCalculationService.ts | Partially Implemented | Generates energy-specific recommendations |
+| `_generate_hvac_recommendations` | `_generateHvacRecommendations` in extendedCalculationService.ts | Partially Implemented | Generates HVAC-specific recommendations |
+| `_generate_lighting_recommendations` | `_generateLightingRecommendations` in extendedCalculationService.ts | Partially Implemented | Generates lighting-specific recommendations |
+| `_generate_humidity_recommendations` | `_generateHumidityRecommendations` in extendedCalculationService.ts | Partially Implemented | Generates humidity-specific recommendations |
+
+**Implementation Tasks:**
+- Complete the implementation of recommendation generation functions
+- Integrate with ProductRecommendationService
+- Add unit tests for recommendation generation
+
+#### 2.3 Financial Analysis Functions
+
+| Python Function | TypeScript Implementation | Status | Description |
+|-----------------|---------------------------|--------|-------------|
+| `_perform_financial_analysis` | `_performFinancialAnalysis` in extendedCalculationService.ts | Partially Implemented | Calculates financial metrics for recommendations |
+| `_analyze_category_financials` | `_analyzeCategoryFinancials` in extendedCalculationService.ts | Partially Implemented | Analyzes financials for each category |
+| `_calculate_average_payback` | `_calculateAveragePayback` in extendedCalculationService.ts | Partially Implemented | Calculates average payback period |
+| `_calculate_total_savings` | `_calculateTotalSavings` in extendedCalculationService.ts | Partially Implemented | Calculates total savings across all recommendations |
+
+**Implementation Tasks:**
+- Complete the implementation of financial analysis functions
+- Add ROI calculations
+- Add unit tests for financial calculations
+
+### 3. Update ReportGenerationService
+
+#### 3.1 Add Product Recommendations to Reports
+
+Updated the `ReportGenerationService` in `backend/src/services/ReportGenerationService.ts` to include product recommendations in the generated reports.
+
+The implementation includes:
+- Adding a dedicated "Product Recommendations" section to the PDF report
+- Retrieving product recommendations based on user preferences
+- Displaying top recommended products by category
+- Showing efficiency ratings, prices, and features for each product
+- Calculating and displaying potential savings for each category
+- Showing total estimated annual savings from all recommended products
+
+**Status: Completed**
+
+#### 3.2 Add Visualizations for Product Comparisons
+
+Add visualizations to the reports that compare recommended products based on efficiency, cost, and savings.
+
+**Implementation Tasks:**
+- Create visualization functions for product comparisons
+- Add charts and graphs to reports
+- Add unit tests for visualization generation
+
+## Integration Plan
+
+### 1. Connect Components
+
+1. Connect ExtendedCalculationService with ProductRecommendationService
+2. Connect ProductRecommendationService with ReportGenerationService
+3. Connect EnergyAuditService with ProductRecommendationService
+
+### 2. API Updates
+
+1. Update `/api/energy-audit/:id` endpoint to include product recommendations (Pending)
+2. Created new endpoint `/api/recommendations/products?auditId={id}` for product recommendations (Completed)
+3. Created new endpoint `/api/recommendations/products/categories` for product categories (Completed)
+4. Created new endpoint `/api/recommendations/products/features` for product features (Completed)
+5. Created new endpoint `/api/recommendations/products/category/:category` for category statistics (Completed)
+
+### 3. Database Integration
+
+1. Ensured product database is accessible to ProductRecommendationService (Completed)
+2. Add caching for product recommendations to improve performance (Pending)
+3. Add indexes for efficient product filtering (Pending)
+
+## Testing Strategy
+
+### 1. Unit Tests
+
+1. Test each calculation function against known inputs and outputs
+2. Test recommendation algorithm with various user preferences
+3. Test financial calculations with different scenarios
+
+### 2. Integration Tests
+
+1. Test end-to-end flow from audit data to recommendations
+2. Test report generation with recommendations
+3. Test API endpoints for recommendations
+
+### 3. Performance Tests
+
+1. Test recommendation algorithm with large product database
+2. Test report generation with many recommendations
+3. Test API response times under load
+
+## Timeline
+
+- Week 1 (March 6-8): Implement ProductRecommendationService (Completed)
+- Week 2 (March 9-13): Port calculation functions (In Progress)
+- Week 3 (March 14-17): Complete API and Integration (Partially Completed)
+- Week 4 (March 18-25): UI for Recommendations (Not Started)
+
+## Dependencies
+
+- Product database must be populated with energy-efficient products
+- ExtendedCalculationService must be completed
+- ReportGenerationService must support adding new sections
+
+## Risks and Mitigations
+
+1. **Risk**: Complex calculations may not translate well from Python to TypeScript
+   **Mitigation**: Implement unit tests that compare results with Python implementation
+
+2. **Risk**: Product recommendation algorithm may be slow with large database
+   **Mitigation**: Implement caching and pagination for recommendations
+
+3. **Risk**: Report generation with recommendations may be resource-intensive
+   **Mitigation**: Generate reports asynchronously and notify users when complete
+
+4. **Risk**: Integration between services may introduce bugs
+   **Mitigation**: Implement comprehensive integration tests and error handling

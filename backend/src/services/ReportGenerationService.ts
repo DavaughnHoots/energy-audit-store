@@ -4,6 +4,7 @@ import { Chart, TooltipItem } from 'chart.js/auto';
 import { EnergyAuditData, AuditRecommendation } from '../types/energyAudit.js';
 import { dashboardService } from './dashboardService.js';
 import { appLogger } from '../utils/logger.js';
+import { productRecommendationService } from './productRecommendationService.js';
 
 export class ReportGenerationService {
   private async generateSavingsChart(
@@ -588,6 +589,94 @@ export class ReportGenerationService {
           .fontSize(12)
           .text('Savings analysis chart could not be generated')
           .moveDown();
+      }
+
+      // Product Recommendations
+      try {
+        appLogger.debug('Adding product recommendations section');
+        
+        if (auditData.productPreferences) {
+          doc
+            .addPage()
+            .fontSize(16)
+            .text('Product Recommendations', { align: 'center' })
+            .moveDown();
+          
+          // Get product recommendations
+          const recommendations = await productRecommendationService.recommendProducts(
+            auditData.productPreferences
+          );
+          
+          if (Object.keys(recommendations).length === 0) {
+            doc
+              .fontSize(12)
+              .text('No specific product recommendations available at this time.')
+              .moveDown();
+          } else {
+            // Calculate potential savings for each category
+            const savingsByCategory: Record<string, number> = {};
+            let totalSavings = 0;
+            
+            for (const [category, products] of Object.entries(recommendations)) {
+              const savings = productRecommendationService.calculateProductSavings(products);
+              savingsByCategory[category] = savings;
+              totalSavings += savings;
+              
+              // Format category name
+              const formattedCategory = category
+                .split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+              
+              doc
+                .fontSize(14)
+                .fillColor('#0284c7')
+                .text(`${formattedCategory} Recommendations`)
+                .fillColor('black')
+                .fontSize(12)
+                .moveDown(0.5);
+              
+              // List top products
+              for (const product of products.slice(0, 3)) { // Show top 3 products
+                doc
+                  .fontSize(12)
+                  .text(`• ${product.productName}`)
+                  .fontSize(10)
+                  .text(`  Efficiency: ${product.efficiencyRating || 'N/A'}`, { indent: 10 })
+                  .text(`  Price: $${product.price ? product.price.toFixed(2) : 'N/A'}`, { indent: 10 });
+                
+                if (product.features) {
+                  doc.text(`  Features: ${product.features}`, { indent: 10 });
+                }
+                
+                doc.moveDown(0.5);
+              }
+              
+              // Show estimated savings
+              if (savings > 0) {
+                doc
+                  .fontSize(11)
+                  .text(`Estimated Annual Savings: $${savings.toFixed(2)}`)
+                  .moveDown();
+              }
+              
+              doc.moveDown();
+            }
+            
+            // Add total savings
+            if (totalSavings > 0) {
+              doc
+                .fontSize(14)
+                .text(`Total Estimated Annual Savings: $${totalSavings.toFixed(2)}`)
+                .moveDown();
+            }
+          }
+          
+          appLogger.debug('Product recommendations section added successfully');
+        }
+      } catch (error) {
+        appLogger.error('Error adding product recommendations section', { error });
+        // Continue without product recommendations section
       }
 
       // Summary
