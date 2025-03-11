@@ -11,10 +11,10 @@ This document provides an overview of all documentation files related to the Ene
 - **Last Updated**: When product preferences were added
 
 ### 2. energy_audit_tool_implementation_plan.txt
-- **Purpose**: Outlines the overall implementation plan across 7 phases
+- **Purpose**: Outlines the overall implementation plan across 8 phases
 - **Content**: High-level plan with phases, timeline, resources, and risks
 - **Created**: At project initiation
-- **Last Updated**: March 7, 2025 (Phase 3 completed)
+- **Last Updated**: March 11, 2025 (Added Phase 8 for PDF Report Enhancement)
 
 ### 3. energy_audit_calculation_implementation.txt
 - **Purpose**: Detailed implementation plan for Phase 3 (Calculation and Recommendation Engine)
@@ -33,6 +33,12 @@ This document provides an overview of all documentation files related to the Ene
 - **Content**: Overview of test components, instructions for running tests, test output explanation
 - **Created**: March 7, 2025
 - **Last Updated**: March 7, 2025
+
+### 6. energy_audit_report_implementation.txt
+- **Purpose**: Detailed implementation plan for Phase 8 (PDF Report Enhancement)
+- **Content**: Current state analysis, target state, implementation steps, testing strategy
+- **Created**: March 11, 2025
+- **Last Updated**: March 11, 2025
 
 ## Document Relationships
 
@@ -79,14 +85,24 @@ This document provides an overview of all documentation files related to the Ene
             │                                    │                  │ - ReportGenerationService │
             │                                    │                  └───────────────────────────┘
             │                                    │
-            ▼                                    ▼                  
-┌───────────────────────────┐      ┌────────────────────────┐      
-│                           │      │                        │      
-│ Database Schema           │      │ Frontend Components    │      
-│ - energy_audits table     │      │ - EnergyAuditForm      │      
-│ - product_preferences col │      │ - ProductPreferencesForm│      
-│                           │      │                        │      
-└───────────────────────────┘      └────────────────────────┘      
+            │                                    ├────────────────────────────────────────┐
+            │                                    │                                         │
+            │                                    ▼                                         ▼
+            │                  ┌────────────────────────────────────┐        ┌────────────────────────────────┐
+            │                  │                                    │        │                                │
+            │                  │ energy_audit_report_implementation.txt │        │ Frontend Components            │
+            │                  │ (PDF Report Enhancement Plan)      │        │ - EnergyAuditForm              │
+            │                  │                                    │        │ - ProductPreferencesForm       │
+            │                  └────────────────────────────────────┘        │                                │
+            │                                                                 └────────────────────────────────┘
+            ▼                                                                 
+┌───────────────────────────┐                                                 
+│                           │                                                 
+│ Database Schema           │                                                 
+│ - energy_audits table     │                                                 
+│ - product_preferences col │                                                 
+│                           │                                                 
+└───────────────────────────┘                                                 
 ```
 
 ## Document Dependencies
@@ -106,6 +122,7 @@ This document provides an overview of all documentation files related to the Ene
 - **Used by**:
   - Project management (for tracking progress)
   - energy_audit_calculation_implementation.txt (for detailed Phase 3 planning)
+  - energy_audit_report_implementation.txt (for detailed Phase 8 planning)
   - Development team (for implementation guidance)
 
 ### energy_audit_calculation_implementation.txt
@@ -140,6 +157,16 @@ This document provides an overview of all documentation files related to the Ene
   - Development team (for running tests)
   - QA team (for verifying test coverage)
   - New team members (for understanding testing approach)
+
+### energy_audit_report_implementation.txt
+- **Depends on**:
+  - energy_audit_tool_implementation_plan.txt (for high-level Phase 8 plan)
+  - Python energy_audit_tool.py (for understanding PDF report format)
+  - ReportGenerationService.ts (for current implementation status)
+- **Used by**:
+  - Development team (for implementing PDF report enhancements)
+  - Testing team (for creating test cases)
+  - Code reviewers (for verifying implementation)
 
 ## Implementation Status Tracking
 
@@ -194,6 +221,24 @@ This document provides an overview of all documentation files related to the Ene
   - ⬜ End-to-end testing (Pending)
   - ⬜ Production deployment (Pending)
 
+### Phase 7: Analytics and Optimization
+- **Status**: Not Started
+- **Documentation**: energy_audit_tool_implementation_plan.txt
+- **Key Deliverables**:
+  - ⬜ Recommendation conversion tracking (Pending)
+  - ⬜ User interaction analysis (Pending)
+  - ⬜ Algorithm optimization (Pending)
+  - ⬜ A/B testing (Pending)
+
+### Phase 8: PDF Report Enhancement
+- **Status**: Not Started
+- **Documentation**: energy_audit_report_implementation.txt
+- **Key Deliverables**:
+  - ⬜ Enhanced report structure (Pending)
+  - ⬜ Improved visualizations (Pending)
+  - ⬜ Fixed data presentation (Pending)
+  - ⬜ Testing and verification (Pending)
+
 ## Modular Architecture Overview
 
 The calculation system has been refactored into a modular architecture with specialized services:
@@ -243,29 +288,36 @@ The calculation system has been refactored into a modular architecture with spec
 - **Location**: backend/src/services/productRecommendationService.ts
 - **Key Functions**: getRecommendedProducts, filterByPreferences, sortByEfficiency
 
+### 10. ReportGenerationService
+- **Purpose**: Generates PDF reports for energy audits
+- **Location**: backend/src/services/ReportGenerationService.ts
+- **Key Functions**: generateReport, generateSavingsChart, generateEnergyBreakdownChart
+
 ## How to Use This Documentation
 
 1. **For New Team Members**:
    - Start with energy_audit_tool_implementation_plan.txt for a high-level overview
    - Review energy_audit_data_requirements.txt to understand the data model
-   - Check energy_audit_calculation_implementation.txt for current implementation details
+   - Check energy_audit_calculation_implementation.txt for calculation implementation details
+   - Review energy_audit_report_implementation.txt for PDF report implementation details
    - Review the Modular Architecture Overview to understand the service structure
 
 2. **For Developers Implementing New Features**:
    - Identify the appropriate service for your feature
    - Review the existing functions in that service
    - Follow the modular architecture pattern for new implementations
-   - Add tests in calculationServices.test.ts for your new functions
+   - Add tests for your new functions
 
 3. **For Testing Team**:
-   - Use energy_audit_calculation_testing.md as your primary guide
+   - Use energy_audit_calculation_testing.md as your primary guide for testing calculations
+   - Review energy_audit_report_implementation.txt for PDF report testing strategy
    - Run the test scripts using the provided runner scripts
-   - Review test output to verify calculation correctness
    - Add new test cases as needed for new functionality
 
 4. **For Project Managers**:
    - Use energy_audit_tool_implementation_plan.txt to track overall progress
    - Use energy_audit_calculation_implementation.txt to track Phase 3 progress
+   - Use energy_audit_report_implementation.txt to track Phase 8 progress
    - Update documentation as phases are completed
 
 ## Keeping Documentation Updated
@@ -302,3 +354,9 @@ To ensure documentation remains accurate and useful:
    - Test runner scripts are updated
    - Testing approach changes
    - Test output format changes
+
+6. Update energy_audit_report_implementation.txt when:
+   - PDF report implementation status changes
+   - New visualization requirements are identified
+   - Testing approach changes
+   - Implementation timeline changes
