@@ -5,8 +5,349 @@ import { EnergyAuditData, AuditRecommendation } from '../types/energyAudit.js';
 import { dashboardService } from './dashboardService.js';
 import { appLogger } from '../utils/logger.js';
 import { productRecommendationService } from './productRecommendationService.js';
+import { calculateOverallEfficiencyScore, interpretEfficiencyScore } from './efficiencyScoreService.js';
 
 export class ReportGenerationService {
+  /**
+   * Generates a table in the PDF document
+   * @param doc PDFKit document
+   * @param headers Array of header strings (optional)
+   * @param rows Array of row data arrays
+   */
+  private generateTable(
+    doc: PDFKit.PDFDocument,
+    headers: string[],
+    rows: any[][]
+  ): void {
+    appLogger.debug('Generating table', { 
+      headerCount: headers.length,
+      rowCount: rows.length
+    });
+
+    try {
+      const tableTop = doc.y;
+      const tableLeft = 50;
+      const cellPadding = 5;
+      const columnWidth = (doc.page.width - 100) / (headers.length || 2);
+      
+      // Draw headers if provided
+      if (headers.length > 0) {
+        doc.fillColor('#6b7280').rect(tableLeft, tableTop, doc.page.width - 100, 20).fill();
+        doc.fillColor('white');
+        
+        headers.forEach((header, i) => {
+          doc.text(
+            header,
+            tableLeft + (i * columnWidth) + cellPadding,
+            tableTop + cellPadding,
+            { width: columnWidth - (cellPadding * 2) }
+          );
+        });
+        
+        doc.fillColor('black');
+      }
+      
+      // Draw rows
+      let rowTop = headers.length > 0 ? tableTop + 20 : tableTop;
+      
+      rows.forEach((row, rowIndex) => {
+        // Alternate row background
+        if (rowIndex % 2 === 0) {
+          doc.fillColor('#f3f4f6').rect(tableLeft, rowTop, doc.page.width - 100, 20).fill();
+        }
+        
+        doc.fillColor('black');
+        
+        row.forEach((cell, i) => {
+          doc.text(
+            this.formatValue(cell, i === 1 ? 'auto' : 'text'),
+            tableLeft + (i * columnWidth) + cellPadding,
+            rowTop + cellPadding,
+            { width: columnWidth - (cellPadding * 2) }
+          );
+        });
+        
+        rowTop += 20;
+      });
+      
+      // Update document position
+      doc.y = rowTop + 10;
+    } catch (error) {
+      appLogger.error('Error generating table', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      // Continue without the table
+      doc.moveDown();
+    }
+  }
+
+  /**
+   * Adds a section header to the PDF document
+   * @param doc PDFKit document
+   * @param title Section title
+   */
+  private addSectionHeader(
+    doc: PDFKit.PDFDocument,
+    title: string
+  ): void {
+    try {
+      doc
+        .fontSize(16)
+        .fillColor('#000000')
+        .text(title, { underline: false })
+        .moveDown(0.5);
+    } catch (error) {
+      appLogger.error('Error adding section header', { 
+        error: error instanceof Error ? error.message : String(error),
+        title
+      });
+      // Continue without the header
+      doc.moveDown();
+    }
+  }
+
+  /**
+   * Formats a value for display in the PDF
+   * @param value Value to format
+   * @param type Type of formatting to apply
+   * @returns Formatted string
+   */
+  private formatValue(
+    value: any,
+    type: 'currency' | 'percentage' | 'number' | 'text' | 'auto' = 'text'
+  ): string {
+    if (value === undefined || value === null || Number.isNaN(value)) {
+      return 'N/A';
+    }
+    
+    if (type === 'auto') {
+      // Try to determine the type
+      if (typeof value === 'string' && value.startsWith('$')) {
+        type = 'currency';
+      } else if (typeof value === 'number') {
+        type = 'number';
+      } else {
+        type = 'text';
+      }
+    }
+    
+    switch (type) {
+      case 'currency':
+        return typeof value === 'number' ? `$${value.toFixed(2)}` : value.toString();
+      case 'percentage':
+        return typeof value === 'number' ? `${value.toFixed(1)}%` : value.toString();
+      case 'number':
+        return typeof value === 'number' ? value.toFixed(2) : value.toString();
+      case 'text':
+      default:
+        return value.toString();
+    }
+  }
+
+  /**
+   * Calculates the total energy consumption from audit data
+   * @param auditData Energy audit data
+   * @returns Total energy consumption in kWh
+   */
+  private calculateTotalEnergy(auditData: EnergyAuditData): number {
+    try {
+      const electricKwhPerYear = auditData.energyConsumption.electricBill * 12;
+      const gasKwhPerYear = auditData.energyConsumption.gasBill * 29.3 * 12; // Convert therms to kWh
+      return electricKwhPerYear + gasKwhPerYear;
+    } catch (error) {
+      appLogger.error('Error calculating total energy', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 0;
+    }
+  }
+
+  /**
+   * Calculates the efficiency score from audit data
+   * @param auditData Energy audit data
+   * @returns Efficiency score (0-100)
+   */
+  private calculateEfficiencyScore(auditData: EnergyAuditData): number {
+    try {
+      const scores = calculateOverallEfficiencyScore(auditData);
+      return scores.overallScore;
+    } catch (error) {
+      appLogger.error('Error calculating efficiency score', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 0;
+    }
+  }
+
+  /**
+   * Calculates the potential annual savings from recommendations
+   * @param recommendations Audit recommendations
+   * @returns Total potential annual savings
+   */
+  private calculatePotentialSavings(recommendations: AuditRecommendation[]): number {
+    try {
+      return recommendations.reduce((sum, rec) => sum + (rec.estimatedSavings || 0), 0);
+    } catch (error) {
+      appLogger.error('Error calculating potential savings', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 0;
+    }
+  }
+
+  /**
+   * Calculates the energy efficiency percentage
+   * @param auditData Energy audit data
+   * @returns Energy efficiency percentage
+   */
+  private calculateEnergyEfficiency(auditData: EnergyAuditData): number {
+    try {
+      // This is a simplified calculation - in a real implementation, this would use more complex logic
+      const baseConsumption: number = 500; // Baseline consumption for comparison
+      const actualConsumption = this.calculateTotalEnergy(auditData);
+      
+      if (baseConsumption <= 0 || actualConsumption <= 0) {
+        return 0;
+      }
+      
+      return (baseConsumption / actualConsumption) * 100;
+    } catch (error) {
+      appLogger.error('Error calculating energy efficiency', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 0;
+    }
+  }
+
+  /**
+   * Calculates the HVAC efficiency gap
+   * @param auditData Energy audit data
+   * @returns HVAC efficiency gap percentage
+   */
+  private calculateHvacEfficiencyGap(auditData: EnergyAuditData): number {
+    try {
+      // This is a simplified calculation - in a real implementation, this would use more complex logic
+      const currentEfficiency = auditData.heatingCooling.heatingSystem.efficiency || 0;
+      const targetEfficiency = auditData.heatingCooling.heatingSystem.targetEfficiency || 95;
+      
+      return targetEfficiency - currentEfficiency;
+    } catch (error) {
+      appLogger.error('Error calculating HVAC efficiency gap', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 0;
+    }
+  }
+
+  /**
+   * Adds report metadata section to the PDF
+   * @param doc PDFKit document
+   * @param auditData Energy audit data
+   */
+  private addReportMetadata(
+    doc: PDFKit.PDFDocument,
+    auditData: EnergyAuditData
+  ): void {
+    try {
+      appLogger.debug('Adding report metadata');
+      
+      const reportId = `EAT-${Date.now()}`;
+      const reportDate = new Date().toLocaleString();
+      
+      const rows = [
+        ['Report Date:', reportDate],
+        ['Report ID:', reportId],
+        ['Analysis Type:', 'comprehensive'],
+        ['Version:', '1.0']
+      ];
+      
+      this.generateTable(doc, [], rows);
+      doc.moveDown();
+    } catch (error) {
+      appLogger.error('Error adding report metadata', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      // Continue without metadata
+      doc.moveDown();
+    }
+  }
+
+  /**
+   * Adds executive summary section to the PDF
+   * @param doc PDFKit document
+   * @param auditData Energy audit data
+   * @param recommendations Audit recommendations
+   */
+  private addExecutiveSummary(
+    doc: PDFKit.PDFDocument,
+    auditData: EnergyAuditData,
+    recommendations: AuditRecommendation[]
+  ): void {
+    try {
+      appLogger.debug('Adding executive summary');
+      
+      this.addSectionHeader(doc, 'Executive Summary');
+      
+      const totalEnergy = this.calculateTotalEnergy(auditData);
+      const efficiencyScore = this.calculateEfficiencyScore(auditData);
+      const potentialSavings = this.calculatePotentialSavings(recommendations);
+      
+      const headers = ['Metric', 'Value'];
+      const rows = [
+        ['Total Energy Consumption', `${totalEnergy.toFixed(2)} kWh`],
+        ['Overall Efficiency Score', efficiencyScore.toFixed(1)],
+        ['Potential Annual Savings', `$${potentialSavings.toFixed(2)}`]
+      ];
+      
+      this.generateTable(doc, headers, rows);
+      doc.moveDown();
+    } catch (error) {
+      appLogger.error('Error adding executive summary', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      // Continue without executive summary
+      doc.moveDown();
+    }
+  }
+
+  /**
+   * Adds key findings section to the PDF
+   * @param doc PDFKit document
+   * @param auditData Energy audit data
+   */
+  private addKeyFindings(
+    doc: PDFKit.PDFDocument,
+    auditData: EnergyAuditData
+  ): void {
+    try {
+      appLogger.debug('Adding key findings');
+      
+      this.addSectionHeader(doc, 'Key Findings');
+      
+      // Extract key findings from audit data
+      const energyEfficiency = this.calculateEnergyEfficiency(auditData);
+      const hvacEfficiencyGap = this.calculateHvacEfficiencyGap(auditData);
+      
+      doc.fontSize(12)
+         .text(`• Energy: Overall energy efficiency is ${energyEfficiency.toFixed(1)}%`)
+         .text(`• HVAC: System efficiency gap is ${hvacEfficiencyGap.toFixed(1)}%`)
+         .moveDown();
+    } catch (error) {
+      appLogger.error('Error adding key findings', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      // Continue without key findings
+      doc.moveDown();
+    }
+  }
+  /**
+   * Generates a savings chart for the recommendations
+   * @param recommendations Audit recommendations
+   * @param width Chart width
+   * @param height Chart height
+   * @returns Buffer containing the chart image
+   */
   private async generateSavingsChart(
     recommendations: AuditRecommendation[],
     width: number,
@@ -75,6 +416,111 @@ export class ReportGenerationService {
     }
   }
 
+  /**
+   * Generates an energy consumption breakdown bar chart
+   * @param auditData Energy audit data
+   * @param width Chart width
+   * @param height Chart height
+   * @returns Buffer containing the chart image
+   */
+  private async generateEnergyConsumptionChart(
+    auditData: EnergyAuditData,
+    width: number,
+    height: number
+  ): Promise<Buffer> {
+    appLogger.debug('Generating energy consumption breakdown chart', { 
+      chartDimensions: { width, height }
+    });
+
+    try {
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext('2d');
+      
+      // Calculate values based on available properties
+      const baseConsumption = auditData.energyConsumption.electricBill * 12; // Use annual electric bill as base
+      const seasonalFactor = auditData.energyConsumption.seasonalFactor || 1.2;
+      const occupancyFactor = auditData.energyConsumption.occupancyFactor || 0.9;
+      const powerFactor = auditData.energyConsumption.powerFactor || 0.95;
+      
+      // Calculate consumption at different stages
+      const seasonalConsumption = baseConsumption * seasonalFactor;
+      const occupiedConsumption = seasonalConsumption * occupancyFactor;
+      const realConsumption = occupiedConsumption * powerFactor;
+      
+      // Log chart data for debugging
+      appLogger.debug('Energy consumption breakdown data', {
+        baseConsumption,
+        seasonalConsumption,
+        occupiedConsumption,
+        realConsumption,
+        factors: {
+          seasonalFactor,
+          occupancyFactor,
+          powerFactor
+        }
+      });
+      
+      // Cast context to any to avoid Chart.js type issues
+      const chart = new Chart(ctx as any, {
+        type: 'bar',
+        data: {
+          labels: ['Base', 'Seasonal', 'Occupied', 'Real'],
+          datasets: [{
+            label: 'Energy (kWh)',
+            data: [baseConsumption, seasonalConsumption, occupiedConsumption, realConsumption],
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            borderColor: 'rgb(59, 130, 246)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Energy (kWh)'
+              }
+            }
+          },
+          plugins: {
+            title: {
+              display: true,
+              text: 'Energy Consumption Breakdown'
+            },
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: (tooltipItem: TooltipItem<'bar'>) => {
+                  const value = tooltipItem.raw as number;
+                  return `${value.toFixed(0)} kWh`;
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      return canvas.toBuffer('image/png');
+    } catch (error) {
+      appLogger.error('Error generating energy consumption breakdown chart', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Generates an energy breakdown pie chart
+   * @param auditData Energy audit data
+   * @param width Chart width
+   * @param height Chart height
+   * @returns Buffer containing the chart image
+   */
   private async generateEnergyBreakdownChart(
     auditData: EnergyAuditData,
     width: number,
@@ -155,6 +601,12 @@ export class ReportGenerationService {
     }
   }
 
+  /**
+   * Generates a PDF report for an energy audit
+   * @param auditData Energy audit data
+   * @param recommendations Audit recommendations
+   * @returns Buffer containing the PDF report
+   */
   async generateReport(
     auditData: EnergyAuditData,
     recommendations: AuditRecommendation[]
@@ -196,6 +648,30 @@ export class ReportGenerationService {
       } catch (error) {
         appLogger.error('Error adding report header', { error });
         throw error;
+      }
+      
+      // Report Metadata
+      try {
+        this.addReportMetadata(doc, auditData);
+      } catch (error) {
+        appLogger.error('Error adding report metadata', { error });
+        // Continue without metadata
+      }
+      
+      // Executive Summary
+      try {
+        this.addExecutiveSummary(doc, auditData, recommendations);
+      } catch (error) {
+        appLogger.error('Error adding executive summary', { error });
+        // Continue without executive summary
+      }
+      
+      // Key Findings
+      try {
+        this.addKeyFindings(doc, auditData);
+      } catch (error) {
+        appLogger.error('Error adding key findings', { error });
+        // Continue without key findings
       }
 
       // Basic Information
@@ -391,6 +867,37 @@ export class ReportGenerationService {
         doc
           .fontSize(12)
           .text('Energy breakdown chart could not be generated')
+          .moveDown();
+      }
+      
+      // Energy Consumption Breakdown Chart
+      try {
+        appLogger.debug('Generating and adding energy consumption breakdown chart');
+        const energyConsumptionChart = await this.generateEnergyConsumptionChart(auditData, 600, 300);
+        doc
+          .addPage()
+          .fontSize(16)
+          .text('Energy Consumption Analysis', { align: 'center' })
+          .moveDown()
+          .image(energyConsumptionChart, {
+            fit: [500, 250],
+            align: 'center'
+          })
+          .moveDown()
+          .fontSize(12)
+          .text('This chart shows how energy consumption is affected by seasonal factors, occupancy patterns, and power efficiency.')
+          .moveDown();
+        appLogger.debug('Energy consumption breakdown chart added successfully');
+      } catch (error) {
+        appLogger.error('Error adding energy consumption breakdown chart', { error });
+        // Continue with the report without the chart
+        doc
+          .addPage()
+          .fontSize(16)
+          .text('Energy Consumption Analysis', { align: 'center' })
+          .moveDown()
+          .fontSize(12)
+          .text('Energy consumption breakdown chart could not be generated')
           .moveDown();
       }
       
