@@ -88,12 +88,24 @@ export class ReportGenerationService {
    * @param title Section title
    * @param align Optional alignment (default: left)
    */
+  /**
+   * Adds a section header to the PDF document
+   * @param doc PDFKit document
+   * @param title Section title
+   * @param align Optional alignment (default: left)
+   * @param startNewPage Whether to start a new page before adding the header
+   */
   private addSectionHeader(
     doc: PDFKit.PDFDocument,
     title: string,
-    align: 'left' | 'center' | 'right' = 'left'
+    align: 'left' | 'center' | 'right' = 'left',
+    startNewPage: boolean = false
   ): void {
     try {
+      if (startNewPage) {
+        doc.addPage();
+      }
+      
       doc
         .fontSize(16)
         .fillColor('#000000')
@@ -660,7 +672,7 @@ export class ReportGenerationService {
         // Continue without metadata
       }
       
-      // Executive Summary
+      // Executive Summary - left aligned
       try {
         this.addExecutiveSummary(doc, auditData, recommendations);
       } catch (error) {
@@ -676,10 +688,10 @@ export class ReportGenerationService {
         // Continue without key findings
       }
 
-      // Basic Information
+      // Basic Information - start on new page
       try {
         appLogger.debug('Adding property information section');
-        this.addSectionHeader(doc, 'Property Information');
+        this.addSectionHeader(doc, 'Property Information', 'left', true);
         
         const rows = [
           ['Address:', auditData.basicInfo.address],
@@ -705,10 +717,10 @@ export class ReportGenerationService {
         throw error;
       }
 
-      // Current Conditions Summary
+      // Current Conditions Summary - start on new page
       try {
         appLogger.debug('Adding current conditions section');
-        this.addSectionHeader(doc, 'Current Conditions');
+        this.addSectionHeader(doc, 'Current Conditions', 'left', true);
         
         const rows = [
           ['Insulation:', `${auditData.currentConditions.insulation.attic} (Attic)`],
@@ -733,10 +745,10 @@ export class ReportGenerationService {
         throw error;
       }
 
-      // HVAC System Details
+      // HVAC System Details - start on new page
       try {
         appLogger.debug('Adding HVAC system details section');
-        this.addSectionHeader(doc, 'HVAC System Details');
+        this.addSectionHeader(doc, 'HVAC System Details', 'left', true);
         
         // Heating System
         const heatingRows = [
@@ -819,10 +831,10 @@ export class ReportGenerationService {
         doc.moveDown();
       }
 
-      // Energy Usage
+      // Energy Usage - start on new page
       try {
         appLogger.debug('Adding energy consumption section');
-        this.addSectionHeader(doc, 'Energy Consumption');
+        this.addSectionHeader(doc, 'Energy Consumption', 'left', true);
         
         const rows = [
           ['Average Monthly Electric:', `${auditData.energyConsumption.electricBill} kWh`],
@@ -937,11 +949,11 @@ export class ReportGenerationService {
           .moveDown();
       }
       
-      // Lighting Assessment
+      // Lighting Assessment - start on new page
       try {
         appLogger.debug('Adding lighting assessment section');
         if (auditData.currentConditions.primaryBulbType) {
-          this.addSectionHeader(doc, 'Lighting Assessment');
+          this.addSectionHeader(doc, 'Lighting Assessment', 'left', true);
             
           // Primary lighting information
           const bulbTypeText = {
@@ -1064,10 +1076,10 @@ export class ReportGenerationService {
         // Continue without lighting section
       }
 
-      // Recommendations
+      // Recommendations - start on new page with left-aligned title and description
       try {
         appLogger.debug('Adding recommendations section');
-        this.addSectionHeader(doc, 'Recommendations');
+        this.addSectionHeader(doc, 'Recommendations', 'left', true);
 
         // Sort recommendations by priority
         const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
@@ -1088,12 +1100,12 @@ export class ReportGenerationService {
               rec.priority === 'high' ? '#dc2626' :
               rec.priority === 'medium' ? '#d97706' : '#059669'
             )
-            .text(rec.title)
+            .text(rec.title, { align: 'left' })
             .fillColor('black')
             .moveDown(0.3);
           
-          // Add description
-          doc.fontSize(12).text(rec.description).moveDown(0.5);
+          // Add description - left aligned
+          doc.fontSize(12).text(rec.description, { align: 'left' }).moveDown(0.5);
           
           // Create a table for the recommendation details
           const recRows = [
@@ -1248,7 +1260,7 @@ export class ReportGenerationService {
         // Continue without product recommendations section
       }
 
-      // Summary
+      // Summary - start on new page
       try {
         appLogger.debug('Adding summary section');
         const implementedRecs = recommendations.filter(r => r.status === 'implemented');
@@ -1261,7 +1273,7 @@ export class ReportGenerationService {
           totalActualSavings
         });
         
-        this.addSectionHeader(doc, 'Summary');
+        this.addSectionHeader(doc, 'Summary', 'left', true);
         
         const rows = [
           ['Total Estimated Annual Savings:', `$${totalEstimatedSavings}`],
