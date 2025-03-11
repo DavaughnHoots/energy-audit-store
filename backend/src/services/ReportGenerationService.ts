@@ -86,16 +86,18 @@ export class ReportGenerationService {
    * Adds a section header to the PDF document
    * @param doc PDFKit document
    * @param title Section title
+   * @param align Optional alignment (default: left)
    */
   private addSectionHeader(
     doc: PDFKit.PDFDocument,
-    title: string
+    title: string,
+    align: 'left' | 'center' | 'right' = 'left'
   ): void {
     try {
       doc
         .fontSize(16)
         .fillColor('#000000')
-        .text(title, { underline: false })
+        .text(title, { align, underline: false })
         .moveDown(0.5);
     } catch (error) {
       appLogger.error('Error adding section header', { 
@@ -677,16 +679,17 @@ export class ReportGenerationService {
       // Basic Information
       try {
         appLogger.debug('Adding property information section');
-        doc
-          .fontSize(16)
-          .text('Property Information')
-          .moveDown(0.5)
-          .fontSize(12)
-          .text(`Address: ${auditData.basicInfo.address}`)
-          .text(`Property Type: ${auditData.basicInfo.propertyType}`)
-          .text(`Year Built: ${auditData.basicInfo.yearBuilt}`)
-          .text(`Square Footage: ${auditData.homeDetails.squareFootage} sq ft`)
-          .moveDown();
+        this.addSectionHeader(doc, 'Property Information');
+        
+        const rows = [
+          ['Address:', auditData.basicInfo.address],
+          ['Property Type:', auditData.basicInfo.propertyType],
+          ['Year Built:', auditData.basicInfo.yearBuilt],
+          ['Square Footage:', `${auditData.homeDetails.squareFootage} sq ft`]
+        ];
+        
+        this.generateTable(doc, [], rows);
+        doc.moveDown();
       } catch (error) {
         appLogger.error('Error adding property information section', { 
           error,
@@ -705,15 +708,16 @@ export class ReportGenerationService {
       // Current Conditions Summary
       try {
         appLogger.debug('Adding current conditions section');
-        doc
-          .fontSize(16)
-          .text('Current Conditions')
-          .moveDown(0.5)
-          .fontSize(12)
-          .text(`Insulation: ${auditData.currentConditions.insulation.attic} (Attic)`)
-          .text(`Windows: ${auditData.currentConditions.windowType}`)
-          .text(`HVAC System Age: ${auditData.heatingCooling.heatingSystem.age} years`)
-          .moveDown();
+        this.addSectionHeader(doc, 'Current Conditions');
+        
+        const rows = [
+          ['Insulation:', `${auditData.currentConditions.insulation.attic} (Attic)`],
+          ['Windows:', auditData.currentConditions.windowType],
+          ['HVAC System Age:', `${auditData.heatingCooling.heatingSystem.age} years`]
+        ];
+        
+        this.generateTable(doc, [], rows);
+        doc.moveDown();
       } catch (error) {
         appLogger.error('Error adding current conditions section', { 
           error,
@@ -732,63 +736,72 @@ export class ReportGenerationService {
       // HVAC System Details
       try {
         appLogger.debug('Adding HVAC system details section');
-        doc
-          .fontSize(16)
-          .text('HVAC System Details')
-          .moveDown(0.5)
-          .fontSize(12);
-
+        this.addSectionHeader(doc, 'HVAC System Details');
+        
         // Heating System
-        doc.text('Heating System:')
-          .text(`  Type: ${auditData.heatingCooling.heatingSystem.type}`)
-          .text(`  Efficiency: ${auditData.heatingCooling.heatingSystem.efficiency}`);
+        const heatingRows = [
+          ['Type:', auditData.heatingCooling.heatingSystem.type],
+          ['Efficiency:', auditData.heatingCooling.heatingSystem.efficiency]
+        ];
         
         // Add new heating system fields if they exist
         if (auditData.heatingCooling.heatingSystem.outputCapacity) {
-          doc.text(`  Output Capacity: ${auditData.heatingCooling.heatingSystem.outputCapacity} BTU/hr`);
+          heatingRows.push(['Output Capacity:', `${auditData.heatingCooling.heatingSystem.outputCapacity} BTU/hr`]);
         }
         if (auditData.heatingCooling.heatingSystem.inputPower) {
-          doc.text(`  Input Power: ${auditData.heatingCooling.heatingSystem.inputPower} kW`);
+          heatingRows.push(['Input Power:', `${auditData.heatingCooling.heatingSystem.inputPower} kW`]);
         }
         if (auditData.heatingCooling.heatingSystem.targetEfficiency) {
-          doc.text(`  Target Efficiency: ${auditData.heatingCooling.heatingSystem.targetEfficiency}%`);
+          heatingRows.push(['Target Efficiency:', `${auditData.heatingCooling.heatingSystem.targetEfficiency}%`]);
         }
-
-        doc.moveDown(0.5);
-
+        
+        doc.fontSize(14).text('Heating System:').moveDown(0.3);
+        this.generateTable(doc, [], heatingRows);
+        doc.moveDown();
+        
         // Cooling System
         if (auditData.heatingCooling.coolingSystem.type !== 'none') {
-          doc.text('Cooling System:')
-            .text(`  Type: ${auditData.heatingCooling.coolingSystem.type}`)
-            .text(`  Efficiency: ${auditData.heatingCooling.coolingSystem.efficiency}`);
+          const coolingRows = [
+            ['Type:', auditData.heatingCooling.coolingSystem.type],
+            ['Efficiency:', auditData.heatingCooling.coolingSystem.efficiency]
+          ];
           
           // Add new cooling system fields if they exist
           if (auditData.heatingCooling.coolingSystem.outputCapacity) {
-            doc.text(`  Output Capacity: ${auditData.heatingCooling.coolingSystem.outputCapacity} BTU/hr`);
+            coolingRows.push(['Output Capacity:', `${auditData.heatingCooling.coolingSystem.outputCapacity} BTU/hr`]);
           }
           if (auditData.heatingCooling.coolingSystem.inputPower) {
-            doc.text(`  Input Power: ${auditData.heatingCooling.coolingSystem.inputPower} kW`);
+            coolingRows.push(['Input Power:', `${auditData.heatingCooling.coolingSystem.inputPower} kW`]);
           }
           if (auditData.heatingCooling.coolingSystem.targetEfficiency) {
-            doc.text(`  Target Efficiency: ${auditData.heatingCooling.coolingSystem.targetEfficiency} SEER`);
+            coolingRows.push(['Target Efficiency:', `${auditData.heatingCooling.coolingSystem.targetEfficiency} SEER`]);
           }
+          
+          doc.fontSize(14).text('Cooling System:').moveDown(0.3);
+          this.generateTable(doc, [], coolingRows);
         } else {
-          doc.text('Cooling System: None');
+          doc.fontSize(14).text('Cooling System: None').moveDown(0.3);
         }
-
+        
         // Temperature Difference
-        if (auditData.heatingCooling.temperatureDifference) {
-          doc.moveDown(0.5)
-            .text(`Temperature Difference: ${auditData.heatingCooling.temperatureDifference}°F`);
-        } else if (auditData.heatingCooling.temperatureDifferenceCategory) {
-          const categoryMap: Record<string, string> = {
-            'small': 'Small (less than 10°F)',
-            'moderate': 'Moderate (10-20°F)',
-            'large': 'Large (20-30°F)',
-            'extreme': 'Extreme (more than 30°F)'
-          };
-          doc.moveDown(0.5)
-            .text(`Temperature Difference: ${categoryMap[auditData.heatingCooling.temperatureDifferenceCategory] || auditData.heatingCooling.temperatureDifferenceCategory}`);
+        if (auditData.heatingCooling.temperatureDifference || auditData.heatingCooling.temperatureDifferenceCategory) {
+          let tempDiffValue = '';
+          
+          if (auditData.heatingCooling.temperatureDifference) {
+            tempDiffValue = `${auditData.heatingCooling.temperatureDifference}°F`;
+          } else if (auditData.heatingCooling.temperatureDifferenceCategory) {
+            const categoryMap: Record<string, string> = {
+              'small': 'Small (less than 10°F)',
+              'moderate': 'Moderate (10-20°F)',
+              'large': 'Large (20-30°F)',
+              'extreme': 'Extreme (more than 30°F)'
+            };
+            tempDiffValue = categoryMap[auditData.heatingCooling.temperatureDifferenceCategory] || 
+                           auditData.heatingCooling.temperatureDifferenceCategory;
+          }
+          
+          const tempDiffRows = [['Temperature Difference:', tempDiffValue]];
+          this.generateTable(doc, [], tempDiffRows);
         }
         
         doc.moveDown();
@@ -809,31 +822,31 @@ export class ReportGenerationService {
       // Energy Usage
       try {
         appLogger.debug('Adding energy consumption section');
-        doc
-          .fontSize(16)
-          .text('Energy Consumption')
-          .moveDown(0.5)
-          .fontSize(12)
-          .text(`Average Monthly Electric: ${auditData.energyConsumption.electricBill} kWh`)
-          .text(`Average Monthly Gas: ${auditData.energyConsumption.gasBill} therms`);
+        this.addSectionHeader(doc, 'Energy Consumption');
+        
+        const rows = [
+          ['Average Monthly Electric:', `${auditData.energyConsumption.electricBill} kWh`],
+          ['Average Monthly Gas:', `${auditData.energyConsumption.gasBill} therms`]
+        ];
         
         // Add new fields if they exist
         if (auditData.energyConsumption.durationHours !== undefined) {
-          doc.text(`Daily Usage Hours: ${auditData.energyConsumption.durationHours} hours`);
+          rows.push(['Daily Usage Hours:', `${auditData.energyConsumption.durationHours} hours`]);
         }
         
         if (auditData.energyConsumption.powerFactor !== undefined) {
-          doc.text(`Power Factor: ${auditData.energyConsumption.powerFactor.toFixed(2)}`);
+          rows.push(['Power Factor:', auditData.energyConsumption.powerFactor.toFixed(2)]);
         }
         
         if (auditData.energyConsumption.seasonalFactor !== undefined) {
-          doc.text(`Seasonal Factor: ${auditData.energyConsumption.seasonalFactor.toFixed(2)}`);
+          rows.push(['Seasonal Factor:', auditData.energyConsumption.seasonalFactor.toFixed(2)]);
         }
         
         if (auditData.energyConsumption.occupancyFactor !== undefined) {
-          doc.text(`Occupancy Factor: ${auditData.energyConsumption.occupancyFactor.toFixed(2)}`);
+          rows.push(['Occupancy Factor:', auditData.energyConsumption.occupancyFactor.toFixed(2)]);
         }
         
+        this.generateTable(doc, [], rows);
         doc.moveDown();
       } catch (error) {
         appLogger.error('Error adding energy consumption section', { 
@@ -854,12 +867,21 @@ export class ReportGenerationService {
       try {
         appLogger.debug('Generating and adding energy breakdown chart');
         const energyBreakdownChart = await this.generateEnergyBreakdownChart(auditData, 600, 300);
+        
+        // Save current Y position
+        const currentY = doc.y;
+        
+        // Center the chart on the page
+        const pageWidth = doc.page.width;
+        const chartWidth = 500;
+        const leftMargin = (pageWidth - chartWidth) / 2;
+        
         doc
-          .image(energyBreakdownChart, {
-            fit: [500, 250],
+          .image(energyBreakdownChart, leftMargin, currentY, {
+            fit: [chartWidth, 250],
             align: 'center'
           })
-          .moveDown();
+          .moveDown(2);
         appLogger.debug('Energy breakdown chart added successfully');
       } catch (error) {
         appLogger.error('Error adding energy breakdown chart', { error });
@@ -878,14 +900,26 @@ export class ReportGenerationService {
           .addPage()
           .fontSize(16)
           .text('Energy Consumption Analysis', { align: 'center' })
-          .moveDown()
-          .image(energyConsumptionChart, {
-            fit: [500, 250],
+          .moveDown();
+        
+        // Save current Y position
+        const currentY = doc.y;
+        
+        // Center the chart on the page
+        const pageWidth = doc.page.width;
+        const chartWidth = 500;
+        const leftMargin = (pageWidth - chartWidth) / 2;
+        
+        doc
+          .image(energyConsumptionChart, leftMargin, currentY, {
+            fit: [chartWidth, 250],
             align: 'center'
           })
-          .moveDown()
+          .moveDown(2)
           .fontSize(12)
-          .text('This chart shows how energy consumption is affected by seasonal factors, occupancy patterns, and power efficiency.')
+          .text('This chart shows how energy consumption is affected by seasonal factors, occupancy patterns, and power efficiency.', {
+            align: 'center'
+          })
           .moveDown();
         appLogger.debug('Energy consumption breakdown chart added successfully');
       } catch (error) {
@@ -897,7 +931,9 @@ export class ReportGenerationService {
           .text('Energy Consumption Analysis', { align: 'center' })
           .moveDown()
           .fontSize(12)
-          .text('Energy consumption breakdown chart could not be generated')
+          .text('Energy consumption breakdown chart could not be generated', {
+            align: 'center'
+          })
           .moveDown();
       }
       
@@ -905,11 +941,7 @@ export class ReportGenerationService {
       try {
         appLogger.debug('Adding lighting assessment section');
         if (auditData.currentConditions.primaryBulbType) {
-          doc
-            .fontSize(16)
-            .text('Lighting Assessment')
-            .moveDown(0.5)
-            .fontSize(12);
+          this.addSectionHeader(doc, 'Lighting Assessment');
             
           // Primary lighting information
           const bulbTypeText = {
@@ -930,18 +962,26 @@ export class ReportGenerationService {
             'smart': 'Smart/Automated Lighting'
           };
           
-          doc
-            .text(`Primary Bulb Types: ${bulbTypeText[auditData.currentConditions.primaryBulbType as keyof typeof bulbTypeText] || 'Not specified'}`)
-            .text(`Natural Light: ${naturalLightText[auditData.currentConditions.naturalLight as keyof typeof naturalLightText] || 'Not specified'}`)
-            .text(`Lighting Controls: ${controlsText[auditData.currentConditions.lightingControls as keyof typeof controlsText] || 'Not specified'}`);
+          const rows = [
+            ['Primary Bulb Types:', bulbTypeText[auditData.currentConditions.primaryBulbType as keyof typeof bulbTypeText] || 'Not specified'],
+            ['Natural Light:', naturalLightText[auditData.currentConditions.naturalLight as keyof typeof naturalLightText] || 'Not specified'],
+            ['Lighting Controls:', controlsText[auditData.currentConditions.lightingControls as keyof typeof controlsText] || 'Not specified']
+          ];
+          
+          this.generateTable(doc, [], rows);
           
           // Add detailed bulb percentages if available
           if (auditData.currentConditions.bulbPercentages) {
-            doc.moveDown(0.5).text('Bulb Type Distribution:');
+            doc.moveDown(0.5).fontSize(14).text('Bulb Type Distribution:').moveDown(0.3);
+            
             const { led, cfl, incandescent } = auditData.currentConditions.bulbPercentages;
-            if (led !== undefined) doc.text(`  LED: ${led}%`);
-            if (cfl !== undefined) doc.text(`  CFL: ${cfl}%`);
-            if (incandescent !== undefined) doc.text(`  Incandescent: ${incandescent}%`);
+            const bulbRows = [];
+            
+            if (led !== undefined) bulbRows.push(['LED:', `${led}%`]);
+            if (cfl !== undefined) bulbRows.push(['CFL:', `${cfl}%`]);
+            if (incandescent !== undefined) bulbRows.push(['Incandescent:', `${incandescent}%`]);
+            
+            this.generateTable(doc, [], bulbRows);
           }
           
           // Add lighting fixtures if available
@@ -990,7 +1030,8 @@ export class ReportGenerationService {
           
           // Add lighting usage patterns if available
           if (auditData.currentConditions.lightingPatterns) {
-            doc.moveDown(0.5).text('Lighting Usage Patterns:');
+            doc.moveDown(0.5).fontSize(14).text('Lighting Usage Patterns:').moveDown(0.3);
+            
             const patternText = {
               'most': 'Most Lights',
               'some': 'Some Lights',
@@ -999,10 +1040,14 @@ export class ReportGenerationService {
             };
             
             const { morning, day, evening, night } = auditData.currentConditions.lightingPatterns;
-            if (morning) doc.text(`  Morning (5am-9am): ${patternText[morning as keyof typeof patternText]}`);
-            if (day) doc.text(`  Day (9am-5pm): ${patternText[day as keyof typeof patternText]}`);
-            if (evening) doc.text(`  Evening (5pm-10pm): ${patternText[evening as keyof typeof patternText]}`);
-            if (night) doc.text(`  Night (10pm-5am): ${patternText[night as keyof typeof patternText]}`);
+            const patternRows = [];
+            
+            if (morning) patternRows.push(['Morning (5am-9am):', patternText[morning as keyof typeof patternText]]);
+            if (day) patternRows.push(['Day (9am-5pm):', patternText[day as keyof typeof patternText]]);
+            if (evening) patternRows.push(['Evening (5pm-10pm):', patternText[evening as keyof typeof patternText]]);
+            if (night) patternRows.push(['Night (10pm-5am):', patternText[night as keyof typeof patternText]]);
+            
+            this.generateTable(doc, [], patternRows);
           }
           
           doc.moveDown();
@@ -1022,10 +1067,7 @@ export class ReportGenerationService {
       // Recommendations
       try {
         appLogger.debug('Adding recommendations section');
-        doc
-          .fontSize(16)
-          .text('Recommendations')
-          .moveDown();
+        this.addSectionHeader(doc, 'Recommendations');
 
         // Sort recommendations by priority
         const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
@@ -1039,6 +1081,7 @@ export class ReportGenerationService {
         });
 
         for (const rec of sortedRecommendations) {
+          // Use color for the recommendation title based on priority
           doc
             .fontSize(14)
             .fillColor(
@@ -1047,19 +1090,26 @@ export class ReportGenerationService {
             )
             .text(rec.title)
             .fillColor('black')
-            .fontSize(12)
-            .text(rec.description)
-            .text(`Estimated Savings: $${rec.estimatedSavings}/year`)
-            .text(`Implementation Cost: $${rec.estimatedCost}`)
-            .text(`Payback Period: ${rec.paybackPeriod} years`)
-            .moveDown();
-
+            .moveDown(0.3);
+          
+          // Add description
+          doc.fontSize(12).text(rec.description).moveDown(0.5);
+          
+          // Create a table for the recommendation details
+          const recRows = [
+            ['Estimated Savings:', `$${rec.estimatedSavings}/year`],
+            ['Implementation Cost:', `$${rec.estimatedCost}`],
+            ['Payback Period:', `${rec.paybackPeriod} years`]
+          ];
+          
+          // Add actual savings if available
           if (rec.actualSavings !== null) {
-            doc
-              .text(`Actual Savings: $${rec.actualSavings}/year`)
-              .text(`Savings Accuracy: ${((rec.actualSavings / rec.estimatedSavings) * 100).toFixed(1)}%`)
-              .moveDown();
+            recRows.push(['Actual Savings:', `$${rec.actualSavings}/year`]);
+            recRows.push(['Savings Accuracy:', `${((rec.actualSavings / rec.estimatedSavings) * 100).toFixed(1)}%`]);
           }
+          
+          this.generateTable(doc, [], recRows);
+          doc.moveDown();
         }
         appLogger.debug('Recommendations section added successfully');
       } catch (error) {
@@ -1078,12 +1128,22 @@ export class ReportGenerationService {
           .addPage()
           .fontSize(16)
           .text('Savings Analysis', { align: 'center' })
-          .moveDown()
-          .image(savingsChart, {
-            fit: [500, 250],
+          .moveDown();
+        
+        // Save current Y position
+        const currentY = doc.y;
+        
+        // Center the chart on the page
+        const pageWidth = doc.page.width;
+        const chartWidth = 500;
+        const leftMargin = (pageWidth - chartWidth) / 2;
+        
+        doc
+          .image(savingsChart, leftMargin, currentY, {
+            fit: [chartWidth, 250],
             align: 'center'
           })
-          .moveDown();
+          .moveDown(2);
         appLogger.debug('Savings analysis chart added successfully');
       } catch (error) {
         appLogger.error('Error adding savings analysis chart', { error });
@@ -1094,7 +1154,9 @@ export class ReportGenerationService {
           .text('Savings Analysis', { align: 'center' })
           .moveDown()
           .fontSize(12)
-          .text('Savings analysis chart could not be generated')
+          .text('Savings analysis chart could not be generated', {
+            align: 'center'
+          })
           .moveDown();
       }
 
@@ -1199,20 +1261,19 @@ export class ReportGenerationService {
           totalActualSavings
         });
         
-        doc
-          .fontSize(16)
-          .text('Summary')
-          .moveDown()
-          .fontSize(12)
-          .text(`Total Estimated Annual Savings: $${totalEstimatedSavings}`)
-          .text(`Total Actual Annual Savings: $${totalActualSavings}`)
-          .text(`Number of Implemented Recommendations: ${implementedRecs.length}`)
-          .text(`Overall Savings Accuracy: ${
-            implementedRecs.length > 0
-              ? ((totalActualSavings / totalEstimatedSavings) * 100).toFixed(1)
-              : 'N/A'
-          }%`)
-          .moveDown();
+        this.addSectionHeader(doc, 'Summary');
+        
+        const rows = [
+          ['Total Estimated Annual Savings:', `$${totalEstimatedSavings}`],
+          ['Total Actual Annual Savings:', `$${totalActualSavings}`],
+          ['Number of Implemented Recommendations:', implementedRecs.length.toString()],
+          ['Overall Savings Accuracy:', implementedRecs.length > 0
+              ? `${((totalActualSavings / totalEstimatedSavings) * 100).toFixed(1)}%`
+              : 'N/A']
+        ];
+        
+        this.generateTable(doc, [], rows);
+        doc.moveDown();
         appLogger.debug('Summary section added successfully');
       } catch (error) {
         appLogger.error('Error adding summary section', { error });
