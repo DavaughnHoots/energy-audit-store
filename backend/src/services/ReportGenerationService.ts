@@ -99,7 +99,8 @@ export class ReportGenerationService {
     doc: PDFKit.PDFDocument,
     title: string,
     align: 'left' | 'center' | 'right' = 'left',
-    startNewPage: boolean = false
+    startNewPage: boolean = false,
+    indent: number = 0  // New parameter for indentation
   ): void {
     try {
       if (startNewPage) {
@@ -109,7 +110,11 @@ export class ReportGenerationService {
       doc
         .fontSize(16)
         .fillColor('#000000')
-        .text(title, { align, underline: false })
+        .text(title, { 
+          align, 
+          underline: false,
+          indent: indent  // Apply indentation
+        })
         .moveDown(0.5);
     } catch (error) {
       appLogger.error('Error adding section header', { 
@@ -301,7 +306,7 @@ export class ReportGenerationService {
     try {
       appLogger.debug('Adding executive summary');
       
-      this.addSectionHeader(doc, 'Executive Summary');
+      this.addSectionHeader(doc, 'Executive Summary', 'left', false, 50);
       
       const totalEnergy = this.calculateTotalEnergy(auditData);
       const efficiencyScore = this.calculateEfficiencyScore(auditData);
@@ -337,7 +342,7 @@ export class ReportGenerationService {
     try {
       appLogger.debug('Adding key findings');
       
-      this.addSectionHeader(doc, 'Key Findings');
+      this.addSectionHeader(doc, 'Key Findings', 'left', false, 50);
       
       // Extract key findings from audit data
       const energyEfficiency = this.calculateEnergyEfficiency(auditData);
@@ -691,7 +696,7 @@ export class ReportGenerationService {
       // Basic Information - start on new page
       try {
         appLogger.debug('Adding property information section');
-        this.addSectionHeader(doc, 'Property Information', 'left', true);
+        this.addSectionHeader(doc, 'Property Information', 'left', true, 50);
         
         const rows = [
           ['Address:', auditData.basicInfo.address],
@@ -720,7 +725,7 @@ export class ReportGenerationService {
       // Current Conditions Summary - start on new page
       try {
         appLogger.debug('Adding current conditions section');
-        this.addSectionHeader(doc, 'Current Conditions', 'left', true);
+        this.addSectionHeader(doc, 'Current Conditions', 'left', true, 50);
         
         const rows = [
           ['Insulation:', `${auditData.currentConditions.insulation.attic} (Attic)`],
@@ -748,7 +753,7 @@ export class ReportGenerationService {
       // HVAC System Details - start on new page
       try {
         appLogger.debug('Adding HVAC system details section');
-        this.addSectionHeader(doc, 'HVAC System Details', 'left', true);
+        this.addSectionHeader(doc, 'HVAC System Details', 'left', true, 50);
         
         // Heating System
         const heatingRows = [
@@ -834,7 +839,7 @@ export class ReportGenerationService {
       // Energy Usage - start on new page
       try {
         appLogger.debug('Adding energy consumption section');
-        this.addSectionHeader(doc, 'Energy Consumption', 'left', true);
+        this.addSectionHeader(doc, 'Energy Consumption', 'left', true, 50);
         
         const rows = [
           ['Average Monthly Electric:', `${auditData.energyConsumption.electricBill} kWh`],
@@ -953,7 +958,7 @@ export class ReportGenerationService {
       try {
         appLogger.debug('Adding lighting assessment section');
         if (auditData.currentConditions.primaryBulbType) {
-          this.addSectionHeader(doc, 'Lighting Assessment', 'left', true);
+          this.addSectionHeader(doc, 'Lighting Assessment', 'left', true, 50);
             
           // Primary lighting information
           const bulbTypeText = {
@@ -1105,8 +1110,13 @@ export class ReportGenerationService {
             .moveDown(0.3);
           
           // Add description - left aligned
-          doc.fontSize(12).text(rec.description, { align: 'left' }).moveDown(0.5);
-          
+          doc.fontSize(12)
+          .text(rec.description, { 
+            align: 'left',
+            continued: false
+          })
+          .moveDown(1);
+
           // Create a table for the recommendation details
           const recRows = [
             ['Estimated Savings:', `$${rec.estimatedSavings}/year`],
@@ -1121,7 +1131,7 @@ export class ReportGenerationService {
           }
           
           this.generateTable(doc, [], recRows);
-          doc.moveDown();
+          doc.moveDown(1.5);
         }
         appLogger.debug('Recommendations section added successfully');
       } catch (error) {
