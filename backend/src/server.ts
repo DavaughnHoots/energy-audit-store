@@ -28,10 +28,12 @@ import productsRoutes from './routes/products.js';
 import visualizationRoutes from './routes/visualization.js';
 import productRecommendationsRoutes from './routes/productRecommendations.js';
 import comparisonsRoutes from './routes/comparisons.js';
+import energyConsumptionRoutes from './routes/energyConsumption.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
+import { runEnergyConsumptionMigration } from './scripts/run_energy_consumption_migration.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 // Product comparison migration removed - table already exists
@@ -54,12 +56,22 @@ try {
 
 // Run database migrations for production environment
 if (process.env.NODE_ENV === 'production') {
+  // Run search migration
   runSearchMigration()
     .then(() => {
       appLogger.info('Search migration completed on startup');
     })
     .catch(error => {
       appLogger.error('Error running search migration on startup', { error });
+    });
+    
+  // Run energy consumption migration
+  runEnergyConsumptionMigration()
+    .then(result => {
+      appLogger.info('Energy consumption migration completed on startup', { result });
+    })
+    .catch(error => {
+      appLogger.error('Error running energy consumption migration on startup', { error });
     });
     
   // Run initial orphaned audit association
@@ -147,6 +159,7 @@ app.use('/api/comparisons', comparisonsRoutes);
 app.use('/api/user-profile', userProfileRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/visualization', visualizationRoutes);
+app.use('/api/energy-consumption', energyConsumptionRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
