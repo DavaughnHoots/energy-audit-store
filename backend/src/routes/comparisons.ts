@@ -1,5 +1,6 @@
 import express from 'express';
 import { validateToken } from '../middleware/tokenValidation.js';
+import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
 import * as productComparisonService from '../services/productComparisonService.js';
 import { appLogger } from '../utils/logger.js';
 import { createLogMetadata } from '../utils/logger.js';
@@ -37,16 +38,22 @@ router.post('/', validateToken, async (req, res) => {
 /**
  * @route GET /api/comparisons
  * @desc Get all comparisons for a user
- * @access Private
+ * @access Public (with optional authentication)
  */
-router.get('/', validateToken, async (req, res) => {
+router.get('/', optionalTokenValidation, async (req, res) => {
   try {
-    const userId = req.user.id;
-    
-    // Get all comparisons for the user
-    const comparisons = await productComparisonService.getUserComparisons(userId);
-    
-    res.json({ success: true, comparisons });
+    // If user is authenticated, get their comparisons
+    if (req.user && req.user.id) {
+      const userId = req.user.id;
+      
+      // Get all comparisons for the user
+      const comparisons = await productComparisonService.getUserComparisons(userId);
+      
+      res.json({ success: true, comparisons });
+    } else {
+      // If not authenticated, return empty array
+      res.json({ success: true, comparisons: [] });
+    }
   } catch (error) {
     appLogger.error('Error fetching comparisons:', createLogMetadata(req, { error }));
     res.status(500).json({ success: false, error: 'Failed to fetch comparisons' });
