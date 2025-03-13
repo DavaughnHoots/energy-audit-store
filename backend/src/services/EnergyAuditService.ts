@@ -62,6 +62,12 @@ export interface AuditData {
   heatingCooling: HeatingCooling;
   energyConsumption: EnergyConsumption;
   createdAt: Date;
+  product_preferences?: any;
+  product_recommendations?: Record<string, any[]>;
+  product_savings?: {
+    byCategory: Record<string, number>;
+    total: number;
+  };
 }
 
 interface ReportGenerationOptions {
@@ -520,7 +526,7 @@ export class EnergyAuditService {
         actualSavings: 0,
         implementationDate: null,
         implementationCost: 0,
-        lastUpdate: now
+        lastUpdate: now,
       });
     } else if (auditData.currentConditions.primaryBulbType === 'mixed') {
       // Medium savings for mixed bulb types
