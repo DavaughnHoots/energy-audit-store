@@ -106,16 +106,38 @@ router.get('/product-history', async (req: AuthenticatedRequest, res) => {
     // Get limit from query params, default to 20
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
     
-    // Get product history
-    const productHistory = await productComparisonService.getProductHistory(userId, limit);
+    appLogger.info(`Fetching product history for user ${userId} with limit ${limit}`);
     
-    res.json({ success: true, productHistory });
+    try {
+      // Get product history - this now returns an empty array on error instead of throwing
+      const productHistory = await productComparisonService.getProductHistory(userId, limit);
+      
+      // Always return success with the product history (which may be empty)
+      res.json({ success: true, productHistory });
+    } catch (serviceError) {
+      // This shouldn't happen anymore since getProductHistory handles errors internally,
+      // but just in case, we'll handle it here too
+      appLogger.error('Unexpected error from productComparisonService:', createLogMetadata(req, { serviceError }));
+      
+      // Return an empty array instead of an error
+      res.json({ 
+        success: true, 
+        productHistory: [],
+        warning: 'Could not retrieve product history, showing empty list instead'
+      });
+    }
   } catch (error) {
-    appLogger.error('Error fetching product history:', createLogMetadata(req, { error }));
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch product history',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    appLogger.error('Error in product history endpoint:', createLogMetadata(req, { 
+      error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined
+    }));
+    
+    // Return an empty array instead of an error
+    res.json({ 
+      success: true, 
+      productHistory: [],
+      warning: 'Could not retrieve product history, showing empty list instead'
     });
   }
 });
