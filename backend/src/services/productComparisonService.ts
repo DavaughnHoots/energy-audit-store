@@ -80,15 +80,20 @@ export async function getProductHistory(userId: string, limit: number = 20): Pro
       SELECT 
         ea.id AS audit_id,
         ea.created_at AS audit_date,
-        ar.recommendations,
-        ar.estimated_savings
+        ar.title,
+        ar.description,
+        ar.category,
+        ar.priority,
+        ar.estimated_savings,
+        ar.estimated_cost,
+        ar.payback_period,
+        ar.products
       FROM 
         energy_audits ea
       LEFT JOIN 
         audit_recommendations ar ON ea.id = ar.audit_id
       WHERE 
         ea.user_id = $1
-        AND ar.recommendations IS NOT NULL
       ORDER BY 
         ea.created_at DESC
       LIMIT $2
@@ -106,56 +111,59 @@ export async function getProductHistory(userId: string, limit: number = 20): Pro
       const firstRow = recommendationsResult.rows[0];
       appLogger.debug('First recommendation row structure:', {
         audit_id: firstRow.audit_id,
-        recommendations_type: typeof firstRow.recommendations,
-        recommendations_is_array: Array.isArray(firstRow.recommendations),
+        title: firstRow.title,
+        category: firstRow.category,
+        priority: firstRow.priority,
         estimated_savings_type: typeof firstRow.estimated_savings,
-        estimated_savings_value: firstRow.estimated_savings
+        estimated_savings_value: firstRow.estimated_savings,
+        products_type: typeof firstRow.products,
+        products_is_null: firstRow.products === null
       });
     }
     
     for (const row of recommendationsResult.rows) {
       try {
-        let recommendations = [];
-        
-        // Safely parse recommendations
-        if (Array.isArray(row.recommendations)) {
-          recommendations = row.recommendations;
-        } else if (typeof row.recommendations === 'string') {
-          try {
-            recommendations = JSON.parse(row.recommendations);
-          } catch (parseError) {
-            appLogger.warn(`Failed to parse recommendations JSON for audit ${row.audit_id}:`, { parseError });
-            recommendations = [];
-          }
-        } else if (row.recommendations && typeof row.recommendations === 'object') {
-          // Handle case where it might be a single recommendation object
-          recommendations = [row.recommendations];
-        }
-        
-        if (!Array.isArray(recommendations)) {
-          appLogger.warn(`Recommendations for audit ${row.audit_id} is not an array after parsing:`, { 
-            type: typeof recommendations,
-            value: recommendations
-          });
-          recommendations = [];
-        }
-        
-        // Generate sample products for each recommendation
-        for (const recommendation of recommendations) {
-          try {
-            // Skip if recommendation is not an object or doesn't have required properties
-            if (!recommendation || typeof recommendation !== 'object') {
-              appLogger.debug(`Skipping invalid recommendation for audit ${row.audit_id}:`, { recommendation });
-              continue;
+        // First check if this recommendation already has products
+        let existingProducts = [];
+        if (row.products) {
+          if (Array.isArray(row.products)) {
+            existingProducts = row.products;
+          } else if (typeof row.products === 'string') {
+            try {
+              existingProducts = JSON.parse(row.products);
+            } catch (parseError) {
+              appLogger.warn(`Failed to parse products JSON for audit ${row.audit_id}:`, { parseError });
+              existingProducts = [];
             }
-            
-            // Get title safely
-            const title = recommendation.title || 
-                         (recommendation.name || 
-                         (recommendation.description || 'Energy Upgrade'));
-            
-            // Determine category from recommendation title
-            let category = 'Other';
+          } else if (typeof row.products === 'object') {
+            existingProducts = [row.products];
+          }
+        }
+        
+        // If we have existing products, use them
+        if (Array.isArray(existingProducts) && existingProducts.length > 0) {
+          for (const product of existingProducts) {
+            if (product && typeof product === 'object') {
+              generatedProducts.push({
+                ...product,
+                audit_id: row.audit_id,
+                audit_date: row.audit_date
+              });
+            }
+          }
+          continue; // Skip to next recommendation if we found products
+        }
+        
+        // Otherwise, generate a sample product based on the recommendation
+        try {
+          // Get title and category from the recommendation
+          const title = row.title || 'Energy Upgrade';
+          const recommendationCategory = row.category || 'Other';
+          
+          // Determine product category based on recommendation category or title
+          let category = recommendationCategory;
+          if (category === 'Other' || !category) {
+            // Try to determine category from title
             const titleLower = title.toLowerCase();
             if (titleLower.includes('hvac') || titleLower.includes('system')) {
               category = 'HVAC';
@@ -163,24 +171,33 @@ export async function getProductHistory(userId: string, limit: number = 20): Pro
               category = 'Lighting';
             } else if (titleLower.includes('insulation') || titleLower.includes('weatherization')) {
               category = 'Insulation';
+            } else if (titleLower.includes('window')) {
+              category = 'Windows';
             } else if (titleLower.includes('appliance')) {
               category = 'Appliances';
             }
+          }
             
-            // Generate a sample product based on the recommendation
-            let estimatedSavings = 0;
+          // Get estimated savings from the recommendation
+          let estimatedSavings = 0;
+          if (row.estimated_savings !== undefined && row.estimated_savings !== null) {
+            estimatedSavings = parseFloat(row.estimated_savings) || 0;
+          }
             
-            // Try to get estimated savings from various possible locations
-            if (recommendation.estimated_savings !== undefined) {
-              estimatedSavings = parseFloat(recommendation.estimated_savings) || 0;
-            } else if (recommendation.savings !== undefined) {
-              estimatedSavings = parseFloat(recommendation.savings) || 0;
-            } else if (row.estimated_savings !== undefined) {
-              estimatedSavings = parseFloat(row.estimated_savings) || 0;
-            }
-            
-            // Generate a reasonable price based on category
-            let price = 0;
+          // Get estimated cost and payback period if available
+          let estimatedCost = 0;
+          if (row.estimated_cost !== undefined && row.estimated_cost !== null) {
+            estimatedCost = parseFloat(row.estimated_cost) || 0;
+          }
+          
+          let paybackPeriod = 0;
+          if (row.payback_period !== undefined && row.payback_period !== null) {
+            paybackPeriod = parseFloat(row.payback_period) || 0;
+          }
+          
+          // Generate a reasonable price based on category if estimated cost is not available
+          let price = estimatedCost;
+          if (price <= 0) {
             switch (category) {
               case 'HVAC':
                 price = Math.round(Math.random() * 3000 + 2000); // $2000-$5000
@@ -191,60 +208,72 @@ export async function getProductHistory(userId: string, limit: number = 20): Pro
               case 'Insulation':
                 price = Math.round(Math.random() * 1000 + 500); // $500-$1500
                 break;
+              case 'Windows':
+                price = Math.round(Math.random() * 2000 + 1000); // $1000-$3000
+                break;
               case 'Appliances':
                 price = Math.round(Math.random() * 800 + 400); // $400-$1200
                 break;
               default:
                 price = Math.round(Math.random() * 500 + 100); // $100-$600
             }
-            
-            // Calculate ROI and payback period
-            const annualSavings = estimatedSavings > 0 ? estimatedSavings : Math.round(price * (Math.random() * 0.2 + 0.1)); // 10-30% of price
-            const roi = price > 0 ? annualSavings / price : 0;
-            const paybackPeriod = annualSavings > 0 ? price / annualSavings : 0;
-            
-            // Generate sample features based on category
-            const features = [];
-            if (category === 'HVAC') {
-              features.push('Energy Star Certified');
-              features.push('Smart Thermostat Compatible');
-              features.push('Quiet Operation');
-            } else if (category === 'Lighting') {
-              features.push('LED Technology');
-              features.push('Dimmable');
-              features.push('Long Lifespan');
-            } else if (category === 'Insulation') {
-              features.push('High R-Value');
-              features.push('Moisture Resistant');
-              features.push('Fire Resistant');
-            } else if (category === 'Appliances') {
-              features.push('Energy Star Certified');
-              features.push('Smart Home Compatible');
-              features.push('Low Water Usage');
-            }
-            
-            // Create a unique ID for the product
-            const productId = `sample-${category.toLowerCase()}-${row.audit_id}-${Math.floor(Math.random() * 1000)}`;
-            
-            generatedProducts.push({
-              id: productId,
-              name: `Energy Efficient ${title}`,
-              category,
-              price,
-              energyEfficiency: 'High',
-              features,
-              description: `This energy efficient ${category.toLowerCase()} product will help you save on energy costs while improving your home's comfort and efficiency.`,
-              annualSavings,
-              roi,
-              paybackPeriod,
-              audit_id: row.audit_id,
-              audit_date: row.audit_date,
-              isSampleProduct: true // Flag to indicate this is a generated sample
-            });
-          } catch (recError) {
-            appLogger.warn(`Error processing recommendation for audit ${row.audit_id}:`, { recError, recommendation });
-            // Continue to next recommendation
           }
+          
+          // Calculate ROI and payback period if not provided
+          const annualSavings = estimatedSavings > 0 ? estimatedSavings : Math.round(price * (Math.random() * 0.2 + 0.1)); // 10-30% of price
+          const roi = price > 0 ? annualSavings / price : 0;
+          const calculatedPaybackPeriod = paybackPeriod > 0 ? paybackPeriod : (annualSavings > 0 ? price / annualSavings : 0);
+            
+          // Generate sample features based on category
+          const features = [];
+          if (category === 'HVAC') {
+            features.push('Energy Star Certified');
+            features.push('Smart Thermostat Compatible');
+            features.push('Quiet Operation');
+          } else if (category === 'Lighting') {
+            features.push('LED Technology');
+            features.push('Dimmable');
+            features.push('Long Lifespan');
+          } else if (category === 'Insulation') {
+            features.push('High R-Value');
+            features.push('Moisture Resistant');
+            features.push('Fire Resistant');
+          } else if (category === 'Windows') {
+            features.push('Double Pane');
+            features.push('Low-E Coating');
+            features.push('Argon Gas Filled');
+          } else if (category === 'Appliances') {
+            features.push('Energy Star Certified');
+            features.push('Smart Home Compatible');
+            features.push('Low Water Usage');
+          }
+          
+          // Create a unique ID for the product
+          const productId = `sample-${category.toLowerCase()}-${row.audit_id}-${Math.floor(Math.random() * 1000)}`;
+          
+          // Get description from the recommendation or generate one
+          const description = row.description || 
+            `This energy efficient ${category.toLowerCase()} product will help you save on energy costs while improving your home's comfort and efficiency.`;
+          
+          generatedProducts.push({
+            id: productId,
+            name: `Energy Efficient ${title}`,
+            category,
+            price,
+            energyEfficiency: 'High',
+            features,
+            description,
+            annualSavings,
+            roi,
+            paybackPeriod: calculatedPaybackPeriod,
+            audit_id: row.audit_id,
+            audit_date: row.audit_date,
+            priority: row.priority || 'medium',
+            isSampleProduct: true // Flag to indicate this is a generated sample
+          });
+        } catch (recError) {
+          appLogger.warn(`Error processing recommendation for audit ${row.audit_id}:`, { recError });
+          // Continue to next recommendation
         }
       } catch (rowError) {
         appLogger.warn(`Error processing recommendation row for audit ${row.audit_id}:`, { rowError });
