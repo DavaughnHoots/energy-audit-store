@@ -34,7 +34,7 @@ import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
-import { runProductComparisonsMigration } from './scripts/run_product_comparisons_migration.js';
+// Product comparison migration removed - table already exists
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,15 +60,6 @@ if (process.env.NODE_ENV === 'production') {
     })
     .catch(error => {
       appLogger.error('Error running search migration on startup', { error });
-    });
-    
-  // Run product comparisons migration
-  runProductComparisonsMigration()
-    .then(result => {
-      appLogger.info('Product comparisons migration completed on startup', { result });
-    })
-    .catch(error => {
-      appLogger.error('Error running product comparisons migration on startup', { error });
     });
     
   // Run initial orphaned audit association
