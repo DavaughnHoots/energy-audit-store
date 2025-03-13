@@ -5,6 +5,7 @@ import { reportGenerationLimiter } from '../middleware/reportRateLimit.js';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
 import { reportGenerationService } from '../services/ReportGenerationService.js';
 import { EnergyAuditService } from '../services/EnergyAuditService.js';
+import { productRecommendationService } from '../services/productRecommendationService.js';
 import { cache } from '../config/cache.js';
 import { Pool } from 'pg';
 import { EnergyAuditData } from '../types/energyAudit.js';
@@ -55,6 +56,35 @@ router.get('/:id', optionalTokenValidation, async (req: AuthenticatedRequest, re
     // If audit belongs to a user, verify ownership
     if (audit.userId && audit.userId !== userId) {
       return res.status(403).json({ error: 'Not authorized to access this audit' });
+    }
+
+    // Add product recommendations if product preferences exist
+    if (audit.product_preferences) {
+      try {
+        const productPreferences = typeof audit.product_preferences === 'string' 
+          ? JSON.parse(audit.product_preferences) 
+          : audit.product_preferences;
+        
+        const recommendations = await productRecommendationService.recommendProducts(productPreferences);
+        
+        // Add recommendations to the response
+        audit.product_recommendations = recommendations;
+        
+        // Calculate potential savings for each category
+        const savingsByCategory: Record<string, number> = {};
+        
+        for (const [category, products] of Object.entries(recommendations)) {
+          savingsByCategory[category] = productRecommendationService.calculateProductSavings(products);
+        }
+        
+        audit.product_savings = {
+          byCategory: savingsByCategory,
+          total: Object.values(savingsByCategory).reduce((sum, val) => sum + val, 0)
+        };
+      } catch (recError) {
+        appLogger.error('Error fetching product recommendations:', createLogMetadata(req, { error: recError }));
+        // Continue without recommendations if there's an error
+      }
     }
 
     res.json(audit);

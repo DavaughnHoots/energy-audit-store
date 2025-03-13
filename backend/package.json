@@ -10,6 +10,7 @@
     "test": "jest --config jest.config.js --detectOpenHandles",
     "test:watch": "jest --watch --config jest.config.js",
     "test:coverage": "jest --coverage --config jest.config.js",
+    "test:recommendations": "node src/tests/productRecommendations.test.js",
     "import-products-full": "node src/scripts/import_products_full.js",
     "associate-audits": "node src/scripts/associate_orphaned_audits.js"
   },

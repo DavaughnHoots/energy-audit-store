@@ -20,6 +20,7 @@ router.get('/products', validateToken, async (req, res) => {
     }
     
     // Get product preferences from database
+    // FIXED: Query the product_preferences column directly instead of a non-existent 'data' column
     const auditQuery = await req.app.locals.pool.query(
       'SELECT product_preferences FROM energy_audits WHERE id = $1',
       [auditId]
@@ -29,6 +30,7 @@ router.get('/products', validateToken, async (req, res) => {
       return res.status(404).json({ message: 'Audit not found' });
     }
     
+    // FIXED: Use product_preferences directly
     const productPreferences = auditQuery.rows[0].product_preferences;
     
     // Check if audit has product preferences

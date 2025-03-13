@@ -158,8 +158,10 @@ Add visualizations to the reports that compare recommended products based on eff
 
 ### 2. API Updates
 
-1. Update `/api/energy-audit/:id` endpoint to include product recommendations (Pending)
+1. ✅ Update `/api/energy-audit/:id` endpoint to include product recommendations (Completed)
+   - Added product recommendations and savings calculations to the response when product preferences exist
 2. ✅ Created new endpoint `/api/recommendations/products?auditId={id}` for product recommendations
+   - ✅ Fixed bug: Updated endpoint to query product_preferences column directly
 3. ✅ Created new endpoint `/api/recommendations/products/categories` for product categories
 4. ✅ Created new endpoint `/api/recommendations/products/features` for product features
 5. ✅ Created new endpoint `/api/recommendations/products/category/:category` for category statistics
@@ -167,8 +169,8 @@ Add visualizations to the reports that compare recommended products based on eff
 ### 3. Database Integration
 
 1. ✅ Ensured product database is accessible to ProductRecommendationService
-2. Add caching for product recommendations to improve performance (Pending)
-3. Add indexes for efficient product filtering (Pending)
+2. ✅ Add caching for product recommendations to improve performance (Completed)
+3. ✅ Add indexes for efficient product filtering (Completed)
 
 ## Testing Strategy
 

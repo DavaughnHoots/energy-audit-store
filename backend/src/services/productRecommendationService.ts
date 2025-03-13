@@ -1,6 +1,7 @@
 import { ProductPreferences } from '../types/energyAuditExtended.js';
 import { appLogger } from '../utils/logger.js';
 import { pool } from '../config/database.js';
+import { cache } from '../config/cache.js';
 
 /**
  * Service for recommending products based on energy audit data and user preferences
@@ -115,6 +116,16 @@ export class ProductRecommendationService {
     try {
       appLogger.info('Generating product recommendations', { preferences });
       
+      // Generate cache key based on preferences
+      const cacheKey = `product_recommendations:${JSON.stringify(preferences)}`;
+      
+      // Check cache first
+      const cachedRecommendations = await cache.get<Record<string, any[]>>(cacheKey);
+      if (cachedRecommendations) {
+        appLogger.info('Using cached product recommendations');
+        return cachedRecommendations;
+      }
+      
       // Load product database if not already loaded
       if (!this.productDb) {
         const success = await this.loadProductDatabase();
@@ -169,6 +180,9 @@ export class ProductRecommendationService {
         categoriesCount: Object.keys(recommendations).length,
         totalRecommendations: Object.values(recommendations).flat().length
       });
+      
+      // Cache the results for 1 hour
+      await cache.set(cacheKey, recommendations, 3600);
       
       return recommendations;
     } catch (error) {

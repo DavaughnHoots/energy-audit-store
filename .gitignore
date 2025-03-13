@@ -97,3 +97,5 @@ backend/src/migrations/*_test_*.sql
 # Editor config files
 .eslintrc*
 .prettierrc*
+energy_audit_calculation_implementation.txt
+energy_audit_tool_implementation_plan.txt

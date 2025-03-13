@@ -306,7 +306,7 @@ export class ReportGenerationService {
     try {
       appLogger.debug('Adding executive summary');
       
-      this.addSectionHeader(doc, 'Executive Summary', 'left', false, 50);
+      this.addSectionHeader(doc, 'Executive Summary', 'left', false, 0);
       
       const totalEnergy = this.calculateTotalEnergy(auditData);
       const efficiencyScore = this.calculateEfficiencyScore(auditData);
@@ -342,7 +342,7 @@ export class ReportGenerationService {
     try {
       appLogger.debug('Adding key findings');
       
-      this.addSectionHeader(doc, 'Key Findings', 'left', false, 50);
+      this.addSectionHeader(doc, 'Key Findings', 'left', false, 0);
       
       // Extract key findings from audit data
       const energyEfficiency = this.calculateEnergyEfficiency(auditData);
@@ -696,7 +696,7 @@ export class ReportGenerationService {
       // Basic Information - start on new page
       try {
         appLogger.debug('Adding property information section');
-        this.addSectionHeader(doc, 'Property Information', 'left', true, 50);
+        this.addSectionHeader(doc, 'Property Information', 'left', false, 0);
         
         const rows = [
           ['Address:', auditData.basicInfo.address],
@@ -725,7 +725,7 @@ export class ReportGenerationService {
       // Current Conditions Summary - start on new page
       try {
         appLogger.debug('Adding current conditions section');
-        this.addSectionHeader(doc, 'Current Conditions', 'left', true, 50);
+        this.addSectionHeader(doc, 'Current Conditions', 'left', false, 0);
         
         const rows = [
           ['Insulation:', `${auditData.currentConditions.insulation.attic} (Attic)`],
@@ -753,7 +753,7 @@ export class ReportGenerationService {
       // HVAC System Details - start on new page
       try {
         appLogger.debug('Adding HVAC system details section');
-        this.addSectionHeader(doc, 'HVAC System Details', 'left', true, 50);
+        this.addSectionHeader(doc, 'HVAC System Details', 'left', false, 0);
         
         // Heating System
         const heatingRows = [
@@ -839,7 +839,7 @@ export class ReportGenerationService {
       // Energy Usage - start on new page
       try {
         appLogger.debug('Adding energy consumption section');
-        this.addSectionHeader(doc, 'Energy Consumption', 'left', true, 50);
+        this.addSectionHeader(doc, 'Energy Consumption', 'left', true, 0);
         
         const rows = [
           ['Average Monthly Electric:', `${auditData.energyConsumption.electricBill} kWh`],
@@ -958,7 +958,7 @@ export class ReportGenerationService {
       try {
         appLogger.debug('Adding lighting assessment section');
         if (auditData.currentConditions.primaryBulbType) {
-          this.addSectionHeader(doc, 'Lighting Assessment', 'left', true, 50);
+          this.addSectionHeader(doc, 'Lighting Assessment', 'left', true, 0);
             
           // Primary lighting information
           const bulbTypeText = {
@@ -1105,7 +1105,11 @@ export class ReportGenerationService {
               rec.priority === 'high' ? '#dc2626' :
               rec.priority === 'medium' ? '#d97706' : '#059669'
             )
-            .text(rec.title, { align: 'left' })
+            .text(rec.title, { 
+              align: 'left',
+              indent: 0,
+              continued: false
+            })
             .fillColor('black')
             .moveDown(0.3);
           
