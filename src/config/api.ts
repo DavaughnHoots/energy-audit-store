@@ -19,7 +19,8 @@ export const API_ENDPOINTS = {
   PRODUCTS: '/api/products',
   ENERGY_AUDIT: '/api/energy-audit',
   DASHBOARD: {
-    STATS: '/api/dashboard/stats'
+    STATS: '/api/dashboard/stats',
+    PRODUCT_HISTORY: '/api/dashboard/product-history'
   },
   SETTINGS: {
     PROPERTY: '/api/settings/property',
@@ -30,6 +31,11 @@ export const API_ENDPOINTS = {
   RECOMMENDATIONS: {
     UPDATE_STATUS: (id: string) => `/api/recommendations/${id}/status`,
     UPDATE_SAVINGS: (id: string) => `/api/recommendations/${id}/savings`
+  },
+  COMPARISONS: {
+    BASE: '/api/comparisons',
+    GET_BY_ID: (id: string) => `/api/comparisons/${id}`,
+    ANALYZE: '/api/comparisons/analyze'
   }
 } as const;
 

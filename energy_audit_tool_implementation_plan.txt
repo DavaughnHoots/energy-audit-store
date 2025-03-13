@@ -58,6 +58,11 @@ This document outlines the plan for implementing the energy audit tool functiona
    - Implemented sorting by price, energy efficiency, ROI, and payback period
    - Added reset filters functionality
 3. ⬜ Add product comparison feature
+   - See `product_comparison_implementation_plan.txt` for detailed implementation plan
+   - Add tabbed navigation to the dashboard
+   - Create product history panel for selecting products
+   - Implement comparison workspace for side-by-side comparison
+   - Add saved comparisons functionality
 4. ⬜ Create detailed product view with energy savings information
 
 ## Phase 6: Testing and Deployment (Partially Completed)

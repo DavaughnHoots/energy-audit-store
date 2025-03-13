@@ -1,8 +1,10 @@
 import express from 'express';
 import { AuthenticatedRequest } from '../types/auth.js';
 import { dashboardService } from '../services/dashboardService.js';
+import * as productComparisonService from '../services/productComparisonService.js';
 import { pool } from '../config/database.js';
 import { appLogger } from '../config/logger.js';
+import { createLogMetadata } from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -82,6 +84,39 @@ router.get('/stats', async (req: AuthenticatedRequest, res) => {
         code: 'INTERNAL_ERROR'
       });
     }
+  }
+});
+
+/**
+ * @route GET /api/dashboard/product-history
+ * @desc Get product history from past audits
+ * @access Private
+ */
+router.get('/product-history', async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        details: 'Please sign in to access your product history',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+    
+    // Get limit from query params, default to 20
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+    
+    // Get product history
+    const productHistory = await productComparisonService.getProductHistory(userId, limit);
+    
+    res.json({ success: true, productHistory });
+  } catch (error) {
+    appLogger.error('Error fetching product history:', createLogMetadata(req, { error }));
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch product history',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

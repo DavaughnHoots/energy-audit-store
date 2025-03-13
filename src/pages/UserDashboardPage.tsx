@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Battery, Calendar, DollarSign, Leaf, AlertCircle, Download, Loader2, Settings } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, Download, Loader2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import RecommendationCard from '@/components/audit/RecommendationCard';
+import DashboardOverview from '@/components/dashboard/DashboardOverview';
+import RecommendationsTab from '@/components/dashboard/RecommendationsTab';
+import ProductComparisons from '@/components/dashboard/ProductComparisons';
+import ReportsTab from '@/components/dashboard/ReportsTab';
 
 interface DashboardStats {
   totalSavings: {
@@ -25,6 +26,7 @@ interface DashboardStats {
   refreshInterval?: number;
   latestAuditId?: string | null;
   recommendations?: any[];
+  userId?: string;
 }
 
 const UserDashboardPage: React.FC = () => {
@@ -41,7 +43,7 @@ const UserDashboardPage: React.FC = () => {
     recommendations: []
   });
 
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   const [refreshKey, setRefreshKey] = useState(0); // Used to force refresh
 
   const fetchDashboardData = useCallback(async (): Promise<number | undefined> => {
@@ -145,116 +147,6 @@ const UserDashboardPage: React.FC = () => {
     };
   }, [fetchDashboardData, refreshKey]);
 
-  const handleDownloadReport = async () => {
-    if (!stats || !stats.latestAuditId) {
-      setError(
-        <div className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No Audit Available</h2>
-          <p className="text-gray-600 mb-4">
-            There is no audit available to generate a report. Please complete an energy audit first.
-          </p>
-          <Button
-            onClick={() => navigate('/energy-audit')}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            Start New Audit
-          </Button>
-        </div>
-      );
-      return;
-    }
-    
-    setIsGeneratingReport(true);
-    try {
-      // Ensure auditId is not null or "null" string
-      const auditId = stats.latestAuditId === "null" ? null : stats.latestAuditId;
-      
-      if (!auditId) {
-        throw new Error('Invalid audit ID');
-      }
-      
-      // Use the full URL with the API_BASE_URL to ensure cookies are sent to the correct domain
-      const { API_BASE_URL } = await import('@/config/api');
-      const reportUrl = `${API_BASE_URL}${API_ENDPOINTS.ENERGY_AUDIT}/${auditId}/report`;
-      
-      console.log('Fetching report from:', reportUrl);
-      
-      const response = await fetch(reportUrl, {
-        method: 'GET',
-        credentials: 'include', // This ensures cookies are sent with the request
-        headers: {
-          'Content-Type': 'application/json'
-          // Let the browser handle sending the cookies automatically
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to generate report');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `energy-audit-report-${stats?.latestAuditId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Error generating report:', err);
-      setError(
-        <div className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Report Generation Failed</h2>
-          <p className="text-gray-600 mb-4">
-            We were unable to generate your report. Please try again.
-          </p>
-          <Button
-            onClick={() => setRefreshKey(prev => prev + 1)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Retry
-          </Button>
-        </div>
-      );
-    } finally {
-      setIsGeneratingReport(false);
-    }
-  };
-
-  const StatCard = ({ 
-    title, 
-    value, 
-    icon: Icon, 
-    description,
-    comparison,
-  }: { 
-    title: string;
-    value: number | string;
-    icon: any;
-    description: string;
-    comparison?: { actual: number; estimated: number };
-  }) => (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex items-center">
-        <div className="p-3 rounded-lg bg-green-100">
-          <Icon className="h-6 w-6 text-green-600" />
-        </div>
-        <div className="ml-4 flex-grow">
-          <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-          <p className="text-2xl font-semibold text-gray-900">{value}</p>
-          <p className="text-sm text-gray-600">{description}</p>
-          {comparison && typeof comparison.estimated === 'number' && typeof comparison.actual === 'number' && (
-            <div className="mt-2 text-sm">
-              <span className="text-blue-600">Estimated: ${comparison.estimated.toLocaleString()}</span>
-              <span className="mx-2">|</span>
-              <span className="text-green-600">Actual: ${comparison.actual.toLocaleString()}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 
   if (isLoading) {
     return (
@@ -290,25 +182,6 @@ const UserDashboardPage: React.FC = () => {
                 <Settings className="h-4 w-4" />
                 <span>Property Settings</span>
               </Button>
-              {stats.latestAuditId && (
-                <Button
-                  onClick={handleDownloadReport}
-                  disabled={isGeneratingReport}
-                  className="flex items-center space-x-2"
-                >
-                  {isGeneratingReport ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Generating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      <span>Download Report</span>
-                    </>
-                  )}
-                </Button>
-              )}
               {stats.lastUpdated && (
                 <p className="text-sm text-gray-500">
                   Last updated: {new Date(stats.lastUpdated).toLocaleTimeString()}
@@ -317,109 +190,82 @@ const UserDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Savings"
-            value={`$${stats?.totalSavings?.actual?.toLocaleString() ?? '0'}`}
-            icon={DollarSign}
-            description="Actual energy cost savings"
-            comparison={stats?.totalSavings ? {
-              estimated: stats.totalSavings.estimated,
-              actual: stats.totalSavings.actual
-            } : undefined}
-          />
-          <StatCard
-            title="Energy Audits"
-            value={stats.completedAudits}
-            icon={Battery}
-            description="Completed energy assessments"
-          />
-          <StatCard
-            title="Active Recommendations"
-            value={stats.activeRecommendations}
-            icon={Leaf}
-            description="Pending improvements"
-          />
-          <StatCard
-            title="Implemented Changes"
-            value={stats.implementedChanges}
-            icon={Calendar}
-            description="Completed improvements"
-          />
+        
+        {/* Tab Navigation */}
+        <div className="mb-6 border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`${
+                activeTab === 'overview'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('recommendations')}
+              className={`${
+                activeTab === 'recommendations'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Recommendations
+            </button>
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`${
+                activeTab === 'products'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Product Comparisons
+            </button>
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`${
+                activeTab === 'reports'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Reports
+            </button>
+          </nav>
         </div>
-
-        {/* Savings Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Savings Trend</h2>
-          <div className="h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={stats.monthlySavings}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip
-                  formatter={(value: number) => [`$${value}`, 'Savings']}
-                  labelFormatter={(label: string) => `Month: ${label}`}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  name="Estimated Savings"
-                  dataKey="estimated"
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  dot={{ fill: '#3B82F6' }}
-                  activeDot={{ r: 8 }}
-                />
-                <Line
-                  type="monotone"
-                  name="Actual Savings"
-                  dataKey="actual"
-                  stroke="#22C55E"
-                  strokeWidth={2}
-                  dot={{ fill: '#22C55E' }}
-                  activeDot={{ r: 8 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Recommendations Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
-          {stats.recommendations && stats.recommendations.length > 0 ? (
-            <div className="space-y-4">
-              {stats.recommendations.map((recommendation) => (
-                <RecommendationCard
-                  key={recommendation.id}
-                  recommendation={recommendation}
-                  onUpdate={() => setRefreshKey(prev => prev + 1)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-gray-500 py-8">
-              <p>No recommendations available.</p>
-              <Button
-                asChild
-                className="mt-4"
-              >
-                <a href="/energy-audit">Start New Energy Audit</a>
-              </Button>
-            </div>
-          )}
-        </div>
+        
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+          <DashboardOverview 
+            stats={stats} 
+            isLoading={isLoading} 
+            error={error} 
+            onRefresh={() => setRefreshKey(prev => prev + 1)} 
+          />
+        )}
+        
+        {activeTab === 'recommendations' && (
+          <RecommendationsTab 
+            recommendations={stats.recommendations || []} 
+            onUpdate={() => setRefreshKey(prev => prev + 1)} 
+          />
+        )}
+        
+        {activeTab === 'products' && (
+          <ProductComparisons 
+            userId={stats.userId || ''} 
+            audits={stats.completedAudits} 
+          />
+        )}
+        
+        {activeTab === 'reports' && (
+          <ReportsTab 
+            auditId={stats.latestAuditId || null} 
+          />
+        )}
       </div>
     </div>
   );

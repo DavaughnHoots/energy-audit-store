@@ -27,12 +27,14 @@ import userProfileRoutes from './routes/userProfile.js';
 import productsRoutes from './routes/products.js';
 import visualizationRoutes from './routes/visualization.js';
 import productRecommendationsRoutes from './routes/productRecommendations.js';
+import comparisonsRoutes from './routes/comparisons.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
+import { runProductComparisonsMigration } from './scripts/run_product_comparisons_migration.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +60,15 @@ if (process.env.NODE_ENV === 'production') {
     })
     .catch(error => {
       appLogger.error('Error running search migration on startup', { error });
+    });
+    
+  // Run product comparisons migration
+  runProductComparisonsMigration()
+    .then(result => {
+      appLogger.info('Product comparisons migration completed on startup', { result });
+    })
+    .catch(error => {
+      appLogger.error('Error running product comparisons migration on startup', { error });
     });
     
   // Run initial orphaned audit association
@@ -141,6 +152,7 @@ app.use('/api/energy-audit', energyAuditRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
 app.use('/api/recommendations/products', productRecommendationsRoutes);
+app.use('/api/comparisons', comparisonsRoutes);
 app.use('/api/user-profile', userProfileRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/visualization', visualizationRoutes);
