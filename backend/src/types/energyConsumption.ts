@@ -73,29 +73,39 @@ export interface BaselineCalculationResult {
   electricity: {
     baseline: number;
     normalizedBaseline: number;
+    adjustedBaseline: number;
     seasonalAdjusted: boolean;
     squareFootageAdjusted: boolean;
     occupancyAdjusted: boolean;
+    benchmarkAdjusted?: boolean;
+    percentileRanking?: number | null;
   };
   gas: {
     baseline: number;
     normalizedBaseline: number;
+    adjustedBaseline: number;
     seasonalAdjusted: boolean;
     squareFootageAdjusted: boolean;
     occupancyAdjusted: boolean;
+    benchmarkAdjusted?: boolean;
+    percentileRanking?: number | null;
   };
   water: {
     baseline: number;
     normalizedBaseline: number;
+    adjustedBaseline: number;
     seasonalAdjusted: boolean;
     squareFootageAdjusted: boolean;
     occupancyAdjusted: boolean;
+    benchmarkAdjusted?: boolean;
+    percentileRanking?: number | null;
   };
   timeframe: {
     start: Date;
     end: Date;
   };
   confidenceScore: number;
+  propertyDetails?: PropertyNormalizationDetails;
 }
 
 /**
