@@ -1,0 +1,777 @@
+import { pool } from '../../config/database.js';
+import { appLogger } from '../../utils/logger.js';
+import { 
+  TimeSeriesPoint,
+  checkSeasonality, 
+  detectAnomalies
+} from '../../utils/forecastingModels.js';
+import { getRecords } from './basicOperations.js';
+import { 
+  PropertyNormalizationDetails, 
+  BaselineCalculationResult,
+  PatternIdentificationResult,
+  ConsumptionAnalysis,
+  ConsumptionAnomaly
+} from '../../types/energyConsumption.js';
+
+/**
+ * Calculate baseline consumption for a user
+ * @param userId The user ID
+ * @param propertyDetails Optional property details for normalization
+ * @param timeframe Optional timeframe for baseline calculation
+ * @returns Baseline calculation result
+ */
+export async function calculateBaseline(
+  userId: string, 
+  propertyDetails?: PropertyNormalizationDetails,
+  timeframe?: { start: Date, end: Date }
+): Promise<BaselineCalculationResult> {
+  try {
+    // Set default timeframe to past year if not provided
+    const now = new Date();
+    const defaultStart = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+    const defaultEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    
+    const start = timeframe?.start || defaultStart;
+    const end = timeframe?.end || defaultEnd;
+    
+    // Get records for the timeframe
+    const records = await getRecords(userId, start, end);
+    
+    if (records.length === 0) {
+      throw new Error('Insufficient data for baseline calculation');
+    }
+    
+    // Calculate raw baseline (average monthly usage)
+    let totalElectricity = 0;
+    let totalGas = 0;
+    let totalWater = 0;
+    let electricityCount = 0;
+    let gasCount = 0;
+    let waterCount = 0;
+    
+    records.forEach(record => {
+      if (record.electricity_usage !== null && record.electricity_usage !== undefined) {
+        totalElectricity += record.electricity_usage;
+        electricityCount++;
+      }
+      
+      if (record.gas_usage !== null && record.gas_usage !== undefined) {
+        totalGas += record.gas_usage;
+        gasCount++;
+      }
+      
+      if (record.water_usage !== null && record.water_usage !== undefined) {
+        totalWater += record.water_usage;
+        waterCount++;
+      }
+    });
+    
+    const baselineElectricity = electricityCount > 0 ? totalElectricity / electricityCount : 0;
+    const baselineGas = gasCount > 0 ? totalGas / gasCount : 0;
+    const baselineWater = waterCount > 0 ? totalWater / waterCount : 0;
+    
+    // Check for seasonality
+    const hasEnoughDataForSeasonality = records.length >= 12;
+    
+    // Normalize by square footage if available
+    const squareFootageAdjusted = propertyDetails?.squareFootage !== undefined && propertyDetails.squareFootage > 0;
+    const occupancyAdjusted = propertyDetails?.occupants !== undefined && propertyDetails.occupants > 0;
+    
+    // Calculate normalized baselines
+    let normalizedElectricity = baselineElectricity;
+    let normalizedGas = baselineGas;
+    let normalizedWater = baselineWater;
+    
+    if (squareFootageAdjusted) {
+      normalizedElectricity = normalizedElectricity / propertyDetails!.squareFootage!;
+      normalizedGas = normalizedGas / propertyDetails!.squareFootage!;
+      // Water is typically not normalized by square footage, but by occupants
+    }
+    
+    if (occupancyAdjusted) {
+      // Electricity and gas are partially normalized by occupants (diminishing returns)
+      // Using square root for diminishing returns - each additional person adds less
+      const occupancyFactor = Math.sqrt(propertyDetails!.occupants!);
+      normalizedElectricity = normalizedElectricity / occupancyFactor;
+      normalizedGas = normalizedGas / occupancyFactor;
+      normalizedWater = normalizedWater / propertyDetails!.occupants!; // Water fully normalized by occupants
+    }
+    
+    // Calculate confidence score (0-1) based on data quantity and quality
+    const monthSpan = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30); // Approximate months
+    const dataCompleteness = Math.min(1, records.length / monthSpan);
+    
+    // Higher confidence with more normalization factors and more data
+    let confidenceScore = 0.5 * dataCompleteness;
+    if (squareFootageAdjusted) confidenceScore += 0.2;
+    if (occupancyAdjusted) confidenceScore += 0.2;
+    if (hasEnoughDataForSeasonality) confidenceScore += 0.1;
+    
+    // Cap at 1.0
+    confidenceScore = Math.min(1.0, confidenceScore);
+    
+    appLogger.info(`Calculated baseline consumption for user ${userId}`);
+    
+    return {
+      electricity: {
+        baseline: baselineElectricity,
+        normalizedBaseline: normalizedElectricity,
+        seasonalAdjusted: hasEnoughDataForSeasonality,
+        squareFootageAdjusted,
+        occupancyAdjusted
+      },
+      gas: {
+        baseline: baselineGas,
+        normalizedBaseline: normalizedGas,
+        seasonalAdjusted: hasEnoughDataForSeasonality,
+        squareFootageAdjusted,
+        occupancyAdjusted
+      },
+      water: {
+        baseline: baselineWater,
+        normalizedBaseline: normalizedWater,
+        seasonalAdjusted: hasEnoughDataForSeasonality,
+        squareFootageAdjusted,
+        occupancyAdjusted
+      },
+      timeframe: {
+        start,
+        end
+      },
+      confidenceScore
+    };
+  } catch (error) {
+    appLogger.error('Error calculating baseline consumption:', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      userId
+    });
+    throw new Error(`Failed to calculate baseline consumption: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Identify patterns in energy consumption data
+ * @param userId The user ID
+ * @param timeframe Optional timeframe for pattern analysis
+ * @param propertyId Optional property ID filter
+ * @returns Pattern identification result
+ */
+export async function identifyPatterns(
+  userId: string,
+  timeframe?: { start: Date, end: Date },
+  propertyId?: string
+): Promise<PatternIdentificationResult> {
+  try {
+    // Set default timeframe to past year if not provided
+    const now = new Date();
+    const defaultStart = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+    const defaultEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    
+    const start = timeframe?.start || defaultStart;
+    const end = timeframe?.end || defaultEnd;
+    
+    // Get records for the timeframe
+    const records = await getRecords(userId, start, end, propertyId);
+    
+    if (records.length < 3) {
+      throw new Error('Insufficient data for pattern identification');
+    }
+    
+    // Prepare data for seasonality check
+    const electricityData: TimeSeriesPoint[] = [];
+    const gasData: TimeSeriesPoint[] = [];
+    const waterData: TimeSeriesPoint[] = [];
+    
+    records.forEach(record => {
+      if (record.electricity_usage !== null && record.electricity_usage !== undefined) {
+        electricityData.push({
+          date: new Date(record.record_date),
+          value: record.electricity_usage
+        });
+      }
+      
+      if (record.gas_usage !== null && record.gas_usage !== undefined) {
+        gasData.push({
+          date: new Date(record.record_date),
+          value: record.gas_usage
+        });
+      }
+      
+      if (record.water_usage !== null && record.water_usage !== undefined) {
+        waterData.push({
+          date: new Date(record.record_date),
+          value: record.water_usage
+        });
+      }
+    });
+    
+    // Check for seasonality - need at least 2 years of data for good check
+    // If not enough data, use a lower period
+    const period = records.length >= 24 ? 12 : Math.min(4, Math.floor(records.length / 2));
+    
+    let electricitySeasonality = 0;
+    let gasSeasonality = 0;
+    let waterSeasonality = 0;
+    
+    try {
+      if (electricityData.length >= period * 2) {
+        electricitySeasonality = checkSeasonality(electricityData, period);
+      }
+    } catch (e) {
+      appLogger.warn(`Error checking electricity seasonality: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    try {
+      if (gasData.length >= period * 2) {
+        gasSeasonality = checkSeasonality(gasData, period);
+      }
+    } catch (e) {
+      appLogger.warn(`Error checking gas seasonality: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    try {
+      if (waterData.length >= period * 2) {
+        waterSeasonality = checkSeasonality(waterData, period);
+      }
+    } catch (e) {
+      appLogger.warn(`Error checking water seasonality: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    // Determine if seasonality is significant (correlation > 0.3)
+    const hasSeasonality = 
+      electricitySeasonality > 0.3 || 
+      gasSeasonality > 0.3 || 
+      waterSeasonality > 0.3;
+    
+    // Determine trends - using simple start vs. end comparison
+    // Sort by date for trend analysis
+    electricityData.sort((a, b) => a.date.getTime() - b.date.getTime());
+    gasData.sort((a, b) => a.date.getTime() - b.date.getTime());
+    waterData.sort((a, b) => a.date.getTime() - b.date.getTime());
+    
+    // Calculate trends using first and last 3 points (or fewer if less data)
+    const electricityTrend = calculateTrend(electricityData);
+    const gasTrend = calculateTrend(gasData);
+    const waterTrend = calculateTrend(waterData);
+    
+    // Determine overall trend
+    const trendValues: Record<string, number> = {
+      'increasing': 1,
+      'stable': 0,
+      'decreasing': -1
+    };
+    
+    const trendSum = 
+      (trendValues[electricityTrend] || 0) + 
+      (trendValues[gasTrend] || 0) + 
+      (trendValues[waterTrend] || 0);
+    
+    let overallTrend: string;
+    
+    if (trendSum > 0) {
+      overallTrend = 'increasing';
+    } else if (trendSum < 0) {
+      overallTrend = 'decreasing';
+    } else {
+      overallTrend = 'stable';
+    }
+    
+    // For day/night and weekday/weekend patterns, we would need more granular data
+    // which we don't have in this implementation, so we'll set to not available
+    
+    appLogger.info(`Identified consumption patterns for user ${userId}`);
+    
+    return {
+      seasonal: {
+        electricity: electricitySeasonality,
+        gas: gasSeasonality,
+        water: waterSeasonality,
+        hasSeasonality
+      },
+      dayNight: {
+        available: false
+      },
+      weekdayWeekend: {
+        available: false
+      },
+      trend: {
+        electricity: electricityTrend,
+        gas: gasTrend,
+        water: waterTrend,
+        overallTrend
+      }
+    };
+  } catch (error) {
+    appLogger.error('Error identifying consumption patterns:', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      userId
+    });
+    throw new Error(`Failed to identify consumption patterns: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Helper method to calculate trend from time series data
+ * @param data Time series data points
+ * @returns Trend description ("increasing", "decreasing", or "stable")
+ */
+function calculateTrend(data: TimeSeriesPoint[]): string {
+  if (data.length < 2) {
+    return 'stable'; // Not enough data to determine trend
+  }
+  
+  // Use first and last 3 points (or fewer if less data)
+  const startPoints = data.slice(0, Math.min(3, data.length));
+  const endPoints = data.slice(Math.max(0, data.length - 3));
+  
+  const startAvg = startPoints.reduce((sum, point) => sum + point.value, 0) / startPoints.length;
+  const endAvg = endPoints.reduce((sum, point) => sum + point.value, 0) / endPoints.length;
+  
+  // Calculate percent change
+  const percentChange = startAvg !== 0
+    ? (endAvg - startAvg) / startAvg
+    : 0;
+  
+  // Classify trend based on percent change
+  if (percentChange > 0.1) {
+    return 'increasing';
+  } else if (percentChange < -0.1) {
+    return 'decreasing';
+  } else {
+    return 'stable';
+  }
+}
+
+/**
+ * Detect anomalies in consumption data
+ * @param userId The user ID
+ * @param timeframe Timeframe for anomaly detection
+ * @param threshold Z-score threshold (default 2.0)
+ * @param propertyId Optional property ID filter
+ * @returns Array of consumption anomalies
+ */
+export async function detectConsumptionAnomalies(
+  userId: string,
+  timeframe: { start: Date, end: Date },
+  threshold: number = 2.0,
+  propertyId?: string
+): Promise<ConsumptionAnomaly[]> {
+  try {
+    // Get records for the timeframe
+    const records = await getRecords(userId, timeframe.start, timeframe.end, propertyId);
+    
+    if (records.length < 5) {
+      throw new Error('Insufficient data for anomaly detection');
+    }
+    
+    // Prepare data for anomaly detection
+    const electricityData: TimeSeriesPoint[] = [];
+    const gasData: TimeSeriesPoint[] = [];
+    const waterData: TimeSeriesPoint[] = [];
+    
+    records.forEach(record => {
+      if (record.electricity_usage !== null && record.electricity_usage !== undefined) {
+        electricityData.push({
+          date: new Date(record.record_date),
+          value: record.electricity_usage
+        });
+      }
+      
+      if (record.gas_usage !== null && record.gas_usage !== undefined) {
+        gasData.push({
+          date: new Date(record.record_date),
+          value: record.gas_usage
+        });
+      }
+      
+      if (record.water_usage !== null && record.water_usage !== undefined) {
+        waterData.push({
+          date: new Date(record.record_date),
+          value: record.water_usage
+        });
+      }
+    });
+    
+    // Detect anomalies using the utility function
+    const electricityAnomalies = detectAnomalies(electricityData, threshold);
+    const gasAnomalies = detectAnomalies(gasData, threshold);
+    const waterAnomalies = detectAnomalies(waterData, threshold);
+    
+    // Calculate expected values and deviations for anomalies
+    const result: ConsumptionAnomaly[] = [];
+    
+    // Process electricity anomalies
+    electricityAnomalies.forEach(anomaly => {
+      // Find the original record
+      const recordIndex = electricityData.findIndex(
+        d => d.date.getTime() === anomaly.date.getTime() && d.value === anomaly.value
+      );
+      
+      if (recordIndex >= 0) {
+        // Calculate expected value based on surrounding points
+        const startIdx = Math.max(0, recordIndex - 2);
+        const endIdx = Math.min(electricityData.length - 1, recordIndex + 2);
+        let sum = 0;
+        let count = 0;
+        
+        for (let i = startIdx; i <= endIdx; i++) {
+          if (i !== recordIndex) {
+            sum += electricityData[i].value;
+            count++;
+          }
+        }
+        
+        const expectedValue = count > 0 ? sum / count : anomaly.value;
+        const deviation = expectedValue !== 0 
+          ? (anomaly.value - expectedValue) / expectedValue 
+          : 0;
+        
+        result.push({
+          date: anomaly.date,
+          type: 'electricity',
+          value: anomaly.value,
+          expectedValue,
+          deviation,
+          zScore: threshold, // We don't have the actual z-score from the utility function
+          suspected_cause: getSuspectedCause('electricity', deviation)
+        });
+      }
+    });
+    
+    // Process gas anomalies
+    gasAnomalies.forEach(anomaly => {
+      // Find the original record
+      const recordIndex = gasData.findIndex(
+        d => d.date.getTime() === anomaly.date.getTime() && d.value === anomaly.value
+      );
+      
+      if (recordIndex >= 0) {
+        // Calculate expected value based on surrounding points
+        const startIdx = Math.max(0, recordIndex - 2);
+        const endIdx = Math.min(gasData.length - 1, recordIndex + 2);
+        let sum = 0;
+        let count = 0;
+        
+        for (let i = startIdx; i <= endIdx; i++) {
+          if (i !== recordIndex) {
+            sum += gasData[i].value;
+            count++;
+          }
+        }
+        
+        const expectedValue = count > 0 ? sum / count : anomaly.value;
+        const deviation = expectedValue !== 0 
+          ? (anomaly.value - expectedValue) / expectedValue 
+          : 0;
+        
+        result.push({
+          date: anomaly.date,
+          type: 'gas',
+          value: anomaly.value,
+          expectedValue,
+          deviation,
+          zScore: threshold, // We don't have the actual z-score from the utility function
+          suspected_cause: getSuspectedCause('gas', deviation)
+        });
+      }
+    });
+    
+    // Process water anomalies
+    waterAnomalies.forEach(anomaly => {
+      // Find the original record
+      const recordIndex = waterData.findIndex(
+        d => d.date.getTime() === anomaly.date.getTime() && d.value === anomaly.value
+      );
+      
+      if (recordIndex >= 0) {
+        // Calculate expected value based on surrounding points
+        const startIdx = Math.max(0, recordIndex - 2);
+        const endIdx = Math.min(waterData.length - 1, recordIndex + 2);
+        let sum = 0;
+        let count = 0;
+        
+        for (let i = startIdx; i <= endIdx; i++) {
+          if (i !== recordIndex) {
+            sum += waterData[i].value;
+            count++;
+          }
+        }
+        
+        const expectedValue = count > 0 ? sum / count : anomaly.value;
+        const deviation = expectedValue !== 0 
+          ? (anomaly.value - expectedValue) / expectedValue 
+          : 0;
+        
+        result.push({
+          date: anomaly.date,
+          type: 'water',
+          value: anomaly.value,
+          expectedValue,
+          deviation,
+          zScore: threshold, // We don't have the actual z-score from the utility function
+          suspected_cause: getSuspectedCause('water', deviation)
+        });
+      }
+    });
+    
+    appLogger.info(`Detected ${result.length} consumption anomalies for user ${userId}`);
+    
+    return result;
+  } catch (error) {
+    appLogger.error('Error detecting consumption anomalies:', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      userId,
+      timeframe
+    });
+    throw new Error(`Failed to detect consumption anomalies: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Get suspected cause for an anomaly based on type and deviation
+ * @param type Utility type
+ * @param deviation Deviation percentage
+ * @returns Suspected cause description
+ */
+function getSuspectedCause(type: string, deviation: number): string {
+  // Positive deviation means higher than expected usage
+  if (deviation > 0) {
+    switch (type) {
+      case 'electricity':
+        return deviation > 0.5 
+          ? 'Possible significant event (e.g., new appliance, guests)'
+          : 'Moderate increase in usage (e.g., increased AC/heating)';
+      case 'gas':
+        return deviation > 0.5
+          ? 'Significant increase - possible heating system issue or unusually cold weather'
+          : 'Moderate increase in heating usage';
+      case 'water':
+        return deviation > 0.5
+          ? 'Possible leak or major water usage event'
+          : 'Higher than normal water usage';
+      default:
+        return 'Unusual increase in consumption';
+    }
+  } else { // Negative deviation - lower than expected usage
+    switch (type) {
+      case 'electricity':
+        return deviation < -0.5
+          ? 'Significant decrease - possible extended absence or major efficiency improvement'
+          : 'Lower than normal electricity usage';
+      case 'gas':
+        return deviation < -0.5
+          ? 'Significant decrease - possible warm weather or heating system change'
+          : 'Lower than normal gas usage';
+      case 'water':
+        return deviation < -0.5
+          ? 'Significant decrease - possible absence or fixture replacement'
+          : 'Lower than normal water usage';
+      default:
+        return 'Unusual decrease in consumption';
+    }
+  }
+}
+
+/**
+ * Analyze energy consumption patterns for a user
+ * @param userId The user ID
+ * @param year The year to analyze
+ * @param propertyId Optional property ID filter
+ * @returns Consumption analysis
+ */
+export async function analyzeConsumption(
+  userId: string, 
+  year: number, 
+  propertyId?: string
+): Promise<ConsumptionAnalysis> {
+  try {
+    // Get all consumption records for the year
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31);
+    
+    const records = await getRecords(userId, startDate, endDate, propertyId);
+    
+    if (records.length === 0) {
+      throw new Error('Insufficient data for analysis');
+    }
+    
+    // Calculate annual totals
+    const annualElectricity = records.reduce((sum, record) => sum + (record.electricity_usage || 0), 0);
+    const annualGas = records.reduce((sum, record) => sum + (record.gas_usage || 0), 0);
+    const annualWater = records.reduce((sum, record) => sum + (record.water_usage || 0), 0);
+    
+    const annualElectricityCost = records.reduce((sum, record) => sum + (record.electricity_cost || 0), 0);
+    const annualGasCost = records.reduce((sum, record) => sum + (record.gas_cost || 0), 0);
+    const annualWaterCost = records.reduce((sum, record) => sum + (record.water_cost || 0), 0);
+    
+    // Group by month for seasonal analysis
+    const monthlyData: Record<number, { electricity: number, gas: number, water: number }> = {};
+    
+    records.forEach(record => {
+      const month = record.record_date.getMonth();
+      
+      if (!monthlyData[month]) {
+        monthlyData[month] = { electricity: 0, gas: 0, water: 0 };
+      }
+      
+      monthlyData[month].electricity += record.electricity_usage || 0;
+      monthlyData[month].gas += record.gas_usage || 0;
+      monthlyData[month].water += record.water_usage || 0;
+    });
+    
+    // Calculate seasonal variations
+    const seasons = {
+      winter: [0, 1, 11], // Dec, Jan, Feb
+      spring: [2, 3, 4],   // Mar, Apr, May
+      summer: [5, 6, 7],   // Jun, Jul, Aug
+      fall: [8, 9, 10]     // Sep, Oct, Nov
+    };
+    
+    const seasonalData: Record<string, { electricity: number, gas: number, water: number }> = {
+      winter: { electricity: 0, gas: 0, water: 0 },
+      spring: { electricity: 0, gas: 0, water: 0 },
+      summer: { electricity: 0, gas: 0, water: 0 },
+      fall: { electricity: 0, gas: 0, water: 0 }
+    };
+    
+    for (const [season, months] of Object.entries(seasons)) {
+      months.forEach(month => {
+        if (monthlyData[month]) {
+          seasonalData[season].electricity += monthlyData[month].electricity;
+          seasonalData[season].gas += monthlyData[month].gas;
+          seasonalData[season].water += monthlyData[month].water;
+        }
+      });
+    }
+    
+    // Calculate seasonal variation (max - min) / avg
+    const seasonValues = Object.values(seasonalData);
+    
+    const electricityValues = seasonValues.map(s => s.electricity);
+    const gasValues = seasonValues.map(s => s.gas);
+    const waterValues = seasonValues.map(s => s.water);
+    
+    const avgElectricity = electricityValues.reduce((sum, val) => sum + val, 0) / seasonValues.length;
+    const avgGas = gasValues.reduce((sum, val) => sum + val, 0) / seasonValues.length;
+    const avgWater = waterValues.reduce((sum, val) => sum + val, 0) / seasonValues.length;
+    
+    const electricityVariation = avgElectricity === 0 ? 0 : 
+      (Math.max(...electricityValues) - Math.min(...electricityValues)) / avgElectricity;
+    
+    const gasVariation = avgGas === 0 ? 0 :
+      (Math.max(...gasValues) - Math.min(...gasValues)) / avgGas;
+    
+    const waterVariation = avgWater === 0 ? 0 :
+      (Math.max(...waterValues) - Math.min(...waterValues)) / avgWater;
+    
+    // Detect anomalies
+    const anomalies = await detectConsumptionAnomalies(userId, { start: startDate, end: endDate }, 2.5, propertyId);
+    
+    // Create analysis result
+    const analysis: ConsumptionAnalysis = {
+      annual_usage: {
+        electricity: annualElectricity,
+        gas: annualGas,
+        water: annualWater
+      },
+      annual_cost: {
+        electricity: annualElectricityCost,
+        gas: annualGasCost,
+        water: annualWaterCost,
+        total: annualElectricityCost + annualGasCost + annualWaterCost
+      },
+      baseline: {
+        electricity: avgElectricity * 4, // Rough baseline: average per season * 4 seasons
+        gas: avgGas * 4,
+        water: avgWater * 4
+      },
+      efficiency_score: 0, // Placeholder, would be calculated based on comparisons
+      patterns: {
+        seasonal_variation: {
+          electricity: electricityVariation,
+          gas: gasVariation,
+          water: waterVariation
+        },
+        usage_trend: "stable", // Will be updated below
+        anomalies: anomalies
+      },
+      savings_opportunities: [] // Will be populated below
+    };
+    
+    // Get pattern identification to determine trend
+    try {
+      const patterns = await identifyPatterns(userId, { start: startDate, end: endDate }, propertyId);
+      analysis.patterns.usage_trend = patterns.trend.overallTrend;
+      
+      // Add day/night and weekday/weekend patterns if available
+      if (patterns.dayNight.available && patterns.dayNight.ratio !== undefined && patterns.dayNight.dayHeavy !== undefined) {
+        analysis.patterns.dayNight = {
+          ratio: patterns.dayNight.ratio,
+          dayHeavy: patterns.dayNight.dayHeavy
+        };
+      }
+      
+      if (patterns.weekdayWeekend.available && patterns.weekdayWeekend.ratio !== undefined && patterns.weekdayWeekend.weekdayHeavy !== undefined) {
+        analysis.patterns.weekdayWeekend = {
+          ratio: patterns.weekdayWeekend.ratio,
+          weekdayHeavy: patterns.weekdayWeekend.weekdayHeavy
+        };
+      }
+    } catch (e) {
+      // Don't let pattern identification failure stop the whole analysis
+      appLogger.warn(`Failed to identify consumption patterns for user ${userId}:`, {
+        error: e instanceof Error ? e.message : String(e)
+      });
+    }
+    
+    // Add savings opportunities based on seasonal variations
+    if (electricityVariation > 0.5) {
+      analysis.savings_opportunities.push({
+        category: "Electricity",
+        potential_savings: Math.round(annualElectricityCost * 0.15),
+        description: "Significant seasonal electricity variations detected. Consider programmable thermostats or more efficient cooling systems.",
+        difficulty: "medium"
+      });
+    }
+    
+    if (gasVariation > 0.7) {
+      analysis.savings_opportunities.push({
+        category: "Heating",
+        potential_savings: Math.round(annualGasCost * 0.2),
+        description: "High seasonal gas usage indicates potential insulation issues or inefficient heating system.",
+        difficulty: "hard"
+      });
+    }
+    
+    if (waterVariation > 0.4) {
+      analysis.savings_opportunities.push({
+        category: "Water",
+        potential_savings: Math.round(annualWaterCost * 0.1),
+        description: "Seasonal water usage variations suggest potential for water conservation measures.",
+        difficulty: "easy"
+      });
+    }
+    
+    // Calculate efficiency score (placeholder algorithm)
+    // A real implementation would use more sophisticated benchmarking
+    const variationPenalty = (electricityVariation + gasVariation + waterVariation) / 3 * 20;
+    analysis.efficiency_score = Math.max(0, Math.min(100, 80 - variationPenalty));
+    
+    appLogger.info(`Generated consumption analysis for user ${userId} for year ${year}`);
+    
+    return analysis;
+  } catch (error) {
+    appLogger.error('Error analyzing energy consumption:', {
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      userId,
+      year,
+      propertyId
+    });
+    throw new Error(`Failed to analyze energy consumption: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
