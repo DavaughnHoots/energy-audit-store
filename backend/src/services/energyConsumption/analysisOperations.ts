@@ -6,6 +6,11 @@ import {
   detectAnomalies
 } from '../../utils/forecastingModels.js';
 import { getRecords } from './basicOperations.js';
+import {
+  getBenchmarkData,
+  calculatePercentileRanking,
+  getReferenceConsumption
+} from './benchmarkingService.js';
 import { 
   PropertyNormalizationDetails, 
   BaselineCalculationResult,
@@ -50,7 +55,15 @@ export async function calculateBaseline(
     let gasCount = 0;
     let waterCount = 0;
     
+    // Also get property_id to use for data retrieval
+    let propertyId: string | undefined;
+    
     records.forEach(record => {
+      // Get property_id from first record if available
+      if (!propertyId && record.property_id) {
+        propertyId = record.property_id;
+      }
+      
       if (record.electricity_usage !== null && record.electricity_usage !== undefined) {
         totalElectricity += record.electricity_usage;
         electricityCount++;
@@ -98,14 +111,133 @@ export async function calculateBaseline(
       normalizedWater = normalizedWater / propertyDetails!.occupants!; // Water fully normalized by occupants
     }
     
+    // Get benchmark data for similar properties if property details are available
+    let benchmarkData = null;
+    let referenceBenchmark = null;
+    let benchmarkAdjusted = false;
+    
+    if (propertyDetails && propertyDetails.propertyType) {
+      try {
+        // Try to get actual benchmark data from similar properties
+        benchmarkData = await getBenchmarkData(propertyDetails, { start, end });
+        
+        // If not enough benchmark data, use reference values
+        if (!benchmarkData) {
+          referenceBenchmark = getReferenceConsumption(
+            propertyDetails.propertyType,
+            propertyDetails.squareFootage,
+            propertyDetails.occupants
+          );
+        }
+        
+        benchmarkAdjusted = !!(benchmarkData || referenceBenchmark);
+      } catch (e) {
+        appLogger.warn('Failed to get benchmark data:', { 
+          error: e instanceof Error ? e.message : String(e),
+          userId
+        });
+        // Continue without benchmark data
+      }
+    }
+    
+    // Adjust baselines with benchmark data if available
+    if (benchmarkData) {
+      // Compare user's normalized consumption with similar properties
+      // If user's normalized value is very different from benchmark median,
+      // adjust the baseline towards the benchmark
+      const adjustWeight = 0.3; // How much weight to give to benchmark data vs. user data
+      
+      if (electricityCount > 0 && benchmarkData.electricity.median > 0) {
+        const ratio = normalizedElectricity / benchmarkData.electricity.median;
+        // Only adjust if significantly different (50% or more)
+        if (ratio < 0.5 || ratio > 1.5) {
+          normalizedElectricity = normalizedElectricity * (1 - adjustWeight) + 
+            benchmarkData.electricity.median * adjustWeight;
+        }
+      }
+      
+      if (gasCount > 0 && benchmarkData.gas.median > 0) {
+        const ratio = normalizedGas / benchmarkData.gas.median;
+        if (ratio < 0.5 || ratio > 1.5) {
+          normalizedGas = normalizedGas * (1 - adjustWeight) + 
+            benchmarkData.gas.median * adjustWeight;
+        }
+      }
+      
+      if (waterCount > 0 && benchmarkData.water.median > 0) {
+        const ratio = normalizedWater / benchmarkData.water.median;
+        if (ratio < 0.5 || ratio > 1.5) {
+          normalizedWater = normalizedWater * (1 - adjustWeight) + 
+            benchmarkData.water.median * adjustWeight;
+        }
+      }
+    } 
+    // Use reference data if no benchmark data but property type is known
+    else if (referenceBenchmark) {
+      // If user has very little data, rely more on reference values
+      const lowDataThreshold = 3; // Less than 3 records is considered low data
+      const adjustWeight = electricityCount <= lowDataThreshold ? 0.7 : 0.2;
+      
+      if (electricityCount === 0) {
+        normalizedElectricity = referenceBenchmark.electricity;
+      } else if (electricityCount <= lowDataThreshold) {
+        normalizedElectricity = normalizedElectricity * (1 - adjustWeight) + 
+          referenceBenchmark.electricity * adjustWeight;
+      }
+      
+      if (gasCount === 0) {
+        normalizedGas = referenceBenchmark.gas;
+      } else if (gasCount <= lowDataThreshold) {
+        normalizedGas = normalizedGas * (1 - adjustWeight) + 
+          referenceBenchmark.gas * adjustWeight;
+      }
+      
+      if (waterCount === 0) {
+        normalizedWater = referenceBenchmark.water;
+      } else if (waterCount <= lowDataThreshold) {
+        normalizedWater = normalizedWater * (1 - adjustWeight) + 
+          referenceBenchmark.water * adjustWeight;
+      }
+    }
+    
+    // Convert normalized values back to absolute values if needed
+    let adjustedBaselineElectricity = normalizedElectricity;
+    let adjustedBaselineGas = normalizedGas;
+    let adjustedBaselineWater = normalizedWater;
+    
+    // Re-apply the normalization factors in reverse to get adjusted absolute values
+    if (squareFootageAdjusted) {
+      adjustedBaselineElectricity *= propertyDetails!.squareFootage!;
+      adjustedBaselineGas *= propertyDetails!.squareFootage!;
+    }
+    
+    if (occupancyAdjusted) {
+      const occupancyFactor = Math.sqrt(propertyDetails!.occupants!);
+      adjustedBaselineElectricity *= occupancyFactor;
+      adjustedBaselineGas *= occupancyFactor;
+      adjustedBaselineWater *= propertyDetails!.occupants!;
+    }
+    
+    // Calculate percentile rankings if benchmark data available
+    let electricityPercentile: number | null = null;
+    let gasPercentile: number | null = null;
+    let waterPercentile: number | null = null;
+    
+    if (benchmarkData) {
+      electricityPercentile = calculatePercentileRanking(normalizedElectricity, benchmarkData, 'electricity');
+      gasPercentile = calculatePercentileRanking(normalizedGas, benchmarkData, 'gas');
+      waterPercentile = calculatePercentileRanking(normalizedWater, benchmarkData, 'water');
+    }
+    
     // Calculate confidence score (0-1) based on data quantity and quality
     const monthSpan = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30); // Approximate months
     const dataCompleteness = Math.min(1, records.length / monthSpan);
     
     // Higher confidence with more normalization factors and more data
     let confidenceScore = 0.5 * dataCompleteness;
-    if (squareFootageAdjusted) confidenceScore += 0.2;
-    if (occupancyAdjusted) confidenceScore += 0.2;
+    if (squareFootageAdjusted) confidenceScore += 0.15;
+    if (occupancyAdjusted) confidenceScore += 0.15;
+    if (benchmarkAdjusted) confidenceScore += 0.1;
     if (hasEnoughDataForSeasonality) confidenceScore += 0.1;
     
     // Cap at 1.0
@@ -117,29 +249,39 @@ export async function calculateBaseline(
       electricity: {
         baseline: baselineElectricity,
         normalizedBaseline: normalizedElectricity,
+        adjustedBaseline: adjustedBaselineElectricity,
         seasonalAdjusted: hasEnoughDataForSeasonality,
         squareFootageAdjusted,
-        occupancyAdjusted
+        occupancyAdjusted,
+        benchmarkAdjusted,
+        percentileRanking: electricityPercentile
       },
       gas: {
         baseline: baselineGas,
         normalizedBaseline: normalizedGas,
+        adjustedBaseline: adjustedBaselineGas,
         seasonalAdjusted: hasEnoughDataForSeasonality,
         squareFootageAdjusted,
-        occupancyAdjusted
+        occupancyAdjusted,
+        benchmarkAdjusted,
+        percentileRanking: gasPercentile
       },
       water: {
         baseline: baselineWater,
         normalizedBaseline: normalizedWater,
+        adjustedBaseline: adjustedBaselineWater,
         seasonalAdjusted: hasEnoughDataForSeasonality,
         squareFootageAdjusted,
-        occupancyAdjusted
+        occupancyAdjusted,
+        benchmarkAdjusted,
+        percentileRanking: waterPercentile
       },
       timeframe: {
         start,
         end
       },
-      confidenceScore
+      confidenceScore,
+      propertyDetails: propertyDetails
     };
   } catch (error) {
     appLogger.error('Error calculating baseline consumption:', {
