@@ -2,8 +2,13 @@ import { pool } from '../../config/database.js';
 import { appLogger } from '../../utils/logger.js';
 import { 
   TimeSeriesPoint,
+  CyclicalPattern,
   checkSeasonality, 
-  detectAnomalies
+  detectAnomalies,
+  detectTrendChangePoints,
+  calculateAutocorrelation,
+  findCyclicalPatterns,
+  calculateLinearRegressionSlope
 } from '../../utils/forecastingModels.js';
 import { getRecords } from './basicOperations.js';
 import {
@@ -349,6 +354,11 @@ export async function identifyPatterns(
       }
     });
     
+    // Sort data by date for analysis
+    electricityData.sort((a, b) => a.date.getTime() - b.date.getTime());
+    gasData.sort((a, b) => a.date.getTime() - b.date.getTime());
+    waterData.sort((a, b) => a.date.getTime() - b.date.getTime());
+    
     // Check for seasonality - need at least 2 years of data for good check
     // If not enough data, use a lower period
     const period = records.length >= 24 ? 12 : Math.min(4, Math.floor(records.length / 2));
@@ -387,16 +397,68 @@ export async function identifyPatterns(
       gasSeasonality > 0.3 || 
       waterSeasonality > 0.3;
     
-    // Determine trends - using simple start vs. end comparison
-    // Sort by date for trend analysis
-    electricityData.sort((a, b) => a.date.getTime() - b.date.getTime());
-    gasData.sort((a, b) => a.date.getTime() - b.date.getTime());
-    waterData.sort((a, b) => a.date.getTime() - b.date.getTime());
+    // Detect cyclical patterns
+    const electricityCyclicalPatterns: CyclicalPattern[] = [];
+    const gasCyclicalPatterns: CyclicalPattern[] = [];
+    const waterCyclicalPatterns: CyclicalPattern[] = [];
     
-    // Calculate trends using first and last 3 points (or fewer if less data)
-    const electricityTrend = calculateTrend(electricityData);
-    const gasTrend = calculateTrend(gasData);
-    const waterTrend = calculateTrend(waterData);
+    try {
+      if (electricityData.length >= 8) { // Need enough data for pattern detection
+        electricityCyclicalPatterns.push(...findCyclicalPatterns(electricityData, undefined, 0.3));
+      }
+    } catch (e) {
+      appLogger.warn(`Error detecting electricity cyclical patterns: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    try {
+      if (gasData.length >= 8) {
+        gasCyclicalPatterns.push(...findCyclicalPatterns(gasData, undefined, 0.3));
+      }
+    } catch (e) {
+      appLogger.warn(`Error detecting gas cyclical patterns: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    try {
+      if (waterData.length >= 8) {
+        waterCyclicalPatterns.push(...findCyclicalPatterns(waterData, undefined, 0.3));
+      }
+    } catch (e) {
+      appLogger.warn(`Error detecting water cyclical patterns: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    // Identify trend change points
+    const electricityChangePoints: TimeSeriesPoint[] = [];
+    const gasChangePoints: TimeSeriesPoint[] = [];
+    const waterChangePoints: TimeSeriesPoint[] = [];
+    
+    try {
+      if (electricityData.length >= 10) { // Need enough data for change point detection
+        electricityChangePoints.push(...detectTrendChangePoints(electricityData));
+      }
+    } catch (e) {
+      appLogger.warn(`Error detecting electricity trend changes: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    try {
+      if (gasData.length >= 10) {
+        gasChangePoints.push(...detectTrendChangePoints(gasData));
+      }
+    } catch (e) {
+      appLogger.warn(`Error detecting gas trend changes: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    try {
+      if (waterData.length >= 10) {
+        waterChangePoints.push(...detectTrendChangePoints(waterData));
+      }
+    } catch (e) {
+      appLogger.warn(`Error detecting water trend changes: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    // Enhanced trend detection using linear regression slopes
+    const electricityTrend = calculateEnhancedTrend(electricityData);
+    const gasTrend = calculateEnhancedTrend(gasData);
+    const waterTrend = calculateEnhancedTrend(waterData);
     
     // Determine overall trend
     const trendValues: Record<string, number> = {
@@ -420,8 +482,63 @@ export async function identifyPatterns(
       overallTrend = 'stable';
     }
     
-    // For day/night and weekday/weekend patterns, we would need more granular data
-    // which we don't have in this implementation, so we'll set to not available
+    // Analyze for day/night patterns if data has enough granularity
+    // Note: This works best with hourly data, which may not be available
+    // For now, we'll rely on simple daily patterns if available
+    let dayNightAvailable = false;
+    let dayNightRatio = 0;
+    let dayHeavy = false;
+    
+    // Analyze for weekday/weekend patterns
+    let weekdayWeekendAvailable = false;
+    let weekdayWeekendRatio = 0;
+    let weekdayHeavy = false;
+    
+    // Check if we have daily data
+    if (electricityData.length >= 14) { // At least 2 weeks of data
+      try {
+        // Group data by day of week (0 = Sunday, 6 = Saturday)
+        const dayGrouped: Record<number, number[]> = {
+          0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []
+        };
+        
+        electricityData.forEach(point => {
+          const dayOfWeek = point.date.getDay();
+          dayGrouped[dayOfWeek].push(point.value);
+        });
+        
+        // Calculate averages for weekdays and weekend
+        const weekdayValues: number[] = [];
+        for (let day = 1; day <= 5; day++) {
+          if (dayGrouped[day].length > 0) {
+            const avg = dayGrouped[day].reduce((sum, val) => sum + val, 0) / dayGrouped[day].length;
+            weekdayValues.push(avg);
+          }
+        }
+        
+        const weekendValues: number[] = [];
+        [0, 6].forEach(day => {
+          if (dayGrouped[day].length > 0) {
+            const avg = dayGrouped[day].reduce((sum, val) => sum + val, 0) / dayGrouped[day].length;
+            weekendValues.push(avg);
+          }
+        });
+        
+        // Calculate weekday and weekend averages
+        if (weekdayValues.length > 0 && weekendValues.length > 0) {
+          const weekdayAvg = weekdayValues.reduce((sum, val) => sum + val, 0) / weekdayValues.length;
+          const weekendAvg = weekendValues.reduce((sum, val) => sum + val, 0) / weekendValues.length;
+          
+          if (weekdayAvg > 0 && weekendAvg > 0) {
+            weekdayWeekendRatio = weekdayAvg / weekendAvg;
+            weekdayHeavy = weekdayAvg > weekendAvg;
+            weekdayWeekendAvailable = true;
+          }
+        }
+      } catch (e) {
+        appLogger.warn(`Error analyzing weekday/weekend patterns: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
     
     appLogger.info(`Identified consumption patterns for user ${userId}`);
     
@@ -432,11 +549,25 @@ export async function identifyPatterns(
         water: waterSeasonality,
         hasSeasonality
       },
+      cyclicalPatterns: {
+        electricity: electricityCyclicalPatterns,
+        gas: gasCyclicalPatterns,
+        water: waterCyclicalPatterns
+      },
+      trendChangePoints: {
+        electricity: electricityChangePoints,
+        gas: gasChangePoints,
+        water: waterChangePoints
+      },
       dayNight: {
-        available: false
+        available: dayNightAvailable,
+        ratio: dayNightRatio,
+        dayHeavy: dayHeavy
       },
       weekdayWeekend: {
-        available: false
+        available: weekdayWeekendAvailable,
+        ratio: weekdayWeekendRatio,
+        weekdayHeavy: weekdayHeavy
       },
       trend: {
         electricity: electricityTrend,
@@ -456,11 +587,47 @@ export async function identifyPatterns(
 }
 
 /**
- * Helper method to calculate trend from time series data
+ * Enhanced method to calculate trend from time series data using linear regression
  * @param data Time series data points
  * @returns Trend description ("increasing", "decreasing", or "stable")
  */
-function calculateTrend(data: TimeSeriesPoint[]): string {
+function calculateEnhancedTrend(data: TimeSeriesPoint[]): string {
+  if (data.length < 4) {
+    return calculateSimpleTrend(data); // Fall back to simple trend for small datasets
+  }
+  
+  try {
+    // Calculate linear regression slope
+    const slope = calculateLinearRegressionSlope(data);
+    
+    // Calculate average value for context
+    const avgValue = data.reduce((sum, point) => sum + point.value, 0) / data.length;
+    
+    // Normalize slope by average value for percentage interpretation
+    const normalizedSlope = avgValue !== 0 ? slope / avgValue : 0;
+    
+    // Classify trend based on normalized slope
+    // Using stricter thresholds for the enhanced method
+    if (normalizedSlope > 0.05) {
+      return 'increasing';
+    } else if (normalizedSlope < -0.05) {
+      return 'decreasing';
+    } else {
+      return 'stable';
+    }
+  } catch (e) {
+    // Fall back to simple trend calculation if the enhanced method fails
+    appLogger.warn(`Error calculating enhanced trend: ${e instanceof Error ? e.message : String(e)}`);
+    return calculateSimpleTrend(data);
+  }
+}
+
+/**
+ * Simple method to calculate trend from time series data
+ * @param data Time series data points
+ * @returns Trend description ("increasing", "decreasing", or "stable")
+ */
+function calculateSimpleTrend(data: TimeSeriesPoint[]): string {
   if (data.length < 2) {
     return 'stable'; // Not enough data to determine trend
   }
@@ -488,7 +655,7 @@ function calculateTrend(data: TimeSeriesPoint[]): string {
 }
 
 /**
- * Detect anomalies in consumption data
+ * Detect anomalies in consumption data with improved contextual analysis
  * @param userId The user ID
  * @param timeframe Timeframe for anomaly detection
  * @param threshold Z-score threshold (default 2.0)
