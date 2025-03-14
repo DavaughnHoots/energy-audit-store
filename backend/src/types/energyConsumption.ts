@@ -118,6 +118,16 @@ export interface PatternIdentificationResult {
     water: number;
     hasSeasonality: boolean;
   };
+  cyclicalPatterns: {
+    electricity: Array<any>; // Array of CyclicalPattern objects
+    gas: Array<any>;
+    water: Array<any>;
+  };
+  trendChangePoints: {
+    electricity: Array<any>; // Array of TimeSeriesPoint objects
+    gas: Array<any>;
+    water: Array<any>;
+  };
   dayNight: {
     available: boolean;
     ratio?: number; // Day usage / night usage

@@ -12,6 +12,16 @@ export interface TimeSeriesPoint {
 }
 
 /**
+ * Interface for cyclical pattern in time series data
+ */
+export interface CyclicalPattern {
+  period: number;
+  strength: number;
+  phase: number; // Starting offset
+  description: string;
+}
+
+/**
  * Calculate simple moving average from time series data
  * @param data Array of data points with date and value
  * @param window Number of points to include in moving average window
@@ -117,6 +127,175 @@ export function exponentialMovingAverage(data: TimeSeriesPoint[], alpha: number)
   }
   
   return result;
+}
+
+/**
+ * Detect trend change points in time series data
+ * This function identifies points where the trend direction changes significantly
+ * @param data Array of data points with date and value
+ * @param windowSize Size of the window for moving regression analysis (default: 5)
+ * @param thresholdMultiplier Multiplier for standard deviation to detect changes (default: 2.0)
+ * @returns Array of data points where trend changes occur
+ */
+export function detectTrendChangePoints(
+  data: TimeSeriesPoint[], 
+  windowSize: number = 5, 
+  thresholdMultiplier: number = 2.0
+): TimeSeriesPoint[] {
+  if (data.length < windowSize * 2) {
+    throw new Error(`Insufficient data points (${data.length}) for window size ${windowSize}, need at least ${windowSize * 2}`);
+  }
+  
+  // Sort data by date
+  const sortedData = [...data].sort((a, b) => a.date.getTime() - b.date.getTime());
+  
+  // Calculate slopes for each window
+  const slopes: number[] = [];
+  
+  for (let i = 0; i <= sortedData.length - windowSize; i++) {
+    const windowData = sortedData.slice(i, i + windowSize);
+    const slope = calculateLinearRegressionSlope(windowData);
+    slopes.push(slope);
+  }
+  
+  // Calculate slope changes
+  const slopeChanges: number[] = [];
+  for (let i = 1; i < slopes.length; i++) {
+    slopeChanges.push(Math.abs(slopes[i] - slopes[i - 1]));
+  }
+  
+  // Calculate threshold for significant changes
+  const mean = slopeChanges.reduce((sum, val) => sum + val, 0) / slopeChanges.length;
+  const squaredDiffs = slopeChanges.map(val => Math.pow(val - mean, 2));
+  const stdDev = Math.sqrt(squaredDiffs.reduce((sum, val) => sum + val, 0) / slopeChanges.length);
+  const threshold = mean + thresholdMultiplier * stdDev;
+  
+  // Identify change points
+  const changePoints: TimeSeriesPoint[] = [];
+  
+  for (let i = 0; i < slopeChanges.length; i++) {
+    if (slopeChanges[i] > threshold) {
+      // The change point is at the end of the previous window
+      const pointIndex = i + windowSize;
+      if (pointIndex < sortedData.length) {
+        changePoints.push({
+          date: new Date(sortedData[pointIndex].date),
+          value: sortedData[pointIndex].value
+        });
+      }
+    }
+  }
+  
+  return changePoints;
+}
+
+/**
+ * Calculate autocorrelation for time series data with specified lag
+ * @param data Array of data points with date and value
+ * @param lag Lag period for autocorrelation calculation
+ * @returns Autocorrelation coefficient (-1 to 1)
+ */
+export function calculateAutocorrelation(data: TimeSeriesPoint[], lag: number): number {
+  if (data.length <= lag) {
+    throw new Error(`Insufficient data points (${data.length}) for lag ${lag}`);
+  }
+  
+  // Sort data by date
+  const sortedData = [...data].sort((a, b) => a.date.getTime() - b.date.getTime());
+  
+  // Extract values
+  const values = sortedData.map(point => point.value);
+  
+  // Calculate mean
+  const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+  
+  // Calculate numerator (covariance)
+  let numerator = 0;
+  for (let i = 0; i < values.length - lag; i++) {
+    numerator += (values[i] - mean) * (values[i + lag] - mean);
+  }
+  
+  // Calculate denominator (variance)
+  let denominator = 0;
+  for (let i = 0; i < values.length; i++) {
+    denominator += Math.pow(values[i] - mean, 2);
+  }
+  
+  if (denominator === 0) {
+    return 0; // Avoid division by zero
+  }
+  
+  return numerator / denominator;
+}
+
+/**
+ * Find cyclical patterns in time series data
+ * @param data Array of data points with date and value
+ * @param maxPeriod Maximum period to check for patterns (default: half of data length)
+ * @param significanceThreshold Threshold for significance of pattern (default: 0.3)
+ * @returns Array of detected cyclical patterns
+ */
+export function findCyclicalPatterns(
+  data: TimeSeriesPoint[], 
+  maxPeriod?: number, 
+  significanceThreshold: number = 0.3
+): CyclicalPattern[] {
+  if (data.length < 4) {
+    throw new Error(`Insufficient data points (${data.length}), need at least 4`);
+  }
+  
+  // Set default maxPeriod to half the data length if not provided
+  const effectiveMaxPeriod = maxPeriod || Math.floor(data.length / 2);
+  
+  // Check each potential period using autocorrelation
+  const patterns: CyclicalPattern[] = [];
+  
+  for (let period = 2; period <= effectiveMaxPeriod; period++) {
+    const correlation = calculateAutocorrelation(data, period);
+    
+    // If correlation is significant, we have a pattern
+    if (Math.abs(correlation) >= significanceThreshold) {
+      // Find the phase (starting offset)
+      let phase = 0;
+      let maxCorrelation = Math.abs(correlation);
+      
+      // Check nearby periods to find the exact phase
+      for (let offset = -1; offset <= 1; offset++) {
+        const testPeriod = period + offset;
+        if (testPeriod >= 2 && testPeriod <= effectiveMaxPeriod) {
+          const testCorrelation = Math.abs(calculateAutocorrelation(data, testPeriod));
+          if (testCorrelation > maxCorrelation) {
+            maxCorrelation = testCorrelation;
+            phase = offset;
+          }
+        }
+      }
+      
+      // Generate description
+      let description = "";
+      if (period >= 365 && period <= 366) {
+        description = "Annual (yearly) cycle";
+      } else if (period >= 28 && period <= 31) {
+        description = "Monthly cycle";
+      } else if (period === 7) {
+        description = "Weekly cycle";
+      } else if (period === 1) {
+        description = "Daily autocorrelation (consecutive day similarity)";
+      } else {
+        description = `${period}-day cycle`;
+      }
+      
+      patterns.push({
+        period,
+        strength: correlation,
+        phase,
+        description
+      });
+    }
+  }
+  
+  // Sort by strength (absolute value of correlation)
+  return patterns.sort((a, b) => Math.abs(b.strength) - Math.abs(a.strength));
 }
 
 /**
@@ -250,7 +429,40 @@ export function generateSimpleForecast(data: TimeSeriesPoint[], periods: number,
 }
 
 /**
- * Generate forecast based on time series data using linear regression
+ * Calculate linear regression slope for time series data
+ * @param data Array of data points with date and value
+ * @returns Slope of the linear regression line
+ */
+export function calculateLinearRegressionSlope(data: TimeSeriesPoint[]): number {
+  if (data.length < 2) {
+    throw new Error(`Insufficient data points (${data.length}), need at least 2`);
+  }
+  
+  // Prepare data for linear regression
+  const n = data.length;
+  const x: number[] = data.map((_, i) => i);
+  const y: number[] = data.map(point => point.value);
+  
+  // Calculate linear regression
+  let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+  
+  for (let i = 0; i < n; i++) {
+    sumX += x[i];
+    sumY += y[i];
+    sumXY += x[i] * y[i];
+    sumXX += x[i] * x[i];
+  }
+  
+  const denominator = n * sumXX - sumX * sumX;
+  if (denominator === 0) {
+    return 0; // Avoid division by zero
+  }
+  
+  return (n * sumXY - sumX * sumY) / denominator;
+}
+
+/**
+ * Generate linear forecast based on time series data using linear regression
  * @param data Array of data points with date and value
  * @param periods Number of periods to forecast
  * @param interval Time interval in milliseconds between forecast points
