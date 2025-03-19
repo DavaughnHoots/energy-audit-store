@@ -4,6 +4,7 @@ import { appLogger } from '../utils/logger.js';
 import { validateToken } from '../middleware/tokenValidation.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
 import { AuthenticatedRequest } from '../types/auth.js';
+import { productDetailLimiter, productSearchLimiter } from '../middleware/rateLimitMiddleware.js';
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ const router = express.Router();
  * @desc Get product recommendations based on audit ID
  * @access Private
  */
-router.get('/products', validateToken, async (req, res) => {
+router.get('/products', validateToken, productSearchLimiter, async (req, res) => {
   try {
     const { auditId } = req.query;
     
@@ -68,7 +69,7 @@ router.get('/products', validateToken, async (req, res) => {
  * @desc Get available product categories
  * @access Public
  */
-router.get('/products/categories', optionalTokenValidation, async (req, res) => {
+router.get('/products/categories', optionalTokenValidation, productSearchLimiter, async (req, res) => {
   try {
     // Ensure product database is loaded
     if (!productRecommendationService.isDatabaseLoaded()) {
@@ -94,7 +95,7 @@ router.get('/products/categories', optionalTokenValidation, async (req, res) => 
  * @desc Get available product features
  * @access Public
  */
-router.get('/products/features', optionalTokenValidation, async (req, res) => {
+router.get('/products/features', optionalTokenValidation, productSearchLimiter, async (req, res) => {
   try {
     // Get features from database
     const featuresQuery = await req.app.locals.pool.query(`
@@ -119,7 +120,7 @@ router.get('/products/features', optionalTokenValidation, async (req, res) => {
  * @desc Get statistics for a specific product category
  * @access Public
  */
-router.get('/products/category/:category', optionalTokenValidation, async (req, res) => {
+router.get('/products/category/:category', optionalTokenValidation, productSearchLimiter, async (req, res) => {
   try {
     const { category } = req.params;
     
@@ -146,7 +147,7 @@ router.get('/products/category/:category', optionalTokenValidation, async (req, 
  * @desc Get detailed information for a specific product
  * @access Private
  */
-router.get('/products/:id', validateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/products/:id', validateToken, productDetailLimiter, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     
