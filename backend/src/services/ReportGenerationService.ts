@@ -6,6 +6,12 @@ import { dashboardService } from './dashboardService.js';
 import { appLogger } from '../utils/logger.js';
 import { productRecommendationService } from './productRecommendationService.js';
 import { calculateOverallEfficiencyScore, interpretEfficiencyScore } from './efficiencyScoreService.js';
+import { 
+  generateEfficiencyRadarChart, 
+  generateHvacPerformanceChart,
+  generateLightingEfficiencyChart,
+  generateHumidityLevelsChart
+} from '../utils/chartHelpers.js';
 
 export class ReportGenerationService {
   /**
@@ -952,6 +958,140 @@ export class ReportGenerationService {
             align: 'center'
           })
           .moveDown();
+      }
+      
+      // Efficiency Metrics Radar Chart
+      try {
+        appLogger.debug('Generating and adding efficiency metrics radar chart');
+        const efficiencyRadarChart = await generateEfficiencyRadarChart(auditData, 600, 400);
+        
+        // Add to new page
+        doc
+          .addPage()
+          .fontSize(16)
+          .text('Efficiency Metrics Analysis', { align: 'center' })
+          .moveDown();
+        
+        // Save current Y position
+        const currentY = doc.y;
+        
+        // Center the chart on the page
+        const pageWidth = doc.page.width;
+        const chartWidth = 500;
+        const leftMargin = (pageWidth - chartWidth) / 2;
+        
+        doc
+          .image(efficiencyRadarChart, leftMargin, currentY, {
+            fit: [chartWidth, 350],
+            align: 'center'
+          })
+          .moveDown(2)
+          .fontSize(12)
+          .text('This radar chart shows the efficiency of various systems in your home compared to target values.', {
+            align: 'center'
+          })
+          .moveDown();
+        appLogger.debug('Efficiency radar chart added successfully');
+      } catch (error) {
+        appLogger.error('Error adding efficiency radar chart', { error });
+        // Continue with the report without the chart
+      }
+      
+      // HVAC Performance Chart
+      try {
+        appLogger.debug('Generating and adding HVAC performance chart');
+        const hvacPerformanceChart = await generateHvacPerformanceChart(auditData, 600, 300);
+        
+        // Save current Y position
+        const currentY = doc.y;
+        
+        // Center the chart on the page
+        const pageWidth = doc.page.width;
+        const chartWidth = 500;
+        const leftMargin = (pageWidth - chartWidth) / 2;
+        
+        doc.moveDown(2);
+        this.addSectionHeader(doc, 'HVAC Performance Analysis', 'left', false);
+        
+        doc
+          .image(hvacPerformanceChart, leftMargin, doc.y, {
+            fit: [chartWidth, 250],
+            align: 'center'
+          })
+          .moveDown(2)
+          .fontSize(12)
+          .text('This chart compares your current HVAC system efficiencies with target values for optimal performance.', {
+            align: 'center'
+          })
+          .moveDown();
+        appLogger.debug('HVAC performance chart added successfully');
+      } catch (error) {
+        appLogger.error('Error adding HVAC performance chart', { error });
+        // Continue with the report without the chart
+      }
+      
+      // Lighting Efficiency Chart (if lighting data is available)
+      try {
+        if (auditData.currentConditions.primaryBulbType) {
+          appLogger.debug('Generating and adding lighting efficiency chart');
+          const lightingEfficiencyChart = await generateLightingEfficiencyChart(auditData, 600, 300);
+          
+          doc.moveDown(2);
+          this.addSectionHeader(doc, 'Lighting Efficiency Analysis', 'left', false);
+          
+          // Center the chart on the page
+          const pageWidth = doc.page.width;
+          const chartWidth = 500;
+          const leftMargin = (pageWidth - chartWidth) / 2;
+          
+          doc
+            .image(lightingEfficiencyChart, leftMargin, doc.y, {
+              fit: [chartWidth, 250],
+              align: 'center'
+            })
+            .moveDown(2)
+            .fontSize(12)
+            .text('This chart shows the efficiency of different lighting types compared to your current mix.', {
+              align: 'center'
+            })
+            .moveDown();
+          appLogger.debug('Lighting efficiency chart added successfully');
+        }
+      } catch (error) {
+        appLogger.error('Error adding lighting efficiency chart', { error });
+        // Continue with the report without the chart
+      }
+      
+      // Humidity Levels Chart (if humidity data is available)
+      try {
+        if (auditData.currentConditions.currentHumidity) {
+          appLogger.debug('Generating and adding humidity levels chart');
+          const humidityLevelsChart = await generateHumidityLevelsChart(auditData, 600, 300);
+          
+          doc.moveDown(2);
+          this.addSectionHeader(doc, 'Indoor Humidity Analysis', 'left', false);
+          
+          // Center the chart on the page
+          const pageWidth = doc.page.width;
+          const chartWidth = 500;
+          const leftMargin = (pageWidth - chartWidth) / 2;
+          
+          doc
+            .image(humidityLevelsChart, leftMargin, doc.y, {
+              fit: [chartWidth, 250],
+              align: 'center'
+            })
+            .moveDown(2)
+            .fontSize(12)
+            .text('This chart compares your indoor humidity levels with recommended ranges for optimal comfort and air quality.', {
+              align: 'center'
+            })
+            .moveDown();
+          appLogger.debug('Humidity levels chart added successfully');
+        }
+      } catch (error) {
+        appLogger.error('Error adding humidity levels chart', { error });
+        // Continue with the report without the chart
       }
       
       // Lighting Assessment - start on new page
