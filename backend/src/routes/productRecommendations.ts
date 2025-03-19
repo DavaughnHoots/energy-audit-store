@@ -3,6 +3,7 @@ import { productRecommendationService } from '../services/productRecommendationS
 import { appLogger } from '../utils/logger.js';
 import { validateToken } from '../middleware/tokenValidation.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
+import { AuthenticatedRequest } from '../types/auth.js';
 
 const router = express.Router();
 
@@ -137,6 +138,53 @@ router.get('/products/category/:category', optionalTokenValidation, async (req, 
   } catch (error) {
     appLogger.error('Error getting category stats', { error });
     return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+/**
+ * @route GET /api/recommendations/products/:id
+ * @desc Get detailed information for a specific product
+ * @access Private
+ */
+router.get('/products/:id', validateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ 
+        success: false,
+        message: 'User authentication required' 
+      });
+    }
+    
+    const userId = req.user.id;
+    
+    // This method will be implemented in the service
+    const productDetails = await productRecommendationService.getDetailedProductInfo(id, userId);
+    
+    if (!productDetails) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Product not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      product: productDetails
+    });
+  } catch (error) {
+    appLogger.error('Error fetching detailed product info:', {
+      error: error instanceof Error ? error.message : String(error),
+      userId: req.user?.id || 'unknown',
+      productId: req.params.id
+    });
+    
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching product details'
+    });
   }
 });
 

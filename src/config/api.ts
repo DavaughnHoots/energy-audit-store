@@ -30,7 +30,8 @@ export const API_ENDPOINTS = {
   USER_PROFILE: '/api/user-profile',
   RECOMMENDATIONS: {
     UPDATE_STATUS: (id: string) => `/api/recommendations/${id}/status`,
-    UPDATE_SAVINGS: (id: string) => `/api/recommendations/${id}/savings`
+    UPDATE_SAVINGS: (id: string) => `/api/recommendations/${id}/savings`,
+    GET_PRODUCT_DETAIL: (id: string) => `/api/recommendations/products/${id}`
   },
   COMPARISONS: {
     BASE: '/api/comparisons',
