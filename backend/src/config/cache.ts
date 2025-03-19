@@ -79,5 +79,7 @@ class RedisCache implements CacheService {
 }
 
 // Export the appropriate cache implementation based on environment
-const isProduction = process.env.NODE_ENV === 'production';
-export const cache: CacheService = isProduction ? new RedisCache() : new MemoryCache();
+// TEMPORARY FIX: Using MemoryCache in all environments until Redis is properly implemented
+// const isProduction = process.env.NODE_ENV === 'production';
+// export const cache: CacheService = isProduction ? new RedisCache() : new MemoryCache();
+export const cache: CacheService = new MemoryCache();

@@ -464,15 +464,37 @@ class ProductDataService {
     return this.products.find(p => p.id === id) || null;
   }
 
+  // Fallback categories in case DB query fails
+  private fallbackCategories = {
+    main: ['Appliances', 'Lighting', 'HVAC', 'Building Products', 'Electronics', 'Uncategorized'],
+    sub: {
+      'Appliances': ['Refrigerators', 'Washers', 'Dryers', 'Dishwashers', 'General'],
+      'Lighting': ['LED Bulbs', 'Fixtures', 'Outdoor', 'Smart Lighting', 'General'],
+      'HVAC': ['Air Conditioners', 'Furnaces', 'Heat Pumps', 'Thermostats', 'General'],
+      'Building Products': ['Windows', 'Doors', 'Insulation', 'Roofing', 'General'],
+      'Electronics': ['Computers', 'Displays', 'Televisions', 'Power Supplies', 'General'],
+      'Uncategorized': ['General']
+    }
+  };
+
   async getCategories(): Promise<{ main: string[]; sub: { [key: string]: string[] } }> {
     // If we're using the database, try to get categories directly from DB
     if (this.useDatabase) {
       try {
-        const result = await pool.query(`
-          SELECT DISTINCT main_category, sub_category 
-          FROM products 
-          ORDER BY main_category, sub_category
-        `);
+        // Add query timeout option to prevent Heroku H12 errors
+        const queryConfig = {
+          text: `
+            SELECT DISTINCT main_category, sub_category 
+            FROM products 
+            ORDER BY main_category, sub_category
+          `,
+          // Set 5 second timeout to avoid Heroku 30-second request timeout
+          query_timeout: 5000
+        };
+        
+        console.log('Executing categories query with timeout...');
+        const result = await pool.query(queryConfig);
+        console.log(`Categories query returned ${result.rowCount} rows`);
         
         const categories = {
           main: [] as string[],
@@ -480,8 +502,8 @@ class ProductDataService {
         };
 
         result.rows.forEach((row: any) => {
-          const mainCategory = row.main_category;
-          const subCategory = row.sub_category;
+          const mainCategory = row.main_category || 'Uncategorized';
+          const subCategory = row.sub_category || 'General';
           
           if (!categories.main.includes(mainCategory)) {
             categories.main.push(mainCategory);
@@ -493,9 +515,17 @@ class ProductDataService {
           }
         });
 
+        // Ensure we always have at least some categories
+        if (categories.main.length === 0) {
+          console.log('No categories found in database, using fallback');
+          return this.fallbackCategories;
+        }
+
         return categories;
       } catch (err) {
         console.error('Error getting categories from database:', err);
+        console.log('Using fallback categories due to database error');
+        return this.fallbackCategories;
       }
     }
 
