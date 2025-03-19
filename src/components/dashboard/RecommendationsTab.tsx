@@ -1,5 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import RecommendationCard from '@/components/audit/RecommendationCard';
+import { Info } from 'lucide-react';
+import ProductDetailModal from '../products/ProductDetailModal';
+
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  energyEfficiency: string;
+  features: string[];
+  description: string;
+  imageUrl?: string;
+  annualSavings: number;
+  roi: number;
+  paybackPeriod: number;
+}
 
 interface Recommendation {
   id: string;
@@ -11,7 +27,7 @@ interface Recommendation {
   estimatedCost?: number;
   paybackPeriod?: number;
   implementationStatus?: string;
-  products?: any[];
+  products?: Product[];
   status: 'active' | 'implemented';
   actualSavings: number | null;
   implementationCost: number | null;
@@ -25,9 +41,11 @@ interface RecommendationsTabProps {
 }
 
 const RecommendationsTab: React.FC<RecommendationsTabProps> = ({ recommendations, onUpdate }) => {
-  const [filterStatus, setFilterStatus] = React.useState<string>('all');
-  const [filterCategory, setFilterCategory] = React.useState<string>('all');
-  const [sortBy, setSortBy] = React.useState<string>('priority');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('priority');
+  const [selectedProductForDetail, setSelectedProductForDetail] = useState<string | null>(null);
+  const [isProductDetailModalOpen, setIsProductDetailModalOpen] = useState(false);
 
   // Get unique categories
   const categories = React.useMemo(() => {
@@ -131,13 +149,50 @@ const RecommendationsTab: React.FC<RecommendationsTabProps> = ({ recommendations
         </h2>
         
         {filteredRecommendations.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filteredRecommendations.map((recommendation) => (
-              <RecommendationCard
-                key={recommendation.id}
-                recommendation={recommendation}
-                onUpdate={onUpdate}
-              />
+              <div key={recommendation.id} className="space-y-4">
+                <RecommendationCard
+                  recommendation={recommendation}
+                  onUpdate={onUpdate}
+                />
+                
+                {/* Display Products if available */}
+                {recommendation.products && recommendation.products.length > 0 && (
+                  <div className="ml-4 mt-2 border-l-2 border-green-200 pl-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Recommended Products:</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {recommendation.products.map((product) => (
+                        <div 
+                          key={product.id}
+                          className="bg-gray-50 rounded-md p-3 border border-gray-200"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h5 className="font-medium text-gray-900">{product.name}</h5>
+                              <p className="text-xs text-gray-600 mt-1">{product.category}</p>
+                              <p className="text-sm font-semibold mt-1">${product.price.toLocaleString()}</p>
+                              <div className="text-xs text-green-600 mt-1">
+                                Saves ${product.annualSavings.toLocaleString()}/year
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setSelectedProductForDetail(product.id);
+                                setIsProductDetailModalOpen(true);
+                              }}
+                              className="p-1 text-blue-600 hover:text-blue-800 rounded"
+                              title="View product details"
+                            >
+                              <Info className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         ) : (
@@ -155,6 +210,14 @@ const RecommendationsTab: React.FC<RecommendationsTabProps> = ({ recommendations
           </div>
         )}
       </div>
+      {/* Product Detail Modal */}
+      {selectedProductForDetail && (
+        <ProductDetailModal
+          productId={selectedProductForDetail}
+          isOpen={isProductDetailModalOpen}
+          onClose={() => setIsProductDetailModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

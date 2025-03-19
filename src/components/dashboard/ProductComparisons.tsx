@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '@/config/api';
-import { Loader2, Save, Trash, RefreshCw, AlertCircle } from 'lucide-react';
+import { Loader2, Save, Trash, RefreshCw, AlertCircle, Info } from 'lucide-react';
+import ProductDetailModal from '../products/ProductDetailModal';
 
 interface Product {
   id: string;
@@ -37,6 +38,8 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
   const [comparisonName, setComparisonName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProductForDetail, setSelectedProductForDetail] = useState<string | null>(null);
+  const [isProductDetailModalOpen, setIsProductDetailModalOpen] = useState(false);
   
   // Fetch product history and saved comparisons
   useEffect(() => {
@@ -192,27 +195,41 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {productHistory.map(product => (
-                <div 
+                      <div 
                   key={`${product.id}-${product.audit_id}`}
-                  className={`p-3 border rounded-md cursor-pointer ${
+                  className={`p-3 border rounded-md ${
                     selectedProducts.some(p => p.id === product.id)
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:bg-gray-50'
                   }`}
-                  onClick={() => toggleProductSelection(product)}
                 >
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div 
+                      className="cursor-pointer flex-grow"
+                      onClick={() => toggleProductSelection(product)}
+                    >
                       <h3 className="font-medium">{product.name}</h3>
                       <p className="text-sm text-gray-600">{product.category}</p>
                       <p className="text-sm font-semibold">${product.price.toLocaleString()}</p>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedProducts.some(p => p.id === product.id)}
-                      onChange={() => {}} // Handled by the div click
-                      className="h-5 w-5 text-green-600"
-                    />
+                    <div className="flex items-start">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedProducts.some(p => p.id === product.id)}
+                        onChange={() => toggleProductSelection(product)} 
+                        className="h-5 w-5 text-green-600 mr-2"
+                      />
+                      <button
+                        onClick={() => {
+                          setSelectedProductForDetail(product.id);
+                          setIsProductDetailModalOpen(true);
+                        }}
+                        className="p-1 text-blue-600 hover:text-blue-800 rounded"
+                        title="View product details"
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -422,6 +439,14 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
           </div>
         </div>
       </div>
+      {/* Product Detail Modal */}
+      {selectedProductForDetail && (
+        <ProductDetailModal
+          productId={selectedProductForDetail}
+          isOpen={isProductDetailModalOpen}
+          onClose={() => setIsProductDetailModalOpen(false)}
+        />
+      )}
     </div>
   );
 };
