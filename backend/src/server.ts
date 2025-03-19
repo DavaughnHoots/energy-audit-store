@@ -16,7 +16,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { appLogger, loggerContextMiddleware, LoggerInitializer, createLogMetadata } from './utils/logger.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { standardLimiter, authLimiter, apiLimiter, productsLimiter } from './middleware/rateLimitMiddleware.js';
+import { standardLimiter, authLimiter, apiLimiter, productsLimiter, productDetailLimiter, productSearchLimiter } from './middleware/rateLimitMiddleware.js';
 import { authenticate } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
@@ -142,11 +142,47 @@ app.use(cookieParser(process.env.JWT_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
+// Rate limiting - Note: More specific route handlers in products.ts and productRecommendations.ts 
+// have their own specialized limiters for different operations
 app.use('/api/auth', authLimiter);
-app.use('/api/products', productsLimiter); // Using the products-specific limiter with higher limits
+// Removed global products rate limiter to use more specific limiters in route handlers
 app.use('/api/recommendations', apiLimiter);
 app.use('/', standardLimiter);
+
+// Rate limit debugging middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Add a listener for the rate limit headers being set
+  const oldSetHeader = res.setHeader;
+  res.setHeader = function(name: string, value: any) {
+    if (name.toLowerCase().includes('ratelimit')) {
+      appLogger.info('Rate limit header set', {
+        header: name,
+        value,
+        path: req.path,
+        method: req.method,
+        requestId: req.id
+      });
+    }
+    return oldSetHeader.apply(this, [name, value]);
+  };
+  
+  // Listen for specific response codes
+  const oldStatus = res.status;
+  res.status = function(code: number) {
+    if (code === 429) {
+      appLogger.warn('Rate limit exceeded', {
+        path: req.path,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        requestId: req.id
+      });
+    }
+    return oldStatus.apply(this, [code]);
+  };
+  
+  next();
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);

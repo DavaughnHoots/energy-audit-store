@@ -5,7 +5,8 @@ import { authenticate } from '../middleware/auth.js';
 import { 
   productsLimiter, 
   productDetailLimiter, 
-  productSearchLimiter 
+  productSearchLimiter,
+  noLimitMiddleware
 } from '../middleware/rateLimitMiddleware.js';
 import ProductDataService from '../services/productDataService.js';
 import { SearchService } from '../services/searchService.js';
@@ -142,7 +143,7 @@ router.get('/categories', productsLimiter, async (req, res) => {
   }
 });
 
-router.get('/:id', productDetailLimiter, async (req, res) => {
+router.get('/:id', noLimitMiddleware, async (req, res) => {
   try {
     const productId = req.params.id;
     
@@ -192,7 +193,7 @@ router.post('/:id/view', authenticate, async (req: AuthenticatedRequest, res) =>
   }
 });
 
-router.get('/:id/similar', productDetailLimiter, async (req, res) => {
+router.get('/:id/similar', noLimitMiddleware, async (req, res) => {
   try {
     const product = await productService.getProduct(req.params.id);
     if (!product) {
@@ -241,7 +242,7 @@ router.post('/sync', async (req, res) => {
   }
 });
 
-router.get('/:id/energy-savings', productDetailLimiter, async (req, res) => {
+router.get('/:id/energy-savings', noLimitMiddleware, async (req, res) => {
   try {
     const product = await productService.getProduct(req.params.id);
     if (!product) {

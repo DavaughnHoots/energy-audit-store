@@ -1,5 +1,5 @@
 import rateLimit from 'express-rate-limit';
-import { RequestHandler } from 'express';
+import { RequestHandler, Request, Response, NextFunction } from 'express';
 
 /**
  * Creates a rate limiter with the specified parameters
@@ -31,7 +31,14 @@ export const authLimiter = createLimiter(20, 5 * 60 * 1000);  // 20 requests per
 // General API rate limiter
 export const apiLimiter = createLimiter(1000);     // 1000 requests per 15 minutes
 
-// Product-specific rate limiters
-export const productsLimiter = createLimiter(3000, 5 * 60 * 1000); // 3000 requests per 5 minutes for general product routes
-export const productDetailLimiter = createLimiter(800, 1 * 60 * 1000, true); // 800 requests per 1 minute for product detail views
-export const productSearchLimiter = createLimiter(500, 1 * 60 * 1000); // 500 requests per minute for search operations
+// Product-specific rate limiters - significantly increased to handle bursts of traffic
+export const productsLimiter = createLimiter(6000, 5 * 60 * 1000); // 6000 requests per 5 minutes for general product routes
+export const productDetailLimiter = createLimiter(1500, 1 * 60 * 1000, true); // 1500 requests per 1 minute for product detail views
+export const productSearchLimiter = createLimiter(1000, 1 * 60 * 1000); // 1000 requests per minute for search operations
+
+// Emergency disablers - for troubleshooting specific routes
+export const noLimitMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // This middleware does nothing but pass control to the next middleware
+  // Used to bypass rate limiting for debugging
+  next();
+};

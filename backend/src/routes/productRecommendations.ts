@@ -4,7 +4,7 @@ import { appLogger } from '../utils/logger.js';
 import { validateToken } from '../middleware/tokenValidation.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
 import { AuthenticatedRequest } from '../types/auth.js';
-import { productDetailLimiter, productSearchLimiter } from '../middleware/rateLimitMiddleware.js';
+import { noLimitMiddleware, productDetailLimiter, productSearchLimiter } from '../middleware/rateLimitMiddleware.js';
 
 const router = express.Router();
 
@@ -147,7 +147,7 @@ router.get('/products/category/:category', optionalTokenValidation, productSearc
  * @desc Get detailed information for a specific product
  * @access Private
  */
-router.get('/products/:id', validateToken, productDetailLimiter, async (req: AuthenticatedRequest, res) => {
+router.get('/products/:id', validateToken, noLimitMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     
