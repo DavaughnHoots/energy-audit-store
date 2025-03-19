@@ -33,12 +33,28 @@ export function useProducts() {
         }
 
         const prods = await productService.getProducts();
-        console.log('Loaded products count:', prods.length);
+        console.log('Loaded products count:', prods?.length || 'undefined');
+
+        // If no products loaded, try loading some directly for client-side usage
+        if (!prods || prods.length === 0) {
+          console.log('No products returned from API, loading from CSV for client-side fallback');
+          await productService.loadProductsFromCSVFallback('/data/products.csv');
+          // Try again to get products after loading from CSV
+          const fallbackProducts = await productService.getProducts();
+          if (fallbackProducts && fallbackProducts.length > 0) {
+            console.log('Successfully loaded fallback products:', fallbackProducts.length);
+            setProducts(fallbackProducts);
+          } else {
+            console.error('Failed to load products from any source');
+            setProducts([]);
+          }
+        } else {
+          setProducts(prods);
+        }
 
         const cats = await productService.getCategories();
         console.log('Categories:', cats);
 
-        setProducts(prods);
         setCategories(cats);
         setError(null);
       } catch (err) {

@@ -54,7 +54,18 @@ class ProductService {
         throw new Error(`API error! status: ${response.status}`);
       }
       
-      this.products = await response.json();
+      const data = await response.json();
+      
+      // Handle both array format and paginated format responses
+      if (Array.isArray(data)) {
+        this.products = data;
+      } else if (data.items && Array.isArray(data.items)) {
+        this.products = data.items;
+      } else {
+        console.warn('Unexpected API response format:', data);
+        this.products = [];
+      }
+      
       console.log(`Fetched ${this.products.length} products from API`);
     } catch (error) {
       console.error('Error fetching products from API:', error);
@@ -65,7 +76,8 @@ class ProductService {
     }
   }
 
-  private async loadProductsFromCSVFallback(file: string): Promise<void> {
+  // Made public to allow explicit fallback loading from hook
+  async loadProductsFromCSVFallback(file: string): Promise<void> {
     try {
       console.log('Loading products from CSV fallback:', file);
       const response = await fetch(file);
