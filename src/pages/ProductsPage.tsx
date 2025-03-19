@@ -40,11 +40,23 @@ const ProductsPage: React.FC = () => {
     debouncedFilterChange('search', value);
   };
 
-  // Handle filter changes with debounce
+  // Handle filter changes with debounce - but handle category changes immediately
   const handleFilterChange = (filterName: string, value: string) => {
     // For UI responsiveness, update the select element immediately
-    // but debounce the actual API call
-    debouncedFilterChange(filterName, value);
+    if (filterName === 'mainCategory') {
+      // For main category, update immediately without debounce
+      console.log(`Setting main category to: ${value}`);
+      setFilters(prev => ({ 
+        ...prev, 
+        [filterName]: value,
+        // Reset subCategory when mainCategory changes
+        subCategory: '' 
+      }));
+      setCurrentPage(1); // Reset to first page when main category changes
+    } else {
+      // For other filters, use debounce for better performance
+      debouncedFilterChange(filterName, value);
+    }
   };
 
   // Load products with pagination
@@ -125,7 +137,7 @@ const ProductsPage: React.FC = () => {
             value={filters.mainCategory}
             onChange={(e) => {
               handleFilterChange('mainCategory', e.target.value);
-              handleFilterChange('subCategory', ''); // Reset sub-category when main category changes
+              // No need to reset subCategory here, it's already handled in handleFilterChange
             }}
           >
             <option value="">All Categories</option>

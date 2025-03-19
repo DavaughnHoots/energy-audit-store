@@ -285,8 +285,14 @@ class ProductService {
     try {
       // Build query string with pagination parameters
       const params = new URLSearchParams();
-      if (filters?.mainCategory) params.append('category', filters.mainCategory);
-      if (filters?.subCategory) params.append('subcategory', filters.subCategory);
+      if (filters?.mainCategory) {
+        params.append('category', filters.mainCategory);
+        console.log(`API request with mainCategory: ${filters.mainCategory}`);
+      }
+      if (filters?.subCategory) {
+        params.append('subcategory', filters.subCategory);
+        console.log(`API request with subCategory: ${filters.subCategory}`);
+      }
       if (filters?.search) params.append('search', filters.search);
       if (filters?.efficiency) params.append('efficiency', filters.efficiency);
       
@@ -340,6 +346,8 @@ class ProductService {
     page: number;
     totalPages: number;
   } {
+    console.log('Using client-side pagination as fallback');
+    
     // Ensure this.products is always an array
     if (!Array.isArray(this.products)) {
       console.warn('Products array is not initialized, using empty array for fallback pagination');
@@ -351,15 +359,19 @@ class ProductService {
     
     if (filters) {
       if (filters.mainCategory) {
+        console.log(`Client-side filtering for mainCategory: ${filters.mainCategory}`);
         filteredProducts = filteredProducts.filter(
           p => p.mainCategory.toLowerCase() === filters.mainCategory?.toLowerCase()
         );
+        console.log(`Filtered to ${filteredProducts.length} products after applying mainCategory filter`);
       }
 
       if (filters.subCategory) {
+        console.log(`Client-side filtering for subCategory: ${filters.subCategory}`);
         filteredProducts = filteredProducts.filter(
           p => p.subCategory.toLowerCase() === filters.subCategory?.toLowerCase()
         );
+        console.log(`Filtered to ${filteredProducts.length} products after applying subCategory filter`);
       }
 
       if (filters.search) {
