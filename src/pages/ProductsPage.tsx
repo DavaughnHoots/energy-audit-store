@@ -63,12 +63,33 @@ const ProductsPage: React.FC = () => {
   const loadProducts = async () => {
     setIsSearching(true);
     try {
+      console.log(`Loading products with filters:`, filters);
       const result = await getFilteredProducts(filters, currentPage, productsPerPage);
-      setProducts(result.items);
-      setTotalProducts(result.total);
-      setTotalPages(result.totalPages);
+      
+      console.log(`API response for products:`, result);
+      
+      if (!result) {
+        console.error('Received empty result from API');
+        setProducts([]);
+        setTotalProducts(0);
+        setTotalPages(1);
+        return;
+      }
+      
+      // Safely extract items or default to empty array
+      const items = result.items || [];
+      console.log(`Retrieved ${items.length} products`);
+      
+      setProducts(items);
+      setTotalProducts(result.total || 0);
+      setTotalPages(result.totalPages || 1);
+      
     } catch (err) {
       console.error('Error loading products:', err);
+      // Set safe defaults on error
+      setProducts([]);
+      setTotalProducts(0);
+      setTotalPages(1);
     } finally {
       setIsSearching(false);
     }

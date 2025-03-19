@@ -81,6 +81,8 @@ export function useProducts() {
     sortOrder: 'asc' | 'desc' = 'desc'
   ): Promise<PaginatedProducts> => {
     try {
+      console.log('Requesting filtered products with:', { filters, page, limit, sortBy, sortOrder });
+      
       // Use the paginated API endpoint
       const result = await productService.getProductsPaginated(
         filters,
@@ -89,17 +91,41 @@ export function useProducts() {
         sortBy,
         sortOrder
       );
-      return result;
+      
+      // Deep validation of the result
+      if (!result) {
+        throw new Error('API returned empty response');
+      }
+      
+      // Ensure all required fields are present with defaults if not
+      const validatedResult: PaginatedProducts = {
+        items: Array.isArray(result.items) ? result.items : [],
+        total: typeof result.total === 'number' ? result.total : 0,
+        page: typeof result.page === 'number' ? result.page : page,
+        totalPages: typeof result.totalPages === 'number' ? result.totalPages : 0
+      };
+
+      console.log(`Successfully retrieved filtered products:`, {
+        count: validatedResult.items.length,
+        total: validatedResult.total,
+        totalPages: validatedResult.totalPages
+      });
+      
+      return validatedResult;
     } catch (err) {
       console.error('Error getting filtered products:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
+      
       // Return empty result with pagination info
-      return {
+      const emptyResult = {
         items: [],
         total: 0,
         page,
         totalPages: 0
       };
+      
+      console.log('Returning empty result due to error');
+      return emptyResult;
     }
   };
 
