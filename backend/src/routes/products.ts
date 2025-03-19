@@ -2,7 +2,11 @@
 
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { productsLimiter } from '../middleware/rateLimitMiddleware.js';
+import { 
+  productsLimiter, 
+  productDetailLimiter, 
+  productSearchLimiter 
+} from '../middleware/rateLimitMiddleware.js';
 import ProductDataService from '../services/productDataService.js';
 import { SearchService } from '../services/searchService.js';
 import { pool } from '../config/database.js';
@@ -13,7 +17,14 @@ const router = express.Router();
 const productService = new ProductDataService();
 const searchService = new SearchService(pool);
 
-router.get('/', productsLimiter, async (req, res) => {
+router.get('/', (req, res, next) => {
+  // Apply search-specific rate limiter if search is being performed
+  if (req.query.search) {
+    return productSearchLimiter(req, res, next);
+  }
+  // Otherwise apply general products limiter
+  return productsLimiter(req, res, next);
+}, async (req, res) => {
   try {
     const search = req.query.search as string;
     const category = req.query.category as string;
@@ -131,7 +142,7 @@ router.get('/categories', productsLimiter, async (req, res) => {
   }
 });
 
-router.get('/:id', productsLimiter, async (req, res) => {
+router.get('/:id', productDetailLimiter, async (req, res) => {
   try {
     const productId = req.params.id;
     
@@ -181,7 +192,7 @@ router.post('/:id/view', authenticate, async (req: AuthenticatedRequest, res) =>
   }
 });
 
-router.get('/:id/similar', productsLimiter, async (req, res) => {
+router.get('/:id/similar', productDetailLimiter, async (req, res) => {
   try {
     const product = await productService.getProduct(req.params.id);
     if (!product) {
@@ -230,7 +241,7 @@ router.post('/sync', async (req, res) => {
   }
 });
 
-router.get('/:id/energy-savings', productsLimiter, async (req, res) => {
+router.get('/:id/energy-savings', productDetailLimiter, async (req, res) => {
   try {
     const product = await productService.getProduct(req.params.id);
     if (!product) {
