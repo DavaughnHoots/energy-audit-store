@@ -79,6 +79,9 @@ backend/src/scripts/run_*_tests.*
 *.md
 *.txt
 !README.md
+*.md
+*.ps1
+*.sh
 
 # Development scripts and utilities
 backend/src/scripts/
@@ -99,3 +102,4 @@ backend/src/migrations/*_test_*.sql
 .prettierrc*
 energy_audit_calculation_implementation.txt
 energy_audit_tool_implementation_plan.txt
+deploy_rollback_march19.ps1
