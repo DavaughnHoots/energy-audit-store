@@ -143,7 +143,10 @@ router.get('/categories', productsLimiter, async (req, res) => {
   }
 });
 
-router.get('/:id', noLimitMiddleware, async (req, res) => {
+router.get('/:id', (req, res, next) => {
+  console.log('Product detail request for ID:', req.params.id);
+  next();
+}, noLimitMiddleware, async (req, res) => {
   try {
     const productId = req.params.id;
     

@@ -147,7 +147,10 @@ router.get('/products/category/:category', optionalTokenValidation, productSearc
  * @desc Get detailed information for a specific product
  * @access Private
  */
-router.get('/products/:id', validateToken, noLimitMiddleware, async (req: AuthenticatedRequest, res) => {
+router.get('/products/:id', validateToken, (req, res, next) => {
+  console.log('Product recommendation detail request for ID:', req.params.id, 'User:', req.user?.id);
+  next();
+}, noLimitMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
     
