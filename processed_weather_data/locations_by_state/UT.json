@@ -1,0 +1,191 @@
+[
+  {
+    "location_id": "84770.0_UT",
+    "zip_code": 84770.0,
+    "city": "Saint George",
+    "county": "Washington",
+    "latitude": 37.0906,
+    "longitude": -113.5931,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84321_UT",
+    "zip_code": 84321,
+    "city": "Logan",
+    "county": "Cache",
+    "latitude": 41.7865,
+    "longitude": -111.8519,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84302_UT",
+    "zip_code": 84302,
+    "city": "Brigham City",
+    "county": "Box Elder",
+    "latitude": 41.5524,
+    "longitude": -112.0622,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84540_UT",
+    "zip_code": 84540,
+    "city": "Thompson",
+    "county": "Grand",
+    "latitude": 38.7501,
+    "longitude": -109.7626,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84721_UT",
+    "zip_code": 84721,
+    "city": "Cedar City",
+    "county": "Iron",
+    "latitude": 37.7067,
+    "longitude": -113.097,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84751_UT",
+    "zip_code": 84751,
+    "city": "Milford",
+    "county": "Beaver",
+    "latitude": 38.4225,
+    "longitude": -113.0109,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84116_UT",
+    "zip_code": 84116,
+    "city": "Salt Lake City",
+    "county": "Salt Lake",
+    "latitude": 40.7707,
+    "longitude": -111.965,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84726_UT",
+    "zip_code": 84726,
+    "city": "Escalante",
+    "county": "Garfield",
+    "latitude": 37.7013,
+    "longitude": -112.149,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84511_UT",
+    "zip_code": 84511,
+    "city": "Blanding",
+    "county": "San Juan",
+    "latitude": 37.5828,
+    "longitude": -109.4831,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84084_UT",
+    "zip_code": 84084,
+    "city": "Salt Lake City",
+    "county": "Salt Lake",
+    "latitude": 40.6196,
+    "longitude": -111.9902,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84067.0_UT",
+    "zip_code": 84067.0,
+    "city": "Roy",
+    "county": "Weber",
+    "latitude": 41.1941,
+    "longitude": -112.0168,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84501_UT",
+    "zip_code": 84501,
+    "city": "Price",
+    "county": "Carbon",
+    "latitude": 39.6089,
+    "longitude": -110.7555,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84022_UT",
+    "zip_code": 84022,
+    "city": "Dugway",
+    "county": "Tooele",
+    "latitude": 40.1838,
+    "longitude": -112.9217,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84056.0_UT",
+    "zip_code": 84056.0,
+    "city": "Hill AFB",
+    "county": "Davis",
+    "latitude": 41.1111,
+    "longitude": -111.9623,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84601_UT",
+    "zip_code": 84601,
+    "city": "Provo",
+    "county": "Utah",
+    "latitude": 40.2192,
+    "longitude": -111.7234,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84078_UT",
+    "zip_code": 84078,
+    "city": "Vernal",
+    "county": "Uintah",
+    "latitude": 40.443,
+    "longitude": -109.5127,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84071_UT",
+    "zip_code": 84071,
+    "city": "Stockton",
+    "county": "Tooele",
+    "latitude": 40.3167,
+    "longitude": -112.3,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84032_UT",
+    "zip_code": 84032,
+    "city": "Heber City",
+    "county": "Wasatch",
+    "latitude": 40.4774,
+    "longitude": -111.433,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "84734.0_UT",
+    "zip_code": 84734.0,
+    "city": "Hanksville",
+    "county": "Wayne",
+    "latitude": 38.3667,
+    "longitude": -110.7167,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84525_UT",
+    "zip_code": 84525,
+    "city": "Green River",
+    "county": "Emery",
+    "latitude": 39.0,
+    "longitude": -110.1667,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "84624_UT",
+    "zip_code": 84624,
+    "city": "Delta",
+    "county": "Millard",
+    "latitude": 39.3375,
+    "longitude": -112.5861,
+    "climate_zone": 3
+  }
+]

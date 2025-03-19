@@ -1,6 +1,19 @@
 import rateLimit from 'express-rate-limit';
 import { RequestHandler, Request, Response, NextFunction } from 'express';
 
+// Global flag to disable rate limiting - set to true to bypass all rate limiting
+export const DISABLE_RATE_LIMITING = true;
+
+// Emergency disabler - for troubleshooting specific routes
+export const noLimitMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // This middleware does nothing but pass control to the next middleware
+  // Used to bypass rate limiting for debugging
+  const requestPath = req.path || 'unknown';
+  const method = req.method || 'unknown';
+  console.log(`[RATE LIMIT BYPASSED] Path: ${requestPath}, Method: ${method}`);
+  next();
+};
+
 /**
  * Creates a rate limiter with the specified parameters
  * 
@@ -14,6 +27,11 @@ const createLimiter = (
   windowMs: number = 15 * 60 * 1000,
   skipSuccesses: boolean = false
 ) => {
+  // If rate limiting is disabled, return the bypass middleware
+  if (DISABLE_RATE_LIMITING) {
+    return noLimitMiddleware;
+  }
+  
   return rateLimit({
     windowMs,
     max,
@@ -36,9 +54,4 @@ export const productsLimiter = createLimiter(6000, 5 * 60 * 1000); // 6000 reque
 export const productDetailLimiter = createLimiter(1500, 1 * 60 * 1000, true); // 1500 requests per 1 minute for product detail views
 export const productSearchLimiter = createLimiter(1000, 1 * 60 * 1000); // 1000 requests per minute for search operations
 
-// Emergency disablers - for troubleshooting specific routes
-export const noLimitMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  // This middleware does nothing but pass control to the next middleware
-  // Used to bypass rate limiting for debugging
-  next();
-};
+// This comment is intentionally left to maintain the diff structure

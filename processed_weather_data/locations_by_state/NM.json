@@ -1,0 +1,335 @@
+[
+  {
+    "location_id": "88007.0_NM",
+    "zip_code": 88007.0,
+    "city": "Las Cruces",
+    "county": "Do\u00f1a Ana",
+    "latitude": 32.2885,
+    "longitude": -106.9132,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "87710_NM",
+    "zip_code": 87710,
+    "city": "Angel Fire",
+    "county": "Colfax",
+    "latitude": 36.4259,
+    "longitude": -105.2903,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88415_NM",
+    "zip_code": 88415,
+    "city": "Clayton",
+    "county": "Union",
+    "latitude": 36.4483,
+    "longitude": -103.1537,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87740_NM",
+    "zip_code": 87740,
+    "city": "Raton",
+    "county": "Colfax",
+    "latitude": 36.7418,
+    "longitude": -104.5076,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88330_NM",
+    "zip_code": 88330,
+    "city": "Holloman Air Force Base",
+    "county": "Otero",
+    "latitude": 32.8519,
+    "longitude": -106.1085,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "87035_NM",
+    "zip_code": 87035,
+    "city": "Moriarty",
+    "county": "Torrance",
+    "latitude": 34.9837,
+    "longitude": -105.9958,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88220_NM",
+    "zip_code": 88220,
+    "city": "Carlsbad",
+    "county": "Eddy",
+    "latitude": 32.3336,
+    "longitude": -104.2584,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "88240.0_NM",
+    "zip_code": 88240.0,
+    "city": "Hobbs",
+    "county": "Lea",
+    "latitude": 32.6875,
+    "longitude": -103.217,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "88043_NM",
+    "zip_code": 88043,
+    "city": "Hurley",
+    "county": "Grant",
+    "latitude": 32.631,
+    "longitude": -108.1466,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "87301_NM",
+    "zip_code": 87301,
+    "city": "Gallup",
+    "county": "McKinley",
+    "latitude": 35.5086,
+    "longitude": -108.7932,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87106_NM",
+    "zip_code": 87106,
+    "city": "Albuquerque",
+    "county": "Bernalillo",
+    "latitude": 35.0417,
+    "longitude": -106.6147,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87529_NM",
+    "zip_code": 87529,
+    "city": "El Prado",
+    "county": "Taos",
+    "latitude": 36.4582,
+    "longitude": -105.6724,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87507_NM",
+    "zip_code": 87507,
+    "city": "Santa Fe",
+    "county": "Santa Fe",
+    "latitude": 35.611,
+    "longitude": -106.0957,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87401_NM",
+    "zip_code": 87401,
+    "city": "Farmington",
+    "county": "San Juan",
+    "latitude": 36.7436,
+    "longitude": -108.2293,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87035.0_NM",
+    "zip_code": 87035.0,
+    "city": "Moriarty",
+    "county": "Torrance",
+    "latitude": 35.0028,
+    "longitude": -105.6628,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87120_NM",
+    "zip_code": 87120,
+    "city": "West Bernalillo",
+    "county": "Bernalillo",
+    "latitude": 35.145,
+    "longitude": -106.795,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87544_NM",
+    "zip_code": 87544,
+    "city": "Los Alamos",
+    "county": "Los Alamos",
+    "latitude": 35.8789,
+    "longitude": -106.2621,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88401_NM",
+    "zip_code": 88401,
+    "city": "Tucumcari",
+    "county": "Quay",
+    "latitude": 35.1805,
+    "longitude": -103.6014,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87942_NM",
+    "zip_code": 87942,
+    "city": "Williamsburg",
+    "county": "Sierra",
+    "latitude": 33.2367,
+    "longitude": -107.2681,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "88210_NM",
+    "zip_code": 88210,
+    "city": "Artesia",
+    "county": "Eddy",
+    "latitude": 32.8524,
+    "longitude": -104.4644,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "88030_NM",
+    "zip_code": 88030,
+    "city": "Deming",
+    "county": "Luna",
+    "latitude": 32.2593,
+    "longitude": -107.7205,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "87020_NM",
+    "zip_code": 87020,
+    "city": "Grants",
+    "county": "Cibola",
+    "latitude": 35.1653,
+    "longitude": -107.9021,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88203_NM",
+    "zip_code": 88203,
+    "city": "Roswell",
+    "county": "Chaves",
+    "latitude": 33.3074,
+    "longitude": -104.5082,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "88135_NM",
+    "zip_code": 88135,
+    "city": "Texico",
+    "county": "Curry",
+    "latitude": 34.4227,
+    "longitude": -103.0802,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87801_NM",
+    "zip_code": 87801,
+    "city": "Socorro",
+    "county": "Socorro",
+    "latitude": 34.0263,
+    "longitude": -106.9037,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87701_NM",
+    "zip_code": 87701,
+    "city": "Las Vegas",
+    "county": "San Miguel",
+    "latitude": 35.6558,
+    "longitude": -105.1385,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88103_NM",
+    "zip_code": 88103,
+    "city": "Cannon AFB",
+    "county": "Curry",
+    "latitude": 34.3828,
+    "longitude": -103.3221,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88324_NM",
+    "zip_code": 88324,
+    "city": "Glencoe",
+    "county": "Lincoln",
+    "latitude": 33.4668,
+    "longitude": -105.5278,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "88310.0_NM",
+    "zip_code": 88310.0,
+    "city": "Alamogordo",
+    "county": "Otero",
+    "latitude": 32.8351,
+    "longitude": -105.9941,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "87002_NM",
+    "zip_code": 87002,
+    "city": "Belen",
+    "county": "Valencia",
+    "latitude": 34.6452,
+    "longitude": -106.8337,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88130_NM",
+    "zip_code": 88130,
+    "city": "Portales",
+    "county": "Roosevelt",
+    "latitude": 34.1436,
+    "longitude": -103.4109,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88008_NM",
+    "zip_code": 88008,
+    "city": "Santa Teresa",
+    "county": "Do\u00f1a Ana",
+    "latitude": 31.8798,
+    "longitude": -106.6973,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "88318_NM",
+    "zip_code": 88318,
+    "city": "Corona",
+    "county": "Lincoln",
+    "latitude": 34.1,
+    "longitude": -105.6833,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "87013.0_NM",
+    "zip_code": 87013.0,
+    "city": "Cuba",
+    "county": "Sandoval",
+    "latitude": 35.799,
+    "longitude": -107.181,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "88008.0_NM",
+    "zip_code": 88008.0,
+    "city": "Santa Teresa",
+    "county": "Do\u00f1a Ana",
+    "latitude": 31.8731,
+    "longitude": -106.6975,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "88045.0_NM",
+    "zip_code": 88045.0,
+    "city": "North Hidalgo",
+    "county": "Hidalgo",
+    "latitude": 32.3335,
+    "longitude": -108.6917,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "87520_NM",
+    "zip_code": 87520,
+    "city": "Chama",
+    "county": "Rio Arriba",
+    "latitude": 36.9,
+    "longitude": -106.5833,
+    "climate_zone": 3
+  }
+]

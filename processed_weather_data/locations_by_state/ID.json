@@ -1,0 +1,236 @@
+[
+  {
+    "location_id": "83422.0_ID",
+    "zip_code": 83422.0,
+    "city": "Driggs",
+    "county": "Teton",
+    "latitude": 43.745,
+    "longitude": -111.0912,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83338_ID",
+    "zip_code": 83338,
+    "city": "Jerome",
+    "county": "Jerome",
+    "latitude": 42.7274,
+    "longitude": -114.4547,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83204_ID",
+    "zip_code": 83204,
+    "city": "Pocatello",
+    "county": "Power",
+    "latitude": 42.9203,
+    "longitude": -112.5711,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83402_ID",
+    "zip_code": 83402,
+    "city": "Idaho Falls",
+    "county": "Bonneville",
+    "latitude": 43.5208,
+    "longitude": -112.0661,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83333_ID",
+    "zip_code": 83333,
+    "city": "Hailey",
+    "county": "Blaine",
+    "latitude": 43.5038,
+    "longitude": -114.2956,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83440_ID",
+    "zip_code": 83440,
+    "city": "Rexburg",
+    "county": "Madison",
+    "latitude": 43.8321,
+    "longitude": -111.8075,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83835_ID",
+    "zip_code": 83835,
+    "city": "Coeur d'Alene",
+    "county": "Kootenai",
+    "latitude": 47.7743,
+    "longitude": -116.8196,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "83648_ID",
+    "zip_code": 83648,
+    "city": "Mountain Home Afb",
+    "county": "Elmore",
+    "latitude": 43.0436,
+    "longitude": -115.8724,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83687_ID",
+    "zip_code": 83687,
+    "city": "Nampa",
+    "county": "Canyon",
+    "latitude": 43.5813,
+    "longitude": -116.5231,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83226_ID",
+    "zip_code": 83226,
+    "city": "Challis",
+    "county": "Custer",
+    "latitude": 44.523,
+    "longitude": -114.2161,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83705_ID",
+    "zip_code": 83705,
+    "city": "Boise",
+    "county": "Ada",
+    "latitude": 43.567,
+    "longitude": -116.2405,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83301_ID",
+    "zip_code": 83301,
+    "city": "Twin Falls",
+    "county": "Twin Falls",
+    "latitude": 42.4785,
+    "longitude": -114.4774,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83864_ID",
+    "zip_code": 83864,
+    "city": "Sandpoint",
+    "county": "Bonner",
+    "latitude": 48.2994,
+    "longitude": -116.56,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "83605.0_ID",
+    "zip_code": 83605.0,
+    "city": "Caldwell",
+    "county": "Canyon",
+    "latitude": 43.6405,
+    "longitude": -116.6302,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83467_ID",
+    "zip_code": 83467,
+    "city": "Salmon",
+    "county": "Lemhi",
+    "latitude": 45.1238,
+    "longitude": -113.8813,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "83638_ID",
+    "zip_code": 83638,
+    "city": "McCall",
+    "county": "Valley",
+    "latitude": 44.8942,
+    "longitude": -116.0998,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83539_ID",
+    "zip_code": 83539,
+    "city": "Kooskia",
+    "county": "Idaho",
+    "latitude": 46.1442,
+    "longitude": -115.5964,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "83530_ID",
+    "zip_code": 83530,
+    "city": "Grangeville",
+    "county": "Idaho",
+    "latitude": 45.9411,
+    "longitude": -116.1326,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "83278.0_ID",
+    "zip_code": 83278.0,
+    "city": "Stanley",
+    "county": "Custer",
+    "latitude": 44.1708,
+    "longitude": -114.9272,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83318_ID",
+    "zip_code": 83318,
+    "city": "Burley",
+    "county": "Cassia",
+    "latitude": 42.5453,
+    "longitude": -113.7686,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83805_ID",
+    "zip_code": 83805,
+    "city": "Bonners Ferry",
+    "county": "Boundary",
+    "latitude": 48.726,
+    "longitude": -116.295,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "83501.0_ID",
+    "zip_code": 83501.0,
+    "city": "Lewiston",
+    "county": "Nez Perce",
+    "latitude": 46.3745,
+    "longitude": -117.0154,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "83446_ID",
+    "zip_code": 83446,
+    "city": "Spencer",
+    "county": "Clark",
+    "latitude": 44.35,
+    "longitude": -112.1833,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83252_ID",
+    "zip_code": 83252,
+    "city": "Malad City",
+    "county": "Oneida",
+    "latitude": 42.1666,
+    "longitude": -112.2966,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83342_ID",
+    "zip_code": 83342,
+    "city": "Malta",
+    "county": "Cassia",
+    "latitude": 42.32,
+    "longitude": -113.33,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83276.0_ID",
+    "zip_code": 83276.0,
+    "city": "Soda Springs",
+    "county": "Caribou",
+    "latitude": 42.6416,
+    "longitude": -111.5799,
+    "climate_zone": 4
+  }
+]

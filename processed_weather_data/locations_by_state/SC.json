@@ -1,0 +1,398 @@
+[
+  {
+    "location_id": "29376.0_SC",
+    "zip_code": 29376.0,
+    "city": "Roebuck",
+    "county": "Spartanburg",
+    "latitude": 34.9157,
+    "longitude": -81.9565,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29649_SC",
+    "zip_code": 29649,
+    "city": "Greenwood",
+    "county": "Greenwood",
+    "latitude": 34.2487,
+    "longitude": -82.1591,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29651_SC",
+    "zip_code": 29651,
+    "city": "Greer",
+    "county": "Spartanburg",
+    "latitude": 34.8839,
+    "longitude": -82.2208,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29626_SC",
+    "zip_code": 29626,
+    "city": "Anderson",
+    "county": "Anderson",
+    "latitude": 34.4978,
+    "longitude": -82.7097,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29108_SC",
+    "zip_code": 29108,
+    "city": "Newberry",
+    "county": "Newberry",
+    "latitude": 34.3061,
+    "longitude": -81.6414,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29720_SC",
+    "zip_code": 29720,
+    "city": "Lancaster",
+    "county": "Lancaster",
+    "latitude": 34.7229,
+    "longitude": -80.8546,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29461_SC",
+    "zip_code": 29461,
+    "city": "Moncks Corner",
+    "county": "Berkeley",
+    "latitude": 33.1855,
+    "longitude": -80.0362,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29488_SC",
+    "zip_code": 29488,
+    "city": "Walterboro",
+    "county": "Colleton",
+    "latitude": 32.921,
+    "longitude": -80.6406,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29812_SC",
+    "zip_code": 29812,
+    "city": "Barnwell",
+    "county": "Barnwell",
+    "latitude": 33.2578,
+    "longitude": -81.3883,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29574_SC",
+    "zip_code": 29574,
+    "city": "Mullins",
+    "county": "Marion",
+    "latitude": 34.181,
+    "longitude": -79.335,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29512_SC",
+    "zip_code": 29512,
+    "city": "Bennettsville",
+    "county": "Marlboro",
+    "latitude": 34.6217,
+    "longitude": -79.7344,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29020_SC",
+    "zip_code": 29020,
+    "city": "Camden",
+    "county": "Kershaw",
+    "latitude": 34.2836,
+    "longitude": -80.5649,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29706_SC",
+    "zip_code": 29706,
+    "city": "Chester",
+    "county": "Chester",
+    "latitude": 34.7893,
+    "longitude": -81.1958,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29506_SC",
+    "zip_code": 29506,
+    "city": "Florence",
+    "county": "Florence",
+    "latitude": 34.1878,
+    "longitude": -79.7308,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29678_SC",
+    "zip_code": 29678,
+    "city": "Seneca",
+    "county": "Oconee",
+    "latitude": 34.6722,
+    "longitude": -82.8814,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29483_SC",
+    "zip_code": 29483,
+    "city": "Summerville",
+    "county": "Dorchester",
+    "latitude": 33.063,
+    "longitude": -80.279,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29605.0_SC",
+    "zip_code": 29605.0,
+    "city": "Greenville",
+    "county": "Greenville",
+    "latitude": 34.7583,
+    "longitude": -82.3764,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29455_SC",
+    "zip_code": 29455,
+    "city": "Johns Island",
+    "county": "Charleston",
+    "latitude": 32.701,
+    "longitude": -80.003,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29044_SC",
+    "zip_code": 29044,
+    "city": "Eastover",
+    "county": "Richland",
+    "latitude": 33.9208,
+    "longitude": -80.8013,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29115_SC",
+    "zip_code": 29115,
+    "city": "Orangeburg",
+    "county": "Orangeburg",
+    "latitude": 33.4568,
+    "longitude": -80.8595,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29520_SC",
+    "zip_code": 29520,
+    "city": "Cheraw",
+    "county": "Chesterfield",
+    "latitude": 34.7128,
+    "longitude": -79.9622,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29440.0_SC",
+    "zip_code": 29440.0,
+    "city": "Georgetown",
+    "county": "Georgetown",
+    "latitude": 33.3117,
+    "longitude": -79.3196,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29582_SC",
+    "zip_code": 29582,
+    "city": "North Myrtle Beach",
+    "county": "Horry",
+    "latitude": 33.8162,
+    "longitude": -78.7204,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29577_SC",
+    "zip_code": 29577,
+    "city": "Myrtle Beach",
+    "county": "Horry",
+    "latitude": 33.6797,
+    "longitude": -78.9283,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29907_SC",
+    "zip_code": 29907,
+    "city": "Beaufort",
+    "county": "Beaufort",
+    "latitude": 32.4122,
+    "longitude": -80.6344,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29153_SC",
+    "zip_code": 29153,
+    "city": "Sumter",
+    "county": "Sumter",
+    "latitude": 33.995,
+    "longitude": -80.3613,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29102_SC",
+    "zip_code": 29102,
+    "city": "Manning",
+    "county": "Clarendon",
+    "latitude": 33.587,
+    "longitude": -80.209,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29540_SC",
+    "zip_code": 29540,
+    "city": "Darlington",
+    "county": "Darlington",
+    "latitude": 34.4494,
+    "longitude": -79.8901,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29657_SC",
+    "zip_code": 29657,
+    "city": "Liberty",
+    "county": "Pickens",
+    "latitude": 34.81,
+    "longitude": -82.7029,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29466_SC",
+    "zip_code": 29466,
+    "city": "Mount Pleasant",
+    "county": "Charleston",
+    "latitude": 32.8978,
+    "longitude": -79.7829,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29906.0_SC",
+    "zip_code": 29906.0,
+    "city": "Beaufort",
+    "county": "Beaufort",
+    "latitude": 32.4774,
+    "longitude": -80.7232,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29404_SC",
+    "zip_code": 29404,
+    "city": "Charleston Afb",
+    "county": "Charleston",
+    "latitude": 32.8986,
+    "longitude": -80.0405,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29550_SC",
+    "zip_code": 29550,
+    "city": "Hartsville",
+    "county": "Darlington",
+    "latitude": 34.4031,
+    "longitude": -80.1192,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29205_SC",
+    "zip_code": 29205,
+    "city": "Columbia",
+    "county": "Richland",
+    "latitude": 33.972,
+    "longitude": -80.9938,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29926_SC",
+    "zip_code": 29926,
+    "city": "Hilton Head Island",
+    "county": "Beaufort",
+    "latitude": 32.2244,
+    "longitude": -80.6975,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29607.0_SC",
+    "zip_code": 29607.0,
+    "city": "Greenville",
+    "county": "Greenville",
+    "latitude": 34.8487,
+    "longitude": -82.35,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29556_SC",
+    "zip_code": 29556,
+    "city": "Kingstree",
+    "county": "Williamsburg",
+    "latitude": 33.7172,
+    "longitude": -79.857,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29805_SC",
+    "zip_code": 29805,
+    "city": "Aiken",
+    "county": "Aiken",
+    "latitude": 33.6509,
+    "longitude": -81.6821,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29360_SC",
+    "zip_code": 29360,
+    "city": "Laurens",
+    "county": "Laurens",
+    "latitude": 34.5071,
+    "longitude": -81.9472,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29527_SC",
+    "zip_code": 29527,
+    "city": "Conway",
+    "county": "Horry",
+    "latitude": 33.8285,
+    "longitude": -79.1222,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29180.0_SC",
+    "zip_code": 29180.0,
+    "city": "Winnsboro",
+    "county": "Fairfield",
+    "latitude": 34.315,
+    "longitude": -81.109,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29732_SC",
+    "zip_code": 29732,
+    "city": "Rock Hill",
+    "county": "York",
+    "latitude": 34.9878,
+    "longitude": -81.0572,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "29152_SC",
+    "zip_code": 29152,
+    "city": "Shaw AFB",
+    "county": "Sumter",
+    "latitude": 33.9727,
+    "longitude": -80.4706,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "29170_SC",
+    "zip_code": 29170,
+    "city": "West Columbia",
+    "county": "Lexington",
+    "latitude": 33.9423,
+    "longitude": -81.118,
+    "climate_zone": 2
+  }
+]

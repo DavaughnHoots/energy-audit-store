@@ -10,6 +10,13 @@ import {
   findCyclicalPatterns,
   calculateLinearRegressionSlope
 } from '../../utils/forecastingModels.js';
+import {
+  decomposeTimeSeries,
+  calculateSeasonalIndices,
+  applySeasonalAdjustment,
+  detectSeasonalPeriods,
+  calculateDegreeDays
+} from '../../utils/seasonalDecomposition.js';
 import { getRecords } from './basicOperations.js';
 import {
   getBenchmarkData,

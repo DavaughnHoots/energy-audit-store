@@ -1,0 +1,254 @@
+[
+  {
+    "location_id": "59404_MT",
+    "zip_code": 59404,
+    "city": "Great Falls",
+    "county": "Cascade",
+    "latitude": 47.4733,
+    "longitude": -111.3822,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59330_MT",
+    "zip_code": 59330,
+    "city": "Glendive",
+    "county": "Dawson",
+    "latitude": 47.1387,
+    "longitude": -104.8072,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59301_MT",
+    "zip_code": 59301,
+    "city": "Miles City",
+    "county": "Custer",
+    "latitude": 46.4267,
+    "longitude": -105.8825,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59402_MT",
+    "zip_code": 59402,
+    "city": "Malmstrom Afb",
+    "county": "Cascade",
+    "latitude": 47.5047,
+    "longitude": -111.1873,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59701_MT",
+    "zip_code": 59701,
+    "city": "Butte",
+    "county": "Silver Bow",
+    "latitude": 45.9647,
+    "longitude": -112.5006,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59230_MT",
+    "zip_code": 59230,
+    "city": "Glasgow",
+    "county": "Valley",
+    "latitude": 48.2142,
+    "longitude": -106.6213,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59725_MT",
+    "zip_code": 59725,
+    "city": "Dillon",
+    "county": "Beaverhead",
+    "latitude": 45.2575,
+    "longitude": -112.5544,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59201_MT",
+    "zip_code": 59201,
+    "city": "Wolf Point",
+    "county": "Roosevelt",
+    "latitude": 48.0945,
+    "longitude": -105.5751,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59427_MT",
+    "zip_code": 59427,
+    "city": "Cut Bank",
+    "county": "Glacier",
+    "latitude": 48.6084,
+    "longitude": -112.3761,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59501_MT",
+    "zip_code": 59501,
+    "city": "Havre",
+    "county": "Hill",
+    "latitude": 48.5428,
+    "longitude": -109.7633,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59313_MT",
+    "zip_code": 59313,
+    "city": "Baker",
+    "county": "Fallon",
+    "latitude": 46.3476,
+    "longitude": -104.2594,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59270_MT",
+    "zip_code": 59270,
+    "city": "Sidney",
+    "county": "Richland",
+    "latitude": 47.7069,
+    "longitude": -104.1926,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59337_MT",
+    "zip_code": 59337,
+    "city": "Jordan",
+    "county": "Garfield",
+    "latitude": 47.3258,
+    "longitude": -106.9475,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59105_MT",
+    "zip_code": 59105,
+    "city": "Billings",
+    "county": "Yellowstone",
+    "latitude": 45.8069,
+    "longitude": -108.5422,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59047_MT",
+    "zip_code": 59047,
+    "city": "Livingston",
+    "county": "Park",
+    "latitude": 45.6983,
+    "longitude": -110.4408,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59714_MT",
+    "zip_code": 59714,
+    "city": "Belgrade",
+    "county": "Gallatin",
+    "latitude": 45.7881,
+    "longitude": -111.1608,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59901.0_MT",
+    "zip_code": 59901.0,
+    "city": "Kalispell",
+    "county": "Flathead",
+    "latitude": 48.3042,
+    "longitude": -114.2636,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59457.0_MT",
+    "zip_code": 59457.0,
+    "city": "Lewistown",
+    "county": "Fergus",
+    "latitude": 47.0493,
+    "longitude": -109.4667,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59808.0_MT",
+    "zip_code": 59808.0,
+    "city": "Missoula",
+    "county": "Missoula",
+    "latitude": 46.9208,
+    "longitude": -114.0925,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59808_MT",
+    "zip_code": 59808,
+    "city": "Missoula",
+    "county": "Missoula",
+    "latitude": 46.9208,
+    "longitude": -114.0925,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59601_MT",
+    "zip_code": 59601,
+    "city": "Helena",
+    "county": "Lewis and Clark",
+    "latitude": 46.6044,
+    "longitude": -111.9892,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59758_MT",
+    "zip_code": 59758,
+    "city": "West Yellowstone",
+    "county": "Gallatin",
+    "latitude": 44.6884,
+    "longitude": -111.1176,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "59417_MT",
+    "zip_code": 59417,
+    "city": "Browning",
+    "county": "Glacier",
+    "latitude": 48.6011,
+    "longitude": -113.1147,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59085_MT",
+    "zip_code": 59085,
+    "city": "Two Dot",
+    "county": "Wheatland",
+    "latitude": 46.4333,
+    "longitude": -109.8333,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59873_MT",
+    "zip_code": 59873,
+    "city": "Thompson Falls-West End",
+    "county": "Sanders",
+    "latitude": 47.6,
+    "longitude": -115.3667,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59327_MT",
+    "zip_code": 59327,
+    "city": "Forsyth",
+    "county": "Rosebud",
+    "latitude": 45.8528,
+    "longitude": -106.7093,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59832_MT",
+    "zip_code": 59832,
+    "city": "Drummond",
+    "county": "Granite",
+    "latitude": 46.6667,
+    "longitude": -113.15,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "59840.0_MT",
+    "zip_code": 59840.0,
+    "city": "Hamilton",
+    "county": "Ravalli",
+    "latitude": 46.25,
+    "longitude": -114.15,
+    "climate_zone": 5
+  }
+]

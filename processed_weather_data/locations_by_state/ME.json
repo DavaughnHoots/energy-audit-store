@@ -1,0 +1,155 @@
+[
+  {
+    "location_id": "4102_ME",
+    "zip_code": 4102,
+    "city": "Portland",
+    "county": "Cumberland",
+    "latitude": 43.6424,
+    "longitude": -70.3044,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4736_ME",
+    "zip_code": 4736,
+    "city": "Caribou",
+    "county": "Aroostook",
+    "latitude": 46.8715,
+    "longitude": -68.0179,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "4462_ME",
+    "zip_code": 4462,
+    "city": "Millinocket",
+    "county": "Penobscot",
+    "latitude": 45.6478,
+    "longitude": -68.6925,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "4769.0_ME",
+    "zip_code": 4769.0,
+    "city": "Presque Isle",
+    "county": "Aroostook",
+    "latitude": 46.689,
+    "longitude": -68.0448,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "4854_ME",
+    "zip_code": 4854,
+    "city": "Owls Head",
+    "county": "Knox",
+    "latitude": 44.0601,
+    "longitude": -69.0993,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4730_ME",
+    "zip_code": 4730,
+    "city": "Houlton",
+    "county": "Aroostook",
+    "latitude": 46.1185,
+    "longitude": -67.7928,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "4401_ME",
+    "zip_code": 4401,
+    "city": "Bangor",
+    "county": "Penobscot",
+    "latitude": 44.8074,
+    "longitude": -68.8281,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4605_ME",
+    "zip_code": 4605,
+    "city": "Trenton",
+    "county": "Hancock",
+    "latitude": 44.4498,
+    "longitude": -68.3616,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4901_ME",
+    "zip_code": 4901,
+    "city": "Waterville",
+    "county": "Kennebec",
+    "latitude": 44.5333,
+    "longitude": -69.6755,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4330_ME",
+    "zip_code": 4330,
+    "city": "Augusta",
+    "county": "Kennebec",
+    "latitude": 44.3207,
+    "longitude": -69.7973,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4578_ME",
+    "zip_code": 4578,
+    "city": "Wiscasset",
+    "county": "Lincoln",
+    "latitude": 43.964,
+    "longitude": -69.7108,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4441_ME",
+    "zip_code": 4441,
+    "city": "Greenville",
+    "county": "Piscataquis",
+    "latitude": 45.4646,
+    "longitude": -69.5538,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "4745_ME",
+    "zip_code": 4745,
+    "city": "Frenchville",
+    "county": "Aroostook",
+    "latitude": 47.2855,
+    "longitude": -68.3127,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "4073_ME",
+    "zip_code": 4073,
+    "city": "Sanford",
+    "county": "York",
+    "latitude": 43.3939,
+    "longitude": -70.708,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4210_ME",
+    "zip_code": 4210,
+    "city": "Auburn",
+    "county": "Androscoggin",
+    "latitude": 44.0485,
+    "longitude": -70.2835,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4037.0_ME",
+    "zip_code": 4037.0,
+    "city": "Fryeburg",
+    "county": "Oxford",
+    "latitude": 43.9911,
+    "longitude": -70.9479,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "4011_ME",
+    "zip_code": 4011,
+    "city": "Brunswick",
+    "county": "Cumberland",
+    "latitude": 43.8922,
+    "longitude": -69.9386,
+    "climate_zone": 4
+  }
+]

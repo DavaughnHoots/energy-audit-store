@@ -1,0 +1,326 @@
+[
+  {
+    "location_id": "36442.0_AL",
+    "zip_code": 36442.0,
+    "city": "Florala",
+    "county": "Covington",
+    "latitude": 31.0425,
+    "longitude": -86.3117,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35950_AL",
+    "zip_code": 35950,
+    "city": "Albertville",
+    "county": "Marshall",
+    "latitude": 34.2291,
+    "longitude": -86.2558,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "35010_AL",
+    "zip_code": 35010,
+    "city": "Alexander City",
+    "county": "Tallapoosa",
+    "latitude": 32.9147,
+    "longitude": -85.9628,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35503_AL",
+    "zip_code": 35503,
+    "city": "Jasper",
+    "county": "Walker",
+    "latitude": 33.902,
+    "longitude": -87.314,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36421_AL",
+    "zip_code": 36421,
+    "city": "Andalusia",
+    "county": "Covington",
+    "latitude": 31.3087,
+    "longitude": -86.3938,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35904_AL",
+    "zip_code": 35904,
+    "city": "Gadsden",
+    "county": "Etowah",
+    "latitude": 33.9726,
+    "longitude": -86.0891,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36542_AL",
+    "zip_code": 36542,
+    "city": "Gulf Shores",
+    "county": "Baldwin",
+    "latitude": 30.2896,
+    "longitude": -87.6718,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36203_AL",
+    "zip_code": 36203,
+    "city": "Oxford",
+    "county": "Calhoun",
+    "latitude": 33.5904,
+    "longitude": -85.8479,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35565_AL",
+    "zip_code": 35565,
+    "city": "Haleyville",
+    "county": "Winston",
+    "latitude": 34.2803,
+    "longitude": -87.6004,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "35671_AL",
+    "zip_code": 35671,
+    "city": "Tanner",
+    "county": "Limestone",
+    "latitude": 34.6525,
+    "longitude": -86.9453,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "36732_AL",
+    "zip_code": 36732,
+    "city": "Demopolis",
+    "county": "Marengo",
+    "latitude": 32.4638,
+    "longitude": -87.954,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36027_AL",
+    "zip_code": 36027,
+    "city": "Eufaula",
+    "county": "Barbour",
+    "latitude": 31.9516,
+    "longitude": -85.1312,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36532_AL",
+    "zip_code": 36532,
+    "city": "Fairhope",
+    "county": "Baldwin",
+    "latitude": 30.46,
+    "longitude": -87.877,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36112_AL",
+    "zip_code": 36112,
+    "city": "Montgomery",
+    "county": "Montgomery",
+    "latitude": 32.3829,
+    "longitude": -86.3658,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36362_AL",
+    "zip_code": 36362,
+    "city": "Fort Rucker",
+    "county": "Dale",
+    "latitude": 31.3558,
+    "longitude": -85.7511,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36401_AL",
+    "zip_code": 36401,
+    "city": "Evergreen",
+    "county": "Conecuh",
+    "latitude": 31.4158,
+    "longitude": -87.044,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36303_AL",
+    "zip_code": 36303,
+    "city": "Dothan",
+    "county": "Dale",
+    "latitude": 31.3213,
+    "longitude": -85.4496,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35756_AL",
+    "zip_code": 35756,
+    "city": "Madison",
+    "county": "Madison",
+    "latitude": 34.6439,
+    "longitude": -86.7861,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "35759_AL",
+    "zip_code": 35759,
+    "city": "Meridianville",
+    "county": "Madison",
+    "latitude": 34.8614,
+    "longitude": -86.5572,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "36037_AL",
+    "zip_code": 36037,
+    "city": "Greenville",
+    "county": "Butler",
+    "latitude": 31.8457,
+    "longitude": -86.6107,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35401_AL",
+    "zip_code": 35401,
+    "city": "Tuscaloosa",
+    "county": "Tuscaloosa",
+    "latitude": 33.2122,
+    "longitude": -87.6155,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36615_AL",
+    "zip_code": 36615,
+    "city": "Mobile",
+    "county": "Mobile",
+    "latitude": 30.6268,
+    "longitude": -88.0681,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35898_AL",
+    "zip_code": 35898,
+    "city": "Huntsville",
+    "county": "Madison",
+    "latitude": 34.6787,
+    "longitude": -86.6848,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "36608_AL",
+    "zip_code": 36608,
+    "city": "Mobile",
+    "county": "Mobile",
+    "latitude": 30.6883,
+    "longitude": -88.2456,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35768_AL",
+    "zip_code": 35768,
+    "city": "Scottsboro",
+    "county": "Jackson",
+    "latitude": 34.6887,
+    "longitude": -86.0059,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "35206_AL",
+    "zip_code": 35206,
+    "city": "Birmingham",
+    "county": "Jefferson",
+    "latitude": 33.5655,
+    "longitude": -86.7449,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35968_AL",
+    "zip_code": 35968,
+    "city": "Fort Payne",
+    "county": "DeKalb",
+    "latitude": 34.4737,
+    "longitude": -85.7214,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "35007_AL",
+    "zip_code": 35007,
+    "city": "Alabaster",
+    "county": "Shelby",
+    "latitude": 33.1783,
+    "longitude": -86.7817,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36801_AL",
+    "zip_code": 36801,
+    "city": "Opelika",
+    "county": "Lee",
+    "latitude": 32.6151,
+    "longitude": -85.434,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36108_AL",
+    "zip_code": 36108,
+    "city": "Hope Hull",
+    "county": "Montgomery",
+    "latitude": 32.3003,
+    "longitude": -86.4061,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36322_AL",
+    "zip_code": 36322,
+    "city": "Daleville",
+    "county": "Dale",
+    "latitude": 31.2767,
+    "longitude": -85.711,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35661_AL",
+    "zip_code": 35661,
+    "city": "Muscle Shoals",
+    "county": "Colbert",
+    "latitude": 34.7439,
+    "longitude": -87.5996,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "36079_AL",
+    "zip_code": 36079,
+    "city": "Troy",
+    "county": "Pike",
+    "latitude": 31.8606,
+    "longitude": -86.0122,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "36535.0_AL",
+    "zip_code": 36535.0,
+    "city": "Foley",
+    "county": "Baldwin",
+    "latitude": 30.3891,
+    "longitude": -87.6353,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "35618.0_AL",
+    "zip_code": 35618.0,
+    "city": "Courtland",
+    "county": "Lawrence",
+    "latitude": 34.6594,
+    "longitude": -87.3488,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "35179.0_AL",
+    "zip_code": 35179.0,
+    "city": "Vinemont",
+    "county": "Cullman",
+    "latitude": 34.2687,
+    "longitude": -86.858,
+    "climate_zone": 3
+  }
+]

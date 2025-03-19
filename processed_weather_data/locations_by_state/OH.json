@@ -1,0 +1,380 @@
+[
+  {
+    "location_id": "44720_OH",
+    "zip_code": 44720,
+    "city": "Green",
+    "county": "Summit",
+    "latitude": 40.9181,
+    "longitude": -81.4434,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45380_OH",
+    "zip_code": 45380,
+    "city": "Versailles",
+    "county": "Darke",
+    "latitude": 40.2044,
+    "longitude": -84.5319,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45433_OH",
+    "zip_code": 45433,
+    "city": "Dayton",
+    "county": "Greene",
+    "latitude": 39.8261,
+    "longitude": -84.0483,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43112_OH",
+    "zip_code": 43112,
+    "city": "Carroll",
+    "county": "Fairfield",
+    "latitude": 39.7556,
+    "longitude": -82.6571,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43235_OH",
+    "zip_code": 43235,
+    "city": "Columbus",
+    "county": "Franklin",
+    "latitude": 40.0781,
+    "longitude": -83.0781,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45804_OH",
+    "zip_code": 45804,
+    "city": "Lima",
+    "county": "Allen",
+    "latitude": 40.7081,
+    "longitude": -84.0214,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45377_OH",
+    "zip_code": 45377,
+    "city": "Vandalia",
+    "county": "Montgomery",
+    "latitude": 39.9061,
+    "longitude": -84.2186,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43056_OH",
+    "zip_code": 43056,
+    "city": "Heath",
+    "county": "Licking",
+    "latitude": 40.0264,
+    "longitude": -82.4634,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45177_OH",
+    "zip_code": 45177,
+    "city": "Wilmington",
+    "county": "Clinton",
+    "latitude": 39.4279,
+    "longitude": -83.7921,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "44266_OH",
+    "zip_code": 44266,
+    "city": "Ravenna",
+    "county": "Portage",
+    "latitude": 41.209,
+    "longitude": -81.2479,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45042_OH",
+    "zip_code": 45042,
+    "city": "Middletown",
+    "county": "Butler",
+    "latitude": 39.531,
+    "longitude": -84.3953,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43228_OH",
+    "zip_code": 43228,
+    "city": "Columbus",
+    "county": "Franklin",
+    "latitude": 39.9012,
+    "longitude": -83.1369,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43512_OH",
+    "zip_code": 43512,
+    "city": "Defiance",
+    "county": "Defiance",
+    "latitude": 41.3357,
+    "longitude": -84.4285,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "44143_OH",
+    "zip_code": 44143,
+    "city": "Cleveland",
+    "county": "Cuyahoga",
+    "latitude": 41.5651,
+    "longitude": -81.4864,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "44035_OH",
+    "zip_code": 44035,
+    "city": "Elyria",
+    "county": "Lorain",
+    "latitude": 41.3461,
+    "longitude": -82.1794,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "43302_OH",
+    "zip_code": 43302,
+    "city": "Marion",
+    "county": "Marion",
+    "latitude": 40.6163,
+    "longitude": -83.0635,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45014_OH",
+    "zip_code": 45014,
+    "city": "Fairfield",
+    "county": "Butler",
+    "latitude": 39.3612,
+    "longitude": -84.5206,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43447_OH",
+    "zip_code": 43447,
+    "city": "Millbury",
+    "county": "Wood",
+    "latitude": 41.5631,
+    "longitude": -83.4764,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "43015_OH",
+    "zip_code": 43015,
+    "city": "Delaware",
+    "county": "Delaware",
+    "latitude": 40.2797,
+    "longitude": -83.1148,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "43311_OH",
+    "zip_code": 43311,
+    "city": "Bellefontaine",
+    "county": "Logan",
+    "latitude": 40.3723,
+    "longitude": -83.8192,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "43452_OH",
+    "zip_code": 43452,
+    "city": "Port Clinton",
+    "county": "Ottawa",
+    "latitude": 41.5163,
+    "longitude": -82.8695,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45710_OH",
+    "zip_code": 45710,
+    "city": "Albany",
+    "county": "Athens",
+    "latitude": 39.2119,
+    "longitude": -82.2293,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "44903_OH",
+    "zip_code": 44903,
+    "city": "Mansfield",
+    "county": "Richland",
+    "latitude": 40.8203,
+    "longitude": -82.5178,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "43050_OH",
+    "zip_code": 43050,
+    "city": "Mount Vernon",
+    "county": "Knox",
+    "latitude": 40.3268,
+    "longitude": -82.5201,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45226_OH",
+    "zip_code": 45226,
+    "city": "Cincinnati",
+    "county": "Hamilton",
+    "latitude": 39.1033,
+    "longitude": -84.4186,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43217_OH",
+    "zip_code": 43217,
+    "city": "Columbus",
+    "county": "Franklin",
+    "latitude": 39.8138,
+    "longitude": -82.9278,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43567_OH",
+    "zip_code": 43567,
+    "city": "Wauseon",
+    "county": "Fulton",
+    "latitude": 41.6101,
+    "longitude": -84.1272,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "44135_OH",
+    "zip_code": 44135,
+    "city": "Cleveland",
+    "county": "Cuyahoga",
+    "latitude": 41.4057,
+    "longitude": -81.8519,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "44677.0_OH",
+    "zip_code": 44677.0,
+    "city": "Smithville",
+    "county": "Wayne",
+    "latitude": 40.8731,
+    "longitude": -81.8867,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45840_OH",
+    "zip_code": 45840,
+    "city": "Findlay",
+    "county": "Hancock",
+    "latitude": 41.0136,
+    "longitude": -83.6686,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "44047_OH",
+    "zip_code": 44047,
+    "city": "Jefferson",
+    "county": "Ashtabula",
+    "latitude": 41.778,
+    "longitude": -80.6955,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "43040_OH",
+    "zip_code": 43040,
+    "city": "Marysville",
+    "county": "Union",
+    "latitude": 40.2247,
+    "longitude": -83.3516,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45066_OH",
+    "zip_code": 45066,
+    "city": "Springboro",
+    "county": "Montgomery",
+    "latitude": 39.589,
+    "longitude": -84.2249,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "44663_OH",
+    "zip_code": 44663,
+    "city": "New Philadelphia",
+    "county": "Tuscarawas",
+    "latitude": 40.4719,
+    "longitude": -81.4236,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "44306_OH",
+    "zip_code": 44306,
+    "city": "Akron",
+    "county": "Summit",
+    "latitude": 41.0375,
+    "longitude": -81.4642,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45502_OH",
+    "zip_code": 45502,
+    "city": "Springfield",
+    "county": "Clark",
+    "latitude": 39.8403,
+    "longitude": -83.8402,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "44114_OH",
+    "zip_code": 44114,
+    "city": "Cleveland",
+    "county": "Cuyahoga",
+    "latitude": 41.5173,
+    "longitude": -81.6832,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "45103.0_OH",
+    "zip_code": 45103.0,
+    "city": "Batavia",
+    "county": "Clermont",
+    "latitude": 39.0784,
+    "longitude": -84.2102,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "44473.0_OH",
+    "zip_code": 44473.0,
+    "city": "Vienna",
+    "county": "Trumbull",
+    "latitude": 41.2544,
+    "longitude": -80.6739,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "43219.0_OH",
+    "zip_code": 43219.0,
+    "city": "Columbus",
+    "county": "Franklin",
+    "latitude": 39.9907,
+    "longitude": -82.8769,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "43558_OH",
+    "zip_code": 43558,
+    "city": "Swanton",
+    "county": "Lucas",
+    "latitude": 41.587,
+    "longitude": -83.8054,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "43701_OH",
+    "zip_code": 43701,
+    "city": "Zanesville",
+    "county": "Muskingum",
+    "latitude": 39.9444,
+    "longitude": -81.8921,
+    "climate_zone": 3
+  }
+]

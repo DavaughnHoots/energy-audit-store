@@ -142,12 +142,11 @@ app.use(cookieParser(process.env.JWT_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting - Note: More specific route handlers in products.ts and productRecommendations.ts 
-// have their own specialized limiters for different operations
-app.use('/api/auth', authLimiter);
-// Removed global products rate limiter to use more specific limiters in route handlers
-app.use('/api/recommendations', apiLimiter);
-app.use('/', standardLimiter);
+// Rate limiting is now globally disabled via the DISABLE_RATE_LIMITING flag in rateLimitMiddleware.ts
+// These routes will automatically use the noLimitMiddleware due to the flag
+app.use('/api/auth', authLimiter); // Will use noLimitMiddleware due to DISABLE_RATE_LIMITING flag
+app.use('/api/recommendations', apiLimiter); // Will use noLimitMiddleware due to DISABLE_RATE_LIMITING flag
+app.use('/', standardLimiter); // Will use noLimitMiddleware due to DISABLE_RATE_LIMITING flag
 
 // Rate limit debugging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {

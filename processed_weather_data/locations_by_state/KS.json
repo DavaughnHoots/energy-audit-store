@@ -1,0 +1,326 @@
+[
+  {
+    "location_id": "67501.0_KS",
+    "zip_code": 67501.0,
+    "city": "Hutchinson",
+    "county": "Reno",
+    "latitude": 38.0655,
+    "longitude": -97.8606,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67215_KS",
+    "zip_code": 67215,
+    "city": "Wichita",
+    "county": "Sedgwick",
+    "latitude": 37.6472,
+    "longitude": -97.4294,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66801_KS",
+    "zip_code": 66801,
+    "city": "Emporia",
+    "county": "Lyon",
+    "latitude": 38.3289,
+    "longitude": -96.1939,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66901_KS",
+    "zip_code": 66901,
+    "city": "Concordia",
+    "county": "Cloud",
+    "latitude": 39.5513,
+    "longitude": -97.6508,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67301_KS",
+    "zip_code": 67301,
+    "city": "Independence",
+    "county": "Montgomery",
+    "latitude": 37.1584,
+    "longitude": -95.7784,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67701_KS",
+    "zip_code": 67701,
+    "city": "Colby",
+    "county": "Thomas",
+    "latitude": 39.43,
+    "longitude": -101.0511,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66720.0_KS",
+    "zip_code": 66720.0,
+    "city": "Chanute",
+    "county": "Neosho",
+    "latitude": 37.6705,
+    "longitude": -95.4846,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67530_KS",
+    "zip_code": 67530,
+    "city": "Great Bend",
+    "county": "Barton",
+    "latitude": 38.3443,
+    "longitude": -98.8592,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67226_KS",
+    "zip_code": 67226,
+    "city": "Wichita",
+    "county": "Sedgwick",
+    "latitude": 37.7497,
+    "longitude": -97.2191,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67846_KS",
+    "zip_code": 67846,
+    "city": "Garden City",
+    "county": "Finney",
+    "latitude": 37.9275,
+    "longitude": -100.7244,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67756_KS",
+    "zip_code": 67756,
+    "city": "Saint Francis",
+    "county": "Cheyenne",
+    "latitude": 39.7619,
+    "longitude": -101.7963,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67801_KS",
+    "zip_code": 67801,
+    "city": "Dodge City",
+    "county": "Ford",
+    "latitude": 37.7608,
+    "longitude": -99.9683,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67401_KS",
+    "zip_code": 67401,
+    "city": "Salina",
+    "county": "Saline",
+    "latitude": 38.8042,
+    "longitude": -97.6488,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67335.0_KS",
+    "zip_code": 67335.0,
+    "city": "Cherryvale",
+    "county": "Labette",
+    "latitude": 37.3278,
+    "longitude": -95.5042,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67337.0_KS",
+    "zip_code": 67337.0,
+    "city": "Coffeyville",
+    "county": "Montgomery",
+    "latitude": 37.0912,
+    "longitude": -95.5726,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67950_KS",
+    "zip_code": 67950,
+    "city": "Taloga",
+    "county": "Morton",
+    "latitude": 37.0008,
+    "longitude": -101.88,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66409_KS",
+    "zip_code": 66409,
+    "city": "Berryton",
+    "county": "Shawnee",
+    "latitude": 38.9509,
+    "longitude": -95.6636,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67114_KS",
+    "zip_code": 67114,
+    "city": "Newton",
+    "county": "Harvey",
+    "latitude": 38.0582,
+    "longitude": -97.2745,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66062_KS",
+    "zip_code": 66062,
+    "city": "Olathe",
+    "county": "Johnson",
+    "latitude": 38.85,
+    "longitude": -94.7392,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67735_KS",
+    "zip_code": 67735,
+    "city": "Goodland",
+    "county": "Sherman",
+    "latitude": 39.3675,
+    "longitude": -101.6931,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67156_KS",
+    "zip_code": 67156,
+    "city": "Winfield",
+    "county": "Cowley",
+    "latitude": 37.1681,
+    "longitude": -97.0369,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66442_KS",
+    "zip_code": 66442,
+    "city": "Fort Riley",
+    "county": "Geary",
+    "latitude": 39.0559,
+    "longitude": -96.7617,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66762_KS",
+    "zip_code": 66762,
+    "city": "Pittsburg",
+    "county": "Crawford",
+    "latitude": 37.4495,
+    "longitude": -94.7311,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67901_KS",
+    "zip_code": 67901,
+    "city": "Liberal",
+    "county": "Seward",
+    "latitude": 37.0442,
+    "longitude": -100.9599,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67601_KS",
+    "zip_code": 67601,
+    "city": "Hays",
+    "county": "Ellis",
+    "latitude": 38.8391,
+    "longitude": -99.2742,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66031_KS",
+    "zip_code": 66031,
+    "city": "Gardner township",
+    "county": "Johnson",
+    "latitude": 38.8309,
+    "longitude": -94.8903,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67104_KS",
+    "zip_code": 67104,
+    "city": "Medicine Lodge",
+    "county": "Barber",
+    "latitude": 37.2839,
+    "longitude": -98.5528,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66044_KS",
+    "zip_code": 66044,
+    "city": "Lawrence",
+    "county": "Douglas",
+    "latitude": 39.0083,
+    "longitude": -95.2117,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66503_KS",
+    "zip_code": 66503,
+    "city": "Manhattan",
+    "county": "Riley",
+    "latitude": 39.1353,
+    "longitude": -96.6778,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67665_KS",
+    "zip_code": 67665,
+    "city": "Russell",
+    "county": "Russell",
+    "latitude": 38.8728,
+    "longitude": -98.8131,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67642_KS",
+    "zip_code": 67642,
+    "city": "Hill City",
+    "county": "Graham",
+    "latitude": 39.3747,
+    "longitude": -99.8297,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67221_KS",
+    "zip_code": 67221,
+    "city": "McConnell AFB",
+    "county": "Sedgwick",
+    "latitude": 37.6219,
+    "longitude": -97.2682,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66616_KS",
+    "zip_code": 66616,
+    "city": "Topeka",
+    "county": "Shawnee",
+    "latitude": 39.0725,
+    "longitude": -95.6261,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "67124_KS",
+    "zip_code": 67124,
+    "city": "Pratt",
+    "county": "Pratt",
+    "latitude": 37.7017,
+    "longitude": -98.7469,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66701_KS",
+    "zip_code": 66701,
+    "city": "Fort Scott",
+    "county": "Bourbon",
+    "latitude": 37.7984,
+    "longitude": -94.7694,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "66839.0_KS",
+    "zip_code": 66839.0,
+    "city": "Burlington",
+    "county": "Coffey",
+    "latitude": 38.3025,
+    "longitude": -95.725,
+    "climate_zone": 3
+  }
+]

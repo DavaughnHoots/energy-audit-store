@@ -1,0 +1,200 @@
+[
+  {
+    "location_id": "89706_NV",
+    "zip_code": 89706,
+    "city": "Carson City",
+    "county": "Carson City",
+    "latitude": 39.1906,
+    "longitude": -119.7319,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89049.0_NV",
+    "zip_code": 89049.0,
+    "city": "Tonopah",
+    "county": "Nye",
+    "latitude": 38.0505,
+    "longitude": -117.0904,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89301_NV",
+    "zip_code": 89301,
+    "city": "Ely",
+    "county": "White Pine",
+    "latitude": 39.2953,
+    "longitude": -114.8466,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89032_NV",
+    "zip_code": 89032,
+    "city": "North Las Vegas",
+    "county": "Clark",
+    "latitude": 36.212,
+    "longitude": -115.194,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89506_NV",
+    "zip_code": 89506,
+    "city": "Reno",
+    "county": "Washoe",
+    "latitude": 39.6682,
+    "longitude": -119.8764,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89052_NV",
+    "zip_code": 89052,
+    "city": "Henderson",
+    "county": "Clark",
+    "latitude": 35.9766,
+    "longitude": -115.1322,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89419_NV",
+    "zip_code": 89419,
+    "city": "Lovelock",
+    "county": "Pershing",
+    "latitude": 40.0684,
+    "longitude": -118.5702,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "89018_NV",
+    "zip_code": 89018,
+    "city": "Indian Springs",
+    "county": "Clark",
+    "latitude": 36.5857,
+    "longitude": -115.6901,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89119_NV",
+    "zip_code": 89119,
+    "city": "Las Vegas",
+    "county": "Clark",
+    "latitude": 36.0719,
+    "longitude": -115.1634,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89445_NV",
+    "zip_code": 89445,
+    "city": "Winnemucca",
+    "county": "Humboldt",
+    "latitude": 40.9018,
+    "longitude": -117.8082,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "89191_NV",
+    "zip_code": 89191,
+    "city": "Nellis AFB",
+    "county": "Clark",
+    "latitude": 36.2362,
+    "longitude": -115.0343,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89005_NV",
+    "zip_code": 89005,
+    "city": "Boulder City",
+    "county": "Clark",
+    "latitude": 35.947,
+    "longitude": -114.861,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89502_NV",
+    "zip_code": 89502,
+    "city": "Reno",
+    "county": "Washoe",
+    "latitude": 39.5078,
+    "longitude": -119.7682,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89406_NV",
+    "zip_code": 89406,
+    "city": "Fallon",
+    "county": "Churchill",
+    "latitude": 39.4166,
+    "longitude": -118.701,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89020_NV",
+    "zip_code": 89020,
+    "city": "Amargosa Valley",
+    "county": "Nye",
+    "latitude": 36.6207,
+    "longitude": -116.0287,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89316_NV",
+    "zip_code": 89316,
+    "city": "Eureka",
+    "county": "Eureka",
+    "latitude": 39.6014,
+    "longitude": -116.0056,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89801_NV",
+    "zip_code": 89801,
+    "city": "Elko",
+    "county": "Elko",
+    "latitude": 40.824,
+    "longitude": -115.7863,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "89310_NV",
+    "zip_code": 89310,
+    "city": "Austin",
+    "county": "Lander",
+    "latitude": 39.5,
+    "longitude": -117.0833,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89823_NV",
+    "zip_code": 89823,
+    "city": "Deeth",
+    "county": "Elko",
+    "latitude": 41.6667,
+    "longitude": -115.7833,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "89835_NV",
+    "zip_code": 89835,
+    "city": "Wells",
+    "county": "Elko",
+    "latitude": 41.1167,
+    "longitude": -114.9667,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "89008.0_NV",
+    "zip_code": 89008.0,
+    "city": "Caliente",
+    "county": "Lincoln",
+    "latitude": 37.6122,
+    "longitude": -114.5264,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "89820_NV",
+    "zip_code": 89820,
+    "city": "Battle Mountain",
+    "county": "Lander",
+    "latitude": 40.6,
+    "longitude": -116.8667,
+    "climate_zone": 4
+  }
+]

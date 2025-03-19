@@ -1,0 +1,650 @@
+[
+  {
+    "location_id": "27330.0_NC",
+    "zip_code": 27330.0,
+    "city": "Sanford",
+    "county": "Lee",
+    "latitude": 35.5825,
+    "longitude": -79.1014,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27531_NC",
+    "zip_code": 27531,
+    "city": "Goldsboro",
+    "county": "Wayne",
+    "latitude": 35.3446,
+    "longitude": -77.9458,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28147.0_NC",
+    "zip_code": 28147.0,
+    "city": "Salisbury",
+    "county": "Rowan",
+    "latitude": 35.6442,
+    "longitude": -80.5236,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27409_NC",
+    "zip_code": 27409,
+    "city": "Greensboro",
+    "county": "Guilford",
+    "latitude": 36.0969,
+    "longitude": -79.9432,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28461_NC",
+    "zip_code": 28461,
+    "city": "Southport",
+    "county": "Brunswick",
+    "latitude": 33.9292,
+    "longitude": -78.0722,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "27549_NC",
+    "zip_code": 27549,
+    "city": "Louisburg",
+    "county": "Franklin",
+    "latitude": 36.0229,
+    "longitude": -78.3341,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27565_NC",
+    "zip_code": 27565,
+    "city": "Oxford",
+    "county": "Granville",
+    "latitude": 36.3635,
+    "longitude": -78.5289,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27048.0_NC",
+    "zip_code": 27048.0,
+    "city": "Stoneville",
+    "county": "Rockingham",
+    "latitude": 36.4372,
+    "longitude": -79.851,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27822_NC",
+    "zip_code": 27822,
+    "city": "Elm City",
+    "county": "Nash",
+    "latitude": 35.8502,
+    "longitude": -77.8952,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27577_NC",
+    "zip_code": 27577,
+    "city": "Smithfield",
+    "county": "Johnston",
+    "latitude": 35.5408,
+    "longitude": -78.3903,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28677_NC",
+    "zip_code": 28677,
+    "city": "Statesville",
+    "county": "Iredell",
+    "latitude": 35.7636,
+    "longitude": -80.9473,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28734_NC",
+    "zip_code": 28734,
+    "city": "Franklin",
+    "county": "Macon",
+    "latitude": 35.2228,
+    "longitude": -83.415,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28027_NC",
+    "zip_code": 28027,
+    "city": "Concord",
+    "county": "Cabarrus",
+    "latitude": 35.3896,
+    "longitude": -80.7074,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28110_NC",
+    "zip_code": 28110,
+    "city": "Monroe",
+    "county": "Union",
+    "latitude": 35.0147,
+    "longitude": -80.6242,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28574_NC",
+    "zip_code": 28574,
+    "city": "Richlands",
+    "county": "Onslow",
+    "latitude": 34.8251,
+    "longitude": -77.6189,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28379_NC",
+    "zip_code": 28379,
+    "city": "Rockingham",
+    "county": "Richmond",
+    "latitude": 34.8954,
+    "longitude": -79.7575,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28472_NC",
+    "zip_code": 28472,
+    "city": "Whiteville",
+    "county": "Columbus",
+    "latitude": 34.2753,
+    "longitude": -78.7146,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28308_NC",
+    "zip_code": 28308,
+    "city": "Pope Army Airfield",
+    "county": "Cumberland",
+    "latitude": 35.1753,
+    "longitude": -79.0077,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27889_NC",
+    "zip_code": 27889,
+    "city": "Washington",
+    "county": "Beaufort",
+    "latitude": 35.5705,
+    "longitude": -77.0498,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28339_NC",
+    "zip_code": 28339,
+    "city": "Erwin",
+    "county": "Harnett",
+    "latitude": 35.3786,
+    "longitude": -78.7336,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27863.0_NC",
+    "zip_code": 27863.0,
+    "city": "Pikeville",
+    "county": "Wayne",
+    "latitude": 35.4606,
+    "longitude": -77.9649,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27886_NC",
+    "zip_code": 27886,
+    "city": "Tarboro",
+    "county": "Edgecombe",
+    "latitude": 35.9373,
+    "longitude": -77.5465,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28405_NC",
+    "zip_code": 28405,
+    "city": "Wilmington",
+    "county": "New Hanover",
+    "latitude": 34.2706,
+    "longitude": -77.9026,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28127_NC",
+    "zip_code": 28127,
+    "city": "New London",
+    "county": "Stanly",
+    "latitude": 35.4167,
+    "longitude": -80.1508,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27560_NC",
+    "zip_code": 27560,
+    "city": "Morrisville",
+    "county": "Wake",
+    "latitude": 35.8922,
+    "longitude": -78.7819,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27030_NC",
+    "zip_code": 27030,
+    "city": "Mount Airy",
+    "county": "Surry",
+    "latitude": 36.4567,
+    "longitude": -80.5548,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28640_NC",
+    "zip_code": 28640,
+    "city": "Jefferson",
+    "county": "Ashe",
+    "latitude": 36.4324,
+    "longitude": -81.4197,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27824_NC",
+    "zip_code": 27824,
+    "city": "Engelhard",
+    "county": "Hyde",
+    "latitude": 35.6667,
+    "longitude": -75.9,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27936_NC",
+    "zip_code": 27936,
+    "city": "Frisco",
+    "county": "Dare",
+    "latitude": 35.2322,
+    "longitude": -75.6225,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28901.0_NC",
+    "zip_code": 28901.0,
+    "city": "Andrews",
+    "county": "Cherokee",
+    "latitude": 35.1939,
+    "longitude": -83.8618,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27909.0_NC",
+    "zip_code": 27909.0,
+    "city": "Elizabeth City",
+    "county": "Pasquotank",
+    "latitude": 36.2577,
+    "longitude": -76.1716,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28562_NC",
+    "zip_code": 28562,
+    "city": "New Bern",
+    "county": "Craven",
+    "latitude": 35.0675,
+    "longitude": -77.0472,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27105_NC",
+    "zip_code": 27105,
+    "city": "Winston Salem",
+    "county": "Forsyth",
+    "latitude": 36.1335,
+    "longitude": -80.2244,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27292_NC",
+    "zip_code": 27292,
+    "city": "Lexington",
+    "county": "Davidson",
+    "latitude": 35.7811,
+    "longitude": -80.3038,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28337_NC",
+    "zip_code": 28337,
+    "city": "Elizabethtown",
+    "county": "Bladen",
+    "latitude": 34.6042,
+    "longitude": -78.579,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28080_NC",
+    "zip_code": 28080,
+    "city": "Iron Station",
+    "county": "Lincoln",
+    "latitude": 35.4833,
+    "longitude": -81.1612,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28139_NC",
+    "zip_code": 28139,
+    "city": "Rutherfordton",
+    "county": "Rutherford",
+    "latitude": 35.4282,
+    "longitude": -81.9351,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27805_NC",
+    "zip_code": 27805,
+    "city": "Aulander",
+    "county": "Hertford",
+    "latitude": 36.2975,
+    "longitude": -77.1708,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27205_NC",
+    "zip_code": 27205,
+    "city": "Asheboro",
+    "county": "Randolph",
+    "latitude": 35.6527,
+    "longitude": -79.8942,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27583_NC",
+    "zip_code": 27583,
+    "city": "Timberlake",
+    "county": "Person",
+    "latitude": 36.285,
+    "longitude": -78.9842,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27215_NC",
+    "zip_code": 27215,
+    "city": "Burlington",
+    "county": "Alamance",
+    "latitude": 36.0475,
+    "longitude": -79.4737,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28364.0_NC",
+    "zip_code": 28364.0,
+    "city": "Maxton",
+    "county": "Scotland",
+    "latitude": 34.7913,
+    "longitude": -79.3683,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28170_NC",
+    "zip_code": 28170,
+    "city": "Wadesboro",
+    "county": "Anson",
+    "latitude": 35.0194,
+    "longitude": -80.0784,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28659_NC",
+    "zip_code": 28659,
+    "city": "North Wilkesboro",
+    "county": "Wilkes",
+    "latitude": 36.2188,
+    "longitude": -81.1002,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28347_NC",
+    "zip_code": 28347,
+    "city": "Hoffman",
+    "county": "Richmond",
+    "latitude": 35.0366,
+    "longitude": -79.4973,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28540_NC",
+    "zip_code": 28540,
+    "city": "Jacksonville",
+    "county": "Onslow",
+    "latitude": 34.7063,
+    "longitude": -77.4407,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28327_NC",
+    "zip_code": 28327,
+    "city": "Carthage",
+    "county": "Moore",
+    "latitude": 35.2372,
+    "longitude": -79.3911,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27932_NC",
+    "zip_code": 27932,
+    "city": "Edenton",
+    "county": "Chowan",
+    "latitude": 36.0277,
+    "longitude": -76.5671,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28504_NC",
+    "zip_code": 28504,
+    "city": "Kinston",
+    "county": "Lenoir",
+    "latitude": 35.3314,
+    "longitude": -77.6088,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28358_NC",
+    "zip_code": 28358,
+    "city": "Lumberton",
+    "county": "Robeson",
+    "latitude": 34.6082,
+    "longitude": -79.059,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28328_NC",
+    "zip_code": 28328,
+    "city": "Clinton",
+    "county": "Sampson",
+    "latitude": 34.9752,
+    "longitude": -78.3628,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28306_NC",
+    "zip_code": 28306,
+    "city": "Fayetteville",
+    "county": "Cumberland",
+    "latitude": 34.9896,
+    "longitude": -78.8801,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27954_NC",
+    "zip_code": 27954,
+    "city": "Manteo",
+    "county": "Dare",
+    "latitude": 35.919,
+    "longitude": -75.6955,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28311.0_NC",
+    "zip_code": 28311.0,
+    "city": "Fayetteville",
+    "county": "Cumberland",
+    "latitude": 35.1314,
+    "longitude": -78.9316,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28570_NC",
+    "zip_code": 28570,
+    "city": "Newport",
+    "county": "Carteret",
+    "latitude": 34.694,
+    "longitude": -77.0294,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27839_NC",
+    "zip_code": 27839,
+    "city": "Halifax",
+    "county": "Halifax",
+    "latitude": 36.33,
+    "longitude": -77.635,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28349_NC",
+    "zip_code": 28349,
+    "city": "Kenansville",
+    "county": "Duplin",
+    "latitude": 34.9994,
+    "longitude": -77.98,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28516_NC",
+    "zip_code": 28516,
+    "city": "Beaufort",
+    "county": "Carteret",
+    "latitude": 34.7326,
+    "longitude": -76.6566,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28532_NC",
+    "zip_code": 28532,
+    "city": "Havelock",
+    "county": "Craven",
+    "latitude": 34.8972,
+    "longitude": -76.8813,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28152.0_NC",
+    "zip_code": 28152.0,
+    "city": "Cleveland",
+    "county": "Cleveland",
+    "latitude": 35.2556,
+    "longitude": -81.5986,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28056.0_NC",
+    "zip_code": 28056.0,
+    "city": "Gastonia",
+    "county": "Gaston",
+    "latitude": 35.1969,
+    "longitude": -81.1555,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28655_NC",
+    "zip_code": 28655,
+    "city": "Morganton",
+    "county": "Burke",
+    "latitude": 35.8192,
+    "longitude": -81.6097,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27834_NC",
+    "zip_code": 27834,
+    "city": "Greenville",
+    "county": "Pitt",
+    "latitude": 35.6374,
+    "longitude": -77.3851,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27956_NC",
+    "zip_code": 27956,
+    "city": "Maple",
+    "county": "Currituck",
+    "latitude": 36.3989,
+    "longitude": -76.0164,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28607_NC",
+    "zip_code": 28607,
+    "city": "New River",
+    "county": "Watauga",
+    "latitude": 36.1986,
+    "longitude": -81.6517,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28732_NC",
+    "zip_code": 28732,
+    "city": "Fletcher",
+    "county": "Buncombe",
+    "latitude": 35.4319,
+    "longitude": -82.5375,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28278_NC",
+    "zip_code": 28278,
+    "city": "Township 2 Berryhill",
+    "county": "Mecklenburg",
+    "latitude": 35.2225,
+    "longitude": -80.9543,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27948.0_NC",
+    "zip_code": 27948.0,
+    "city": "Kill Devil Hills",
+    "county": "Dare",
+    "latitude": 36.0182,
+    "longitude": -75.6713,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "28601.0_NC",
+    "zip_code": 28601.0,
+    "city": "Hickory",
+    "county": "Catawba",
+    "latitude": 35.7422,
+    "longitude": -81.3822,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27344_NC",
+    "zip_code": 27344,
+    "city": "Siler City",
+    "county": "Chatham",
+    "latitude": 35.704,
+    "longitude": -79.504,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27516.0_NC",
+    "zip_code": 27516.0,
+    "city": "Chapel Hill",
+    "county": "Orange",
+    "latitude": 35.935,
+    "longitude": -79.0659,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "27870.0_NC",
+    "zip_code": 27870.0,
+    "city": "Roanoke Rapids",
+    "county": "Halifax",
+    "latitude": 36.4395,
+    "longitude": -77.7093,
+    "climate_zone": 3
+  }
+]
