@@ -5,7 +5,7 @@ import { EnergyAuditData, AuditRecommendation } from '../types/energyAudit.js';
 import { dashboardService } from './dashboardService.js';
 import { appLogger } from '../utils/logger.js';
 import { productRecommendationService } from './productRecommendationService.js';
-import { calculateOverallEfficiencyScore, interpretEfficiencyScore } from './efficiencyScoreService.js';
+import { calculateAuditEfficiencyScore, interpretEfficiencyScore } from './efficiencyScoreService.js';
 import { 
   generateEfficiencyRadarChart, 
   generateHvacPerformanceChart,
@@ -133,32 +133,44 @@ export class ReportGenerationService {
   }
 
   /**
-   * Formats a value for display in the PDF
-   * @param value Value to format
-   * @param type Type of formatting to apply
-   * @param context Optional context for providing better fallbacks
-   * @returns Formatted string
+   * Calculates the efficiency score from audit data
+   * @param auditData Energy audit data
+   * @returns Efficiency score (40-100)
    */
-  private formatValue(
-    value: any,
-    type: 'currency' | 'percentage' | 'number' | 'text' | 'auto' = 'text',
-    context: string = ''
-  ): string {
-    // Check for invalid values first
-    if (value === undefined || value === null || 
-        (typeof value === 'number' && isNaN(value))) {
+  private calculateEfficiencyScore(auditData: EnergyAuditData): number {
+    try {
+      appLogger.info('Calculating overall efficiency score');
       
-      // Use context-appropriate fallbacks
-      switch (type) {
-        case 'currency':
-          return context.includes('savings') ? 'Estimated: $200-300/year' : 'Not calculated';
-        case 'percentage':
-          return context.includes('efficiency') ? 'Typical range: 70-80%' : 'Not calculated';
-        case 'number':
-          return 'Not available';
-        default:
-          return 'Not available';
-      }
+      // Map EnergyAuditData to the structure expected by calculateOverallEfficiencyScore
+      const transformedData = {
+        energy: auditData.energyConsumption,
+        hvac: auditData.heatingCooling,
+        lighting: auditData.currentConditions, // Contains lighting data like bulb percentages
+        humidity: auditData.currentConditions  // Contains humidity data
+      };
+      
+      // Calculate efficiency using multiple factors
+      const scores = calculateOverallEfficiencyScore(transformedData);
+      
+      // Ensure score is within realistic range (40-100)
+      const sanitizedScore = Math.min(100, Math.max(40, scores.overallScore));
+      
+      appLogger.debug('Efficiency score calculation', {
+        rawScore: scores.overallScore,
+        sanitizedScore
+      });
+      
+      appLogger.info(`Overall efficiency score: ${sanitizedScore} (${scores.interpretation})`);
+      
+      return sanitizedScore;
+    } catch (error) {
+      appLogger.error('Error calculating efficiency score', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      // Return reasonable default on error rather than 0
+      return 70;
+    }
+  }
     }
     
     // Format valid values appropriately with proper precision

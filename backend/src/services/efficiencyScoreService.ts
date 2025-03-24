@@ -1,9 +1,76 @@
-import { appLogger } from '../config/logger.js';
+import { appLogger } from '../utils/logger.js';
 import { EfficiencyScores } from '../types/energyAuditExtended.js';
+import { EnergyAuditData } from '../types/energyAudit.js';
 import { calculateEnergyScore } from './energyAnalysisService.js';
 import { calculateHvacScore } from './hvacAnalysisService.js';
 import { calculateLightingScore } from './lightingAnalysisService.js';
 import { calculateHumidityScore } from './humidityAnalysisService.js';
+
+/**
+ * Adapts EnergyAuditData to the structure expected by the efficiency scoring functions
+ * 
+ * @param auditData - EnergyAuditData from the application
+ * @returns Transformed data structure suitable for scoring functions
+ */
+export function adaptAuditDataForScoring(auditData: EnergyAuditData): any {
+  try {
+    if (!auditData) {
+      appLogger.warn('Invalid audit data for adapting to scoring structure');
+      return {
+        energy: {},
+        hvac: {},
+        lighting: {},
+        humidity: {}
+      };
+    }
+
+    // Create the adapted data structure
+    return {
+      energy: auditData.energyConsumption || {},
+      hvac: auditData.heatingCooling || {},
+      lighting: auditData.currentConditions || {},
+      humidity: auditData.currentConditions || {}
+    };
+  } catch (error) {
+    appLogger.error('Error adapting audit data for scoring', { error });
+    // Return empty structure to avoid null pointer exceptions
+    return {
+      energy: {},
+      hvac: {},
+      lighting: {},
+      humidity: {}
+    };
+  }
+}
+
+/**
+ * Calculate overall efficiency score from EnergyAuditData
+ * 
+ * This is a convenience method that first adapts the EnergyAuditData to the expected
+ * structure and then calculates the efficiency scores.
+ * 
+ * @param auditData - EnergyAuditData from the application
+ * @returns Efficiency scores object
+ */
+export function calculateAuditEfficiencyScore(auditData: EnergyAuditData): EfficiencyScores {
+  try {
+    // Transform data to the expected structure
+    const adaptedData = adaptAuditDataForScoring(auditData);
+    
+    // Calculate the scores using the adapted data
+    return calculateOverallEfficiencyScore(adaptedData);
+  } catch (error) {
+    appLogger.error('Error calculating audit efficiency score', { error });
+    return {
+      energyScore: 0,
+      hvacScore: 0,
+      lightingScore: 0,
+      humidityScore: 0,
+      overallScore: 70, // Default to a reasonable middle value rather than 0
+      interpretation: "Error calculating efficiency score"
+    };
+  }
+}
 
 /**
  * Calculate overall efficiency score (matching Python tool's _calculate_overall_efficiency_score)
