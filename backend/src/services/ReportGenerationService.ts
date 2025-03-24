@@ -453,8 +453,14 @@ export class ReportGenerationService {
    */
   private normalizeBulbPercentages(auditData: EnergyAuditData): { led: number, cfl: number, incandescent: number } {
     try {
+      appLogger.debug('Normalizing bulb percentages', { 
+        hasData: !!auditData.currentConditions.bulbPercentages,
+        originalData: auditData.currentConditions.bulbPercentages || 'none'
+      });
+      
       if (!auditData.currentConditions.bulbPercentages) {
         // Generate estimates based on property age and type
+        appLogger.debug('No bulb percentages found, using estimates based on property');
         return this.estimateBulbPercentagesByProperty(auditData);
       }
       
@@ -467,17 +473,37 @@ export class ReportGenerationService {
       
       const total = ledValue + cflValue + incandescentValue;
       
-      // If no data (all zeros), estimate based on property
-      if (total === 0) {
+      // If no data (all zeros or very small total), estimate based on property
+      if (total < 5) { // Using 5 as a threshold to catch near-zero cases
+        appLogger.debug('All bulb percentages are zero or near-zero, using estimates');
         return this.estimateBulbPercentagesByProperty(auditData);
       }
       
       // Otherwise normalize to 100%
-      return {
+      const normalizedValues = {
         led: Math.round((ledValue / total) * 100),
         cfl: Math.round((cflValue / total) * 100),
         incandescent: Math.round((incandescentValue / total) * 100)
       };
+      
+      // Ensure percentages sum to exactly 100% (handle rounding errors)
+      const sum = normalizedValues.led + normalizedValues.cfl + normalizedValues.incandescent;
+      
+      if (sum !== 100) {
+        // Adjust the largest value to make sum exactly 100%
+        const largestKey = Object.entries(normalizedValues)
+          .reduce((a, b) => a[1] > b[1] ? a : b)[0] as keyof typeof normalizedValues;
+        
+        normalizedValues[largestKey] += (100 - sum);
+        
+        appLogger.debug('Adjusted normalized values to sum to 100%', { 
+          adjustedKey: largestKey,
+          adjustment: 100 - sum,
+          finalValues: normalizedValues
+        });
+      }
+      
+      return normalizedValues;
     } catch (error) {
       appLogger.error('Error normalizing bulb percentages', { 
         error: error instanceof Error ? error.message : String(error)
@@ -494,10 +520,26 @@ export class ReportGenerationService {
    */
   private estimateBulbPercentagesByProperty(auditData: EnergyAuditData): { led: number, cfl: number, incandescent: number } {
     const yearBuilt = auditData.basicInfo.yearBuilt || 2000;
-    const renovated = false; // Default value since recentlyRenovated doesn't exist in the model
+    
+    // Check for renovation information in the auditData if it exists
+    // Using optional chaining and type assertion for properties that might not exist in the model
+    const recentlyRenovated = (auditData.homeDetails as any).recentlyRenovated;
+    const renovationYear = (auditData.homeDetails as any).renovationYear;
+    
+    const renovated = recentlyRenovated || 
+                     (renovationYear && 
+                      renovationYear > (new Date().getFullYear() - 5));
+    
+    appLogger.debug('Estimating bulb percentages based on property', {
+      yearBuilt,
+      renovated: !!renovated,
+      currentYear: new Date().getFullYear() 
+    });
     
     // Newer properties or recently renovated ones likely have more LEDs
-    if (yearBuilt >= 2018 || renovated) {
+    if (yearBuilt >= 2020 || renovated) {
+      return { led: 80, cfl: 15, incandescent: 5 };
+    } else if (yearBuilt >= 2018) {
       return { led: 70, cfl: 20, incandescent: 10 };
     } else if (yearBuilt >= 2010) {
       return { led: 50, cfl: 30, incandescent: 20 };
@@ -516,8 +558,30 @@ export class ReportGenerationService {
    * @returns Description string
    */
   private getBulbTypeDescription(bulbPercentages: { led: number, cfl: number, incandescent: number }): string {
-    if (bulbPercentages.led > 70) return 'Mostly LED Bulbs';
-    if (bulbPercentages.incandescent > 70) return 'Mostly Incandescent Bulbs';
+    if (!bulbPercentages) {
+      return 'Lighting data not available';
+    }
+    
+    // Check if we have any data at all
+    if (bulbPercentages.led === 0 && bulbPercentages.cfl === 0 && bulbPercentages.incandescent === 0) {
+      return 'Lighting data unavailable';
+    }
+    
+    // Check for dominant bulb type
+    if (bulbPercentages.led >= 70) return 'Mostly LED Bulbs';
+    if (bulbPercentages.cfl >= 70) return 'Mostly CFL Bulbs';
+    if (bulbPercentages.incandescent >= 70) return 'Mostly Incandescent Bulbs';
+    
+    // Check for significant combinations
+    if (bulbPercentages.led + bulbPercentages.cfl >= 80) {
+      return 'Primarily Energy Efficient Bulbs';
+    }
+    
+    if (bulbPercentages.incandescent >= 50) {
+      return 'Mix of Bulb Types (Higher Incandescent)';
+    }
+    
+    // Default case
     return 'Mix of Bulb Types';
   }
 
