@@ -22,7 +22,7 @@ class EducationService {
    */
   async getResources(
     filters: ResourceFilters = {}, 
-    userId?: number
+    userId?: string
   ): Promise<EducationalResource[]> {
     try {
       // Build the base query
@@ -51,22 +51,22 @@ class EducationService {
 
       if (filters.type) {
         conditions.push(`er.type = $${paramIndex++}`);
-        queryParams.push(filters.type as string);
+        queryParams.push(filters.type);
       }
 
       if (filters.topic) {
         conditions.push(`er.topic = $${paramIndex++}`);
-        queryParams.push(filters.topic as string);
+        queryParams.push(filters.topic);
       }
 
       if (filters.level) {
         conditions.push(`er.level = $${paramIndex++}`);
-        queryParams.push(filters.level as string);
+        queryParams.push(filters.level);
       }
 
       if (filters.featured !== undefined) {
         conditions.push(`er.is_featured = $${paramIndex++}`);
-        queryParams.push(filters.featured as boolean);
+        queryParams.push(filters.featured);
       }
 
       if (filters.search) {
@@ -81,7 +81,7 @@ class EducationService {
 
       if (filters.tags && filters.tags.length > 0) {
         conditions.push(`er.tags @> $${paramIndex++}`);
-        queryParams.push(filters.tags as string[]);
+        queryParams.push(filters.tags);
       }
 
       if (filters.collection_id) {
@@ -134,7 +134,7 @@ class EducationService {
       // Execute the query
       const result = await db.query(query, queryParams);
       
-      return result.rows.map(row => {
+      return result.rows.map((row: any) => {
         // Transform database row to EducationalResource object
         const resource: EducationalResource = {
           id: row.id,
@@ -160,7 +160,7 @@ class EducationService {
         // Add progress information if available
         if (row.progress_status) {
           resource.progress = {
-            user_id: userId as number,
+            user_id: userId as string,
             resource_id: row.id,
             status: row.progress_status,
             progress_percent: row.progress_percent,
@@ -181,7 +181,7 @@ class EducationService {
   /**
    * Get a single educational resource by ID
    */
-  async getResourceById(id: number, userId?: number): Promise<EducationalResource | null> {
+  async getResourceById(id: number, userId?: string): Promise<EducationalResource | null> {
     try {
       const query = `
         SELECT 
@@ -237,7 +237,7 @@ class EducationService {
       // Add progress information if available
       if (row.progress_status) {
         resource.progress = {
-          user_id: userId as number,
+          user_id: userId as string,
           resource_id: row.id,
           status: row.progress_status,
           progress_percent: row.progress_percent,
@@ -264,7 +264,7 @@ class EducationService {
    */
   async getCollections(
     includeResources = false, 
-    userId?: number
+    userId?: string
   ): Promise<ResourceCollection[]> {
     try {
       // Query for collections
@@ -308,7 +308,7 @@ class EducationService {
           
           const resourcesResult = await db.query(resourcesQuery, [userId || null, collection.id]);
           
-          collection.resources = resourcesResult.rows.map(row => {
+          collection.resources = resourcesResult.rows.map((row: any) => {
             const resource: EducationalResource = {
               id: row.id,
               title: row.title,
@@ -333,7 +333,7 @@ class EducationService {
             // Add progress information if available
             if (row.progress_status) {
               resource.progress = {
-                user_id: userId as number,
+                user_id: userId as string,
                 resource_id: row.id,
                 status: row.progress_status,
                 progress_percent: row.progress_percent,
@@ -358,7 +358,7 @@ class EducationService {
   /**
    * Get bookmarked resources for a user
    */
-  async getUserBookmarks(userId: number): Promise<EducationalResource[]> {
+  async getUserBookmarks(userId: string): Promise<EducationalResource[]> {
     try {
       const query = `
         SELECT 
@@ -386,7 +386,7 @@ class EducationService {
       
       const result = await db.query(query, [userId]);
       
-      return result.rows.map(row => {
+      return result.rows.map((row: any) => {
         const resource: EducationalResource = {
           id: row.id,
           title: row.title,
@@ -432,7 +432,7 @@ class EducationService {
   /**
    * Add a bookmark
    */
-  async addBookmark(userId: number, { resource_id }: BookmarkRequest): Promise<ResourceBookmark> {
+  async addBookmark(userId: string, { resource_id }: BookmarkRequest): Promise<ResourceBookmark> {
     try {
       const query = `
         INSERT INTO resource_bookmarks (user_id, resource_id)
@@ -452,7 +452,7 @@ class EducationService {
   /**
    * Remove a bookmark
    */
-  async removeBookmark(userId: number, resourceId: number): Promise<boolean> {
+  async removeBookmark(userId: string, resourceId: number): Promise<boolean> {
     try {
       const query = `
         DELETE FROM resource_bookmarks
@@ -472,7 +472,7 @@ class EducationService {
   /**
    * Get user progress for all resources
    */
-  async getUserProgress(userId: number): Promise<ResourceProgress[]> {
+  async getUserProgress(userId: string): Promise<ResourceProgress[]> {
     try {
       const query = `
         SELECT rp.*, er.title
@@ -495,7 +495,7 @@ class EducationService {
    * Update user progress for a resource
    */
   async updateProgress(
-    userId: number, 
+    userId: string, 
     { resource_id, status, progress_percent }: ProgressUpdateRequest
   ): Promise<ResourceProgress> {
     try {
@@ -561,7 +561,7 @@ class EducationService {
    * Record that a user accessed a resource
    * This is used to track views and update the last_accessed timestamp
    */
-  async recordResourceAccess(resourceId: number, userId: number): Promise<void> {
+  async recordResourceAccess(resourceId: number, userId: string): Promise<void> {
     try {
       // Check if entry exists
       const checkQuery = `
@@ -592,7 +592,7 @@ class EducationService {
         await db.query(updateQuery, [userId, resourceId]);
       }
       
-      // Increment popularity independently (triggers will handle aggregation for bookmarks, etc.)
+      // Increment view count for popularity tracking
       const updatePopularityQuery = `
         UPDATE educational_resources
         SET popularity = popularity + 1
@@ -600,10 +600,41 @@ class EducationService {
       `;
       
       await db.query(updatePopularityQuery, [resourceId]);
+      
+      // Update overall popularity score
+      await this.updateResourcePopularity(resourceId);
     } catch (error) {
       console.error(`Error recording resource access for user ${userId}:`, error);
       // Don't throw an error as this is a background operation
       // that shouldn't fail the main request
+    }
+  }
+  
+  /**
+   * Calculate and update popularity score for a resource
+   * This replaces the database trigger functionality
+   */
+  async updateResourcePopularity(resourceId: number): Promise<void> {
+    try {
+      const query = `
+        UPDATE educational_resources
+        SET popularity = (
+          SELECT 
+            COALESCE(COUNT(DISTINCT rb.user_id), 0) * 5 + -- Each bookmark is worth 5 points
+            COALESCE(COUNT(DISTINCT rp.user_id), 0) * 2 + -- Each view/progress entry is worth 2 points
+            COALESCE(SUM(rr.rating), 0)                  -- Each rating point is worth 1 point
+          FROM resource_bookmarks rb
+          FULL OUTER JOIN resource_progress rp ON rb.resource_id = rp.resource_id
+          FULL OUTER JOIN resource_ratings rr ON rb.resource_id = rr.resource_id
+          WHERE rb.resource_id = $1 OR rp.resource_id = $1 OR rr.resource_id = $1
+        )
+        WHERE id = $1
+      `;
+      
+      await db.query(query, [resourceId]);
+    } catch (error) {
+      console.error(`Error updating popularity for resource ${resourceId}:`, error);
+      // Don't throw an error as this is a background operation
     }
   }
 
@@ -632,7 +663,7 @@ class EducationService {
   /**
    * Get a user's rating for a resource
    */
-  async getUserRating(userId: number, resourceId: number): Promise<ResourceRating | null> {
+  async getUserRating(userId: string, resourceId: number): Promise<ResourceRating | null> {
     try {
       const query = `
         SELECT * FROM resource_ratings
@@ -652,7 +683,7 @@ class EducationService {
    * Rate a resource
    */
   async rateResource(
-    userId: number, 
+    userId: string, 
     { resource_id, rating, review }: RatingRequest
   ): Promise<ResourceRating> {
     try {
@@ -695,7 +726,7 @@ class EducationService {
   /**
    * Delete a rating
    */
-  async deleteRating(userId: number, resourceId: number): Promise<boolean> {
+  async deleteRating(userId: string, resourceId: number): Promise<boolean> {
     try {
       const query = `
         DELETE FROM resource_ratings

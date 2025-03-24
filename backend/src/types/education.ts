@@ -42,13 +42,13 @@ export interface ResourceCollection {
 }
 
 export interface ResourceBookmark {
-  user_id: number;
+  user_id: string; // UUID
   resource_id: number;
   created_at: string;
 }
 
 export interface ResourceProgress {
-  user_id: number;
+  user_id: string; // UUID
   resource_id: number;
   status: ProgressStatus;
   progress_percent: number;
@@ -59,7 +59,7 @@ export interface ResourceProgress {
 
 export interface ResourceRating {
   id: number;
-  user_id: number;
+  user_id: string; // UUID
   resource_id: number;
   rating: number; // 1-5
   review: string | null;
