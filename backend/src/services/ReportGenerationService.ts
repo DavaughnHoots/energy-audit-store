@@ -228,6 +228,18 @@ export class ReportGenerationService {
         return value.toString();
     }
   }
+  
+  /**
+   * Formats a value representing years for recommendations display
+   * @param years The number of years
+   * @returns Formatted string with years
+   */
+  private formatRecommendationYears(years: any): string {
+    if (years === null || years === undefined || isNaN(Number(years))) {
+      return 'N/A';
+    }
+    return `${Number(years).toFixed(1)} years`;
+  }
 
   /**
    * Calculates the total energy consumption from audit data
@@ -1508,17 +1520,25 @@ export class ReportGenerationService {
           })
           .moveDown(1);
 
-          // Create a table for the recommendation details
+          // Create a table for the recommendation details with proper formatting
           const recRows = [
-            ['Estimated Savings:', `$${rec.estimatedSavings}/year`],
-            ['Implementation Cost:', `$${rec.estimatedCost}`],
-            ['Payback Period:', `${rec.paybackPeriod} years`]
+            ['Estimated Savings:', this.formatValue(rec.estimatedSavings, 'currency') + '/year'],
+            ['Implementation Cost:', this.formatValue(rec.estimatedCost, 'currency')],
+            ['Payback Period:', this.formatRecommendationYears(rec.paybackPeriod)]
           ];
           
           // Add actual savings if available
-          if (rec.actualSavings !== null) {
-            recRows.push(['Actual Savings:', `$${rec.actualSavings}/year`]);
-            recRows.push(['Savings Accuracy:', `${((rec.actualSavings / rec.estimatedSavings) * 100).toFixed(1)}%`]);
+          if (rec.actualSavings !== null && rec.actualSavings !== undefined) {
+            recRows.push(['Actual Savings:', this.formatValue(rec.actualSavings, 'currency') + '/year']);
+            
+            // Calculate savings accuracy only if both values are valid numbers
+            if (typeof rec.actualSavings === 'number' && typeof rec.estimatedSavings === 'number' &&
+                !isNaN(rec.actualSavings) && !isNaN(rec.estimatedSavings) && rec.estimatedSavings !== 0) {
+              const accuracyPercentage = (rec.actualSavings / rec.estimatedSavings) * 100;
+              recRows.push(['Savings Accuracy:', this.formatValue(accuracyPercentage, 'percentage')]);
+            } else {
+              recRows.push(['Savings Accuracy:', 'N/A']);
+            }
           }
           
           this.generateTable(doc, [], recRows);
