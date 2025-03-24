@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.1.2",
     "canvas": "^2.11.2",
     "chart.js": "^4.4.2",
     "class-variance-authority": "^0.7.1",
