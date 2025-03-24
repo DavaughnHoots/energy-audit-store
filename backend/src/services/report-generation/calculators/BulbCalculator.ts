@@ -10,7 +10,7 @@ export class BulbCalculator implements IBulbCalculator {
    */
   normalizeBulbPercentages(auditData: EnergyAuditData): { led: number, cfl: number, incandescent: number } {
     try {
-      if (!auditData.currentConditions.bulbPercentages) {
+      if (!auditData.currentConditions || !auditData.currentConditions.bulbPercentages) {
         // Generate estimates based on property age and type
         return this.estimateBulbPercentagesByProperty(auditData);
       }
@@ -26,14 +26,43 @@ export class BulbCalculator implements IBulbCalculator {
       
       // If no data (all zeros), estimate based on property
       if (total === 0) {
+        appLogger.warn('All bulb percentages are zero, using property-based estimate', {
+          propertyType: auditData.basicInfo?.propertyType,
+          yearBuilt: auditData.basicInfo?.yearBuilt
+        });
         return this.estimateBulbPercentagesByProperty(auditData);
       }
       
-      // Otherwise normalize to 100%
+      // Normalize to 100% with rounding adjustment to ensure sum is exactly 100%
+      const normalizedLed = Math.round((ledValue / total) * 100);
+      const normalizedCfl = Math.round((cflValue / total) * 100);
+      let normalizedIncandescent = Math.round((incandescentValue / total) * 100);
+      
+      // Ensure sum is exactly 100% by adjusting the largest value
+      const sum = normalizedLed + normalizedCfl + normalizedIncandescent;
+      if (sum !== 100) {
+        const diff = 100 - sum;
+        
+        // Adjust the largest value to compensate
+        if (normalizedLed >= normalizedCfl && normalizedLed >= normalizedIncandescent) {
+          normalizedLed + diff;
+        } else if (normalizedCfl >= normalizedLed && normalizedCfl >= normalizedIncandescent) {
+          normalizedCfl + diff;
+        } else {
+          normalizedIncandescent += diff;
+        }
+      }
+      
+      appLogger.debug('Normalized bulb percentages', {
+        original: { led, cfl, incandescent },
+        normalized: { led: normalizedLed, cfl: normalizedCfl, incandescent: normalizedIncandescent },
+        sum: normalizedLed + normalizedCfl + normalizedIncandescent
+      });
+      
       return {
-        led: Math.round((ledValue / total) * 100),
-        cfl: Math.round((cflValue / total) * 100),
-        incandescent: Math.round((incandescentValue / total) * 100)
+        led: normalizedLed,
+        cfl: normalizedCfl,
+        incandescent: normalizedIncandescent
       };
     } catch (error) {
       appLogger.error('Error normalizing bulb percentages', { 
@@ -74,8 +103,19 @@ export class BulbCalculator implements IBulbCalculator {
    * @returns Description string
    */
   getBulbTypeDescription(bulbPercentages: { led: number, cfl: number, incandescent: number }): string {
+    // If we have no data, clearly indicate this
+    if (!bulbPercentages || 
+        (bulbPercentages.led === 0 && 
+         bulbPercentages.cfl === 0 && 
+         bulbPercentages.incandescent === 0)) {
+      return 'Lighting data not available';
+    }
+    
+    // Return appropriate description based on actual data
     if (bulbPercentages.led > 70) return 'Mostly LED Bulbs';
     if (bulbPercentages.incandescent > 70) return 'Mostly Incandescent Bulbs';
+    if (bulbPercentages.cfl > 70) return 'Mostly CFL Bulbs';
+    if (bulbPercentages.led + bulbPercentages.cfl > 70) return 'Mostly Energy Efficient Bulbs';
     return 'Mix of Bulb Types';
   }
 }

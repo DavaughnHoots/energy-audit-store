@@ -33,6 +33,8 @@ export interface IEnergyCalculator {
   calculateTotalEnergy(auditData: EnergyAuditData): number;
   calculateEnergyEfficiency(auditData: EnergyAuditData): number;
   getBaselineConsumption(propertyType: string, squareFootage: number): number;
+  calculateEnergyUseIntensity(auditData: EnergyAuditData): number;
+  getEfficiencyDescription(efficiency: number): string;
 }
 
 export interface ISavingsCalculator {
