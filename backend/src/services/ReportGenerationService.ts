@@ -141,16 +141,8 @@ export class ReportGenerationService {
     try {
       appLogger.info('Calculating overall efficiency score');
       
-      // Map EnergyAuditData to the structure expected by calculateOverallEfficiencyScore
-      const transformedData = {
-        energy: auditData.energyConsumption,
-        hvac: auditData.heatingCooling,
-        lighting: auditData.currentConditions, // Contains lighting data like bulb percentages
-        humidity: auditData.currentConditions  // Contains humidity data
-      };
-      
-      // Calculate efficiency using multiple factors
-      const scores = calculateOverallEfficiencyScore(transformedData);
+      // Calculate efficiency using the audit data
+      const scores = calculateAuditEfficiencyScore(auditData);
       
       // Ensure score is within realistic range (40-100)
       const sanitizedScore = Math.min(100, Math.max(40, scores.overallScore));
@@ -171,6 +163,21 @@ export class ReportGenerationService {
       return 70;
     }
   }
+  
+  /**
+   * Formats a value according to the specified type
+   * @param value The value to format
+   * @param type The type of formatting to apply
+   * @param context Optional context for formatting
+   * @returns Formatted value as a string
+   */
+  private formatValue(
+    value: any,
+    type: 'currency' | 'percentage' | 'number' | 'text' | 'auto' = 'text',
+    context?: any
+  ): string {
+    if (value === null || value === undefined) {
+      return 'N/A';
     }
     
     // Format valid values appropriately with proper precision
@@ -234,23 +241,6 @@ export class ReportGenerationService {
       return electricKwhPerYear + gasKwhPerYear;
     } catch (error) {
       appLogger.error('Error calculating total energy', { 
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return 0;
-    }
-  }
-
-  /**
-   * Calculates the efficiency score from audit data
-   * @param auditData Energy audit data
-   * @returns Efficiency score (0-100)
-   */
-  private calculateEfficiencyScore(auditData: EnergyAuditData): number {
-    try {
-      const scores = calculateOverallEfficiencyScore(auditData);
-      return scores.overallScore;
-    } catch (error) {
-      appLogger.error('Error calculating efficiency score', { 
         error: error instanceof Error ? error.message : String(error)
       });
       return 0;
@@ -627,6 +617,13 @@ export class ReportGenerationService {
    * @param height Chart height
    * @returns Buffer containing the chart image
    */
+  /**
+   * Generates a savings chart for the recommendations
+   * @param recommendations Audit recommendations
+   * @param width Chart width
+   * @param height Chart height
+   * @returns Buffer containing the chart image
+   */
   private async generateSavingsChart(
     recommendations: AuditRecommendation[],
     width: number,
@@ -650,39 +647,39 @@ export class ReportGenerationService {
 
       // Cast context to any to avoid Chart.js type issues
       const chart = new Chart(ctx as any, {
-      type: 'bar',
-      data: {
-        labels: recommendations.map(rec => rec.title.substring(0, 20) + '...'),
-        datasets: [
-          {
-            label: 'Estimated Savings ($)',
-            data: recommendations.map(rec => rec.estimatedSavings),
-            backgroundColor: 'rgba(59, 130, 246, 0.5)',
-            borderColor: 'rgb(59, 130, 246)',
-            borderWidth: 1
-          },
-          {
-            label: 'Actual Savings ($)',
-            data: recommendations.map(rec => rec.actualSavings || 0),
-            backgroundColor: 'rgba(34, 197, 94, 0.5)',
-            borderColor: 'rgb(34, 197, 94)',
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        responsive: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Annual Savings ($)'
+        type: 'bar',
+        data: {
+          labels: recommendations.map(rec => rec.title.substring(0, 20) + '...'),
+          datasets: [
+            {
+              label: 'Estimated Savings ($)',
+              data: recommendations.map(rec => rec.estimatedSavings),
+              backgroundColor: 'rgba(59, 130, 246, 0.5)',
+              borderColor: 'rgb(59, 130, 246)',
+              borderWidth: 1
+            },
+            {
+              label: 'Actual Savings ($)',
+              data: recommendations.map(rec => rec.actualSavings || 0),
+              backgroundColor: 'rgba(34, 197, 94, 0.5)',
+              borderColor: 'rgb(34, 197, 94)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Annual Savings ($)'
+              }
             }
           }
         }
-      }
-    });
+      });
 
       return canvas.toBuffer('image/png');
     } catch (error) {
