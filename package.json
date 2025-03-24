@@ -1,7 +1,6 @@
 {
   "name": "energy-audit-store",
   "version": "0.0.0",
-  "type": "module",
   "private": true,
   "scripts": {
     "test-efficiency": "node test-efficiency-calculation.js",
