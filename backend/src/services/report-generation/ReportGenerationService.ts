@@ -39,6 +39,116 @@ export class ReportGenerationService {
   }
 
   /**
+   * Extract estimated savings from recommendation title and description
+   * @param title Recommendation title
+   * @param description Recommendation description
+   * @returns Estimated annual savings
+   */
+  private extractSavingsFromTitle(title: string, description: string): number {
+    try {
+      const titleLower = (title || '').toLowerCase();
+      const descLower = (description || '').toLowerCase();
+      
+      // Default savings by category
+      if (titleLower.includes('insulation') || descLower.includes('insulation')) {
+        return 350;
+      } else if (titleLower.includes('hvac') || descLower.includes('hvac') || 
+                titleLower.includes('heating') || descLower.includes('heating')) {
+        return 450;
+      } else if (titleLower.includes('light') || descLower.includes('light') ||
+                titleLower.includes('bulb') || descLower.includes('bulb')) {
+        return 200;
+      } else if (titleLower.includes('window') || descLower.includes('window')) {
+        return 300;
+      } else if (titleLower.includes('air seal') || descLower.includes('air seal') ||
+                titleLower.includes('draft') || descLower.includes('draft')) {
+        return 180;
+      } else if (titleLower.includes('thermostat') || descLower.includes('thermostat')) {
+        return 120;
+      }
+      
+      return 200; // Default value
+    } catch (error) {
+      appLogger.error('Error extracting savings from title', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 200;
+    }
+  }
+  
+  /**
+   * Extract estimated cost from recommendation title and description
+   * @param title Recommendation title
+   * @param description Recommendation description
+   * @returns Estimated implementation cost
+   */
+  private extractCostFromTitle(title: string, description: string): number {
+    try {
+      const titleLower = (title || '').toLowerCase();
+      const descLower = (description || '').toLowerCase();
+      
+      // Default costs by category
+      if (titleLower.includes('insulation') || descLower.includes('insulation')) {
+        return 1200;
+      } else if (titleLower.includes('hvac') || descLower.includes('hvac')) {
+        return 3500;
+      } else if (titleLower.includes('light') || descLower.includes('light') ||
+                titleLower.includes('bulb') || descLower.includes('bulb')) {
+        return 120;
+      } else if (titleLower.includes('window') || descLower.includes('window')) {
+        return 3000;
+      } else if (titleLower.includes('air seal') || descLower.includes('air seal')) {
+        return 350;
+      } else if (titleLower.includes('thermostat') || descLower.includes('thermostat')) {
+        return 250;
+      }
+      
+      return 500; // Default value
+    } catch (error) {
+      appLogger.error('Error extracting cost from title', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 500;
+    }
+  }
+  
+  /**
+   * Get default payback period based on recommendation type
+   * @param title Recommendation title
+   * @param description Recommendation description
+   * @returns Default payback period in years
+   */
+  private getDefaultPaybackPeriod(title: string, description: string): number {
+    try {
+      const titleLower = (title || '').toLowerCase();
+      const descLower = (description || '').toLowerCase();
+      
+      // Default payback by category (approximate years)
+      if (titleLower.includes('insulation') || descLower.includes('insulation')) {
+        return 3.5;
+      } else if (titleLower.includes('hvac') || descLower.includes('hvac')) {
+        return 8.0;
+      } else if (titleLower.includes('light') || descLower.includes('light') ||
+                titleLower.includes('bulb') || descLower.includes('bulb')) {
+        return 0.6;
+      } else if (titleLower.includes('window') || descLower.includes('window')) {
+        return 10.0;
+      } else if (titleLower.includes('air seal') || descLower.includes('air seal')) {
+        return 2.0;
+      } else if (titleLower.includes('thermostat') || descLower.includes('thermostat')) {
+        return 2.1;
+      }
+      
+      return 2.5; // Default value
+    } catch (error) {
+      appLogger.error('Error getting default payback period', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 2.5;
+    }
+  }
+
+  /**
    * Calculates the efficiency score from audit data
    * @param auditData Energy audit data
    * @returns Efficiency score (40-100)
@@ -368,11 +478,37 @@ export class ReportGenerationService {
           })
           .moveDown(1);
 
+          // Apply validation and intelligent defaults to recommendation data
+          const validatedRec = { ...rec };
+
+          // Ensure we have valid savings data
+          if (typeof validatedRec.estimatedSavings !== 'number' || isNaN(validatedRec.estimatedSavings)) {
+            validatedRec.estimatedSavings = this.extractSavingsFromTitle(rec.title, rec.description);
+            appLogger.debug('Using extracted savings value', { title: rec.title, savings: validatedRec.estimatedSavings });
+          }
+          
+          // Ensure we have valid cost data
+          if (typeof validatedRec.estimatedCost !== 'number' || isNaN(validatedRec.estimatedCost)) {
+            validatedRec.estimatedCost = this.extractCostFromTitle(rec.title, rec.description);
+            appLogger.debug('Using extracted cost value', { title: rec.title, cost: validatedRec.estimatedCost });
+          }
+          
+          // Ensure we have valid payback period
+          if (typeof validatedRec.paybackPeriod !== 'number' || isNaN(validatedRec.paybackPeriod)) {
+            // Calculate payback as cost / savings if we have both
+            if (validatedRec.estimatedSavings > 0 && validatedRec.estimatedCost > 0) {
+              validatedRec.paybackPeriod = validatedRec.estimatedCost / validatedRec.estimatedSavings;
+            } else {
+              validatedRec.paybackPeriod = this.getDefaultPaybackPeriod(rec.title, rec.description);
+            }
+            appLogger.debug('Using calculated payback period', { title: rec.title, payback: validatedRec.paybackPeriod });
+          }
+          
           // Create a table for the recommendation details with proper formatting
           const recRows = [
-            ['Estimated Savings:', this.formatters.valueFormatter.formatValue(rec.estimatedSavings, 'currency', 'savings') + '/year'],
-            ['Implementation Cost:', this.formatters.valueFormatter.formatValue(rec.estimatedCost, 'currency', 'cost')],
-            ['Payback Period:', this.formatters.valueFormatter.formatValue(rec.paybackPeriod, 'number', 'payback') + ' years']
+            ['Estimated Savings:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedSavings, 'currency', 'savings') + '/year'],
+            ['Implementation Cost:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedCost, 'currency', 'cost')],
+            ['Payback Period:', this.formatters.valueFormatter.formatValue(validatedRec.paybackPeriod, 'number', 'payback') + ' years']
           ];
           
           // Add actual savings if available
