@@ -66,7 +66,7 @@ class EducationService {
 
       if (filters.featured !== undefined) {
         conditions.push(`er.is_featured = $${paramIndex++}`);
-        queryParams.push(filters.featured);
+        queryParams.push(filters.featured ? 'true' : 'false');
       }
 
       if (filters.search) {

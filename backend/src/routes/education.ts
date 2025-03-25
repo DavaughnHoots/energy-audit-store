@@ -1,8 +1,11 @@
 // backend/src/routes/education.ts
 import express from 'express';
 import { validateToken } from '../middleware/tokenValidation.js';
+import { authenticate as authenticateToken } from '../middleware/auth.js';
+import { validateRequest } from '../middleware/requestValidation.js';
 import { z } from 'zod';
 import educationService from '../services/educationService.js';
+import { ResourceType, ResourceTopic, ResourceLevel } from '../types/education.js';
 
 // Define type for authenticated request
 interface AuthenticatedRequest extends express.Request {
@@ -25,9 +28,9 @@ router.get('/resources', async (req, res) => {
     
     // Parse query parameters for filtering
     const filters = {
-      type: req.query.type as string | undefined,
-      topic: req.query.topic as string | undefined,
-      level: req.query.level as string | undefined,
+      type: req.query.type as ResourceType | undefined,
+      topic: req.query.topic as ResourceTopic | undefined,
+      level: req.query.level as ResourceLevel | undefined,
       search: req.query.search as string | undefined,
       featured: req.query.featured === 'true',
       collection_id: req.query.collection_id ? parseInt(req.query.collection_id as string) : undefined,
