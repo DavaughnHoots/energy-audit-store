@@ -59,7 +59,8 @@ export class UsageHoursValidator {
         usageHours = auditData.energyConsumption.durationHours || 0;
       }
 
-      // Check if usage hours are valid
+      // Always ensure a valid value, even if it's zero in the data
+      // Min allowed is 1 hour (reasonable minimum for any occupied home)
       if (usageHours <= 0 || usageHours > 24) {
         appLogger.warn('Invalid daily usage hours', { 
           providedValue: usageHours 

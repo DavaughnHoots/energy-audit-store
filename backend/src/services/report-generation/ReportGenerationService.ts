@@ -478,38 +478,15 @@ export class ReportGenerationService {
           })
           .moveDown(1);
 
-          // Apply validation and intelligent defaults to recommendation data
-          const validatedRec = { ...rec };
-
-          // Ensure we have valid savings data
-          if (typeof validatedRec.estimatedSavings !== 'number' || isNaN(validatedRec.estimatedSavings)) {
-            validatedRec.estimatedSavings = this.extractSavingsFromTitle(rec.title, rec.description);
-            appLogger.debug('Using extracted savings value', { title: rec.title, savings: validatedRec.estimatedSavings });
-          }
-          
-          // Ensure we have valid cost data
-          if (typeof validatedRec.estimatedCost !== 'number' || isNaN(validatedRec.estimatedCost)) {
-            validatedRec.estimatedCost = this.extractCostFromTitle(rec.title, rec.description);
-            appLogger.debug('Using extracted cost value', { title: rec.title, cost: validatedRec.estimatedCost });
-          }
-          
-          // Ensure we have valid payback period
-          if (typeof validatedRec.paybackPeriod !== 'number' || isNaN(validatedRec.paybackPeriod)) {
-            // Calculate payback as cost / savings if we have both
-            if (validatedRec.estimatedSavings > 0 && validatedRec.estimatedCost > 0) {
-              validatedRec.paybackPeriod = validatedRec.estimatedCost / validatedRec.estimatedSavings;
-            } else {
-              validatedRec.paybackPeriod = this.getDefaultPaybackPeriod(rec.title, rec.description);
-            }
-            appLogger.debug('Using calculated payback period', { title: rec.title, payback: validatedRec.paybackPeriod });
-          }
-          
-          // Create a table for the recommendation details with proper formatting
-          const recRows = [
-            ['Estimated Savings:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedSavings, 'currency', 'savings') + '/year'],
-            ['Implementation Cost:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedCost, 'currency', 'cost')],
-            ['Payback Period:', this.formatters.valueFormatter.formatValue(validatedRec.paybackPeriod, 'number', 'payback') + ' years']
-          ];
+      // Apply validation and intelligent defaults to recommendation data
+      const validatedRec = ReportValidationHelper.validateSingleRecommendation(rec);
+      
+      // Create a table for the recommendation details with proper formatting
+      const recRows = [
+        ['Estimated Savings:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedSavings, 'currency', 'savings') + '/year'],
+        ['Implementation Cost:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedCost, 'currency', 'cost')],
+        ['Payback Period:', this.formatters.valueFormatter.formatValue(validatedRec.paybackPeriod, 'number', 'payback') + ' years']
+      ];
           
           // Add actual savings if available
           if (rec.actualSavings !== null && rec.actualSavings !== undefined) {
