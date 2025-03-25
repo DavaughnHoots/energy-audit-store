@@ -20,6 +20,7 @@ import { standardLimiter, authLimiter, apiLimiter, productsLimiter, productDetai
 import { authenticate } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
+import educationRoutes from './routes/education.js';
 import energyAuditRoutes from './routes/energyAudit.js';
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
 import recommendationsRoutes from './routes/recommendations.js';
@@ -34,6 +35,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import { runEnergyConsumptionMigration } from './scripts/run_energy_consumption_migration.js';
+import { runEducationMigration } from './scripts/run_education_migration.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 // Product comparison migration removed - table already exists
@@ -72,6 +74,15 @@ if (process.env.NODE_ENV === 'production') {
     })
     .catch(error => {
       appLogger.error('Error running energy consumption migration on startup', { error });
+    });
+    
+  // Run education tables migration
+  runEducationMigration()
+    .then(result => {
+      appLogger.info('Education tables migration completed on startup', { result });
+    })
+    .catch(error => {
+      appLogger.error('Error running education tables migration on startup', { error });
     });
     
   // Run initial orphaned audit association
@@ -186,6 +197,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
+app.use('/api/education', educationRoutes);
 app.use('/api/energy-audit', energyAuditRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);

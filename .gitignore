@@ -87,6 +87,8 @@ backend/src/scripts/run_*_tests.*
 backend/src/scripts/
 !backend/src/scripts/heroku_*.js
 !backend/src/scripts/heroku_*.ts
+!backend/src/scripts/run_*_migration.js
+!backend/src/scripts/run_*_migration.ts
 
 # Migration scripts (only needed during development)
 # Keep the migrations directory but exclude specific files
