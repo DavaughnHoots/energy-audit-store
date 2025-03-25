@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 
+// Export the Dialog component as both named and default export
 interface DialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -60,3 +61,6 @@ export function DialogDescription({ children }: { children: ReactNode }) {
 export function DialogFooter({ children }: { children: ReactNode }) {
   return <div className="flex justify-end space-x-2 mt-4">{children}</div>;
 }
+
+// Export as default for import statements like: import Dialog from '@/components/ui/Dialog'
+export default Dialog;
