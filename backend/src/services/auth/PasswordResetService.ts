@@ -1,6 +1,7 @@
 // backend/src/services/auth/PasswordResetService.ts
 
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { emailService } from '../emailService.js';

@@ -1,4 +1,5 @@
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import fs from 'fs';
 import path from 'path';
 import { config } from 'dotenv';

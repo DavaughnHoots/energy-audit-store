@@ -1,4 +1,5 @@
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { appLogger } from '../config/logger.js';

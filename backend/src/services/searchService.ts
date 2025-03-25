@@ -1,6 +1,7 @@
 // backend/src/services/searchService.ts
 
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { Product } from '../types/product.js';
 
 interface SearchFilters {

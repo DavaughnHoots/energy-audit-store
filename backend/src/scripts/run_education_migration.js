@@ -1,5 +1,6 @@
 // backend/src/scripts/run_education_migration.js
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

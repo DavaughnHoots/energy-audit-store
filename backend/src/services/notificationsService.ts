@@ -1,6 +1,7 @@
 // backend/src/services/notificationService.ts
 
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { emailService } from './emailService.js';
 
 interface NotificationPreferences {

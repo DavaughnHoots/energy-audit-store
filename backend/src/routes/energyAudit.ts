@@ -7,7 +7,8 @@ import { reportGenerationService } from '../services/ReportGenerationService.js'
 import { EnergyAuditService } from '../services/EnergyAuditService.js';
 import { productRecommendationService } from '../services/productRecommendationService.js';
 import { cache } from '../config/cache.js';
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { EnergyAuditData } from '../types/energyAudit.js';
 import { AuthenticatedRequest } from '../types/auth.js';
 
