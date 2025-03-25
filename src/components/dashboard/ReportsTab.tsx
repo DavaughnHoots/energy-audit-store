@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
-import { Download, Loader2, AlertCircle } from 'lucide-react';
+import { Download, Loader2, AlertCircle, BarChart2 } from 'lucide-react';
 
 interface ReportsTabProps {
   auditId: string | null;
 }
 
 const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
+  const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<React.ReactNode | null>(null);
 
@@ -115,27 +117,42 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
               </ul>
             </div>
             
-            <button
-              onClick={handleDownloadReport}
-              disabled={isGenerating || !auditId}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
-                !auditId 
-                  ? 'bg-gray-300 cursor-not-allowed' 
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Generating Report...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="h-5 w-5" />
-                  <span>Download Latest Report</span>
-                </>
-              )}
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleDownloadReport}
+                disabled={isGenerating || !auditId}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
+                  !auditId 
+                    ? 'bg-gray-300 cursor-not-allowed' 
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Generating Report...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-5 w-5" />
+                    <span>Download PDF Report</span>
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => auditId && navigate(`/reports/${auditId}`)}
+                disabled={!auditId}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
+                  !auditId 
+                    ? 'bg-gray-300 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                <BarChart2 className="h-5 w-5" />
+                <span>View Interactive Report</span>
+              </button>
+            </div>
             
             {!auditId && (
               <p className="text-sm text-gray-500 mt-2">
