@@ -1,0 +1,714 @@
+# Interactive Report Preview Implementation Code Samples
+
+This document provides code snippets that can be used as references when implementing the interactive report preview feature.
+
+## Backend Implementation
+
+### 1. API Endpoint Addition (src/config/api.ts)
+
+```typescript
+// Add to API_ENDPOINTS in src/config/api.ts
+export const API_ENDPOINTS = {
+  // ... existing endpoints
+  ENERGY_AUDIT: '/api/energy-audit',
+  REPORT_DATA: (auditId: string) => `/api/energy-audit/${auditId}/report-data`,
+  // ... other endpoints
+};
+```
+
+### 2. Backend Controller Implementation (backend/src/routes/energyAudit.ts)
+
+```typescript
+// In backend/src/routes/energyAudit.ts
+router.get('/:auditId/report-data', authenticateJWT, async (req, res) => {
+  try {
+    const { auditId } = req.params;
+    const userId = req.user.id;
+    
+    // Get the audit data from the database
+    const auditData = await EnergyAuditModel.findOne({
+      where: { id: auditId, userId }
+    });
+    
+    if (!auditData) {
+      return res.status(404).json({ error: 'Audit not found' });
+    }
+    
+    // Get recommendations
+    const recommendations = await RecommendationModel.findAll({
+      where: { auditId }
+    });
+    
+    // Use our existing report generation service
+    const reportGenerationService = new ReportGenerationService(
+      formatters, calculators, chartGenerators
+    );
+    
+    // Generate the report data without creating a PDF
+    const reportData = await reportGenerationService.prepareReportData(
+      auditData, 
+      recommendations
+    );
+    
+    return res.json(reportData);
+  } catch (error) {
+    console.error('Error generating report data:', error);
+    return res.status(500).json({ error: 'Failed to generate report data' });
+  }
+});
+```
+
+### 3. ReportGenerationService Enhancement (backend/src/services/report-generation/ReportGenerationService.ts)
+
+```typescript
+/**
+ * Prepares report data for frontend rendering without generating PDF
+ */
+async prepareReportData(
+  auditData: EnergyAuditData,
+  recommendations: AuditRecommendation[]
+): Promise<ReportData> {
+  // Validate and normalize recommendations
+  const validatedRecommendations = ReportValidationHelper.validateRecommendations(recommendations);
+  
+  // Calculate key metrics (reuse existing calculations)
+  const totalEnergy = this.calculators.energyCalculator.calculateTotalEnergy(auditData);
+  const efficiencyScore = this.calculateEfficiencyScore(auditData);
+  const energyEfficiency = this.calculators.energyCalculator.calculateEnergyEfficiency(auditData);
+  const potentialSavings = this.calculators.savingsCalculator.calculatePotentialSavings(validatedRecommendations);
+  
+  // Calculate summary metrics with our new SummaryCalculator
+  const totalEstimatedSavings = this.calculators.summaryCalculator.calculateTotalEstimatedSavings(validatedRecommendations);
+  const totalActualSavings = this.calculators.summaryCalculator.calculateTotalActualSavings(validatedRecommendations);
+  const implementedCount = this.calculators.summaryCalculator.countImplementedRecommendations(validatedRecommendations);
+  const savingsAccuracy = this.calculators.summaryCalculator.calculateSavingsAccuracy(totalEstimatedSavings, totalActualSavings);
+  
+  // Get chart data without generating images
+  const energyBreakdownData = this.prepareEnergyBreakdownData(auditData);
+  const savingsAnalysisData = this.prepareSavingsAnalysisData(validatedRecommendations);
+  const consumptionData = this.prepareConsumptionData(auditData);
+  
+  // Return structured data for frontend rendering
+  return {
+    metadata: {
+      reportId: `EAT-${Date.now()}`,
+      reportDate: new Date().toISOString(),
+      analysisType: 'comprehensive',
+      version: '1.0'
+    },
+    executiveSummary: {
+      totalEnergy,
+      efficiencyScore,
+      energyEfficiency,
+      potentialSavings
+    },
+    propertyInfo: {
+      address: auditData.basicInfo.address,
+      propertyType: auditData.basicInfo.propertyType,
+      yearBuilt: auditData.basicInfo.yearBuilt,
+      squareFootage: auditData.homeDetails.squareFootage
+    },
+    currentConditions: {
+      // ... current conditions data
+    },
+    energyConsumption: {
+      // ... energy consumption data
+    },
+    lighting: {
+      // ... lighting data
+    },
+    recommendations: validatedRecommendations,
+    charts: {
+      energyBreakdown: energyBreakdownData,
+      savingsAnalysis: savingsAnalysisData,
+      consumption: consumptionData
+    },
+    summary: {
+      totalEstimatedSavings,
+      totalActualSavings,
+      implementedCount,
+      savingsAccuracy
+    }
+  };
+}
+
+/**
+ * Prepare energy breakdown chart data
+ */
+private prepareEnergyBreakdownData(auditData: EnergyAuditData): any[] {
+  // Extract data for energy breakdown chart
+  const electricityUsage = auditData.energyConsumption?.electricityUsage || 0;
+  const gasUsage = auditData.energyConsumption?.gasUsage || 0;
+  
+  return [
+    { name: 'Electricity', value: electricityUsage },
+    { name: 'Natural Gas', value: gasUsage }
+  ];
+}
+
+/**
+ * Prepare savings analysis chart data
+ */
+private prepareSavingsAnalysisData(recommendations: AuditRecommendation[]): any[] {
+  // Map recommendations to chart format
+  return recommendations.map(rec => ({
+    name: rec.type.split(' ').slice(0, 2).join(' '), // Shorten name for display
+    estimatedSavings: rec.estimatedSavings || 0,
+    actualSavings: rec.actualSavings || 0
+  }));
+}
+
+/**
+ * Prepare consumption chart data
+ */
+private prepareConsumptionData(auditData: EnergyAuditData): any[] {
+  // Get factors
+  const baseFactor = 1;
+  const seasonalFactor = auditData.energyConsumption?.seasonalFactor || 0.9;
+  const occupancyFactor = auditData.energyConsumption?.occupancyFactor || 0.8;
+  const efficiencyFactor = auditData.energyConsumption?.powerFactor || 0.7;
+  
+  // Base consumption (estimated)
+  const baseConsumption = this.calculators.energyCalculator.getBaselineConsumption(
+    auditData.basicInfo.propertyType,
+    auditData.homeDetails.squareFootage
+  );
+  
+  return [
+    { name: 'Base', value: baseConsumption },
+    { name: 'Seasonal', value: baseConsumption * seasonalFactor },
+    { name: 'Occupied', value: baseConsumption * seasonalFactor * occupancyFactor },
+    { name: 'Real', value: baseConsumption * seasonalFactor * occupancyFactor * efficiencyFactor }
+  ];
+}
+```
+
+## Frontend Implementation
+
+### 1. ReportData Type Definition (src/types/report.ts)
+
+```typescript
+// src/types/report.ts
+import { AuditRecommendation } from './energyAudit';
+
+export interface ReportData {
+  metadata: {
+    reportId: string;
+    reportDate: string;
+    analysisType: string;
+    version: string;
+  };
+  executiveSummary: {
+    totalEnergy: number;
+    efficiencyScore: number;
+    energyEfficiency: number;
+    potentialSavings: number;
+  };
+  propertyInfo: {
+    address: string;
+    propertyType: string;
+    yearBuilt: string;
+    squareFootage: number;
+  };
+  currentConditions: {
+    insulation: string;
+    windows: string;
+    hvacSystemAge: number;
+  };
+  energyConsumption: {
+    electricityUsage: number;
+    gasUsage: number;
+    usageHours: number;
+    powerFactor: number;
+    seasonalFactor: number;
+    occupancyFactor: number;
+  };
+  lighting: {
+    bulbTypes: {
+      led: number;
+      cfl: number;
+      incandescent: number;
+    };
+    naturalLight: string;
+    controls: string;
+  };
+  recommendations: AuditRecommendation[];
+  charts: {
+    energyBreakdown: any[];
+    savingsAnalysis: any[];
+    consumption: any[];
+  };
+  summary: {
+    totalEstimatedSavings: number;
+    totalActualSavings: number;
+    implementedCount: number;
+    savingsAccuracy: number | null;
+  };
+}
+```
+
+### 2. Report Service (src/services/reportService.ts)
+
+```typescript
+// src/services/reportService.ts
+import { API_ENDPOINTS, API_BASE_URL } from '@/config/api';
+import { ReportData } from '@/types/report';
+
+export const fetchReportData = async (auditId: string): Promise<ReportData> => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}${API_ENDPOINTS.REPORT_DATA(auditId)}`, 
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch report data');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching report data:', error);
+    throw error;
+  }
+};
+
+export const updateRecommendationStatus = async (
+  recommendationId: string,
+  status: string,
+  actualSavings?: number
+): Promise<void> => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}${API_ENDPOINTS.RECOMMENDATIONS.UPDATE_STATUS(recommendationId)}`,
+      {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status,
+          actualSavings
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to update recommendation status');
+    }
+
+    return;
+  } catch (error) {
+    console.error('Error updating recommendation status:', error);
+    throw error;
+  }
+};
+```
+
+### 3. Enhanced ReportsTab Component (src/components/dashboard/ReportsTab.tsx)
+
+```tsx
+import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '@/config/api';
+import { Download, Loader2, AlertCircle, ChevronRight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ReportData } from '@/types/report';
+import { fetchReportData } from '@/services/reportService';
+import ReportExecutiveSummary from '@/components/reports/ReportExecutiveSummary';
+import ReportPropertyInfo from '@/components/reports/ReportPropertyInfo';
+import ReportEnergyConsumption from '@/components/reports/ReportEnergyConsumption';
+import ReportRecommendations from '@/components/reports/ReportRecommendations';
+import ReportCharts from '@/components/reports/ReportCharts';
+import ReportSummary from '@/components/reports/ReportSummary';
+
+interface ReportsTabProps {
+  auditId: string | null;
+}
+
+const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
+  const [activeTab, setActiveTab] = useState('list');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
+
+  // Fetch report data when tab changes to preview
+  useEffect(() => {
+    if (activeTab === 'preview' && auditId && !reportData) {
+      loadReportData();
+    }
+  }, [activeTab, auditId]);
+
+  const loadReportData = async () => {
+    if (!auditId) {
+      setError(
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No Audit Available</h2>
+          <p className="text-gray-600 mb-4">
+            There is no audit available to generate a report. Please complete an energy audit first.
+          </p>
+          <button
+            onClick={() => window.location.href = '/energy-audit'}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          >
+            Start New Audit
+          </button>
+        </div>
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const data = await fetchReportData(auditId);
+      setReportData(data);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading report data:', err);
+      setError(
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Report Data Error</h2>
+          <p className="text-gray-600 mb-4">
+            We encountered an error loading the report data. Please try again.
+          </p>
+          <button
+            onClick={loadReportData}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    // Existing download code
+  };
+
+  const handleRecommendationUpdate = async () => {
+    // After updating, refresh report data
+    loadReportData();
+  };
+
+  return (
+    <div className="space-y-6">
+      {error ? (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          {error}
+        </div>
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="list">Reports List</TabsTrigger>
+            <TabsTrigger value="preview">Report Preview</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="list">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Energy Audit Reports</h2>
+              
+              {/* Existing report download UI */}
+              <div className="mb-6">
+                <p className="text-gray-600 mb-4">
+                  Generate and download comprehensive reports based on your energy audits. These reports include detailed analysis, 
+                  recommendations, and potential savings information.
+                </p>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800 mb-6">
+                  <h3 className="font-medium mb-2">Report Contents</h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Executive summary of energy usage</li>
+                    <li>Detailed analysis of current conditions</li>
+                    <li>Prioritized improvement recommendations</li>
+                    <li>Estimated cost savings and ROI calculations</li>
+                    <li>Product recommendations with efficiency ratings</li>
+                    <li>Implementation timeline suggestions</li>
+                  </ul>
+                </div>
+                
+                <button
+                  onClick={handleDownloadReport}
+                  disabled={isGenerating || !auditId}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
+                    !auditId 
+                      ? 'bg-gray-300 cursor-not-allowed' 
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>Generating Report...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-5 w-5" />
+                      <span>Download Latest Report</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-md font-medium mb-3">Previous Reports</h3>
+                <p className="text-gray-500 italic">
+                  Report history will be available in a future update.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="preview">
+            {isLoading ? (
+              <div className="flex items-center justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+                <span className="ml-3 text-gray-600">Loading report data...</span>
+              </div>
+            ) : reportData ? (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900">Energy Audit Report</h1>
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={loadReportData}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      <span>Refresh</span>
+                    </button>
+                    <button
+                      onClick={handleDownloadReport}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    >
+                      <Download className="h-5 w-5" />
+                      <span>Download PDF</span>
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="space-y-8">
+                  {/* Report Sections */}
+                  <ReportExecutiveSummary data={reportData.executiveSummary} />
+                  <ReportPropertyInfo data={reportData.propertyInfo} />
+                  <ReportEnergyConsumption data={reportData.energyConsumption} />
+                  <ReportCharts chartData={reportData.charts} />
+                  <ReportRecommendations 
+                    recommendations={reportData.recommendations} 
+                    onUpdate={handleRecommendationUpdate}
+                  />
+                  <ReportSummary summary={reportData.summary} />
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+                <p className="text-gray-600">
+                  {auditId ? 'Click "Load Preview" to view the report.' : 'No audit available for preview.'}
+                </p>
+                {auditId && (
+                  <button
+                    onClick={loadReportData}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Load Preview
+                  </button>
+                )}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
+    </div>
+  );
+};
+
+export default ReportsTab;
+```
+
+### 4. Report Section Component Example (src/components/reports/ReportExecutiveSummary.tsx)
+
+```tsx
+import React from 'react';
+
+interface ExecutiveSummaryProps {
+  data: {
+    totalEnergy: number;
+    efficiencyScore: number;
+    energyEfficiency: number;
+    potentialSavings: number;
+  };
+}
+
+const ReportExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ data }) => {
+  // Determine efficiency rating text
+  let efficiencyRating = 'Average';
+  if (data.efficiencyScore >= 80) efficiencyRating = 'Excellent';
+  else if (data.efficiencyScore >= 70) efficiencyRating = 'Good';
+  else if (data.efficiencyScore < 60) efficiencyRating = 'Poor';
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-xl font-semibold mb-4 text-gray-900">Executive Summary</h2>
+      <div className="overflow-hidden bg-white shadow sm:rounded-lg">
+        <div className="border-t border-gray-200">
+          <dl>
+            <div className="bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Total Energy Consumption</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                {data.totalEnergy.toLocaleString()} kWh
+              </dd>
+            </div>
+            <div className="bg-white px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Overall Efficiency Score</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                {data.efficiencyScore} ({efficiencyRating})
+              </dd>
+            </div>
+            <div className="bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Energy Efficiency</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                {data.energyEfficiency.toFixed(1)}%
+              </dd>
+            </div>
+            <div className="bg-white px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Potential Annual Savings</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                ${data.potentialSavings.toLocaleString()}/year
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default ReportExecutiveSummary;
+```
+
+### 5. Charts Component with Recharts (src/components/reports/ReportCharts.tsx)
+
+```tsx
+import React from 'react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
+} from 'recharts';
+
+interface ChartDataProps {
+  chartData: {
+    energyBreakdown: any[];
+    savingsAnalysis: any[];
+    consumption: any[];
+  };
+}
+
+const ReportCharts: React.FC<ChartDataProps> = ({ chartData }) => {
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-xl font-semibold mb-4 text-gray-900">Report Analytics</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Energy Breakdown Chart */}
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="text-lg font-medium mb-4">Energy Breakdown</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData.energyBreakdown}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {chartData.energyBreakdown.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        
+        {/* Savings Analysis Chart */}
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="text-lg font-medium mb-4">Savings Analysis</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData.savingsAnalysis}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="estimatedSavings" name="Estimated Savings" fill="#8884d8" />
+                <Bar dataKey="actualSavings" name="Actual Savings" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        
+        {/* Energy Consumption Chart */}
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="text-lg font-medium mb-4">Energy Consumption</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData.consumption}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" name="Energy (kWh)" fill="#0088FE" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default ReportCharts;
+```
+
+## Installation and Configuration
+
+### Package.json Dependencies
+
+```json
+"dependencies": {
+  // ... existing dependencies
+  "recharts": "^2.9.0"
+}
+```
+
+### Running the Implementation
+
+1. Install required dependencies:
+```bash
+npm install recharts
+```
+
+2. Compile and run:
+```bash
+npm run build
+npm run dev
