@@ -1,6 +1,9 @@
 // backend/src/utils/db.ts
-import { Pool } from 'pg';
+import pkg from 'pg';
 import { dbConfig } from '../config/database.js';
+
+// Extract Pool from pg package (CommonJS compatibility)
+const { Pool } = pkg;
 
 // Create a connection pool using the configuration from database.ts
 const pool = new Pool(dbConfig);
