@@ -53,6 +53,13 @@ export interface IHvacCalculator {
   calculateHvacEfficiencyGap(auditData: EnergyAuditData): number;
 }
 
+export interface ISummaryCalculator {
+  calculateTotalEstimatedSavings(recommendations: AuditRecommendation[]): number;
+  calculateTotalActualSavings(recommendations: AuditRecommendation[]): number;
+  calculateSavingsAccuracy(totalEstimatedSavings: number, totalActualSavings: number): number | null;
+  countImplementedRecommendations(recommendations: AuditRecommendation[]): number;
+}
+
 // Chart generator interfaces
 export interface IChartGenerator {
   generate(data: any, width: number, height: number): Promise<Buffer>;
@@ -87,6 +94,7 @@ export interface ICalculators {
   savingsCalculator: ISavingsCalculator;
   bulbCalculator: IBulbCalculator;
   hvacCalculator: IHvacCalculator;
+  summaryCalculator: ISummaryCalculator;
 }
 
 export interface IChartGenerators {

@@ -598,6 +598,45 @@ export class ReportGenerationService {
           .moveDown();
       }
 
+      // Summary Section
+      try {
+        appLogger.debug('Adding recommendation summary section');
+        doc
+          .addPage()
+          .fontSize(16)
+          .text('Summary', { align: 'left' })
+          .moveDown();
+
+        // Calculate summary metrics using the SummaryCalculator
+        const totalEstimatedSavings = this.calculators.summaryCalculator.calculateTotalEstimatedSavings(validatedRecommendations);
+        const totalActualSavings = this.calculators.summaryCalculator.calculateTotalActualSavings(validatedRecommendations);
+        const implementedCount = this.calculators.summaryCalculator.countImplementedRecommendations(validatedRecommendations);
+        const savingsAccuracy = this.calculators.summaryCalculator.calculateSavingsAccuracy(totalEstimatedSavings, totalActualSavings);
+
+        // Create summary table rows
+        const summaryRows = [
+          ['Total Estimated Annual Savings:', this.formatters.valueFormatter.formatValue(totalEstimatedSavings, 'currency', 'savings') + '/year'],
+          ['Total Actual Annual Savings:', this.formatters.valueFormatter.formatValue(totalActualSavings, 'currency', 'savings') + '/year'],
+          ['Number of Implemented Recommendations:', String(implementedCount)]
+        ];
+
+        // Add accuracy if available
+        if (savingsAccuracy !== null) {
+          summaryRows.push(['Recommendation Accuracy:', this.formatters.valueFormatter.formatValue(savingsAccuracy, 'percentage', 'accuracy')]);
+        } else {
+          summaryRows.push(['Recommendation Accuracy:', 'N/A']);
+        }
+
+        // Generate the summary table
+        this.formatters.tableFormatter.generateTable(doc, [], summaryRows);
+        doc.moveDown(2);
+        
+        appLogger.debug('Summary section added successfully');
+      } catch (error) {
+        appLogger.error('Error adding summary section', { error });
+        // Continue without the summary section
+      }
+
       // Footer
       try {
         appLogger.debug('Adding footer');
