@@ -1,6 +1,7 @@
 import { IEnergyCalculator } from '../types/index.js';
 import { EnergyAuditData } from '../../../types/energyAudit.js';
 import { appLogger } from '../../../utils/logger.js';
+import { UsageHoursValidator } from '../../../utils/usageHoursValidator.js';
 
 // Constants for energy calculations
 const THERM_TO_KWH = 29.3;  // 1 therm = 29.3 kWh
@@ -112,6 +113,13 @@ export class EnergyCalculator implements IEnergyCalculator {
         auditData.basicInfo?.propertyType || 'single-family',
         auditData.homeDetails?.squareFootage || 2000
       );
+      
+      // Ensure we have valid usage hours
+      if (auditData.energyConsumption && (!auditData.energyConsumption.durationHours || auditData.energyConsumption.durationHours <= 0)) {
+        auditData.energyConsumption.durationHours = UsageHoursValidator.validateDailyUsageHours(auditData);
+        appLogger.debug('Added validated usage hours', { hours: auditData.energyConsumption.durationHours });
+      }
+      
       const actualConsumption = this.calculateTotalEnergy(auditData);
       
       if (baselineConsumption <= 0 || actualConsumption <= 0) {

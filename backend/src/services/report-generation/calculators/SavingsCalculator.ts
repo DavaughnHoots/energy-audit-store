@@ -10,6 +10,26 @@ export class SavingsCalculator implements ISavingsCalculator {
    */
   calculatePotentialSavings(recommendations: AuditRecommendation[]): number {
     try {
+      // First, check if we have a valid recommendations array
+      if (!recommendations || !Array.isArray(recommendations) || recommendations.length === 0) {
+        appLogger.warn('No recommendations provided for savings calculation');
+        return 0; // No recommendations means no savings
+      }
+      
+      // Check which recommendations have valid savings
+      const hasValidSavings = recommendations.some(rec => 
+        typeof rec.estimatedSavings === 'number' && 
+        !isNaN(rec.estimatedSavings) && 
+        rec.estimatedSavings > 0
+      );
+      
+      // If we don't have valid savings in any recommendations, generate estimates
+      if (!hasValidSavings) {
+        appLogger.debug('No valid savings data found, generating estimates');
+        return this.generateDefaultSavingsEstimate(recommendations);
+      }
+      
+      // Calculate total from valid savings values
       const totalSavings = recommendations.reduce((sum, rec) => {
         // Ensure estimatedSavings is a valid number
         const savings = typeof rec.estimatedSavings === 'number' && !isNaN(rec.estimatedSavings) 
@@ -18,11 +38,8 @@ export class SavingsCalculator implements ISavingsCalculator {
         return sum + savings;
       }, 0);
       
-      // If we have recommendations but zero savings, provide an estimate
-      if (totalSavings === 0 && recommendations.length > 0) {
-        return this.generateDefaultSavingsEstimate(recommendations);
-      }
-      
+      // Log and return the result
+      appLogger.debug('Calculated total potential savings', { totalSavings });
       return totalSavings;
     } catch (error) {
       appLogger.error('Error calculating potential savings', { 
