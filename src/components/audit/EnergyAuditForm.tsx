@@ -12,7 +12,7 @@ import EnergyUseForm from './forms/EnergyUseForm';
 import LightingForm from './forms/LightingForm';
 import ProductPreferencesForm from './forms/ProductPreferencesForm';
 import AuditSubmissionModal from './AuditSubmissionModal';
-import Dialog from '@/components/ui/Dialog';
+import { Dialog } from '@/components/ui/Dialog';
 import { getStoredAuditData, storeAuditData, clearStoredAuditData } from '@/utils/auditStorage';
 import { fetchUserProfileData, updateUserProfileFromAudit } from '@/services/userProfileService';
 import { 
