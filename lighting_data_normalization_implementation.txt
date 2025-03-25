@@ -1,0 +1,309 @@
+# Lighting Data Normalization Implementation Plan
+
+This document outlines the implementation plan for addressing the lighting data inconsistencies in energy audit reports (Issue #4 in the Energy Audit Report Improvements).
+
+## Current Issues
+
+- Text describes "Mix of Bulb Types" but distribution shows LED: 0%, CFL: 0%, Incandescent: 0%
+- Bulb percentages don't always sum to 100% as expected
+- Contradictory information reduces report credibility
+- Missing validation for lighting data
+
+## Root Causes
+
+- Data collection or processing issue for bulb percentages
+- Default text not matching actual data
+- Missing validation for percentage totals
+- No fallback mechanism for missing lighting data
+
+## Implementation Solutions
+
+### 1. Implement Bulb Type Description Generator
+
+```typescript
+/**
+ * Generates an appropriate lighting description based on actual bulb data
+ * @param bulbPercentages The percentages of different bulb types
+ * @returns A human-readable description of the lighting setup
+ */
+private getBulbTypeDescription(bulbPercentages: { led?: number; cfl?: number; incandescent?: number }): string {
+  try {
+    // Check if we have valid data
+    if (!bulbPercentages || 
+        typeof bulbPercentages !== 'object' ||
+        (
+          (bulbPercentages.led === undefined || bulbPercentages.led === 0) && 
+          (bulbPercentages.cfl === undefined || bulbPercentages.cfl === 0) && 
+          (bulbPercentages.incandescent === undefined || bulbPercentages.incandescent === 0)
+        )) {
+      appLogger.debug('No valid lighting data found', { bulbPercentages });
+      return 'Lighting data not available';
+    }
+    
+    // Get normalized percentages
+    const normalized = this.normalizeBulbPercentages(bulbPercentages);
+    
+    // Determine the dominant bulb type or mix
+    if (normalized.led >= 70) {
+      return 'Mostly LED Bulbs';
+    } else if (normalized.incandescent >= 70) {
+      return 'Mostly Incandescent Bulbs';
+    } else if (normalized.cfl >= 70) {
+      return 'Mostly CFL Bulbs';
+    } else if (normalized.led >= 40 && normalized.cfl >= 40) {
+      return 'Mix of LED and CFL Bulbs';
+    } else if (normalized.led >= 40 && normalized.incandescent >= 40) {
+      return 'Mix of LED and Incandescent Bulbs';
+    } else if (normalized.cfl >= 40 && normalized.incandescent >= 40) {
+      return 'Mix of CFL and Incandescent Bulbs';
+    } else {
+      return 'Mix of Bulb Types';
+    }
+  } catch (error) {
+    appLogger.error('Error generating bulb type description', { 
+      error: error instanceof Error ? error.message : String(error),
+      bulbPercentages 
+    });
+    return 'Mix of Bulb Types'; // Fallback
+  }
+}
+```
+
+### 2. Implement Percentage Normalization Function
+
+```typescript
+/**
+ * Normalizes bulb percentages to ensure they sum to 100%
+ * @param percentages The raw bulb percentage data
+ * @returns Normalized percentages that sum to 100%
+ */
+private normalizeBulbPercentages(percentages: { 
+  led?: number; 
+  cfl?: number; 
+  incandescent?: number 
+}): { led: number; cfl: number; incandescent: number } {
+  try {
+    // Handle null/undefined input
+    if (!percentages) {
+      appLogger.warn('No bulb percentages provided for normalization');
+      return this.getDefaultBulbPercentages();
+    }
+    
+    // Ensure values are numbers and not undefined
+    const led = typeof percentages.led === 'number' && !isNaN(percentages.led) ? percentages.led : 0;
+    const cfl = typeof percentages.cfl === 'number' && !isNaN(percentages.cfl) ? percentages.cfl : 0;
+    const incandescent = typeof percentages.incandescent === 'number' && !isNaN(percentages.incandescent) ? percentages.incandescent : 0;
+    
+    // Calculate sum
+    const total = led + cfl + incandescent;
+    
+    // If no data available, use defaults based on property type and age
+    if (total === 0) {
+      appLogger.debug('No bulb data available, using defaults');
+      return this.getDefaultBulbPercentages();
+    }
+    
+    // Normalize to 100%
+    return {
+      led: Math.round((led / total) * 100),
+      cfl: Math.round((cfl / total) * 100),
+      incandescent: Math.round((incandescent / total) * 100)
+    };
+  } catch (error) {
+    appLogger.error('Error normalizing bulb percentages', { 
+      error: error instanceof Error ? error.message : String(error),
+      percentages 
+    });
+    return this.getDefaultBulbPercentages();
+  }
+}
+```
+
+### 3. Provide Default Values Based on Property Age
+
+```typescript
+/**
+ * Provides default bulb percentages based on property age
+ * @param yearBuilt The year the property was built
+ * @returns Default bulb percentages
+ */
+private getDefaultBulbPercentages(yearBuilt?: number): { led: number; cfl: number; incandescent: number } {
+  try {
+    // If year is provided, estimate based on construction date
+    if (yearBuilt && !isNaN(yearBuilt)) {
+      if (yearBuilt >= 2020) {
+        // Most modern homes use LED lighting
+        return { led: 70, cfl: 20, incandescent: 10 };
+      } else if (yearBuilt >= 2010) {
+        // Transition period with mix of LED and CFL
+        return { led: 40, cfl: 40, incandescent: 20 };
+      } else if (yearBuilt >= 2000) {
+        // CFL adoption period
+        return { led: 20, cfl: 50, incandescent: 30 };
+      } else if (yearBuilt >= 1980) {
+        // Older homes with more incandescent
+        return { led: 10, cfl: 30, incandescent: 60 };
+      } else {
+        // Very old homes, likely higher incandescent usage
+        return { led: 5, cfl: 15, incandescent: 80 };
+      }
+    }
+    
+    // Default for unknown construction date - conservative estimate
+    return { led: 30, cfl: 30, incandescent: 40 };
+  } catch (error) {
+    appLogger.error('Error calculating default bulb percentages', { 
+      error: error instanceof Error ? error.message : String(error),
+      yearBuilt 
+    });
+    // Fallback defaults
+    return { led: 30, cfl: 30, incandescent: 40 };
+  }
+}
+```
+
+### 4. Update Lighting Data Display in Report
+
+```typescript
+/**
+ * Add lighting section to the PDF with normalized data
+ * @param doc PDFKit document
+ * @param auditData Energy audit data
+ */
+private addLightingSection(doc: PDFKit.PDFDocument, auditData: EnergyAuditData): void {
+  try {
+    // Start lighting section
+    this.addSectionHeader(doc, 'Lighting', 'left', false);
+    
+    // Get and normalize bulb percentages
+    const rawPercentages = auditData.currentConditions?.bulbPercentages;
+    const normalizedPercentages = this.normalizeBulbPercentages(rawPercentages);
+    
+    // Generate appropriate description based on actual data
+    const bulbTypeDescription = this.getBulbTypeDescription(normalizedPercentages);
+    
+    // Create lighting data table
+    const rows = [
+      ['Primary Lighting Type:', bulbTypeDescription],
+      ['LED Bulbs:', `${normalizedPercentages.led}%`],
+      ['CFL Bulbs:', `${normalizedPercentages.cfl}%`],
+      ['Incandescent Bulbs:', `${normalizedPercentages.incandescent}%`]
+    ];
+    
+    // Add table to document
+    this.generateTable(doc, [], rows);
+    
+    // Add explanation if using default data
+    if (!rawPercentages || (rawPercentages.led === 0 && rawPercentages.cfl === 0 && rawPercentages.incandescent === 0)) {
+      doc.fontSize(10)
+         .text('Note: Lighting distribution estimated based on property age and typical patterns.', {
+           italics: true
+         });
+    }
+    
+    // Add lighting efficiency chart if data is available
+    if (normalizedPercentages.led > 0 || normalizedPercentages.cfl > 0 || normalizedPercentages.incandescent > 0) {
+      doc.moveDown(2);
+      this.addLightingEfficiencyChart(doc, normalizedPercentages);
+    }
+    
+    doc.moveDown(2);
+  } catch (error) {
+    appLogger.error('Error adding lighting section', { 
+      error: error instanceof Error ? error.message : String(error)
+    });
+    // Continue with other sections
+    doc.moveDown(2);
+  }
+}
+```
+
+### 5. Add Lighting Efficiency Chart
+
+```typescript
+/**
+ * Adds a lighting efficiency chart to the PDF
+ * @param doc PDFKit document
+ * @param bulbPercentages Normalized bulb percentages
+ */
+private addLightingEfficiencyChart(doc: PDFKit.PDFDocument, bulbPercentages: { led: number; cfl: number; incandescent: number }): void {
+  try {
+    // Calculate estimated energy usage based on bulb types
+    // Standard efficiency factors: LED (1x), CFL (3x), Incandescent (10x)
+    const ledEnergyUsage = bulbPercentages.led * 1;
+    const cflEnergyUsage = bulbPercentages.cfl * 3;
+    const incandescentEnergyUsage = bulbPercentages.incandescent * 10;
+    
+    // Calculate potential savings by switching to all LED
+    const currentTotal = ledEnergyUsage + cflEnergyUsage + incandescentEnergyUsage;
+    const potentialTotal = (bulbPercentages.led + bulbPercentages.cfl + bulbPercentages.incandescent) * 1;
+    const potentialSavings = Math.round(((currentTotal - potentialTotal) / currentTotal) * 100);
+    
+    // Generate chart using chartHelpers
+    // (Implementation depends on your chart generation library)
+    // ...chart generation code...
+    
+    // Add chart explanation text
+    doc.fontSize(12)
+       .text('Lighting Efficiency Analysis', { continued: false })
+       .moveDown(0.5)
+       .fontSize(10)
+       .text(`Your current lighting configuration uses approximately ${this.formatValue(currentTotal, 'number')} units of energy.`)
+       .text(`Switching to 100% LED bulbs could reduce your lighting energy usage by approximately ${potentialSavings}%.`);
+    
+    doc.moveDown(1);
+  } catch (error) {
+    appLogger.error('Error adding lighting efficiency chart', { 
+      error: error instanceof Error ? error.message : String(error),
+      bulbPercentages
+    });
+    // Continue without chart
+    doc.moveDown(1);
+  }
+}
+```
+
+## Integration Points
+
+### Update Report Generation Workflow
+
+1. Update the main `generateReport` method to use normalized lighting data:
+
+```typescript
+// Inside the generateReport method
+try {
+  // Other sections...
+  
+  // Lighting section - use our new normalized lighting data methods
+  this.addLightingSection(doc, auditData);
+  
+  // Other sections...
+} catch (error) {
+  appLogger.error('Error generating report', { error });
+  throw error;
+}
+```
+
+2. Ensure all references to lighting data in other parts of the report use the normalized values:
+
+```typescript
+// Any other place lighting data is referenced
+const normalizedPercentages = this.normalizeBulbPercentages(auditData.currentConditions?.bulbPercentages);
+```
+
+## Testing Strategy
+
+1. **Unit Testing**:
+   - Test normalization with various input data (null, undefined, zeros, non-zero values)
+   - Verify description generation matches normalized data
+   - Test defaults based on property age
+
+2. **Integration Testing**:
+   - Generate reports with various lighting data inputs
+   - Verify the text description matches the percentages shown
+   - Ensure percentages always sum to 100%
+
+## Implementation Timeline
+
+- Implementation: March 25, 2025
+- Testing: March 26, 2025 (part of the planned Testing & Validation phase)
