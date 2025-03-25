@@ -152,9 +152,19 @@ export function calculateOverallEfficiencyScore(results: any): EfficiencyScores 
     }
     
     // Normalize the total score based on applicable weights
-    const finalScore = Math.min(100, Math.max(0, (totalScore / applicableWeight)));
+    let weightedScore = totalScore / applicableWeight;
     
-    appLogger.debug(`Final score calculation: ${totalScore} / ${applicableWeight} = ${finalScore}`);
+    // Apply property age adjustment if building age is available
+    if (results.energy && results.energy.buildingAge) {
+      const ageAdjustment = getPropertyAgeAdjustment(results.energy.buildingAge);
+      weightedScore = weightedScore * ageAdjustment;
+      appLogger.debug(`Applied property age adjustment: ${ageAdjustment}, adjusted score: ${weightedScore}`);
+    }
+    
+    // Ensure score is within reasonable range (60-95%)
+    const finalScore = Math.min(95, Math.max(60, weightedScore));
+    
+    appLogger.debug(`Final score calculation: ${totalScore} / ${applicableWeight} = ${weightedScore}, clamped: ${finalScore}`);
     
     // Get interpretation of the score
     const interpretation = interpretEfficiencyScore(finalScore);
@@ -162,14 +172,14 @@ export function calculateOverallEfficiencyScore(results: any): EfficiencyScores 
     appLogger.info(`Overall efficiency score: ${finalScore} (${interpretation})`);
     
     // Return complete efficiency scores object
-    return {
+    return validateEfficiencyMetrics({
       energyScore: scores.energyScore,
       hvacScore: scores.hvacScore,
       lightingScore: scores.lightingScore,
       humidityScore: scores.humidityScore,
       overallScore: finalScore,
       interpretation: interpretation
-    };
+    });
   } catch (error) {
     appLogger.error('Overall efficiency score calculation failed', { error });
     return {
@@ -181,6 +191,89 @@ export function calculateOverallEfficiencyScore(results: any): EfficiencyScores 
       interpretation: "Good - Meeting standard requirements" // Use appropriate interpretation for default score
     };
   }
+}
+
+/**
+ * Get adjustment factor based on property age
+ * Newer properties are expected to be more efficient
+ * 
+ * @param buildingAge - Age of the building in years
+ * @returns Adjustment factor to apply to efficiency score
+ */
+export function getPropertyAgeAdjustment(buildingAge: number): number {
+  try {
+    // Input validation
+    if (!buildingAge || isNaN(buildingAge) || buildingAge < 0) {
+      appLogger.warn(`Invalid building age: ${buildingAge}, using default adjustment`);
+      return 1.0; // No adjustment for unknown age
+    }
+    
+    // Cap the age effect (very old buildings don't get penalized indefinitely)
+    const cappedAge = Math.min(buildingAge, 70);
+    
+    // Newer buildings get a bonus, older buildings get a penalty
+    // Range: 0.9 to 1.1 adjustment
+    const adjustment = 1.1 - (cappedAge / 350);
+    
+    appLogger.debug(`Property age adjustment for ${buildingAge} years: ${adjustment}`);
+    return adjustment;
+  } catch (error) {
+    appLogger.error('Error calculating property age adjustment', { error });
+    return 1.0; // No adjustment on error
+  }
+}
+
+/**
+ * Validate efficiency metrics to ensure realistic values
+ * 
+ * @param metrics - Efficiency metrics to validate
+ * @returns Validated efficiency metrics
+ */
+export function validateEfficiencyMetrics(metrics: EfficiencyScores): EfficiencyScores {
+  try {
+    const validated = { ...metrics };
+    
+    // Ensure overall score is in reasonable range
+    if (!validated.overallScore || validated.overallScore < 60 || validated.overallScore > 95) {
+      appLogger.warn('Invalid overall efficiency score, using default', { 
+        original: validated.overallScore 
+      });
+      validated.overallScore = 70;
+      validated.interpretation = interpretEfficiencyScore(70);
+    }
+    
+    // Validate all component scores
+    validated.energyScore = ensureValidRange(validated.energyScore, 40, 100, 65);
+    validated.hvacScore = ensureValidRange(validated.hvacScore, 40, 100, 65);
+    validated.lightingScore = ensureValidRange(validated.lightingScore, 40, 100, 70);
+    validated.humidityScore = ensureValidRange(validated.humidityScore, 40, 100, 65);
+    
+    return validated;
+  } catch (error) {
+    appLogger.error('Error validating efficiency metrics', { error });
+    return metrics; // Return original metrics if validation fails
+  }
+}
+
+/**
+ * Ensure a value is within a specified range
+ * 
+ * @param value - Value to validate
+ * @param min - Minimum acceptable value
+ * @param max - Maximum acceptable value
+ * @param defaultValue - Default value to use if validation fails
+ * @returns Validated value within specified range
+ */
+export function ensureValidRange(
+  value: number, 
+  min: number, 
+  max: number, 
+  defaultValue: number
+): number {
+  if (value === undefined || value === null || isNaN(value) || value < min || value > max) {
+    return defaultValue;
+  }
+  return value;
 }
 
 /**
