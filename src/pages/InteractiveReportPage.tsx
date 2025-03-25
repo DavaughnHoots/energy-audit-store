@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchReportData, updateRecommendationStatus } from '../services/reportService';
+import { 
+  fetchReportData, 
+  updateRecommendationStatus, 
+  updateRecommendationPriority, 
+  updateImplementationDetails 
+} from '../services/reportService';
 import { ReportData } from '../types/report';
-import { RecommendationStatus } from '../types/energyAudit';
+import { RecommendationStatus, RecommendationPriority } from '../types/energyAudit';
 
 // Import all report section components
 import ReportExecutiveSummary from '../components/reports/ReportExecutiveSummary';
@@ -71,6 +76,65 @@ const InteractiveReportPage: React.FC = () => {
       });
     } catch (err) {
       console.error('Error updating recommendation status:', err);
+      // Show error notification or handle gracefully
+    }
+  };
+  
+  const handleUpdatePriority = async (recommendationId: string, priority: RecommendationPriority) => {
+    if (!reportData) return;
+    
+    try {
+      await updateRecommendationPriority(recommendationId, priority);
+      
+      // Update local state
+      const updatedRecommendations = reportData.recommendations.map(rec => {
+        if (rec.id === recommendationId) {
+          return {
+            ...rec,
+            priority
+          };
+        }
+        return rec;
+      });
+      
+      setReportData({
+        ...reportData,
+        recommendations: updatedRecommendations
+      });
+    } catch (err) {
+      console.error('Error updating recommendation priority:', err);
+      // Show error notification or handle gracefully
+    }
+  };
+  
+  const handleUpdateImplementationDetails = async (
+    recommendationId: string, 
+    implementationDate: string,
+    implementationCost: number
+  ) => {
+    if (!reportData) return;
+    
+    try {
+      await updateImplementationDetails(recommendationId, implementationDate, implementationCost);
+      
+      // Update local state
+      const updatedRecommendations = reportData.recommendations.map(rec => {
+        if (rec.id === recommendationId) {
+          return {
+            ...rec,
+            implementationDate,
+            implementationCost
+          };
+        }
+        return rec;
+      });
+      
+      setReportData({
+        ...reportData,
+        recommendations: updatedRecommendations
+      });
+    } catch (err) {
+      console.error('Error updating implementation details:', err);
       // Show error notification or handle gracefully
     }
   };
@@ -178,6 +242,8 @@ const InteractiveReportPage: React.FC = () => {
           <ReportRecommendations 
             recommendations={reportData.recommendations}
             onUpdateStatus={handleUpdateStatus}
+            onUpdatePriority={handleUpdatePriority}
+            onUpdateImplementationDetails={handleUpdateImplementationDetails}
           />
         )}
         

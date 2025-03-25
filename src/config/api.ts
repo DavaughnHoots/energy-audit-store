@@ -32,6 +32,8 @@ export const API_ENDPOINTS = {
   RECOMMENDATIONS: {
     UPDATE_STATUS: (id: string) => `/api/recommendations/${id}/status`,
     UPDATE_SAVINGS: (id: string) => `/api/recommendations/${id}/savings`,
+    UPDATE_PRIORITY: (id: string) => `/api/recommendations/${id}/priority`,
+    UPDATE_DETAILS: (id: string) => `/api/recommendations/${id}/implementation-details`,
     GET_PRODUCT_DETAIL: (id: string) => `/api/recommendations/products/${id}`
   },
   COMPARISONS: {
