@@ -7,7 +7,7 @@ copy backend\src\migrations\20250324_01_education_user_engagement.sql temp_migra
 
 echo.
 echo === Step 2: Running SQL migration directly on Heroku PostgreSQL ===
-heroku pg:psql --app energy-audit-store < temp_migration.sql
+"C:\Program Files\heroku\bin\heroku.cmd" pg:psql --app energy-audit-store < temp_migration.sql
 
 echo.
 echo === Step 3: Cleanup ===
