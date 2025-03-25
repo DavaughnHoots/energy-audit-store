@@ -141,6 +141,16 @@ export interface ProductPreferences {
   budgetConstraint: number; // Maximum budget
 }
 
+export interface Lighting {
+  bulbTypes: {
+    led: number;
+    cfl: number;
+    incandescent: number;
+  };
+  naturalLight: string;
+  controls: string;
+}
+
 export interface EnergyAuditData {
   basicInfo: BasicInfo;
   homeDetails: HomeDetails;
@@ -148,6 +158,7 @@ export interface EnergyAuditData {
   heatingCooling: HeatingCooling;
   energyConsumption: EnergyConsumption;
   productPreferences?: ProductPreferences;
+  lighting?: Lighting;
 }
 
 export type RecommendationPriority = 'high' | 'medium' | 'low';
@@ -157,6 +168,7 @@ export interface AuditRecommendation {
   id: string;
   title: string;
   description: string;
+  type: string;
   priority: RecommendationPriority;
   status: RecommendationStatus;
   estimatedSavings: number;

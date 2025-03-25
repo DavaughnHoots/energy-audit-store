@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { EnergyAuditData, AuditRecommendation } from '../../types/energyAudit.js';
+import { ReportData } from '../../types/report.js';
 import { appLogger } from '../../utils/logger.js';
 import { IFormatters, ICalculators, IChartGenerators } from './types/index.js';
 import { 
@@ -305,6 +306,140 @@ export class ReportGenerationService {
       // Continue without key findings
       doc.moveDown();
     }
+  }
+
+  /**
+   * Prepares report data for frontend rendering without generating PDF
+   */
+  async prepareReportData(
+    auditData: EnergyAuditData,
+    recommendations: AuditRecommendation[]
+  ): Promise<ReportData> {
+    // Validate and normalize recommendations
+    const validatedRecommendations = ReportValidationHelper.validateRecommendations(recommendations);
+    
+    // Calculate key metrics (reuse existing calculations)
+    const totalEnergy = this.calculators.energyCalculator.calculateTotalEnergy(auditData);
+    const efficiencyScore = this.calculateEfficiencyScore(auditData);
+    const energyEfficiency = this.calculators.energyCalculator.calculateEnergyEfficiency(auditData);
+    const potentialSavings = this.calculators.savingsCalculator.calculatePotentialSavings(validatedRecommendations);
+    
+    // Calculate summary metrics with our new SummaryCalculator
+    const totalEstimatedSavings = this.calculators.summaryCalculator.calculateTotalEstimatedSavings(validatedRecommendations);
+    const totalActualSavings = this.calculators.summaryCalculator.calculateTotalActualSavings(validatedRecommendations);
+    const implementedCount = this.calculators.summaryCalculator.countImplementedRecommendations(validatedRecommendations);
+    const savingsAccuracy = this.calculators.summaryCalculator.calculateSavingsAccuracy(totalEstimatedSavings, totalActualSavings);
+    
+    // Get chart data without generating images
+    const energyBreakdownData = this.prepareEnergyBreakdownData(auditData);
+    const savingsAnalysisData = this.prepareSavingsAnalysisData(validatedRecommendations);
+    const consumptionData = this.prepareConsumptionData(auditData);
+    
+    // Return structured data for frontend rendering
+    return {
+      metadata: {
+        reportId: `EAT-${Date.now()}`,
+        reportDate: new Date().toISOString(),
+        analysisType: 'comprehensive',
+        version: '1.0'
+      },
+      executiveSummary: {
+        totalEnergy,
+        efficiencyScore,
+        energyEfficiency,
+        potentialSavings
+      },
+      propertyInfo: {
+        address: auditData.basicInfo.address,
+        propertyType: auditData.basicInfo.propertyType,
+        yearBuilt: auditData.basicInfo.yearBuilt,
+        squareFootage: auditData.homeDetails.squareFootage
+      },
+      currentConditions: {
+        insulation: auditData.currentConditions?.insulation || 'Not assessed',
+        windows: auditData.currentConditions?.windows || 'Not assessed',
+        hvacSystemAge: auditData.currentConditions?.hvacSystemAge || 0
+      },
+      energyConsumption: {
+        electricityUsage: auditData.energyConsumption?.electricityUsage || 0,
+        gasUsage: auditData.energyConsumption?.gasUsage || 0,
+        usageHours: auditData.energyConsumption?.usageHours || 0,
+        powerFactor: auditData.energyConsumption?.powerFactor || 0,
+        seasonalFactor: auditData.energyConsumption?.seasonalFactor || 0,
+        occupancyFactor: auditData.energyConsumption?.occupancyFactor || 0
+      },
+      lighting: {
+        bulbTypes: {
+          led: auditData.lighting?.bulbTypes?.led || 0,
+          cfl: auditData.lighting?.bulbTypes?.cfl || 0,
+          incandescent: auditData.lighting?.bulbTypes?.incandescent || 0
+        },
+        naturalLight: auditData.lighting?.naturalLight || 'Not assessed',
+        controls: auditData.lighting?.controls || 'Not assessed'
+      },
+      recommendations: validatedRecommendations,
+      charts: {
+        energyBreakdown: energyBreakdownData,
+        savingsAnalysis: savingsAnalysisData,
+        consumption: consumptionData
+      },
+      summary: {
+        totalEstimatedSavings,
+        totalActualSavings,
+        implementedCount,
+        savingsAccuracy
+      }
+    };
+  }
+
+  /**
+   * Prepare energy breakdown chart data
+   */
+  private prepareEnergyBreakdownData(auditData: EnergyAuditData): any[] {
+    // Extract data for energy breakdown chart
+    const electricityUsage = auditData.energyConsumption?.electricityUsage || 0;
+    const gasUsage = auditData.energyConsumption?.gasUsage || 0;
+    
+    return [
+      { name: 'Electricity', value: electricityUsage },
+      { name: 'Natural Gas', value: gasUsage }
+    ];
+  }
+
+  /**
+   * Prepare savings analysis chart data
+   */
+  private prepareSavingsAnalysisData(recommendations: AuditRecommendation[]): any[] {
+    // Map recommendations to chart format
+    return recommendations.map(rec => ({
+      name: rec.type.split(' ').slice(0, 2).join(' '), // Shorten name for display
+      estimatedSavings: rec.estimatedSavings || 0,
+      actualSavings: rec.actualSavings || 0
+    }));
+  }
+
+  /**
+   * Prepare consumption chart data
+   */
+  private prepareConsumptionData(auditData: EnergyAuditData): any[] {
+    // Get factors
+    const baseFactor = 1;
+    const seasonalFactor = auditData.energyConsumption?.seasonalFactor || 0.9;
+    const occupancyFactor = auditData.energyConsumption?.occupancyFactor || 0.8;
+    const efficiencyFactor = auditData.energyConsumption?.powerFactor || 0.7;
+    
+    // Base consumption (estimated)
+    const baseConsumption = this.calculators.energyCalculator.getBaselineConsumption(
+      auditData.basicInfo.propertyType,
+      auditData.homeDetails.squareFootage
+    );
+    
+    return [
+      { name: 'Base', value: baseConsumption },
+      { name: 'Seasonal', value: baseConsumption * seasonalFactor },
+      { name: 'Occupied', value: baseConsumption * seasonalFactor * occupancyFactor },
+      { name: 'Real', value: baseConsumption * seasonalFactor * occupancyFactor * efficiencyFactor }
+    ];
   }
 
   /**

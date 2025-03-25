@@ -9,6 +9,7 @@ import Footer from './components/layout/Footer';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import EnergyAuditPage from './pages/EnergyAuditPage';
+import InteractiveReportPage from './pages/InteractiveReportPage';
 import EducationPage from './pages/EducationPage';
 import CommunityPage from './pages/CommunityPage';
 import SignIn from './components/auth/SignIn';
@@ -126,6 +127,7 @@ const App: React.FC = () => {
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/:id" element={<ProductDetailPage />} />
             <Route path="/energy-audit" element={<EnergyAuditPage />} />
+            <Route path="/energy-audit/:auditId/report" element={<InteractiveReportPage />} />
             <Route path="/education" element={<EducationPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/sign-in" element={<SignIn />} />

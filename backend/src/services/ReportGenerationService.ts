@@ -242,6 +242,140 @@ export class ReportGenerationService {
   }
 
   /**
+   * Prepares report data for frontend rendering without generating PDF
+   * @param auditData Energy audit data
+   * @param recommendations Audit recommendations
+   * @returns Structured report data for frontend
+   */
+  async prepareReportData(
+    auditData: EnergyAuditData,
+    recommendations: AuditRecommendation[]
+  ): Promise<any> {
+    appLogger.info('Preparing report data for frontend', { 
+      recommendationsCount: recommendations.length 
+    });
+
+    try {
+      // Validate input data
+      if (!auditData || !auditData.basicInfo) {
+        appLogger.error('Invalid audit data for report data preparation', { 
+          auditData: auditData ? Object.keys(auditData) : 'null' 
+        });
+        throw new Error('Invalid audit data structure');
+      }
+
+      if (!recommendations || !Array.isArray(recommendations)) {
+        appLogger.error('Invalid recommendations data for report data preparation', { 
+          recommendations: recommendations ? typeof recommendations : 'null' 
+        });
+        throw new Error('Invalid recommendations data structure');
+      }
+
+      // Calculate key metrics
+      const totalEnergy = this.calculateTotalEnergy(auditData);
+      const efficiencyScore = this.calculateEfficiencyScore(auditData);
+      const energyEfficiency = this.calculateEnergyEfficiency(auditData);
+      const potentialSavings = this.calculatePotentialSavings(recommendations);
+      
+      // Calculate summary metrics
+      const implementedRecs = recommendations.filter(r => r.status === 'implemented');
+      const totalEstimatedSavings = recommendations.reduce((sum, r) => sum + r.estimatedSavings, 0);
+      const totalActualSavings = implementedRecs.reduce((sum, r) => sum + (r.actualSavings || 0), 0);
+      const savingsAccuracy = implementedRecs.length > 0 ? (totalActualSavings / totalEstimatedSavings) * 100 : null;
+      
+      // Prepare energy breakdown data
+      const electricKwhPerYear = auditData.energyConsumption.electricBill * 12;
+      const gasKwhPerYear = auditData.energyConsumption.gasBill * 29.3 * 12; // Convert therms to kWh
+      
+      const energyBreakdownData = [
+        { name: 'Electricity', value: electricKwhPerYear },
+        { name: 'Natural Gas', value: gasKwhPerYear }
+      ];
+      
+      // Prepare savings analysis data
+      const savingsAnalysisData = recommendations.map(rec => ({
+        name: rec.title.split(' ').slice(0, 2).join(' '), // Shorten name for display
+        estimatedSavings: rec.estimatedSavings || 0,
+        actualSavings: rec.actualSavings || 0
+      }));
+      
+      // Prepare consumption data
+      const baseConsumption = this.getBaselineConsumption(
+        auditData.basicInfo.propertyType,
+        auditData.homeDetails.squareFootage
+      );
+      const seasonalFactor = auditData.energyConsumption.seasonalFactor || 1.2;
+      const occupancyFactor = auditData.energyConsumption.occupancyFactor || 0.9;
+      const powerFactor = auditData.energyConsumption.powerFactor || 0.95;
+      
+      const consumptionData = [
+        { name: 'Base', value: baseConsumption },
+        { name: 'Seasonal', value: baseConsumption * seasonalFactor },
+        { name: 'Occupied', value: baseConsumption * seasonalFactor * occupancyFactor },
+        { name: 'Real', value: baseConsumption * seasonalFactor * occupancyFactor * powerFactor }
+      ];
+      
+      // Structure the data for frontend rendering
+      return {
+        metadata: {
+          reportId: `EAT-${Date.now()}`,
+          reportDate: new Date().toISOString(),
+          analysisType: 'comprehensive',
+          version: '1.0'
+        },
+        executiveSummary: {
+          totalEnergy,
+          efficiencyScore,
+          energyEfficiency,
+          potentialSavings
+        },
+        propertyInfo: {
+          address: auditData.basicInfo.address,
+          propertyType: auditData.basicInfo.propertyType,
+          yearBuilt: auditData.basicInfo.yearBuilt,
+          squareFootage: auditData.homeDetails.squareFootage
+        },
+        currentConditions: {
+          insulation: auditData.currentConditions.insulation?.attic || 'Not assessed',
+          windows: auditData.currentConditions.windowType || 'Not assessed',
+          hvacSystemAge: auditData.heatingCooling.heatingSystem.age || 0
+        },
+        energyConsumption: {
+          electricityUsage: auditData.energyConsumption.electricBill * 12 || 0,
+          gasUsage: auditData.energyConsumption.gasBill * 12 || 0,
+          usageHours: auditData.energyConsumption.durationHours || 0,
+          powerFactor: auditData.energyConsumption.powerFactor || 0,
+          seasonalFactor: auditData.energyConsumption.seasonalFactor || 0,
+          occupancyFactor: auditData.energyConsumption.occupancyFactor || 0
+        },
+        lighting: {
+          bulbTypes: this.normalizeBulbPercentages(auditData),
+          naturalLight: auditData.currentConditions.naturalLight || 'Not assessed',
+          controls: auditData.currentConditions.lightingControls || 'Not assessed'
+        },
+        recommendations: recommendations,
+        charts: {
+          energyBreakdown: energyBreakdownData,
+          savingsAnalysis: savingsAnalysisData,
+          consumption: consumptionData
+        },
+        summary: {
+          totalEstimatedSavings,
+          totalActualSavings,
+          implementedCount: implementedRecs.length,
+          savingsAccuracy
+        }
+      };
+    } catch (error) {
+      appLogger.error('Error preparing report data', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Calculates the total energy consumption from audit data
    * @param auditData Energy audit data
    * @returns Total energy consumption in kWh

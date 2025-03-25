@@ -1,19 +1,27 @@
 // src/components/education/ResourceCard.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { EducationalResource, ResourceType } from '@/types/education';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Video, PieChart, Calculator, HelpCircle, Star } from 'lucide-react';
+import BookmarkButton from './BookmarkButton';
+import ProgressIndicator from './ProgressIndicator';
+import ResourceRatingAndReview from './ResourceRatingAndReview';
+import { educationService } from '@/services/educationService';
 
 interface ResourceCardProps {
   resource: EducationalResource;
   featured?: boolean;
   className?: string;
+  onBookmarkChange?: (isBookmarked: boolean) => void;
+  showProgress?: boolean;
 }
 
 const ResourceCard: React.FC<ResourceCardProps> = ({ 
   resource, 
   featured = false,
-  className = ''
+  className = '',
+  onBookmarkChange,
+  showProgress = false
 }) => {
   const getResourceIcon = (type: ResourceType) => {
     switch (type) {
@@ -61,6 +69,16 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
             Featured
           </div>
         )}
+        
+        <div className="absolute top-2 left-2">
+          <BookmarkButton 
+            resourceId={resource.id} 
+            isBookmarked={resource.is_bookmarked} 
+            size="sm"
+            onBookmarkChange={onBookmarkChange}
+          />
+        </div>
+        
         {resource.rating && (
           <div className="absolute bottom-2 right-2 bg-white px-2 py-1 rounded-full text-xs font-semibold flex items-center shadow-sm">
             <Star className="h-3 w-3 mr-1 text-yellow-500 fill-yellow-500" />
@@ -111,8 +129,27 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           </div>
         </div>
         
+        {/* Progress indicator */}
+        {showProgress && resource.progress && (
+          <div className="mt-3">
+            <ProgressIndicator 
+              progress={resource.progress}
+              showPercentage={true}
+            />
+          </div>
+        )}
+
+        {/* Ratings and Reviews */}
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <ResourceRatingAndReview 
+            resourceId={resource.id}
+            size="sm"
+          />
+        </div>
+        
+        {/* Tags */}
         {resource.tags && resource.tags.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1">
+          <div className={`mt-3 flex flex-wrap gap-1 ${showProgress ? 'pt-3 border-t border-gray-100' : ''}`}>
             {resource.tags.slice(0, 3).map(tag => (
               <span 
                 key={tag} 

@@ -24,6 +24,35 @@ export interface EducationalResource {
   };
   authorId?: string;
   relatedResourceIds?: string[];
+  is_bookmarked?: boolean; // Whether the current user has bookmarked this resource
+  progress?: ResourceProgress; // User's progress on this resource
+}
+
+export interface ResourceProgress {
+  status: 'not_started' | 'in_progress' | 'completed';
+  percentComplete: number;
+  lastAccessed?: string;
+}
+
+export interface ResourceReview {
+  id: string;
+  userId: string;
+  userName?: string; // Display name for the reviewer
+  userAvatar?: string; // Avatar image URL
+  resourceId: string;
+  rating: number;
+  reviewText?: string; // Optional text content
+  createdAt: string;
+  updatedAt?: string;
+  helpful?: number; // Number of users who found this review helpful
+  reported?: boolean; // Whether this review has been flagged
+}
+
+export interface ResourceRatingInfo {
+  average: number;
+  count: number;
+  distribution?: Record<number, number>; // e.g., {1: 5, 2: 10, 3: 20, 4: 15, 5: 50}
+  userRating?: number; // The current user's rating for this resource, if any
 }
 
 export interface ResourceCollection {

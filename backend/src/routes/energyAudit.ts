@@ -6,6 +6,7 @@ import { appLogger, createLogMetadata } from '../utils/logger.js';
 import { reportGenerationService } from '../services/ReportGenerationService.js';
 import { EnergyAuditService } from '../services/EnergyAuditService.js';
 import { productRecommendationService } from '../services/productRecommendationService.js';
+import { ReportData } from '../types/report.js';
 import { cache } from '../config/cache.js';
 import pkg from 'pg';
 const { Pool } = pkg;
@@ -264,6 +265,80 @@ router.delete('/:id', validateToken, async (req: AuthenticatedRequest, res: Resp
   } catch (error) {
     appLogger.error('Error deleting energy audit:', createLogMetadata(req, { error }));
     res.status(500).json({ error: 'Failed to delete energy audit' });
+  }
+});
+
+// Generate report data for interactive preview
+router.get('/:id/report-data', optionalTokenValidation, async (req: AuthenticatedRequest, res: Response) => {
+  // Define variables outside try/catch for error logging
+  const userId = req.user?.id;
+  const auditId = req.params.id;
+  let audit: any = null;
+  let recommendations: any[] = [];
+
+  try {
+    // Validate audit ID
+    if (!auditId || auditId === 'null' || auditId === 'undefined') {
+      return res.status(400).json({ error: 'Invalid audit ID' });
+    }
+
+    audit = await energyAuditService.getAuditById(auditId);
+    if (!audit) {
+      return res.status(404).json({ error: 'Audit not found' });
+    }
+    
+    // Only check ownership if the user is authenticated and the audit belongs to a user
+    if (userId && audit.userId && audit.userId !== userId) {
+      appLogger.warn('Unauthorized access attempt to audit report data:', createLogMetadata(req, {
+        auditId,
+        requestUserId: userId,
+        auditUserId: audit.userId
+      }));
+      return res.status(403).json({ error: 'Not authorized to access this audit' });
+    }
+
+    recommendations = await energyAuditService.getRecommendations(auditId);
+    
+    // Transform the audit data to match the expected format for ReportGenerationService
+    const transformedAudit = {
+      basicInfo: typeof audit.basic_info === 'string' ? JSON.parse(audit.basic_info) : audit.basic_info,
+      homeDetails: typeof audit.home_details === 'string' ? JSON.parse(audit.home_details) : audit.home_details,
+      currentConditions: typeof audit.current_conditions === 'string' ? JSON.parse(audit.current_conditions) : audit.current_conditions,
+      heatingCooling: typeof audit.heating_cooling === 'string' ? JSON.parse(audit.heating_cooling) : audit.heating_cooling,
+      energyConsumption: typeof audit.energy_consumption === 'string' ? JSON.parse(audit.energy_consumption) : audit.energy_consumption,
+      productPreferences: typeof audit.product_preferences === 'string' ? JSON.parse(audit.product_preferences) : audit.product_preferences
+    };
+    
+    appLogger.debug('Transformed audit data for report data generation:', createLogMetadata(req, {
+      originalKeys: Object.keys(audit),
+      transformedKeys: Object.keys(transformedAudit)
+    }));
+    
+    const reportData: ReportData = await reportGenerationService.prepareReportData(transformedAudit, recommendations);
+
+    res.json(reportData);
+
+    appLogger.info('Report data generated successfully:', createLogMetadata(req, { auditId }));
+  } catch (error) {
+    // Enhanced error logging for report data generation
+    appLogger.error('Error generating report data:', createLogMetadata(req, { 
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : String(error),
+      auditId: auditId,
+      userId: userId,
+      recommendationsCount: recommendations ? recommendations.length : 0,
+      auditDataKeys: audit ? Object.keys(audit) : []
+    }));
+    
+    // Return detailed error message in development
+    const errorMessage = process.env.NODE_ENV === 'production' 
+      ? 'Failed to generate report data' 
+      : `Failed to generate report data: ${error instanceof Error ? error.message : String(error)}`;
+    
+    res.status(500).json({ error: errorMessage });
   }
 });
 

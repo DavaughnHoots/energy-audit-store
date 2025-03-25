@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   },
   PRODUCTS: '/api/products',
   ENERGY_AUDIT: '/api/energy-audit',
+  REPORT_DATA: (auditId: string) => `/api/energy-audit/${auditId}/report-data`,
   DASHBOARD: {
     STATS: '/api/dashboard/stats',
     PRODUCT_HISTORY: '/api/dashboard/product-history'

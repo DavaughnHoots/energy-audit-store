@@ -6,8 +6,12 @@ import ResourceCard from '@/components/education/ResourceCard';
 import FeaturedResourcesCarousel from '@/components/education/FeaturedResourcesCarousel';
 import ResourceCollectionComponent from '@/components/education/ResourceCollection';
 import ResourceFiltersComponent from '@/components/education/ResourceFilters';
+import BookmarksView from '@/components/education/BookmarksView';
+import ContinueLearningSection from '@/components/education/ContinueLearningSection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Bookmark } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import useAuth from '@/context/AuthContext';
 
 const EducationPage: React.FC = () => {
   // State for resources and collections
@@ -154,15 +158,27 @@ const EducationPage: React.FC = () => {
           })
         )}
 
-        {/* Resource Filters */}
-        <ResourceFiltersComponent 
-          onFilterChange={handleFilterChange}
-          initialFilters={filters}
-        />
+        {/* Continue Learning Section (in-progress resources) */}
+        <ContinueLearningSection />
 
-        {/* Resource Grid - Filtered Results */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">All Resources</h2>
+        {/* Bookmarks Section */}
+        <div className="mb-10">
+          <BookmarksView />
+        </div>
+
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">All Resources</h2>
+          
+          {/* Resource Filters */}
+          <div className="w-full max-w-xl">
+            <ResourceFiltersComponent 
+              onFilterChange={handleFilterChange}
+              initialFilters={filters}
+            />
+          </div>
+        </div>
         
+        {/* Resource Grid - Filtered Results */}
         {loading.filtered ? (
           <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-sm">
             <Loader2 className="h-8 w-8 text-green-500 animate-spin" />
