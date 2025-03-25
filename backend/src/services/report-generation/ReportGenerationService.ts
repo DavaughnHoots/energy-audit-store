@@ -10,6 +10,7 @@ import {
 } from '../../utils/chartHelpers.js';
 import { productRecommendationService } from '../productRecommendationService.js';
 import { calculateOverallEfficiencyScore } from '../efficiencyScoreService.js';
+import { ReportValidationHelper } from '../../utils/reportValidationHelper.js';
 
 /**
  * Service for generating PDF reports for energy audits
@@ -160,11 +161,32 @@ export class ReportGenerationService {
       
       // Extract key findings from audit data
       const energyEfficiency = this.calculators.energyCalculator.calculateEnergyEfficiency(auditData);
-      const hvacEfficiencyGap = this.calculators.hvacCalculator.calculateHvacEfficiencyGap(auditData);
+      
+      // Get HVAC efficiency gap and ensure it's always a non-negative value
+      let hvacEfficiencyGap = this.calculators.hvacCalculator.calculateHvacEfficiencyGap(auditData);
+      
+      // Provide context for the HVAC efficiency gap
+      let hvacEfficiencyContext = '';
+      if (hvacEfficiencyGap <= 0) {
+        hvacEfficiencyGap = 0;
+        hvacEfficiencyContext = ' (system meets or exceeds targets)';
+      } else if (hvacEfficiencyGap < 5) {
+        hvacEfficiencyContext = ' (minor improvements needed)';
+      } else if (hvacEfficiencyGap < 15) {
+        hvacEfficiencyContext = ' (moderate improvements needed)';
+      } else {
+        hvacEfficiencyContext = ' (significant improvements needed)';
+      }
+      
+      appLogger.debug('HVAC efficiency gap calculated', {
+        rawGap: this.calculators.hvacCalculator.calculateHvacEfficiencyGap(auditData),
+        displayGap: hvacEfficiencyGap,
+        context: hvacEfficiencyContext
+      });
       
       doc.fontSize(12)
          .text(`• Energy: Overall energy efficiency is ${energyEfficiency.toFixed(1)}%`)
-         .text(`• HVAC: System efficiency gap is ${hvacEfficiencyGap.toFixed(1)}%`)
+         .text(`• HVAC: System efficiency gap is ${hvacEfficiencyGap.toFixed(1)}%${hvacEfficiencyContext}`)
          .moveDown();
     } catch (error) {
       appLogger.error('Error adding key findings', { 
@@ -198,12 +220,12 @@ export class ReportGenerationService {
         throw new Error('Invalid audit data structure');
       }
 
-      if (!recommendations || !Array.isArray(recommendations)) {
-        appLogger.error('Invalid recommendations data for report generation', { 
-          recommendations: recommendations ? typeof recommendations : 'null' 
-        });
-        throw new Error('Invalid recommendations data structure');
-      }
+      // Validate and normalize recommendations to ensure they have valid values
+      const validatedRecommendations = ReportValidationHelper.validateRecommendations(recommendations);
+      appLogger.debug('Validated recommendations for report', {
+        originalCount: recommendations?.length || 0,
+        validatedCount: validatedRecommendations.length
+      });
 
       appLogger.debug('Creating PDF document');
       const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -313,7 +335,7 @@ export class ReportGenerationService {
 
         // Sort recommendations by priority
         const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
-        const sortedRecommendations = [...recommendations].sort(
+        const sortedRecommendations = [...validatedRecommendations].sort(
           (a, b) => (priorityOrder[a.priority] ?? 0) - (priorityOrder[b.priority] ?? 0)
         );
 
@@ -381,7 +403,7 @@ export class ReportGenerationService {
       // Savings Analysis
       try {
         appLogger.debug('Generating and adding savings analysis chart');
-        const savingsChart = await this.chartGenerators.savingsChartGenerator.generate(recommendations, 600, 300);
+        const savingsChart = await this.chartGenerators.savingsChartGenerator.generate(validatedRecommendations, 600, 300);
         doc
           .addPage()
           .fontSize(16)
