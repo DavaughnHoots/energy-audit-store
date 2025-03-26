@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
 import useAuth from '@/context/AuthContext';
@@ -15,6 +15,7 @@ import AuditSubmissionModal from './AuditSubmissionModal';
 import { Dialog } from '@/components/ui/Dialog';
 import { getStoredAuditData, storeAuditData, clearStoredAuditData } from '@/utils/auditStorage';
 import { fetchUserProfileData, updateUserProfileFromAudit } from '@/services/userProfileService';
+import { getMobileHomeDefaults } from './forms/housingTypeDefaults';
 import { 
   EnergyAuditData,
   BasicInfo,
@@ -249,7 +250,148 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
     }
   }, [formData]);
 
-  // Update insulation values when property type changes
+  // Apply mobile home defaults when homeType and/or yearBuilt changes
+  useEffect(() => {
+    // Propagate mobile home specific defaults to all relevant form sections
+    const applyMobileHomeDefaults = () => {
+      const propertyType = formData.basicInfo.propertyType;
+      const homeType = formData.homeDetails.homeType;
+      
+      // Only apply if both property type and home type are set to mobile home
+      if (propertyType === 'mobile-home' && homeType === 'mobile-home') {
+        const yearBuilt = formData.basicInfo.yearBuilt || 2000; // Default to 2000 if not set
+        const squareFootage = formData.homeDetails.squareFootage || 
+                              (formData.homeDetails.homeSize || 1500); // Use size or default
+        
+        try {
+          console.log('Applying mobile home defaults for year built:', yearBuilt, 'size:', squareFootage);
+          // Get mobile-specific defaults based on year and size
+          const mobileDefaults = getMobileHomeDefaults(yearBuilt, squareFootage);
+          
+          if (mobileDefaults) {
+            setFormData(prevData => {
+              const newData = { ...prevData };
+              
+              // Apply current conditions defaults with type checking
+              if (mobileDefaults.currentConditions) {
+                // Extract safely to ensure type safety
+                const {
+                  insulation,
+                  windowType,
+                  numWindows,
+                  windowCount,
+                  airLeaks,
+                  estimatedACH,
+                  temperatureConsistency
+                } = mobileDefaults.currentConditions;
+                
+                // Cast windowCondition to the correct type
+                let windowCondition: 'fair' | 'poor' | 'good' | 'excellent' = 'fair'; // Default value
+                
+                // Check if the value from mobile defaults is one of our valid enum values
+                if (mobileDefaults.currentConditions.windowCondition === 'fair' || 
+                    mobileDefaults.currentConditions.windowCondition === 'poor' || 
+                    mobileDefaults.currentConditions.windowCondition === 'good' || 
+                    mobileDefaults.currentConditions.windowCondition === 'excellent') {
+                  // Type assertion is safe here since we've verified it's one of our valid values
+                  windowCondition = mobileDefaults.currentConditions.windowCondition as 'fair' | 'poor' | 'good' | 'excellent';
+                }
+                
+                // Safe weatherStripping with type checking
+                let weatherStripping = mobileDefaults.currentConditions.weatherStripping;
+                if (weatherStripping !== 'none' && 
+                    weatherStripping !== 'foam' && 
+                    weatherStripping !== 'metal' && 
+                    weatherStripping !== 'door-sweep' && 
+                    weatherStripping !== 'not-sure') {
+                  weatherStripping = 'none'; // Default to a safe value
+                }
+                
+                newData.currentConditions = {
+                  ...prevData.currentConditions,
+                  windowType,
+                  numWindows,
+                  windowCount: windowCount as 'few' | 'average' | 'many',
+                  airLeaks: Array.isArray(airLeaks) ? airLeaks : prevData.currentConditions.airLeaks,
+                  windowCondition,
+                  weatherStripping,
+                  temperatureConsistency: temperatureConsistency as 'very-consistent' | 'some-variations' | 'large-variations',
+                  // Ensure specific properties are properly merged
+                  insulation: {
+                    ...prevData.currentConditions.insulation,
+                    ...(insulation || {})
+                  }
+                };
+                
+                // Note: estimatedACH is used internally but not stored in the model
+                // We're not adding it to the model to avoid type errors
+              }
+              
+              // Apply HVAC defaults - only setting valid properties
+              if (mobileDefaults.heatingCooling) {
+                // Create a new heating/cooling object with only the properties we need
+                const newHeatingCooling = { ...prevData.heatingCooling };
+                
+                // Add zone count if valid
+                if (typeof mobileDefaults.heatingCooling.zoneCount === 'number') {
+                  newHeatingCooling.zoneCount = mobileDefaults.heatingCooling.zoneCount;
+                }
+                
+                // Add thermostat type if present
+                if (mobileDefaults.heatingCooling.thermostatType) {
+                  newHeatingCooling.thermostatType = mobileDefaults.heatingCooling.thermostatType;
+                }
+                
+                // Add system performance if valid enum value
+                const systemPerformance = mobileDefaults.heatingCooling.systemPerformance;
+                if (systemPerformance === 'works-well' || 
+                    systemPerformance === 'some-problems' || 
+                    systemPerformance === 'needs-attention') {
+                  newHeatingCooling.systemPerformance = systemPerformance;
+                }
+                
+                // Update heating and cooling systems
+                if (mobileDefaults.heatingCooling.heatingSystem) {
+                  newHeatingCooling.heatingSystem = {
+                    ...prevData.heatingCooling.heatingSystem,
+                    ...mobileDefaults.heatingCooling.heatingSystem
+                  };
+                }
+                
+                if (mobileDefaults.heatingCooling.coolingSystem) {
+                  newHeatingCooling.coolingSystem = {
+                    ...prevData.heatingCooling.coolingSystem,
+                    ...mobileDefaults.heatingCooling.coolingSystem
+                  };
+                }
+                
+                // Apply the updated heating/cooling object
+                newData.heatingCooling = newHeatingCooling;
+              }
+              
+              // Apply energy consumption defaults if available
+              if (mobileDefaults.energyConsumption) {
+                newData.energyConsumption = {
+                  ...prevData.energyConsumption,
+                  ...mobileDefaults.energyConsumption
+                };
+              }
+              
+              return newData;
+            });
+            
+            console.log('Applied mobile home defaults successfully');
+          }
+        } catch (error) {
+          console.error('Error applying mobile home defaults:', error);
+        }
+      }
+    };
+    
+    applyMobileHomeDefaults();
+  }, [formData.basicInfo.propertyType, formData.homeDetails.homeType, formData.basicInfo.yearBuilt]);
+
+  // Update insulation values when property type changes for apartments/condos
   useEffect(() => {
     const propertyType = formData.basicInfo.propertyType;
     if (propertyType === 'apartment' || propertyType === 'condominium') {

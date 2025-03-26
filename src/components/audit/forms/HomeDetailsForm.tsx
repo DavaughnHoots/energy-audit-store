@@ -1,15 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home } from 'lucide-react';
 import { HomeDetailsFormProps } from './types';
 import FormSection, { FormSectionAdvanced } from '../FormSection';
 import { FormGrid, InputField, SelectField } from '../FormFields';
 import { getDefaultValues, getSizeCategory } from './homeDefaults';
+import { getMobileHomeDefaults, getConstructionPeriod } from './housingTypeDefaults';
 
 const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
   data,
   onInputChange
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Method to access parent data (yearBuilt in basicInfo)
+  const getParentData = () => {
+    // Try to access parent form data if available through DOM - this is a workaround
+    // since we don't have direct access to the parent component's state
+    const basicInfoSection = document.getElementById('basic-info-section');
+    let yearBuilt = 2000; // Default to 2000 if we can't find the value
+    
+    if (basicInfoSection) {
+      const yearBuiltInput = basicInfoSection.querySelector('input[name="yearBuilt"]');
+      if (yearBuiltInput) {
+        const inputValue = (yearBuiltInput as HTMLInputElement).value;
+        if (inputValue && !isNaN(parseInt(inputValue))) {
+          yearBuilt = parseInt(inputValue);
+        }
+      }
+    }
+    
+    return { yearBuilt };
+  };
 
   const handleBasicChange = (field: keyof typeof data) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -19,15 +40,49 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
 
     // Update advanced fields based on property type and size
     if (field === 'homeType' || field === 'homeSize') {
-      const sizeCategory = getSizeCategory(data.homeSize);
-      const defaults = getDefaultValues(data.homeType, sizeCategory);
+      const homeType = field === 'homeType' ? value as string : data.homeType;
+      const homeSize = field === 'homeSize' ? value as number : data.homeSize;
+      const sizeCategory = getSizeCategory(homeSize);
       
-      // Only update fields that haven't been manually modified
-      Object.entries(defaults).forEach(([key, defaultValue]) => {
-        if (key !== field) {
-          onInputChange(key as keyof typeof data, defaultValue);
+      // Special handling for mobile homes using research-based defaults
+      if (homeType === 'mobile-home') {
+        try {
+          const { yearBuilt } = getParentData();
+          // Get mobile home specific defaults based on year built, size, and (optionally) location
+          const mobileDefaults = getMobileHomeDefaults(yearBuilt, homeSize);
+          
+          // Apply mobile home defaults
+          if (mobileDefaults && mobileDefaults.homeDetails) {
+            // Update home details
+            Object.entries(mobileDefaults.homeDetails).forEach(([key, defaultValue]) => {
+              if (key !== field && key in data) {
+                onInputChange(key as keyof typeof data, defaultValue);
+              }
+            });
+            
+            // Here we'd also update currentConditions and heatingCooling in parent form,
+            // but this requires parent form access which we'll implement later
+            console.log('Applied mobile home defaults based on year built:', yearBuilt);
+          }
+        } catch (error) {
+          console.error('Error applying mobile home defaults:', error);
+          // Fallback to standard defaults if mobile-specific ones fail
+          const defaults = getDefaultValues(homeType, sizeCategory);
+          Object.entries(defaults).forEach(([key, defaultValue]) => {
+            if (key !== field) {
+              onInputChange(key as keyof typeof data, defaultValue);
+            }
+          });
         }
-      });
+      } else {
+        // Use standard defaults for non-mobile homes
+        const defaults = getDefaultValues(homeType, sizeCategory);
+        Object.entries(defaults).forEach(([key, defaultValue]) => {
+          if (key !== field) {
+            onInputChange(key as keyof typeof data, defaultValue);
+          }
+        });
+      }
     }
   };
 
