@@ -4,7 +4,13 @@ import { HomeDetailsFormProps } from './types';
 import FormSection, { FormSectionAdvanced } from '../FormSection';
 import { FormGrid, InputField, SelectField } from '../FormFields';
 import { getDefaultValues, getSizeCategory } from './homeDefaults';
-import { getMobileHomeDefaults, getConstructionPeriod } from './housingTypeDefaults';
+import { 
+  getMobileHomeDefaults, 
+  getSingleFamilyDefaults,
+  getTownhouseDefaults,
+  getDuplexDefaults,
+  getConstructionPeriod 
+} from './housingTypeDefaults';
 
 const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
   data,
@@ -44,17 +50,19 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
       const homeSize = field === 'homeSize' ? value as number : data.homeSize;
       const sizeCategory = getSizeCategory(homeSize);
       
-      // Special handling for mobile homes using research-based defaults
-      if (homeType === 'mobile-home') {
+      // Special handling for homes using research-based defaults
+      if (homeType === 'mobile-home' || homeType === 'duplex') {
         try {
           const { yearBuilt } = getParentData();
-          // Get mobile home specific defaults based on year built, size, and (optionally) location
-          const mobileDefaults = getMobileHomeDefaults(yearBuilt, homeSize);
+          // Get home-type specific defaults based on year built, size, and (optionally) location
+          const housingDefaults = homeType === 'mobile-home' 
+            ? getMobileHomeDefaults(yearBuilt, homeSize)
+            : getDuplexDefaults(yearBuilt, homeSize, undefined, data.unitPosition);
           
-          // Apply mobile home defaults
-          if (mobileDefaults && mobileDefaults.homeDetails) {
+          // Apply housing type-specific defaults
+          if (housingDefaults && housingDefaults.homeDetails) {
             // Update home details
-            Object.entries(mobileDefaults.homeDetails).forEach(([key, defaultValue]) => {
+            Object.entries(housingDefaults.homeDetails).forEach(([key, defaultValue]) => {
               if (key !== field && key in data) {
                 onInputChange(key as keyof typeof data, defaultValue);
               }
@@ -62,7 +70,7 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
             
             // Here we'd also update currentConditions and heatingCooling in parent form,
             // but this requires parent form access which we'll implement later
-            console.log('Applied mobile home defaults based on year built:', yearBuilt);
+            console.log(`Applied ${homeType} defaults based on year built:`, yearBuilt);
           }
         } catch (error) {
           console.error('Error applying mobile home defaults:', error);
@@ -129,6 +137,34 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
           ]}
           required
         />
+        
+        {data.homeType === 'townhouse' && (
+          <SelectField
+            label="Unit Position"
+            value={data.unitPosition || 'interior'}
+            onChange={handleBasicChange('unitPosition')}
+            options={[
+              { value: 'interior', label: 'Interior Unit (shared walls on both sides)' },
+              { value: 'end', label: 'End Unit (shared wall on one side)' },
+              { value: 'corner', label: 'Corner Unit (shared walls on two sides at corner)' }
+            ]}
+            helpText="This affects energy usage due to exposed exterior walls"
+          />
+        )}
+
+        {data.homeType === 'duplex' && (
+          <SelectField
+            label="Unit Configuration"
+            value={data.unitPosition || 'side-by-side'}
+            onChange={handleBasicChange('unitPosition')}
+            options={[
+              { value: 'side-by-side', label: 'Side-by-Side Units' },
+              { value: 'stacked', label: 'Stacked Units (one above the other)' },
+              { value: 'front-to-back', label: 'Front-to-Back Units' }
+            ]}
+            helpText="This affects energy usage based on shared walls and floor/ceiling"
+          />
+        )}
 
         <SelectField
           label="Number of Stories"
