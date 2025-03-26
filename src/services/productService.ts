@@ -1,473 +1,112 @@
-// src/services/productService.ts
-import { getApiUrl } from '../config/api';
-import { API_ENDPOINTS } from '../config/api';
-import { Product, ProductFilters } from '../../backend/src/types/product';
+import axios from 'axios';
+import { Product, ProductFilter } from '../types/product';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
-class ProductService {
-  private products: Product[] = [];
-  private categories: { main: string[]; sub: { [key: string]: string[] } } = { main: [], sub: {} };
-  private initialized = false;
-
-  // This method is kept for backward compatibility but now uses the API with CSV fallback
-  async loadProductsFromCSV(file: string): Promise<boolean> {
-    try {
-      console.log('Using API instead of CSV file');
-      // Load products from API
-      await this.fetchProductsFromAPI();
-      // Load categories from API
-      await this.fetchCategoriesFromAPI();
-      
-      this.initialized = true;
-      console.log('Successfully loaded products from API:', this.products.length);
-      return true;
-    } catch (error) {
-      const err = error as Error;
-      console.error('Error loading products from API:', {
-        name: err.name,
-        message: err.message,
-        stack: err.stack
-      });
-      throw new Error(`Failed to load products: ${err.message}`);
-    }
+/**
+ * Service for interacting with the product database API
+ */
+export class ProductService {
+  private apiBaseUrl: string;
+  private cache: Map<string, { timestamp: number, products: Product[] }>;
+  private cacheTTL = 24 * 60 * 60 * 1000; // 24 hours
+  
+  constructor() {
+    this.apiBaseUrl = `${API_BASE_URL}${API_ENDPOINTS.PRODUCTS}`;
+    this.cache = new Map();
   }
-
-  private async fetchProductsFromAPI(): Promise<void> {
-    try {
-      // First try to fetch from API
-      const url = getApiUrl(API_ENDPOINTS.PRODUCTS);
-      console.log('Fetching products from:', url);
-      
-      const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn(`API returned non-JSON response: ${contentType}`);
-        throw new Error('API returned non-JSON response');
-      }
-      
-      if (!response.ok) {
-        throw new Error(`API error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Handle both array format and paginated format responses
-      if (Array.isArray(data)) {
-        this.products = data;
-      } else if (data.items && Array.isArray(data.items)) {
-        this.products = data.items;
-      } else {
-        console.warn('Unexpected API response format:', data);
-        this.products = [];
-      }
-      
-      console.log(`Fetched ${this.products.length} products from API`);
-    } catch (error) {
-      console.error('Error fetching products from API:', error);
-      
-      // Fallback to CSV if API fails
-      console.log('Falling back to CSV data');
-      await this.loadProductsFromCSVFallback('/data/products.csv');
-    }
-  }
-
-  // Made public to allow explicit fallback loading from hook
-  async loadProductsFromCSVFallback(file: string): Promise<void> {
-    try {
-      console.log('Loading products from CSV fallback:', file);
-      const response = await fetch(file);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const csvData = await response.text();
-      console.log('CSV data loaded, first 100 chars:', csvData.substring(0, 100));
-      
-      // Use Papa Parse to parse CSV
-      const Papa = await import('papaparse');
-      const results = Papa.default.parse(csvData, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header) => {
-          // Convert spaces and special characters to camelCase
-          return header
-            .toLowerCase()
-            .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
-        },
-      });
-      
-      if (results.errors && results.errors.length > 0) {
-        console.error('CSV parsing errors:', results.errors);
-        throw new Error('CSV parsing errors occurred');
-      }
-      
-      this.products = results.data.map((row: any, index: number) => {
-        // Parse features string into array
-        const features = row.features
-          ? row.features.split('\n').filter(Boolean).map((f: string) => f.trim())
-          : [];
-
-        // Extract specifications from description
-        const specifications: { [key: string]: string } = {};
-        if (row.description) {
-          row.description.split('\n').forEach((line: string) => {
-            const [key, value] = line.split(':').map((s: string) => s.trim());
-            if (key && value) {
-              specifications[key] = value;
-            }
-          });
-        }
-
-        return {
-          id: row.energyStarUniqueId || String(index + 1),
-          productUrl: row.productUrl || '',
-          mainCategory: row.mainCategory || 'Uncategorized',
-          subCategory: row.subCategory || 'General',
-          name: row.productName || 'Unknown Product',
-          model: row.model || '',
-          description: row.description || '',
-          efficiency: row.efficiency || '',
-          features: features,
-          marketInfo: row.market || '',
-          energyStarId: row.energyStarUniqueId || '',
-          upcCodes: row.upcCodes || '',
-          additionalModels: row.additionalModelNamesAndOrNumbers || '',
-          pdfUrl: row.pdfFileUrl || '',
-          specifications
-        };
-      });
-      
-      // Build categories from products
-      this.buildCategoriesFromProducts();
-      
-      console.log(`Loaded ${this.products.length} products from CSV fallback`);
-    } catch (error) {
-      console.error('Error in CSV fallback:', error);
-      // Initialize with empty data if all else fails
-      this.products = [];
-      this.categories = { main: ['Uncategorized'], sub: { 'Uncategorized': ['General'] } };
-    }
-  }
-
-  private buildCategoriesFromProducts(): void {
-    this.categories = {
-      main: [],
-      sub: {}
-    };
-
-    this.products.forEach(product => {
-      if (!this.categories.main.includes(product.mainCategory)) {
-        this.categories.main.push(product.mainCategory);
-        this.categories.sub[product.mainCategory] = [];
-      }
-
-      if (!this.categories.sub[product.mainCategory]!.includes(product.subCategory)) {
-        this.categories.sub[product.mainCategory]!.push(product.subCategory);
-      }
-    });
-  }
-
-  private async fetchCategoriesFromAPI(): Promise<void> {
-    try {
-      const url = getApiUrl(`${API_ENDPOINTS.PRODUCTS}/categories`);
-      console.log('Fetching categories from:', url);
-      
-      const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn(`API returned non-JSON response: ${contentType}`);
-        throw new Error('API returned non-JSON response');
-      }
-      
-      if (!response.ok) {
-        throw new Error(`API error! status: ${response.status}`);
-      }
-      
-      this.categories = await response.json();
-      console.log('Fetched categories from API:', {
-        mainCategories: this.categories.main.length,
-        subCategories: Object.keys(this.categories.sub).length
-      });
-    } catch (error) {
-      console.error('Error fetching categories from API:', error);
-      
-      // If we have products, build categories from them
-      if (this.products.length > 0) {
-        this.buildCategoriesFromProducts();
-      } else {
-        // Default categories if all else fails
-        this.categories = { main: ['Uncategorized'], sub: { 'Uncategorized': ['General'] } };
-      }
-    }
-  }
-
-  async getProducts(filters?: ProductFilters): Promise<Product[]> {
-    if (!this.initialized) {
-      await this.loadProductsFromCSV(''); // Parameter is ignored now
-    }
-
-    // If there are filters, we should query the API with those filters
-    if (filters) {
-      try {
-        // Build query string
-        const params = new URLSearchParams();
-        if (filters.mainCategory) params.append('category', filters.mainCategory);
-        if (filters.subCategory) params.append('subcategory', filters.subCategory);
-        if (filters.search) params.append('search', filters.search);
-        
-        const url = `${getApiUrl(API_ENDPOINTS.PRODUCTS)}?${params.toString()}`;
-        const response = await fetch(url, {
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-        
-        // Check if response is JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          console.warn(`API returned non-JSON response: ${contentType}`);
-          return this.products.filter(p => {
-            if (filters.mainCategory && p.mainCategory.toLowerCase() !== filters.mainCategory.toLowerCase()) return false;
-            if (filters.subCategory && p.subCategory.toLowerCase() !== filters.subCategory.toLowerCase()) return false;
-            if (filters.search) {
-              const searchLower = filters.search.toLowerCase();
-              return p.name.toLowerCase().includes(searchLower) ||
-                p.description.toLowerCase().includes(searchLower) ||
-                p.model.toLowerCase().includes(searchLower);
-            }
-            return true;
-          });
-        }
-        
-        if (!response.ok) {
-          throw new Error(`API error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('Error fetching filtered products:', error);
-        // Fall back to client-side filtering
-        return this.products.filter(p => {
-          if (filters.mainCategory && p.mainCategory.toLowerCase() !== filters.mainCategory.toLowerCase()) return false;
-          if (filters.subCategory && p.subCategory.toLowerCase() !== filters.subCategory.toLowerCase()) return false;
-          if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
-            return p.name.toLowerCase().includes(searchLower) ||
-              p.description.toLowerCase().includes(searchLower) ||
-              p.model.toLowerCase().includes(searchLower);
-          }
-          return true;
-        });
-      }
-    }
-
-    return this.products;
-  }
-
+  
   /**
-   * Get products with pagination and sorting
+   * Fetch products from the API with optional filters
+   * @param filter Optional filter parameters
+   * @returns Array of products matching the filter
    */
-  async getProductsPaginated(
-    filters?: ProductFilters,
-    page: number = 1,
-    limit: number = 20,
-    sortBy: string = 'relevance',
-    sortOrder: 'asc' | 'desc' = 'desc'
-  ): Promise<{
-    items: Product[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
-    if (!this.initialized) {
-      await this.loadProductsFromCSV(''); // Parameter is ignored now
-    }
-
+  public async getProducts(filter?: ProductFilter): Promise<Product[]> {
     try {
-      // Build query string with pagination parameters
-      const params = new URLSearchParams();
-      if (filters?.mainCategory) {
-        params.append('category', filters.mainCategory);
-        console.log(`API request with mainCategory: ${filters.mainCategory}`);
+      // Generate cache key based on filter
+      const cacheKey = filter ? JSON.stringify(filter) : 'all-products';
+      
+      // Check cache first
+      const cached = this.cache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp) < this.cacheTTL) {
+        console.debug('Using cached products data');
+        return cached.products;
       }
-      if (filters?.subCategory) {
-        params.append('subcategory', filters.subCategory);
-        console.log(`API request with subCategory: ${filters.subCategory}`);
-      }
-      if (filters?.search) params.append('search', filters.search);
-      if (filters?.efficiency) params.append('efficiency', filters.efficiency);
       
-      // Add pagination and sorting parameters
-      params.append('page', page.toString());
-      params.append('limit', limit.toString());
-      params.append('sortBy', sortBy);
-      params.append('sortOrder', sortOrder);
+      // Prepare query parameters
+      const params: Record<string, any> = {};
       
-      const url = `${getApiUrl(API_ENDPOINTS.PRODUCTS)}?${params.toString()}`;
-      console.log('Fetching paginated products from:', url);
-      
-      const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/json'
+      if (filter) {
+        if (filter.mainCategory) params.category = filter.mainCategory;
+        if (filter.subCategory) params.subCategory = filter.subCategory;
+        if (filter.efficiencyRating) params.efficiencyRating = filter.efficiencyRating;
+        if (filter.rebateEligible) params.rebateEligible = filter.rebateEligible;
+        if (filter.greenCertified) params.greenCertified = filter.greenCertified;
+        if (filter.minUserRating) params.minRating = filter.minUserRating;
+        
+        if (filter.priceRange) {
+          if (filter.priceRange.min) params.minPrice = filter.priceRange.min;
+          if (filter.priceRange.max) params.maxPrice = filter.priceRange.max;
         }
+      }
+      
+      // Make API request
+      const response = await axios.get(this.apiBaseUrl, { params });
+      
+      // Validate response
+      if (!response.data || !Array.isArray(response.data)) {
+        console.error('Invalid response format from products API', response.data);
+        return [];
+      }
+      
+      // Store in cache
+      this.cache.set(cacheKey, {
+        timestamp: Date.now(),
+        products: response.data
       });
       
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn(`API returned non-JSON response: ${contentType}`);
-        // Fall back to client-side pagination
-        return this.clientSidePagination(filters, page, limit, sortBy, sortOrder);
-      }
-      
-      if (!response.ok) {
-        throw new Error(`API error! status: ${response.status}`);
-      }
-      
-      return await response.json();
+      return response.data;
     } catch (error) {
-      console.error('Error fetching paginated products:', error);
-      // Fall back to client-side pagination
-      return this.clientSidePagination(filters, page, limit, sortBy, sortOrder);
+      console.error('Error fetching products', error);
+      
+      // Return empty array on error - could be enhanced with retry logic
+      return [];
     }
   }
-
+  
   /**
-   * Fallback client-side pagination when API fails
+   * Fetch a single product by ID
+   * @param id Product ID
+   * @returns Product details or null if not found
    */
-  private clientSidePagination(
-    filters?: ProductFilters,
-    page: number = 1,
-    limit: number = 20,
-    sortBy: string = 'name',
-    sortOrder: 'asc' | 'desc' = 'asc'
-  ): {
-    items: Product[];
-    total: number;
-    page: number;
-    totalPages: number;
-  } {
-    console.log('Using client-side pagination as fallback');
-    
-    // Ensure this.products is always an array
-    if (!Array.isArray(this.products)) {
-      console.warn('Products array is not initialized, using empty array for fallback pagination');
-      this.products = [];
-    }
-    
-    // Filter products
-    let filteredProducts = [...this.products];
-    
-    if (filters) {
-      if (filters.mainCategory) {
-        console.log(`Client-side filtering for mainCategory: ${filters.mainCategory}`);
-        filteredProducts = filteredProducts.filter(
-          p => p.mainCategory.toLowerCase() === filters.mainCategory?.toLowerCase()
-        );
-        console.log(`Filtered to ${filteredProducts.length} products after applying mainCategory filter`);
-      }
-
-      if (filters.subCategory) {
-        console.log(`Client-side filtering for subCategory: ${filters.subCategory}`);
-        filteredProducts = filteredProducts.filter(
-          p => p.subCategory.toLowerCase() === filters.subCategory?.toLowerCase()
-        );
-        console.log(`Filtered to ${filteredProducts.length} products after applying subCategory filter`);
-      }
-
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredProducts = filteredProducts.filter(p =>
-          p.name.toLowerCase().includes(searchLower) ||
-          p.description.toLowerCase().includes(searchLower) ||
-          p.model.toLowerCase().includes(searchLower)
-        );
-      }
-    }
-    
-    // Sort products
-    filteredProducts.sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortBy) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case 'relevance':
-          // For client-side, we don't have a true relevance score
-          // Just use name as default
-          comparison = a.name.localeCompare(b.name);
-          break;
-        default:
-          comparison = a.name.localeCompare(b.name);
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-    
-    // Apply pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = Math.min(startIndex + limit, filteredProducts.length);
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-    
-    return {
-      items: paginatedProducts,
-      total: filteredProducts.length,
-      page,
-      totalPages: Math.ceil(filteredProducts.length / limit)
-    };
-  }
-
-  async getProduct(id: string): Promise<Product | null> {
-    if (!this.initialized) {
-      await this.loadProductsFromCSV(''); // Parameter is ignored now
-    }
-
+  public async getProduct(id: string): Promise<Product | null> {
     try {
-      const response = await fetch(getApiUrl(`${API_ENDPOINTS.PRODUCTS}/${id}`), {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn(`API returned non-JSON response: ${contentType}`);
-        return this.products.find(p => p.id === id) || null;
-      }
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error(`API error! status: ${response.status}`);
-      }
-      
-      return await response.json();
+      const response = await axios.get(`${this.apiBaseUrl}/${id}`);
+      return response.data || null;
     } catch (error) {
-      console.error(`Error fetching product ${id}:`, error);
-      // Fall back to local products
-      return this.products.find(p => p.id === id) || null;
+      console.error(`Error fetching product with ID ${id}`, error);
+      return null;
     }
   }
-
-  async getCategories(): Promise<{ main: string[]; sub: { [key: string]: string[] } }> {
-    if (!this.initialized) {
-      await this.loadProductsFromCSV(''); // Parameter is ignored now
+  
+  /**
+   * Get product categories
+   * @returns Array of product categories
+   */
+  public async getCategories(): Promise<string[]> {
+    try {
+      const response = await axios.get(`${this.apiBaseUrl}/categories`);
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error('Error fetching product categories', error);
+      return [];
     }
-    return this.categories;
+  }
+  
+  /**
+   * Clear the products cache
+   */
+  public clearCache(): void {
+    this.cache.clear();
   }
 }
 

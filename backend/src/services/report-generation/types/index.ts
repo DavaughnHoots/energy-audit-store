@@ -28,6 +28,13 @@ export interface IHeaderFormatter {
   ): void;
 }
 
+export interface IRecommendationFormatter {
+  addProductRecommendations(
+    doc: PDFKit.PDFDocument,
+    recommendation: AuditRecommendation
+  ): void;
+}
+
 // Calculator interfaces
 export interface IEnergyCalculator {
   calculateTotalEnergy(auditData: EnergyAuditData): number;
@@ -87,6 +94,7 @@ export interface IFormatters {
   valueFormatter: IValueFormatter;
   tableFormatter: ITableFormatter;
   headerFormatter: IHeaderFormatter;
+  recommendationFormatter: IRecommendationFormatter;
 }
 
 export interface ICalculators {

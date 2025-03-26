@@ -9,7 +9,7 @@ import {
   generateLightingEfficiencyChart,
   generateHumidityLevelsChart 
 } from '../../utils/chartHelpers.js';
-import { productRecommendationService } from '../productRecommendationService.js';
+import { ProductRecommendationService } from '../productRecommendationService.js';
 import { calculateOverallEfficiencyScore } from '../efficiencyScoreService.js';
 import { ReportValidationHelper } from '../../utils/reportValidationHelper.js';
 
@@ -22,6 +22,7 @@ export class ReportGenerationService {
   private formatters: IFormatters;
   private calculators: ICalculators;
   private chartGenerators: IChartGenerators;
+  private productRecommendationService: ProductRecommendationService;
 
   /**
    * Constructor with dependency injection
@@ -37,6 +38,7 @@ export class ReportGenerationService {
     this.formatters = formatters;
     this.calculators = calculators;
     this.chartGenerators = chartGenerators;
+    this.productRecommendationService = new ProductRecommendationService();
   }
 
   /**
@@ -613,16 +615,16 @@ export class ReportGenerationService {
           })
           .moveDown(1);
 
-      // Apply validation and intelligent defaults to recommendation data
-      const validatedRec = ReportValidationHelper.validateSingleRecommendation(rec);
-      
-      // Create a table for the recommendation details with proper formatting
-      const recRows = [
-        ['Estimated Savings:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedSavings, 'currency', 'savings') + '/year'],
-        ['Implementation Cost:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedCost, 'currency', 'cost')],
-        ['Payback Period:', this.formatters.valueFormatter.formatValue(validatedRec.paybackPeriod, 'number', 'payback') + ' years']
-      ];
+          // Apply validation and intelligent defaults to recommendation data
+          const validatedRec = ReportValidationHelper.validateSingleRecommendation(rec);
           
+          // Create a table for the recommendation details with proper formatting
+          const recRows = [
+            ['Estimated Savings:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedSavings, 'currency', 'savings') + '/year'],
+            ['Implementation Cost:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedCost, 'currency', 'cost')],
+            ['Payback Period:', this.formatters.valueFormatter.formatValue(validatedRec.paybackPeriod, 'number', 'payback') + ' years']
+          ];
+              
           // Add actual savings if available
           if (rec.actualSavings !== null && rec.actualSavings !== undefined) {
             recRows.push(['Actual Savings:', this.formatters.valueFormatter.formatValue(rec.actualSavings, 'currency', 'savings') + '/year']);
@@ -637,6 +639,32 @@ export class ReportGenerationService {
           }
           
           this.formatters.tableFormatter.generateTable(doc, [], recRows);
+          doc.moveDown(1);
+          
+          // Add product recommendations if available
+          try {
+            // Check if recommendation has products attached
+            if (!rec.products || rec.products.length === 0) {
+              // If not, try to fetch recommended products by category
+              if (!rec.type) {
+                appLogger.debug('Skipping product recommendations - no type defined for recommendation');
+              } else {
+                // Use recommendation type to fetch products
+                const enrichedRec = await this.productRecommendationService.enrichRecommendationWithProducts(rec);
+                if (enrichedRec.products && enrichedRec.products.length > 0) {
+                  // Use the enriched recommendation with products
+                  this.formatters.recommendationFormatter.addProductRecommendations(doc, enrichedRec);
+                }
+              }
+            } else {
+              // Recommendation already has products, render them
+              this.formatters.recommendationFormatter.addProductRecommendations(doc, rec);
+            }
+          } catch (error) {
+            appLogger.error('Error adding product recommendations', { error });
+            // Continue with the next recommendation without products
+          }
+          
           doc.moveDown(1.5);
         }
         appLogger.debug('Recommendations section added successfully');
