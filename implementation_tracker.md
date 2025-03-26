@@ -48,7 +48,32 @@ Implemented usage hours validation and intelligent default calculation to preven
 
 ---
 
+## HVAC Metrics Context Explanation
+
+**Status:** ✅ Implemented on March 26, 2025
+
+**Files Modified:**
+- `backend/src/services/hvacMetricsExplanationService.ts` - Created new service for HVAC metrics explanations
+- `src/components/reports/ReportHvac.tsx` - Updated with interactive explanations
+- `test-hvac-metrics-explanation.js` - Added test script for the service
+
+**Description:**
+Implemented HVAC metrics context explanations to help users better understand efficiency ratings and technical terms in reports. Added color-coded visual indicators and expandable technical details.
+
+**Key Improvements:**
+- Added tiered explanations (simple and advanced technical details)
+- Created color-coded efficiency ratings (Excellent, Good, Average, Poor, Very Poor)
+- Added regional standards comparison based on user location
+- Integrated energy star and federal minimum requirements
+- Added interactive toggle for advanced explanations in the UI
+
+**Testing:**
+- Created test script with extensive test cases for all service functions
+- Verified correct rating calculations and normalizations for different system types
+- Validated regional standards detection
+
+---
+
 ## Upcoming Tasks
 
 - Product Recommendations Integration
-- HVAC Metrics Context Explanation
