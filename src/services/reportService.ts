@@ -1,5 +1,6 @@
-import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { API_ENDPOINTS, API_BASE_URL, getApiUrl } from '../config/api';
 import { ReportData } from '../types/report';
+import { fetchWithAuth } from '../utils/authUtils';
 
 /**
  * Fetches report data for the interactive preview
@@ -8,22 +9,21 @@ import { ReportData } from '../types/report';
  */
 export const fetchReportData = async (auditId: string): Promise<ReportData> => {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.REPORT_DATA(auditId)}`, 
-      {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
+    console.log('Fetching report data for audit ID:', auditId);
+    
+    // Use the fetchWithAuth utility which handles retries and token refresh
+    const response = await fetchWithAuth(
+      getApiUrl(API_ENDPOINTS.REPORT_DATA(auditId)),
+      { method: 'GET' }
     );
 
     if (!response.ok) {
       throw new Error(`Failed to fetch report data: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('Successfully retrieved report data');
+    return data;
   } catch (error) {
     console.error('Error fetching report data:', error);
     throw error;
@@ -43,14 +43,12 @@ export const updateRecommendationStatus = async (
   actualSavings?: number
 ): Promise<void> => {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.RECOMMENDATIONS.UPDATE_STATUS(recommendationId)}`,
+    console.log(`Updating recommendation status: ID=${recommendationId}, status=${status}`);
+    
+    const response = await fetchWithAuth(
+      getApiUrl(API_ENDPOINTS.RECOMMENDATIONS.UPDATE_STATUS(recommendationId)),
       {
         method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           status,
           actualSavings
@@ -61,6 +59,8 @@ export const updateRecommendationStatus = async (
     if (!response.ok) {
       throw new Error(`Failed to update recommendation status: ${response.status} ${response.statusText}`);
     }
+    
+    console.log('Recommendation status updated successfully');
   } catch (error) {
     console.error('Error updating recommendation status:', error);
     throw error;
@@ -78,14 +78,12 @@ export const updateRecommendationPriority = async (
   priority: 'high' | 'medium' | 'low'
 ): Promise<void> => {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.RECOMMENDATIONS.UPDATE_PRIORITY(recommendationId)}`,
+    console.log(`Updating recommendation priority: ID=${recommendationId}, priority=${priority}`);
+    
+    const response = await fetchWithAuth(
+      getApiUrl(API_ENDPOINTS.RECOMMENDATIONS.UPDATE_PRIORITY(recommendationId)),
       {
         method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ priority })
       }
     );
@@ -93,6 +91,8 @@ export const updateRecommendationPriority = async (
     if (!response.ok) {
       throw new Error(`Failed to update recommendation priority: ${response.status} ${response.statusText}`);
     }
+    
+    console.log('Recommendation priority updated successfully');
   } catch (error) {
     console.error('Error updating recommendation priority:', error);
     throw error;
@@ -112,14 +112,12 @@ export const updateImplementationDetails = async (
   implementationCost: number
 ): Promise<void> => {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.RECOMMENDATIONS.UPDATE_DETAILS(recommendationId)}`,
+    console.log(`Updating implementation details: ID=${recommendationId}, date=${implementationDate}, cost=${implementationCost}`);
+    
+    const response = await fetchWithAuth(
+      getApiUrl(API_ENDPOINTS.RECOMMENDATIONS.UPDATE_DETAILS(recommendationId)),
       {
         method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           implementationDate,
           implementationCost
@@ -130,6 +128,8 @@ export const updateImplementationDetails = async (
     if (!response.ok) {
       throw new Error(`Failed to update implementation details: ${response.status} ${response.statusText}`);
     }
+    
+    console.log('Implementation details updated successfully');
   } catch (error) {
     console.error('Error updating implementation details:', error);
     throw error;

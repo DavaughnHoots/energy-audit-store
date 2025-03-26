@@ -27,15 +27,39 @@ let isRefreshing = false;
 // Constants
 const AUTH_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes before expiry
+const AUTH_PERSIST_KEY = 'auth-state';
 
-const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>({
+// Load persisted auth state from localStorage
+const loadPersistedAuthState = (): AuthState => {
+  try {
+    const saved = localStorage.getItem(AUTH_PERSIST_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Only restore if not too old (e.g., within last 24 hours)
+      if (parsed.lastVerified && Date.now() - parsed.lastVerified < 24*60*60*1000) {
+        console.log('Restored auth state from localStorage');
+        return {
+          ...parsed,
+          isLoading: true, // Still need to verify
+          initialCheckDone: false
+        };
+      }
+    }
+  } catch (e) {
+    console.error('Failed to parse persisted auth state', e);
+  }
+  
+  return {
     isAuthenticated: false,
     isLoading: true,
     lastVerified: null,
     user: null,
     initialCheckDone: false
-  });
+  };
+};
+
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [authState, setAuthState] = useState<AuthState>(loadPersistedAuthState());
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -185,6 +209,20 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       });
     }
   }, [authState.isLoading, authState.lastVerified, authState.initialCheckDone]);
+
+  // Persist auth state to localStorage whenever it changes
+  useEffect(() => {
+    if (authState.initialCheckDone) {
+      console.log('Persisting auth state to localStorage');
+      localStorage.setItem(AUTH_PERSIST_KEY, JSON.stringify({
+        isAuthenticated: authState.isAuthenticated,
+        isLoading: false,
+        lastVerified: authState.lastVerified,
+        user: authState.user,
+        initialCheckDone: true
+      }));
+    }
+  }, [authState]);
 
   // Initial auth check on mount
   useEffect(() => {

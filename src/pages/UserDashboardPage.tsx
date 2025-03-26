@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '@/config/api';
+import { API_ENDPOINTS, getApiUrl } from '@/config/api';
+import { fetchWithAuth } from '@/utils/authUtils';
+import { useLocalStorage } from '@/utils/authUtils';
 import { AlertCircle, Download, Loader2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
@@ -33,7 +35,8 @@ const UserDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<React.ReactNode | null>(null);
-  const [stats, setStats] = useState<DashboardStats>({
+  // Use localStorage to persist dashboard stats
+  const [persistedStats, setPersistentStats] = useLocalStorage<DashboardStats>('dashboard-stats', {
     totalSavings: { estimated: 0, actual: 0, accuracy: 0 },
     completedAudits: 0,
     activeRecommendations: 0,
@@ -42,7 +45,8 @@ const UserDashboardPage: React.FC = () => {
     latestAuditId: null,
     recommendations: []
   });
-
+  
+  const [stats, setStats] = useState<DashboardStats>(persistedStats);
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshKey, setRefreshKey] = useState(0); // Used to force refresh
 
@@ -51,28 +55,21 @@ const UserDashboardPage: React.FC = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const auditIdFromUrl = urlParams.get('newAudit');
       
-      const response = await fetch(
-        `${API_ENDPOINTS.DASHBOARD.STATS}${auditIdFromUrl ? `?newAudit=${auditIdFromUrl}` : ''}`,
-        {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${document.cookie
-              .split('; ')
-              .find(row => row.startsWith('accessToken='))
-              ?.split('=')[1] || ''}`
-          }
-        }
+      // Use the new fetchWithAuth utility for better error handling and automatic retry
+      const response = await fetchWithAuth(
+        getApiUrl(`${API_ENDPOINTS.DASHBOARD.STATS}${auditIdFromUrl ? `?newAudit=${auditIdFromUrl}` : ''}`)
       );
 
-      const data = await response.json();
-
+      // Check for non-OK response
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         if (data.code === 'SETUP_REQUIRED') {
           throw new Error('SETUP_REQUIRED');
         }
-        throw new Error(data.error || 'Failed to fetch dashboard data');
+        throw new Error(data.error || `Failed to fetch dashboard data: ${response.status}`);
       }
+
+      const data = await response.json();
 
       console.log('Dashboard data received:', {
         hasLatestAuditId: !!data.latestAuditId,
@@ -82,7 +79,9 @@ const UserDashboardPage: React.FC = () => {
         requestUrl: `${API_ENDPOINTS.DASHBOARD.STATS}${auditIdFromUrl ? `?newAudit=${auditIdFromUrl}` : ''}`
       });
       
+      // Update both stats and persisted stats
       setStats(data);
+      setPersistentStats(data);
       setError(null);
       return data.refreshInterval;
 
