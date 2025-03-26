@@ -146,7 +146,7 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
               (!recommendation.implementationDate || !recommendation.implementationCost)) {
             setEditingImplementationId(recommendation.id);
             const currentDate = new Date().toISOString().split('T')[0];
-            setImplementationDate(currentDate);
+            setImplementationDate(currentDate || '');
             setImplementationCost('');
           }
           
@@ -169,7 +169,7 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
           (!recommendation.implementationDate || !recommendation.implementationCost)) {
         setEditingImplementationId(recommendation.id);
         const currentDate = new Date().toISOString().split('T')[0];
-        setImplementationDate(currentDate);
+        setImplementationDate(currentDate || '');
         setImplementationCost('');
       }
       
@@ -266,12 +266,12 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
     }
   };
 
-  const formatCurrency = (value: number | null): string => {
-    if (value === null) return 'N/A';
+  const formatCurrency = (value: number | null | undefined): string => {
+    if (value === null || value === undefined) return 'N/A';
     return `$${value.toLocaleString()}`;
   };
   
-  const formatDate = (dateString: string | null): string => {
+  const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'Not set';
     return new Date(dateString).toLocaleDateString();
   };
@@ -538,15 +538,15 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
             </div>
             
             {/* Edit History Section (initially collapsed) */}
-            {editHistory[recommendation.id]?.length > 0 && (
+            {(editHistory[recommendation.id]?.length ?? 0) > 0 && (
               <div className="mt-4 pt-3 border-t border-gray-200">
                 <details className="text-sm">
                   <summary className="text-blue-600 cursor-pointer font-medium">
-                    View Change History ({editHistory[recommendation.id] ? editHistory[recommendation.id].length : 0})
+                    View Change History ({editHistory[recommendation.id]?.length || 0})
                   </summary>
                   <div className="mt-2 bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto">
                     <ul className="space-y-2">
-                      {editHistory[recommendation.id]?.map((edit, index) => (
+                      {(editHistory[recommendation.id] || []).map((edit, index) => (
                         <li key={index} className="text-xs text-gray-600">
                           <span className="text-gray-400">{new Date(edit.timestamp).toLocaleString()}:</span>{' '}
                           Changed <span className="font-medium">{edit.field}</span> from{' '}
