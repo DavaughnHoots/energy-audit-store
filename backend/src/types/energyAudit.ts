@@ -1,3 +1,50 @@
+// Product type defined locally to avoid import issues
+export interface ProductReference {
+  // Base properties
+  id: string;
+  name: string;
+  brand?: string;
+  manufacturer?: string;
+  model?: string;
+  price?: number;
+  
+  // Description and details (must be required to match formatter)
+  description: string;
+  specifications: Record<string, string | number>; // Required
+  features?: string[];
+  
+  // Category info
+  category?: string;
+  mainCategory?: string;
+  subCategory?: string; // Only included once
+  
+  // Efficiency information
+  efficiency?: {
+    rating?: string;
+    value: number;
+    unit?: string;
+  };
+  
+  // External links
+  productUrl?: string;
+  imageUrl?: string;
+  
+  // Financial incentives
+  rebateAmount?: number;
+  rebateEligible?: boolean;
+  currency?: string;
+  
+  // Required for compatibility with RecommendationFormatter
+  marketInfo: string;
+  energyStarId: string;
+  
+  // Optional additional metadata
+  greenCertified?: boolean;
+  userRating?: number;
+  reviewCount?: number;
+  specs?: Record<string, any>;
+}
+
 export interface BasicInfo {
   fullName: string;
   email: string;
@@ -181,6 +228,7 @@ export interface AuditRecommendation {
   lastUpdate: string;
   scope?: string; // Added: Area or scope of the recommendation (e.g., specific rooms)
   isEstimated?: boolean; // Added: Flag indicating if values are estimates
+  products?: ProductReference[]; // Associated product recommendations
 }
 
 export interface EnergyAudit {

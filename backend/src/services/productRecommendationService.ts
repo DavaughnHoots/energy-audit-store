@@ -1,5 +1,4 @@
-import { AuditRecommendation } from '../types/energyAudit.js';
-import { Product } from '../types/product.js';
+import { AuditRecommendation, ProductReference } from '../types/energyAudit.js';
 import { appLogger } from '../utils/logger.js';
 
 /**
@@ -19,80 +18,76 @@ export class ProductRecommendationService {
   };
 
   // Mock data for product recommendations by category
-  private readonly mockProducts: Record<string, Product[]> = {
+  private readonly mockProducts: Record<string, ProductReference[]> = {
     'hvac': [
       {
         id: 'hvac-001',
         name: 'EcoComfort Heat Pump',
-        manufacturer: 'GreenAir Systems',
         brand: 'EcoComfort',
+        manufacturer: 'GreenAir Systems',
         model: 'HP-2250-E',
-        category: 'HVAC',
-        subCategory: 'heat-pump',
-        description: 'High-efficiency heat pump with smart temperature control',
+        price: 3499.99,
+        efficiency: {
+          rating: 'Excellent',
+          value: 20.5,
+          unit: 'SEER'
+        },
         features: [
           'SEER 20+ efficiency rating',
           'Smart home integration',
           'Dual-zone capability',
           'Ultra-quiet operation'
         ],
-        specs: {
+        productUrl: 'https://example.com/products/ecocomfort-hp2250e',
+        rebateAmount: 450,
+        rebateEligible: true,
+        description: 'High-efficiency heat pump with smart temperature control',
+        specifications: {
           capacity: '24,000 BTU',
           coverage: '1,200 sq ft',
           coolingSeer: 20.5,
           heatingHspf: 11,
           voltage: 240
         },
-        efficiency: {
-          rating: 'Excellent',
-          value: 20.5,
-          unit: 'SEER'
-        },
-        price: 3499.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/images/heatpump.jpg',
-        productUrl: 'https://example.com/products/ecocomfort-hp2250e',
-        rebateEligible: true,
-        rebateAmount: 450,
-        greenCertified: true,
-        userRating: 4.8,
-        reviewCount: 156
+        mainCategory: 'HVAC',
+        subCategory: 'heat-pump',
+        marketInfo: 'Energy Star Certified',
+        energyStarId: 'ES12345',
+        imageUrl: 'https://example.com/images/heatpump.jpg'
       },
       {
         id: 'hvac-002',
         name: 'ClimateGuard Mini-Split',
         manufacturer: 'ClimateGuard',
         model: 'MS-18K-HESP',
-        category: 'HVAC',
-        subCategory: 'mini-split',
-        description: 'Energy-efficient ductless mini-split system for zoned comfort',
+        price: 1899.99,
+        efficiency: {
+          rating: 'Very Good',
+          value: 19.0,
+          unit: 'SEER'
+        },
         features: [
           'Ductless installation',
           'Heating and cooling functionality',
           'Inverter technology',
           'Washable air filter'
         ],
-        specs: {
+        productUrl: 'https://example.com/products/climateguard-ms18k',
+        rebateAmount: 250,
+        rebateEligible: true,
+        description: 'Energy-efficient ductless mini-split system for zoned comfort',
+        specifications: {
           capacity: '18,000 BTU',
           coverage: '850 sq ft',
           coolingSeer: 19,
           heatingHspf: 10,
           voltage: 220
         },
-        efficiency: {
-          rating: 'Very Good',
-          value: 19.0,
-          unit: 'SEER'
-        },
-        price: 1899.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/images/minisplit.jpg',
-        productUrl: 'https://example.com/products/climateguard-ms18k',
-        rebateEligible: true,
-        rebateAmount: 250,
-        greenCertified: true,
-        userRating: 4.6,
-        reviewCount: 87
+        mainCategory: 'HVAC',
+        subCategory: 'mini-split',
+        marketInfo: 'Energy Star Certified',
+        energyStarId: 'ES12346',
+        imageUrl: 'https://example.com/images/minisplit.jpg'
       }
     ],
     'lighting': [
@@ -101,71 +96,67 @@ export class ProductRecommendationService {
         name: 'LumiSave LED Smart Bulb 4-Pack',
         manufacturer: 'LumiSave',
         model: 'SB-800L-4PK',
-        category: 'Lighting',
-        subCategory: 'LED',
-        description: 'Smart LED bulbs with adjustable color temperature and brightness',
+        price: 49.99,
+        efficiency: {
+          rating: 'Excellent',
+          value: 88.9,
+          unit: 'lumens/watt'
+        },
         features: [
           'Smartphone control',
           'Adjustable from 2700K-5000K',
           '800 lumens at full brightness',
           '15,000 hour lifespan'
         ],
-        specs: {
+        productUrl: 'https://example.com/products/lumisave-sb800l',
+        rebateEligible: false,
+        description: 'Smart LED bulbs with adjustable color temperature and brightness',
+        specifications: {
           wattage: 9,
           lumens: 800,
           lifespan: 15000,
           baseType: 'E26',
           colorTemperature: '2700K-5000K'
         },
-        efficiency: {
-          rating: 'Excellent',
-          value: 88.9,
-          unit: 'lumens/watt'
-        },
-        price: 49.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/images/smartbulb.jpg',
-        productUrl: 'https://example.com/products/lumisave-sb800l',
-        rebateEligible: false,
-        greenCertified: true,
-        userRating: 4.7,
-        reviewCount: 312
+        mainCategory: 'Lighting',
+        subCategory: 'LED',
+        marketInfo: 'Energy Star Certified',
+        energyStarId: 'ES12347',
+        imageUrl: 'https://example.com/images/smartbulb.jpg'
       },
       {
         id: 'light-002',
         name: 'EcoLumen BR30 Flood Light 6-Pack',
         manufacturer: 'EcoLumen',
         model: 'BR30-65W-6PK',
-        category: 'Lighting',
-        subCategory: 'LED',
-        description: 'Energy-efficient LED flood lights for recessed fixtures',
+        price: 39.99,
+        efficiency: {
+          rating: 'Very Good',
+          value: 68.4,
+          unit: 'lumens/watt'
+        },
         features: [
           'Dimmable',
           'Indoor/outdoor rated',
           '65W replacement',
           'Warm white (2700K)'
         ],
-        specs: {
+        productUrl: 'https://example.com/products/ecolumen-br30',
+        rebateAmount: 5,
+        rebateEligible: true,
+        description: 'Energy-efficient LED flood lights for recessed fixtures',
+        specifications: {
           wattage: 9.5,
           lumens: 650,
           lifespan: 25000,
           baseType: 'E26',
           colorTemperature: '2700K'
         },
-        efficiency: {
-          rating: 'Very Good',
-          value: 68.4,
-          unit: 'lumens/watt'
-        },
-        price: 39.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/images/floodlight.jpg',
-        productUrl: 'https://example.com/products/ecolumen-br30',
-        rebateEligible: true,
-        rebateAmount: 5,
-        greenCertified: true,
-        userRating: 4.5,
-        reviewCount: 186
+        mainCategory: 'Lighting',
+        subCategory: 'LED',
+        marketInfo: 'Energy Star Certified',
+        energyStarId: 'ES12348',
+        imageUrl: 'https://example.com/images/floodlight.jpg'
       }
     ],
     'insulation': [
@@ -174,72 +165,68 @@ export class ProductRecommendationService {
         name: 'ThermoBarrier Wall Insulation',
         manufacturer: 'EcoInsulate',
         model: 'TB-R15-23',
-        category: 'Insulation',
-        subCategory: 'fiberglass-batts',
-        description: 'High-performance fiberglass insulation for energy-efficient walls',
+        price: 54.99,
+        efficiency: {
+          rating: 'Excellent',
+          value: 15,
+          unit: 'R-Value'
+        },
         features: [
           'R-15 thermal resistance',
           'Formaldehyde-free formula',
           'Fire resistant',
           'Standard 23" width for wall studs'
         ],
-        specs: {
+        productUrl: 'https://example.com/products/thermobarrier-r15',
+        rebateAmount: 15,
+        rebateEligible: true,
+        description: 'High-performance fiberglass insulation for energy-efficient walls',
+        specifications: {
           rValue: 15,
           thickness: 3.5,
           width: 23,
           length: 93,
           material: 'Fiberglass'
         },
-        efficiency: {
-          rating: 'Excellent',
-          value: 15,
-          unit: 'R-Value'
-        },
-        price: 54.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/images/wallinsulation.jpg',
-        productUrl: 'https://example.com/products/thermobarrier-r15',
-        rebateEligible: true,
-        rebateAmount: 15,
-        greenCertified: true,
-        userRating: 4.6,
-        reviewCount: 78
+        mainCategory: 'Insulation',
+        subCategory: 'fiberglass-batts',
+        marketInfo: 'Energy Star Certified',
+        energyStarId: 'ES12349',
+        imageUrl: 'https://example.com/images/wallinsulation.jpg'
       },
       {
         id: 'insul-002',
         name: 'AtticGuard Blown-In Insulation Kit',
         manufacturer: 'ThermoShield',
         model: 'AG-BIK-30',
-        category: 'Insulation',
-        subCategory: 'blown-in',
-        description: 'Complete DIY kit for adding blown-in insulation to attics',
+        price: 379.99,
+        efficiency: {
+          rating: 'Excellent',
+          value: 30,
+          unit: 'R-Value'
+        },
         features: [
           'Covers up to 300 sq. ft. at R-30',
           'Includes blowing machine rental voucher',
           'Cellulose made from recycled materials',
           'Fire-retardant treatment'
         ],
-        specs: {
+        productUrl: 'https://example.com/products/atticguard-bik30',
+        rebateAmount: 100,
+        rebateEligible: true,
+        description: 'Complete DIY kit for adding blown-in insulation to attics',
+        specifications: {
           rValue: 30,
           coverage: 300,
           depth: 10.25,
           material: 'Cellulose',
           weight: 150
         },
-        efficiency: {
-          rating: 'Excellent',
-          value: 30,
-          unit: 'R-Value'
-        },
-        price: 379.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/images/blownin.jpg',
-        productUrl: 'https://example.com/products/atticguard-bik30',
-        rebateEligible: true,
-        rebateAmount: 100,
-        greenCertified: true,
-        userRating: 4.4,
-        reviewCount: 42
+        mainCategory: 'Insulation',
+        subCategory: 'blown-in',
+        marketInfo: 'Energy Star Certified',
+        energyStarId: 'ES12350',
+        imageUrl: 'https://example.com/images/blownin.jpg'
       }
     ],
     'windows': [
@@ -248,36 +235,34 @@ export class ProductRecommendationService {
         name: 'ClearView Double-Hung Window',
         manufacturer: 'WindowWorks',
         model: 'CV-DH-3656',
-        category: 'Windows',
-        subCategory: 'double-hung',
-        description: 'Energy-efficient double-hung window with Low-E glass',
+        price: 389.99,
+        efficiency: {
+          rating: 'Excellent',
+          value: 0.28,
+          unit: 'U-Factor'
+        },
         features: [
           'ENERGY STAR certified',
           'Low-E glass coating',
           'Argon gas fill',
           'Tilt-in sashes for easy cleaning'
         ],
-        specs: {
+        productUrl: 'https://example.com/products/clearview-dh3656',
+        rebateAmount: 40,
+        rebateEligible: true,
+        description: 'Energy-efficient double-hung window with Low-E glass',
+        specifications: {
           width: 36,
           height: 56,
           uFactor: 0.28,
           solarHeatGain: 0.32,
           visibleTransmittance: 0.51
         },
-        efficiency: {
-          rating: 'Excellent',
-          value: 0.28,
-          unit: 'U-Factor'
-        },
-        price: 389.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/images/doublehung.jpg',
-        productUrl: 'https://example.com/products/clearview-dh3656',
-        rebateEligible: true,
-        rebateAmount: 40,
-        greenCertified: true,
-        userRating: 4.7,
-        reviewCount: 124
+        mainCategory: 'Windows',
+        subCategory: 'double-hung',
+        marketInfo: 'Energy Star Certified',
+        energyStarId: 'ES12351',
+        imageUrl: 'https://example.com/images/doublehung.jpg'
       }
     ],
     'thermostat': [
@@ -286,35 +271,33 @@ export class ProductRecommendationService {
         name: 'EnergyMinder Smart Thermostat',
         manufacturer: 'SmartHome Technologies',
         model: 'EM-ST200',
-        category: 'Thermostats',
-        subCategory: 'smart-thermostat',
-        description: 'AI-powered learning thermostat with energy usage reports',
+        price: 249.99,
+        efficiency: {
+          rating: 'Excellent',
+          value: 23,
+          unit: '% energy savings'
+        },
         features: [
           'Learning algorithm adapts to your schedule',
           'Smartphone control and monitoring',
           'Energy usage reports',
           'Compatible with most HVAC systems'
         ],
-        specs: {
+        productUrl: 'https://example.com/products/energyminder-st200',
+        rebateAmount: 50,
+        rebateEligible: true,
+        description: 'AI-powered learning thermostat with energy usage reports',
+        specifications: {
           display: 'Color touchscreen',
           connectivity: 'Wi-Fi, Bluetooth',
           sensors: 'Temperature, Humidity, Occupancy',
           compatibility: '24V systems, heat pumps, multi-stage'
         },
-        efficiency: {
-          rating: 'Excellent',
-          value: 23,
-          unit: '% energy savings'
-        },
-        price: 249.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/images/smartthermostat.jpg',
-        productUrl: 'https://example.com/products/energyminder-st200',
-        rebateEligible: true,
-        rebateAmount: 50,
-        greenCertified: true,
-        userRating: 4.8,
-        reviewCount: 567
+        mainCategory: 'Thermostats',
+        subCategory: 'smart-thermostat',
+        marketInfo: 'Energy Star Certified',
+        energyStarId: 'ES12352',
+        imageUrl: 'https://example.com/images/smartthermostat.jpg'
       }
     ]
   };
@@ -365,7 +348,7 @@ export class ProductRecommendationService {
    * @param limit Maximum number of products to return
    * @returns Array of recommended products
    */
-  public getProductsByCategory(category: string, limit: number = 2): Product[] {
+  public getProductsByCategory(category: string, limit: number = 2): ProductReference[] {
     const categoryKey = category.toLowerCase();
     const products = this.mockProducts[categoryKey] || [];
     

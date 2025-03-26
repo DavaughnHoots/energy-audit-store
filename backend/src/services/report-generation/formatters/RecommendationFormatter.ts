@@ -1,6 +1,5 @@
 import PDFKit from 'pdfkit';
-import { Product } from '../../../types/product.js';
-import { AuditRecommendation } from '../../../types/energyAudit.js';
+import { AuditRecommendation, ProductReference } from '../../../types/energyAudit.js';
 import { appLogger } from '../../../utils/logger.js';
 
 /**
@@ -36,8 +35,8 @@ export class RecommendationFormatter {
         .moveDown(0.3);
       
       // Add product cards
-      for (const product of recommendation.products) {
-        this.addProductCard(doc, product);
+      for (const productRef of recommendation.products) {
+        this.addProductCard(doc, productRef);
       }
       
       // Add note about product recommendations
@@ -64,7 +63,7 @@ export class RecommendationFormatter {
    * @param doc PDFKit document
    * @param product Product information
    */
-  private addProductCard(doc: PDFKit.PDFDocument, product: Product): void {
+  private addProductCard(doc: PDFKit.PDFDocument, product: ProductReference): void {
     // Start a box for the product card
     doc.rect(doc.x, doc.y, 500, 120)
       .fillAndStroke('#f5f5f5', '#cccccc')
@@ -84,7 +83,7 @@ export class RecommendationFormatter {
     
     doc.fontSize(10)
       .fillColor('#666666')
-      .text(`by ${product.brand || product.manufacturer || 'Unknown manufacturer'}`, {
+      .text(`by ${product.brand || 'Unknown manufacturer'}`, {
         indent: 10
       })
       .moveDown(0.2);
@@ -112,8 +111,13 @@ export class RecommendationFormatter {
       });
     }
     
-    if (product.efficiency && product.efficiency.value) {
-      doc.text(`Efficiency: ${product.efficiency.rating || 'Standard'} (${product.efficiency.value} ${product.efficiency.unit || ''})`, {
+    if (product.efficiency) {
+      // Efficiency is now a structured object
+      const effText = typeof product.efficiency === 'string' 
+        ? product.efficiency 
+        : `${product.efficiency.rating || ''} ${product.efficiency.value}${product.efficiency.unit || ''}`.trim();
+        
+      doc.text(`Efficiency: ${effText}`, {
         indent: 15,
         width: 240
       });
