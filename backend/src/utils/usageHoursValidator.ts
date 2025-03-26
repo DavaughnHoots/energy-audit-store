@@ -1,146 +1,136 @@
-import { EnergyAuditData } from '../types/energyAudit.js';
-import { appLogger } from './logger.js';
-
 /**
- * Validates and normalizes daily usage hours
- * Ensures that usage hours are reasonable values
+ * Utility class for validating and calculating daily usage hours
  */
 export class UsageHoursValidator {
-  /**
-   * Default daily usage hours by property type
-   * These are used when no valid data is provided
-   */
-  private static readonly defaultUsageHours: Record<string, number> = {
-    'single-family': 6.5,
-    'multi-family': 7.2,
-    'apartment': 8.0,
-    'condo': 7.5,
-    'townhouse': 6.8,
-    'mobile-home': 8.5,
-    'commercial': 10.5
+  // Default hours by occupancy type
+  private static defaultHoursByOccupancy: Record<string, number> = {
+    'fullTime': 16,    // Full-time occupancy (work from home, etc.)
+    'standard': 12,    // Standard occupancy (typical working hours)
+    'partTime': 8,     // Part-time occupancy (weekdays evenings only)
+    'weekendOnly': 6,  // Weekend occupancy (vacation homes)
+    'seasonal': 4,     // Seasonal properties with limited use
+    'vacant': 2        // Minimal usage but some systems still running
   };
-
+  
   /**
-   * Occupancy-based adjustment factors
-   * Applied as multipliers on the default hours
+   * Validates daily usage hours and ensures a reasonable value
+   * @param usageHours The provided usage hours (may be invalid)
+   * @param occupancyData Information about property occupancy
+   * @returns Valid usage hours value
    */
-  private static readonly occupancyFactors: Record<string, number> = {
-    'low': 0.7,      // Low occupancy (e.g., vacation home)
-    'medium': 1.0,   // Medium occupancy (e.g., average family)
-    'high': 1.3      // High occupancy (e.g., large family, home business)
-  };
-
-  /**
-   * Room-specific default hours
-   * For more granular room-by-room recommendations
-   */
-  private static readonly roomDefaultHours: Record<string, number> = {
-    'kitchen': 5.0,
-    'living_room': 6.0,
-    'bedroom': 3.5,
-    'bathroom': 2.0,
-    'office': 8.0,
-    'garage': 1.0,
-    'basement': 1.5,
-    'hallway': 2.0,
-    'outdoor': 4.0
-  };
-
-  /**
-   * Validate and normalize daily usage hours
-   * @param auditData Full energy audit data
-   * @returns Validated daily usage hours
-   */
-  public static validateDailyUsageHours(auditData: EnergyAuditData): number {
-    try {
-      // Extract usage hours from audit data
-      let usageHours = 0;
-      if (auditData.energyConsumption) {
-        usageHours = auditData.energyConsumption.durationHours || 0;
-      }
-
-      // Always ensure a valid value, even if it's zero in the data
-      // Min allowed is 1 hour (reasonable minimum for any occupied home)
-      if (usageHours <= 0 || usageHours > 24) {
-        appLogger.warn('Invalid daily usage hours', { 
-          providedValue: usageHours 
-        });
-
-        // Calculate default based on property type
-        const propertyType = (auditData.basicInfo?.propertyType || 'single-family').toLowerCase();
-        const defaultHours = this.defaultUsageHours[propertyType] || 7.0;
-
-        // Determine occupancy level based on number of occupants
-        let occupancyLevel = 'medium';
-        if (auditData.basicInfo?.occupants) {
-          if (auditData.basicInfo.occupants <= 1) {
-            occupancyLevel = 'low';
-          } else if (auditData.basicInfo.occupants >= 5) {
-            occupancyLevel = 'high';
-          }
-        }
-        
-        // Use inferred occupancy or fallback to medium
-        const occupancyFactor = this.occupancyFactors[occupancyLevel] || 1.0;
-        
-        usageHours = defaultHours * occupancyFactor;
-        
-        appLogger.debug('Using default daily usage hours', { 
-          propertyType, 
-          defaultHours,
-          occupancyLevel,
-          occupancyFactor,
-          calculatedHours: usageHours
-        });
-      }
-
-      // Ensure hours are within reasonable range and properly formatted
-      usageHours = Math.min(24, Math.max(1, usageHours));
+  public static validateDailyUsageHours(
+    usageHours: number | undefined | null,
+    occupancyData: {
+      type?: string;
+      householdSize?: number;
+    }
+  ): number {
+    // Check if hours are within reasonable range
+    if (usageHours === undefined || 
+        usageHours === null || 
+        isNaN(usageHours) || 
+        usageHours <= 0 || 
+        usageHours > 24) {
       
-      return parseFloat(usageHours.toFixed(1));
-    } catch (error) {
-      appLogger.error('Error validating daily usage hours', { 
-        error: error instanceof Error ? error.message : String(error)
+      console.warn('Invalid daily usage hours detected', { 
+        providedValue: usageHours 
       });
-      return 7.0; // Sensible default for most homes
+      
+      // Generate default based on occupancy patterns
+      return this.getDefaultDailyUsageHours(occupancyData);
+    }
+    
+    // Valid value - return as is
+    return usageHours;
+  }
+  
+  /**
+   * Get default daily usage hours based on occupancy data
+   * @param occupancyData Information about property occupancy
+   * @returns Estimated daily usage hours
+   */
+  private static getDefaultDailyUsageHours(
+    occupancyData: {
+      type?: string;
+      householdSize?: number;
+    }
+  ): number {
+    try {
+      // Use occupancy type to determine realistic usage hours
+      const occupancyType = occupancyData.type || 'standard';
+      
+      // Get default hours for this occupancy type or standard if not found
+      let defaultHours = this.defaultHoursByOccupancy[occupancyType] || 
+                        this.defaultHoursByOccupancy.standard;
+      
+      // Apply household size adjustment if available
+      const householdSize = occupancyData.householdSize || 0;
+      if (householdSize > 0) {
+        // Larger households tend to have longer usage hours
+        // Add 0.5 hours per additional person beyond 2 people
+        const sizeAdjustment = Math.max(0, (householdSize - 2) * 0.5);
+        defaultHours += sizeAdjustment;
+      }
+      
+      // Cap at reasonable maximum
+      return Math.min(defaultHours, 24);
+    } catch (error) {
+      console.error('Error generating default usage hours', error);
+      return 12; // Safe fallback
     }
   }
-
+  
   /**
-   * Get default usage hours for a specific room or space
-   * Used for room-specific recommendations
-   * @param roomType Type of room (kitchen, bedroom, etc.)
-   * @param auditData Full energy audit data for context
-   * @returns Default usage hours for the specified room
+   * Calculate daily usage hours based on wake and sleep time patterns
+   * @param wakeTime Wake time pattern (early, standard, late, varied)
+   * @param sleepTime Sleep time pattern (early, standard, late, varied)
+   * @param occupancyType Base occupancy type
+   * @returns Calculated usage hours
    */
-  public static getRoomUsageHours(roomType: string, auditData: EnergyAuditData): number {
-    try {
-      // Get default for the room type
-      const roomTypeKey = roomType.toLowerCase().replace(' ', '_');
-      let roomHours = this.roomDefaultHours[roomTypeKey] || 4.0;
-      
-      // Determine occupancy level based on number of occupants
-      let occupancyLevel = 'medium';
-      if (auditData.basicInfo?.occupants) {
-        if (auditData.basicInfo.occupants <= 1) {
-          occupancyLevel = 'low';
-        } else if (auditData.basicInfo.occupants >= 5) {
-          occupancyLevel = 'high';
-        }
-      }
-      
-      // Use inferred occupancy or fallback to medium
-      const occupancyFactor = this.occupancyFactors[occupancyLevel] || 1.0;
-      
-      roomHours *= occupancyFactor;
-      
-      return parseFloat(roomHours.toFixed(1));
-    } catch (error) {
-      appLogger.error('Error calculating room usage hours', { 
-        error: error instanceof Error ? error.message : String(error),
-        roomType
-      });
-      return 4.0; // Reasonable default
+  public static calculateHoursFromPattern(
+    wakeTime: 'early' | 'standard' | 'late' | 'varied',
+    sleepTime: 'early' | 'standard' | 'late' | 'varied',
+    occupancyType: string = 'standard'
+  ): number {
+    // Start with base hours by occupancy type
+    let baseHours = this.defaultHoursByOccupancy[occupancyType] || 12;
+    
+    // Adjust for wake and sleep time
+    let adjustment = 0;
+    
+    // Wake time adjustments
+    switch (wakeTime) {
+      case 'early':
+        adjustment += 1;  // Earlier wake = more hours
+        break;
+      case 'late':
+        adjustment -= 1;  // Later wake = fewer hours
+        break;
+      case 'varied':
+        adjustment += 0;  // No adjustment for varied
+        break;
+      default:
+        adjustment += 0;  // No adjustment for standard
     }
+    
+    // Sleep time adjustments
+    switch (sleepTime) {
+      case 'early':
+        adjustment -= 1;  // Earlier sleep = fewer hours
+        break;
+      case 'late':
+        adjustment += 1;  // Later sleep = more hours
+        break;
+      case 'varied':
+        adjustment += 0;  // No adjustment for varied
+        break;
+      default:
+        adjustment += 0;  // No adjustment for standard
+    }
+    
+    // Apply adjustment and ensure within valid range
+    return Math.min(24, Math.max(1, baseHours + adjustment));
   }
 }
+
+export default UsageHoursValidator;

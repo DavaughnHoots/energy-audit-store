@@ -1,9 +1,9 @@
 /**
- * Test script for daily usage hours validation (ES Module version)
+ * Test script for daily usage hours validation
  */
 
-// Create a version of the validator class for ES module testing
-// Since we can't import TypeScript directly in ESM without transpiling
+// Import the validator class - fix for CommonJS
+// In CommonJS, we need to make a dummy class to test since we can't compile TypeScript directly
 const UsageHoursValidator = {
   // Default hours by occupancy type
   defaultHoursByOccupancy: {
@@ -15,7 +15,7 @@ const UsageHoursValidator = {
     'vacant': 2        // Minimal usage but some systems still running
   },
   
-  validateDailyUsageHours(usageHours, occupancyData) {
+  validateDailyUsageHours: function(usageHours, occupancyData) {
     // Check if hours are within reasonable range
     if (usageHours === undefined || 
         usageHours === null || 
@@ -35,7 +35,7 @@ const UsageHoursValidator = {
     return usageHours;
   },
   
-  getDefaultDailyUsageHours(occupancyData) {
+  getDefaultDailyUsageHours: function(occupancyData) {
     try {
       // Use occupancy type to determine realistic usage hours
       const occupancyType = occupancyData.type || 'standard';
@@ -61,7 +61,7 @@ const UsageHoursValidator = {
     }
   },
   
-  calculateHoursFromPattern(wakeTime, sleepTime, occupancyType = 'standard') {
+  calculateHoursFromPattern: function(wakeTime, sleepTime, occupancyType) {
     // Start with base hours by occupancy type
     let baseHours = this.defaultHoursByOccupancy[occupancyType] || 12;
     
