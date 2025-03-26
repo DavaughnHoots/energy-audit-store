@@ -31,12 +31,12 @@ This document tracks the implementation progress of improvements to the Energy A
 
 | Task ID | Description | Status | Assigned To | Target Date | Dependencies | Notes |
 |---------|-------------|--------|-------------|-------------|--------------|-------|
-| FIN-01 | Fix potential savings calculation | ⬜ Not Started | | Mar 26, 2025 | | See recommendation_financial_data_improvements.txt |
-| FIN-02 | Implement default savings estimates by recommendation type | ⬜ Not Started | | Mar 26, 2025 | FIN-01 | |
-| FIN-03 | Implement implementation cost estimates | ⬜ Not Started | | Mar 26, 2025 | | |
-| FIN-04 | Implement payback period calculation | ⬜ Not Started | | Mar 26, 2025 | FIN-01, FIN-03 | |
-| FIN-05 | Add estimate indicators in PDF report | ⬜ Not Started | | Mar 26, 2025 | FIN-01, FIN-02, FIN-03, FIN-04 | |
-| FIN-06 | Create unit tests for financial calculations | ⬜ Not Started | | Mar 26, 2025 | FIN-01, FIN-02, FIN-03, FIN-04 | |
+| FIN-01 | Fix potential savings calculation | ✅ Completed | | Mar 26, 2025 | | Added sophisticated savings estimation in ReportValidationHelper |
+| FIN-02 | Implement default savings estimates by recommendation type | ✅ Completed | | Mar 26, 2025 | FIN-01 | Added detailed savings estimates by category |
+| FIN-03 | Implement implementation cost estimates | ✅ Completed | | Mar 26, 2025 | | Added cost estimation based on property size |
+| FIN-04 | Implement payback period calculation | ✅ Completed | | Mar 26, 2025 | FIN-01, FIN-03 | Added calculations based on cost/savings ratio |
+| FIN-05 | Add estimate indicators in PDF report | ✅ Completed | | Mar 26, 2025 | FIN-01, FIN-02, FIN-03, FIN-04 | Added isEstimated flag to indicate estimated values |
+| FIN-06 | Create unit tests for financial calculations | ⬜ Not Started | | Mar 26, 2025 | FIN-01, FIN-02, FIN-03, FIN-04 | To be completed |
 
 ### 3. Daily Usage Hours Validation (🟠 High)
 

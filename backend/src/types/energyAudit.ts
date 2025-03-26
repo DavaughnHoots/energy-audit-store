@@ -24,6 +24,7 @@ export interface HomeDetails {
   ceilingHeight: number;
   basementType: 'finished' | 'unfinished' | 'none';
   basementHeating: 'heated' | 'unheated';
+  unitPosition?: 'interior' | 'end' | 'corner'; // For townhouses - position affects energy usage
 }
 
 export interface InsulationInfo {
@@ -178,6 +179,8 @@ export interface AuditRecommendation {
   implementationDate: string | null;
   implementationCost: number | null;
   lastUpdate: string;
+  scope?: string; // Added: Area or scope of the recommendation (e.g., specific rooms)
+  isEstimated?: boolean; // Added: Flag indicating if values are estimates
 }
 
 export interface EnergyAudit {
