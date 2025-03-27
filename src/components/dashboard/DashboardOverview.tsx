@@ -62,20 +62,20 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     description: string;
     comparison?: { actual: number; estimated: number };
   }) => (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex items-center">
-        <div className="p-3 rounded-lg bg-green-100">
+    <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-0">
+        <div className="p-3 rounded-lg bg-green-100 self-start">
           <Icon className="h-6 w-6 text-green-600" />
         </div>
-        <div className="ml-4 flex-grow">
+        <div className="sm:ml-4 flex-grow">
           <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-          <p className="text-2xl font-semibold text-gray-900">{value}</p>
-          <p className="text-sm text-gray-600">{description}</p>
+          <p className="text-xl sm:text-2xl font-semibold text-gray-900 mt-1">{value}</p>
+          <p className="text-sm text-gray-600 mt-1">{description}</p>
           {comparison && typeof comparison.estimated === 'number' && typeof comparison.actual === 'number' && (
-            <div className="mt-2 text-sm">
-              <span className="text-blue-600">Estimated: ${comparison.estimated.toLocaleString()}</span>
-              <span className="mx-2">|</span>
-              <span className="text-green-600">Actual: ${comparison.actual.toLocaleString()}</span>
+            <div className="mt-2 text-sm flex flex-col sm:flex-row gap-2 sm:gap-0">
+              <span className="text-blue-600 whitespace-nowrap">Estimated: ${comparison.estimated.toLocaleString()}</span>
+              <span className="hidden sm:inline mx-2">|</span>
+              <span className="text-green-600 whitespace-nowrap">Actual: ${comparison.actual.toLocaleString()}</span>
             </div>
           )}
         </div>
@@ -118,9 +118,9 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       </div>
 
       {/* Savings Chart */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-8 overflow-hidden">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Savings Trend</h2>
-        <div className="h-96">
+        <div className="h-[400px] sm:h-96 -mx-4 sm:mx-0">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={stats.monthlySavings}
@@ -163,10 +163,10 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       </div>
 
       {/* Recommendations Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
         {stats.recommendations && stats.recommendations.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 -mx-4 sm:mx-0">
             {stats.recommendations.map((recommendation) => (
               <RecommendationCard
                 key={recommendation.id}
