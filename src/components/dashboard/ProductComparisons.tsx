@@ -179,9 +179,9 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
         </div>
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Product History Panel */}
-        <div className="lg:col-span-1 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="lg:col-span-1 bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">Product History</h2>
           <p className="text-sm text-gray-600 mb-4">
             Select products to compare from your past energy audits.
@@ -193,11 +193,11 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
               <p className="text-sm mt-2">Complete an energy audit to get product recommendations.</p>
             </div>
           ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-[350px] sm:max-h-96 overflow-y-auto">
               {productHistory.map(product => (
-                      <div 
+                <div 
                   key={`${product.id}-${product.audit_id}`}
-                  className={`p-3 border rounded-md ${
+                  className={`p-2 sm:p-3 border rounded-md ${
                     selectedProducts.some(p => p.id === product.id)
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:bg-gray-50'
@@ -205,26 +205,26 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                 >
                   <div className="flex justify-between items-start">
                     <div 
-                      className="cursor-pointer flex-grow"
+                      className="cursor-pointer flex-grow pr-2"
                       onClick={() => toggleProductSelection(product)}
                     >
-                      <h3 className="font-medium">{product.name}</h3>
-                      <p className="text-sm text-gray-600">{product.category}</p>
-                      <p className="text-sm font-semibold">${product.price.toLocaleString()}</p>
+                      <h3 className="font-medium text-sm sm:text-base">{product.name}</h3>
+                      <p className="text-xs sm:text-sm text-gray-600">{product.category}</p>
+                      <p className="text-xs sm:text-sm font-semibold">${product.price.toLocaleString()}</p>
                     </div>
                     <div className="flex items-start">
                       <input 
                         type="checkbox" 
                         checked={selectedProducts.some(p => p.id === product.id)}
                         onChange={() => toggleProductSelection(product)} 
-                        className="h-5 w-5 text-green-600 mr-2"
+                        className="h-5 w-5 text-green-600 mr-1 sm:mr-2 shrink-0"
                       />
                       <button
                         onClick={() => {
                           setSelectedProductForDetail(product.id);
                           setIsProductDetailModalOpen(true);
                         }}
-                        className="p-1 text-blue-600 hover:text-blue-800 rounded"
+                        className="p-1 text-blue-600 hover:text-blue-800 rounded shrink-0"
                         title="View product details"
                       >
                         <Info className="h-4 w-4" />
@@ -239,7 +239,7 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
         
         {/* Comparison Workspace */}
         <div className="lg:col-span-3">
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 mb-4 sm:mb-6">
             <h2 className="text-lg font-semibold mb-4">Comparison Workspace</h2>
             
             {selectedProducts.length === 0 ? (
@@ -249,15 +249,15 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
             ) : (
               <>
                 {/* Product Comparison Grid */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
+                <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+                  <table className="min-w-full divide-y divide-gray-200 table-fixed">
                     <thead>
                       <tr>
-                        <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px] sm:w-auto">
                           Feature
                         </th>
                         {selectedProducts.map(product => (
-                          <th key={product.id} className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th key={product.id} className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px] sm:min-w-[200px]">
                             {product.name}
                           </th>
                         ))}
@@ -266,11 +266,11 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                     <tbody className="bg-white divide-y divide-gray-200">
                       {/* Price Row */}
                       <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           Price
                         </td>
                         {selectedProducts.map(product => (
-                          <td key={product.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                             ${product.price.toLocaleString()}
                           </td>
                         ))}
@@ -278,11 +278,11 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                       
                       {/* Category Row */}
                       <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           Category
                         </td>
                         {selectedProducts.map(product => (
-                          <td key={product.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                             {product.category}
                           </td>
                         ))}
@@ -290,11 +290,11 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                       
                       {/* Energy Efficiency Row */}
                       <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           Energy Efficiency
                         </td>
                         {selectedProducts.map(product => (
-                          <td key={product.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                             {product.energyEfficiency}
                           </td>
                         ))}
@@ -302,11 +302,11 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                       
                       {/* Annual Savings Row */}
                       <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           Annual Savings
                         </td>
                         {selectedProducts.map(product => (
-                          <td key={product.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                             ${product.annualSavings.toLocaleString()}
                           </td>
                         ))}
@@ -314,11 +314,11 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                       
                       {/* ROI Row */}
                       <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           ROI
                         </td>
                         {selectedProducts.map(product => (
-                          <td key={product.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                             {(product.roi * 100).toFixed(1)}%
                           </td>
                         ))}
@@ -326,11 +326,11 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                       
                       {/* Payback Period Row */}
                       <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           Payback Period
                         </td>
                         {selectedProducts.map(product => (
-                          <td key={product.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                             {product.paybackPeriod.toFixed(1)} years
                           </td>
                         ))}
@@ -338,12 +338,12 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                       
                       {/* Features Row */}
                       <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           Features
                         </td>
                         {selectedProducts.map(product => (
-                          <td key={product.id} className="px-6 py-4 text-sm text-gray-500">
-                            <ul className="list-disc pl-5">
+                          <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 text-xs sm:text-sm text-gray-500">
+                            <ul className="list-disc pl-4 sm:pl-5">
                               {product.features.map(feature => (
                                 <li key={feature}>{feature}</li>
                               ))}
@@ -356,24 +356,24 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                 </div>
                 
                 {/* Save Comparison Controls */}
-                <div className="mt-6 flex items-center space-x-4">
+                <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:space-x-4">
                   <input
                     type="text"
                     value={comparisonName}
                     onChange={(e) => setComparisonName(e.target.value)}
                     placeholder="Comparison name"
-                    className="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="flex-grow px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                   <button
                     onClick={saveComparison}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    className="flex items-center justify-center px-3 sm:px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 w-full sm:w-auto"
                   >
                     <Save className="w-4 h-4 mr-2" />
                     Save Comparison
                   </button>
                   <button
                     onClick={() => setSelectedProducts([])}
-                    className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                    className="flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300 w-full sm:w-auto"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Clear
@@ -384,7 +384,7 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
           </div>
           
           {/* Saved Comparisons */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Saved Comparisons</h2>
             
             {savedComparisons.length === 0 ? (
@@ -397,9 +397,9 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                 {savedComparisons.map(comparison => (
                   <div 
                     key={comparison.id}
-                    className="p-4 border border-gray-200 rounded-md hover:bg-gray-50"
+                    className="p-3 sm:p-4 border border-gray-200 rounded-md hover:bg-gray-50"
                   >
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
                       <div>
                         <h3 className="font-medium">{comparison.name}</h3>
                         <p className="text-sm text-gray-600">
@@ -407,16 +407,16 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                           Created {new Date(comparison.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-2 self-end sm:self-auto">
                         <button
                           onClick={() => loadComparison(comparison)}
-                          className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200"
+                          className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-md hover:bg-blue-200"
                         >
                           Load
                         </button>
                         <button
                           onClick={() => deleteComparison(comparison.id)}
-                          className="px-3 py-1 bg-red-100 text-red-800 rounded-md hover:bg-red-200"
+                          className="px-3 py-1 bg-red-100 text-red-800 text-sm rounded-md hover:bg-red-200"
                         >
                           <Trash className="w-4 h-4" />
                         </button>
@@ -426,7 +426,7 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                       {comparison.products.map(product => (
                         <span 
                           key={product.id}
-                          className="px-2 py-1 bg-gray-100 text-xs rounded-full"
+                          className="px-2 py-1 bg-gray-100 text-xs rounded-full inline-block mb-1 mr-1"
                         >
                           {product.name}
                         </span>
