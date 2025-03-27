@@ -266,15 +266,26 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
     }
   };
 
-  // Updated formatCurrency with improved error handling
+  // Enhanced formatCurrency with better handling of potential zero values
   const formatCurrency = (value: number | null | undefined): string => {
-    // Make sure data exists and value is a number
-    if (value === null || value === undefined || typeof value !== 'number' || isNaN(value)) return 'N/A';
+    // Log the incoming value for debugging
+    console.log(`Formatting currency value: ${value}, type: ${typeof value}`);
+    
+    // Check for undefined, null, or NaN
+    if (value === undefined || value === null) return 'N/A';
+    
+    // Convert string values to numbers if needed (API might return strings)
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    
+    // Only return N/A if it's not a valid number after conversion
+    if (isNaN(numValue)) return 'N/A';
+    
+    // Even zero is a valid value that should be displayed
     try {
-      return `$${value.toLocaleString()}`;
+      return `$${numValue.toLocaleString()}`;
     } catch (error) {
       console.error('Error formatting currency:', error);
-      return `$${value}`;
+      return `$${numValue}`;
     }
   };
   
@@ -414,7 +425,12 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
                   <DollarSign className="h-4 w-4 mr-1 text-green-500" />
                   Estimated Savings:
                 </span>
-                <span className="font-medium text-green-600">{formatCurrency(recommendation.estimatedSavings)}/year</span>
+                <div className="flex items-center">
+                  <span className="font-medium text-green-600">{formatCurrency(recommendation.estimatedSavings)}/year</span>
+                  {recommendation.isEstimated && 
+                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Estimated</span>
+                  }
+                </div>
               </div>
               
               <div className="bg-gray-50 p-3 rounded-lg">
@@ -422,7 +438,12 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
                   <DollarSign className="h-4 w-4 mr-1 text-gray-500" />
                   Implementation Cost:
                 </span>
-                <span className="font-medium">{formatCurrency(recommendation.estimatedCost)}</span>
+                <div className="flex items-center">
+                  <span className="font-medium">{formatCurrency(recommendation.estimatedCost)}</span>
+                  {recommendation.isEstimated && 
+                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Estimated</span>
+                  }
+                </div>
               </div>
               
               <div className="bg-gray-50 p-3 rounded-lg">
@@ -431,7 +452,9 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
                   Payback Period:
                 </span>
                 <span className="font-medium">
-                  {recommendation.paybackPeriod ? `${recommendation.paybackPeriod.toFixed(1)} years` : 'N/A'}
+                  {recommendation.paybackPeriod && !isNaN(recommendation.paybackPeriod)
+                    ? `${recommendation.paybackPeriod.toFixed(1)} years` 
+                    : 'N/A'}
                 </span>
               </div>
               
