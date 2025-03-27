@@ -6,28 +6,30 @@ import {
   getCondominiumDefaults,
   getCondominiumConstructionPeriod,
   getCondominiumSizeCategory
-} from './condominiumDefaults';
+} from './condominiumDefaults.ts';
 
 import {
   getApartmentDefaults,
   getApartmentConstructionPeriod,
   getApartmentSizeCategory
-} from './apartmentDefaults';
+} from './apartmentDefaults.ts';
 
 import {
   getDuplexDefaults,
   getDuplexConstructionPeriod,
   getDuplexSizeCategory,
   getDuplexUnitConfiguration
-} from './duplexDefaults';
+} from './duplexDefaults.ts';
 
-// Helper functions to determine construction period from year built
-export const getMobileHomeConstructionPeriod = (yearBuilt: number): string => {
-  if (yearBuilt < 1976) return 'pre-1976';
-  if (yearBuilt < 1994) return '1976-1994';
-  if (yearBuilt < 2000) return '1994-2000';
-  return 'post-2000';
-};
+// Import mobile home defaults from separate file to avoid circular dependencies
+import { 
+  getMobileHomeConstructionPeriod,
+  getMobileHomeSizeCategory,
+  getMobileHomeDefaults
+} from './MobileHomeDefaults';
+
+// Re-export for backward compatibility
+export { getMobileHomeConstructionPeriod };
 
 export const getSingleFamilyConstructionPeriod = (yearBuilt: number): string => {
   if (yearBuilt < 1980) return 'pre-1980';
@@ -62,11 +64,7 @@ export const getConstructionPeriod = (yearBuilt: number, homeType?: string): str
 };
 
 // Helper functions to determine size category based on home type
-export const getMobileHomeSizeCategory = (squareFootage: number): 'small' | 'medium' | 'large' => {
-  if (squareFootage < 1000) return 'small';
-  if (squareFootage <= 1800) return 'medium';
-  return 'large';
-};
+// getMobileHomeSizeCategory is imported from MobileHomeDefaults.ts
 
 export const getSingleFamilySizeCategory = (squareFootage: number): 'small' | 'medium' | 'large' => {
   if (squareFootage < 1500) return 'small';
@@ -873,30 +871,7 @@ export const mobileHomeDefaults = {
   }
 };
 
-// Main function to get mobile home defaults based on year built and square footage
-export const getMobileHomeDefaults = (yearBuilt: number, squareFootage: number, state?: string) => {
-  const constructionPeriod = getMobileHomeConstructionPeriod(yearBuilt);
-  const sizeCategory = getMobileHomeSizeCategory(squareFootage);
-  
-  // Get base defaults
-  const defaults = mobileHomeDefaults[constructionPeriod as keyof typeof mobileHomeDefaults][sizeCategory];
-  
-  // Calculate climate-adjusted energy usage if state is provided
-  if (state) {
-    const climateZone = getClimateZone(state);
-    const climateAdjustment = mobileHomeClimateZoneAdjustments[climateZone] || 1.0;
-    const sizeAdjustment = mobileHomeSizeAdjustments[sizeCategory] || 1.0;
-    const baseEnergyUsage = mobileHomeEnergyUsageBaseline[constructionPeriod] || 58; // Default to average if not found
-    
-    // Calculate adjusted energy usage
-    const adjustedEnergyUsage = Math.round(baseEnergyUsage * climateAdjustment * sizeAdjustment);
-    
-    // Update energy consumption values
-    defaults.energyConsumption.estimatedAnnualUsage = adjustedEnergyUsage;
-  }
-  
-  return defaults;
-};
+// getMobileHomeDefaults is imported from MobileHomeDefaults.ts
 
 // Create the single-family defaults structure based on the research data
 export const singleFamilyDefaults = {

@@ -15,7 +15,7 @@ import AuditSubmissionModal from './AuditSubmissionModal';
 import { Dialog } from '@/components/ui/Dialog';
 import { getStoredAuditData, storeAuditData, clearStoredAuditData } from '@/utils/auditStorage';
 import { fetchUserProfileData, updateUserProfileFromAudit } from '@/services/userProfileService';
-import { getMobileHomeDefaults } from './forms/housingTypeDefaults';
+import { getMobileHomeDefaults } from './forms/MobileHomeDefaults';
 import { 
   EnergyAuditData,
   BasicInfo,

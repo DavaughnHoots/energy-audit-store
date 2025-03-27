@@ -5,12 +5,12 @@ import FormSection, { FormSectionAdvanced } from '../FormSection';
 import { FormGrid, InputField, SelectField } from '../FormFields';
 import { getDefaultValues, getSizeCategory } from './homeDefaults';
 import { 
-  getMobileHomeDefaults, 
   getSingleFamilyDefaults,
   getTownhouseDefaults,
   getDuplexDefaults,
   getConstructionPeriod 
-} from './housingTypeDefaults';
+} from './housingTypeDefaults.ts';
+import { getMobileHomeDefaults } from './MobileHomeDefaults';
 
 const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
   data,
