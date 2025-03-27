@@ -112,11 +112,11 @@ const EducationPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header Section */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Educational Resources</h1>
-          <p className="mt-4 text-lg text-gray-600">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Educational Resources</h1>
+          <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-600">
             Learn about energy efficiency and discover ways to reduce your energy consumption
           </p>
         </div>
@@ -166,11 +166,11 @@ const EducationPage: React.FC = () => {
           <BookmarksView />
         </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">All Resources</h2>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">All Resources</h2>
           
           {/* Resource Filters */}
-          <div className="w-full max-w-xl">
+          <div className="w-full sm:max-w-xl">
             <ResourceFiltersComponent 
               onFilterChange={handleFilterChange}
               initialFilters={filters}
@@ -184,14 +184,14 @@ const EducationPage: React.FC = () => {
             <Loader2 className="h-8 w-8 text-green-500 animate-spin" />
           </div>
         ) : filteredResources.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredResources.map((resource) => (
               <ResourceCard key={resource.id} resource={resource} />
             ))}
           </div>
         ) : (
-          <Alert>
-            <AlertDescription>
+          <Alert className="mx-2 sm:mx-0">
+            <AlertDescription className="text-sm sm:text-base">
               No resources found matching your search criteria. Try adjusting your filters.
             </AlertDescription>
           </Alert>

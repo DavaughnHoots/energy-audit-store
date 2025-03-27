@@ -53,15 +53,15 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
 
   return (
     <div 
-      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ${
+      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden ${
         featured ? 'border-2 border-green-400' : ''
       } ${className}`}
     >
-      <div className="relative">
+      <div className="relative aspect-[16/9]">
         <img
           src={resource.thumbnail}
           alt={resource.title}
-          className="w-full h-48 object-cover rounded-t-lg"
+          className="absolute inset-0 w-full h-full object-cover"
         />
         {featured && (
           <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center">
@@ -88,7 +88,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
       </div>
 
       <div className="p-4">
-        <div className="flex flex-wrap items-center gap-2 mb-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2">
           {getResourceIcon(resource.type)}
           
           <Badge variant="outline" className={`text-xs ${getLevelBadgeColor(resource.level)}`}>
@@ -104,11 +104,11 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           )}
         </div>
         
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-2 line-clamp-2">
           {resource.title}
         </h3>
         
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-3">
           {resource.description}
         </p>
         
@@ -150,17 +150,17 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         {/* Tags */}
         {resource.tags && resource.tags.length > 0 && (
           <div className={`mt-3 flex flex-wrap gap-1 ${showProgress ? 'pt-3 border-t border-gray-100' : ''}`}>
-            {resource.tags.slice(0, 3).map(tag => (
+            {resource.tags.slice(0, 2).map(tag => (
               <span 
                 key={tag} 
-                className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
+                className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full truncate max-w-[100px]"
               >
                 #{tag}
               </span>
             ))}
-            {resource.tags.length > 3 && (
-              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                +{resource.tags.length - 3} more
+            {resource.tags.length > 2 && (
+              <span className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full">
+                +{resource.tags.length - 2} more
               </span>
             )}
           </div>

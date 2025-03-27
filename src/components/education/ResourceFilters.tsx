@@ -1,5 +1,5 @@
 // src/components/education/ResourceFilters.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ResourceType, ResourceTopic, ResourceLevel, ResourceFilters } from '@/types/education';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 
@@ -29,8 +29,8 @@ const ResourceFiltersComponent: React.FC<ResourceFiltersProps> = ({
   );
   const [showFilters, setShowFilters] = useState(false);
 
-  // Update filters when any selection changes
-  useEffect(() => {
+  // Memoize the filter update function
+  const updateFilters = useCallback(() => {
     const filters: Partial<ResourceFilters> = {
       search: searchQuery,
       type: selectedType === 'all' ? undefined : selectedType,
@@ -39,7 +39,13 @@ const ResourceFiltersComponent: React.FC<ResourceFiltersProps> = ({
       sortBy,
     };
     onFilterChange(filters);
-  }, [searchQuery, selectedType, selectedTopic, selectedLevel, sortBy, onFilterChange]);
+  }, [searchQuery, selectedType, selectedTopic, selectedLevel, sortBy]);
+
+  // Update filters when selections change
+  useEffect(() => {
+    const timeoutId = setTimeout(updateFilters, 300); // Debounce filter updates
+    return () => clearTimeout(timeoutId);
+  }, [updateFilters]);
 
   const clearFilters = () => {
     setSearchQuery('');

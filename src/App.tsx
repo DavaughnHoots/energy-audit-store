@@ -47,15 +47,15 @@ const Home: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       {/* Hero Section */}
-      <Alert className="mb-8">
-        <AlertTitle className="text-lg font-semibold">Welcome to Energy Efficient Shop!</AlertTitle>
-        <AlertDescription>
+      <Alert className="mb-4 sm:mb-8 mx-2 sm:mx-0">
+        <AlertTitle className="text-base sm:text-lg font-semibold">Welcome to Energy Efficient Shop!</AlertTitle>
+        <AlertDescription className="text-sm sm:text-base">
           Where Efficiency meets Sustainability! It is your one-stop shop for energy-efficient products. Start with a DIY energy audit to get personalized recommendations.
         </AlertDescription>
       </Alert>
 
       {/* Feature Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12 mx-2 sm:mx-0">
         {features.map((feature) => (
           <div
             key={feature.title}
@@ -81,8 +81,8 @@ const Home: React.FC = () => {
       </div>
 
       {/* Energy Savings Stats */}
-      <div className="bg-green-50 rounded-lg p-8 mb-12">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">
+      <div className="bg-green-50 rounded-lg p-4 sm:p-8 mb-8 sm:mb-12 mx-2 sm:mx-0">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6 text-center">
           Make an Impact with Energy Efficiency
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -96,15 +96,15 @@ const Home: React.FC = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-green-600 rounded-lg p-8 text-center">
-        <h2 className="text-2xl font-bold text-white mb-4">
+      <div className="bg-green-600 rounded-lg p-4 sm:p-8 text-center mx-2 sm:mx-0">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
           Ready to Start Saving?
         </h2>
-        <p className="text-green-100 mb-6 max-w-2xl mx-auto">
+        <p className="text-sm sm:text-base text-green-100 mb-4 sm:mb-6 max-w-2xl mx-auto">
           Take our DIY energy audit today and discover personalized recommendations for your home's energy efficiency.
         </p>
         <Link to="/energy-audit">
-          <button className="bg-white text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition-colors duration-200">
+          <button className="bg-white text-green-600 px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-green-50 transition-colors duration-200">
             Start Energy Audit
           </button>
         </Link>

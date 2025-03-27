@@ -1,22 +1,24 @@
 // src/components/layout/Header.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Menu, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useAuth from '@/context/AuthContext';
 import logo from '../../assets/website logo.png';
+import MobileMenu from './MobileMenu';
 
 const Header: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   return (
     <header className="bg-white shadow-sm">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and Brand */}
-          <div className="flex">
+          <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center gap-2">
               <img src={logo} alt="Energy Efficient Shop Logo" className="h-8 w-auto" />
-              <h1 className="text-2xl font-bold text-green-600">Energy Efficient Shop</h1>
+              <h1 className="text-2xl font-bold text-green-600 hidden sm:block">Energy Efficient Shop</h1>
             </Link>
             
             {/* Desktop Navigation */}
@@ -69,9 +71,13 @@ const Header: React.FC = () => {
             )}
             
             {/* Mobile menu button */}
-            <button className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+            >
               <Menu className="h-6 w-6" />
             </button>
+            <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
           </div>
         </div>
       </nav>
