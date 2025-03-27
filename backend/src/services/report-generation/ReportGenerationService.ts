@@ -40,112 +40,64 @@ export class ReportGenerationService {
   }
 
   /**
-   * Extract estimated savings from recommendation title and description
+   * Generate financial data for a recommendation
+   * Uses the enhanced SavingsCalculator to provide more accurate financial estimates
    * @param title Recommendation title
    * @param description Recommendation description
-   * @returns Estimated annual savings
+   * @param scope Optional scope of the recommendation
+   * @param auditData Optional audit data for context-aware calculations
+   * @returns Object with financial estimates
    */
-  private extractSavingsFromTitle(title: string, description: string): number {
+  private generateFinancialEstimates(
+    title: string, 
+    description: string, 
+    scope: string = '',
+    auditData?: EnergyAuditData
+  ): { 
+    estimatedSavings: number; 
+    estimatedCost: number; 
+    paybackPeriod: number; 
+  } {
     try {
-      const titleLower = (title || '').toLowerCase();
-      const descLower = (description || '').toLowerCase();
-      
-      // Default savings by category
-      if (titleLower.includes('insulation') || descLower.includes('insulation')) {
-        return 350;
-      } else if (titleLower.includes('hvac') || descLower.includes('hvac') || 
-                titleLower.includes('heating') || descLower.includes('heating')) {
-        return 450;
-      } else if (titleLower.includes('light') || descLower.includes('light') ||
-                titleLower.includes('bulb') || descLower.includes('bulb')) {
-        return 200;
-      } else if (titleLower.includes('window') || descLower.includes('window')) {
-        return 300;
-      } else if (titleLower.includes('air seal') || descLower.includes('air seal') ||
-                titleLower.includes('draft') || descLower.includes('draft')) {
-        return 180;
-      } else if (titleLower.includes('thermostat') || descLower.includes('thermostat')) {
-        return 120;
+      // Set audit data for better context-aware calculations if available
+      if (auditData) {
+        this.calculators.savingsCalculator.setAuditData(auditData);
       }
       
-      return 200; // Default value
-    } catch (error) {
-      appLogger.error('Error extracting savings from title', {
-        error: error instanceof Error ? error.message : String(error)
+      // Use SavingsCalculator to generate financial data
+      const squareFootage = auditData?.homeDetails?.squareFootage || 1500; // Default if unknown
+      
+      // Get financial estimates
+      const estimatedSavings = this.calculators.savingsCalculator.estimateSavingsByType?.(title, scope, squareFootage) || 200;
+      const estimatedCost = this.calculators.savingsCalculator.generateImplementationCostEstimate?.(title, scope, squareFootage) || 1000;
+      const paybackPeriod = this.calculators.savingsCalculator.calculatePaybackPeriod?.(estimatedCost, estimatedSavings) || 5;
+      
+      appLogger.debug('Generated financial estimates for recommendation', {
+        title,
+        scope,
+        squareFootage,
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod
       });
-      return 200;
-    }
-  }
-  
-  /**
-   * Extract estimated cost from recommendation title and description
-   * @param title Recommendation title
-   * @param description Recommendation description
-   * @returns Estimated implementation cost
-   */
-  private extractCostFromTitle(title: string, description: string): number {
-    try {
-      const titleLower = (title || '').toLowerCase();
-      const descLower = (description || '').toLowerCase();
       
-      // Default costs by category
-      if (titleLower.includes('insulation') || descLower.includes('insulation')) {
-        return 1200;
-      } else if (titleLower.includes('hvac') || descLower.includes('hvac')) {
-        return 3500;
-      } else if (titleLower.includes('light') || descLower.includes('light') ||
-                titleLower.includes('bulb') || descLower.includes('bulb')) {
-        return 120;
-      } else if (titleLower.includes('window') || descLower.includes('window')) {
-        return 3000;
-      } else if (titleLower.includes('air seal') || descLower.includes('air seal')) {
-        return 350;
-      } else if (titleLower.includes('thermostat') || descLower.includes('thermostat')) {
-        return 250;
-      }
-      
-      return 500; // Default value
+      return {
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod
+      };
     } catch (error) {
-      appLogger.error('Error extracting cost from title', {
-        error: error instanceof Error ? error.message : String(error)
+      appLogger.error('Error generating financial estimates', {
+        error: error instanceof Error ? error.message : String(error),
+        title
       });
-      return 500;
-    }
-  }
-  
-  /**
-   * Get default payback period based on recommendation type
-   * @param title Recommendation title
-   * @param description Recommendation description
-   * @returns Default payback period in years
-   */
-  private getDefaultPaybackPeriod(title: string, description: string): number {
-    try {
-      const titleLower = (title || '').toLowerCase();
-      const descLower = (description || '').toLowerCase();
       
-      // Default payback by category (approximate years)
-      if (titleLower.includes('insulation') || descLower.includes('insulation')) {
-        return 3.5;
-      } else if (titleLower.includes('hvac') || descLower.includes('hvac')) {
-        return 8.0;
-      } else if (titleLower.includes('light') || descLower.includes('light') ||
-                titleLower.includes('bulb') || descLower.includes('bulb')) {
-        return 0.6;
-      } else if (titleLower.includes('window') || descLower.includes('window')) {
-        return 10.0;
-      } else if (titleLower.includes('air seal') || descLower.includes('air seal')) {
-        return 2.0;
-      } else if (titleLower.includes('thermostat') || descLower.includes('thermostat')) {
-        return 2.1;
-      }
-      
-      return 2.5; // Default value
-    } catch (error) {
-      appLogger.error('Error getting default payback period', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return 2.5;
+      // Return default values
+      return {
+        estimatedSavings: 200,
+        estimatedCost: 1000,
+        paybackPeriod: 5
+      };
     }
   }
 
@@ -613,8 +565,34 @@ export class ReportGenerationService {
           })
           .moveDown(1);
 
-      // Apply validation and intelligent defaults to recommendation data
-      const validatedRec = ReportValidationHelper.validateSingleRecommendation(rec);
+      // Apply validation and generate intelligent defaults for recommendation data
+      let validatedRec = ReportValidationHelper.validateSingleRecommendation(rec);
+      
+      // Generate financial estimates if they're missing
+      if (!validatedRec.estimatedSavings || !validatedRec.estimatedCost || !validatedRec.paybackPeriod) {
+        const financialData = this.generateFinancialEstimates(
+          validatedRec.title,
+          validatedRec.description,
+          validatedRec.scope || '',
+          auditData
+        );
+        
+        // Apply financial estimates where missing
+        if (!validatedRec.estimatedSavings) {
+          validatedRec.estimatedSavings = financialData.estimatedSavings;
+          validatedRec.isEstimated = true;
+        }
+        
+        if (!validatedRec.estimatedCost) {
+          validatedRec.estimatedCost = financialData.estimatedCost;
+          validatedRec.isEstimated = true;
+        }
+        
+        if (!validatedRec.paybackPeriod) {
+          validatedRec.paybackPeriod = financialData.paybackPeriod;
+          validatedRec.isEstimated = true;
+        }
+      }
       
       // Create a table for the recommendation details with proper formatting
       const recRows = [
@@ -622,6 +600,11 @@ export class ReportGenerationService {
         ['Implementation Cost:', this.formatters.valueFormatter.formatValue(validatedRec.estimatedCost, 'currency', 'cost')],
         ['Payback Period:', this.formatters.valueFormatter.formatValue(validatedRec.paybackPeriod, 'number', 'payback') + ' years']
       ];
+      
+      // Add an estimated flag if values are calculated estimates
+      if (validatedRec.isEstimated) {
+        recRows.push(['Note:', 'Financial figures are estimates based on typical values']);
+      }
           
           // Add actual savings if available
           if (rec.actualSavings !== null && rec.actualSavings !== undefined) {

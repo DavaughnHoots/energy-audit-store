@@ -41,6 +41,12 @@ export interface ISavingsCalculator {
   calculatePotentialSavings(recommendations: AuditRecommendation[]): number;
   generateDefaultSavingsEstimate(recommendations: AuditRecommendation[]): number;
   extractCategoryFromRecommendation(recommendation: AuditRecommendation): string;
+  // Extended methods for financial calculations
+  setAuditData?(auditData: EnergyAuditData): void;
+  estimateSavingsByType?(recommendationType: string, scope: string, squareFootage: number): number;
+  generateImplementationCostEstimate?(recommendationType: string, scope: string, squareFootage: number): number;
+  calculatePaybackPeriod?(cost: number, annualSavings: number): number;
+  generateRecommendation?(type: string, description: string, scope?: string): Partial<AuditRecommendation>;
 }
 
 export interface IBulbCalculator {
