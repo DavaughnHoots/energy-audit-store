@@ -86,7 +86,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   return (
     <div>
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 -mx-4 sm:mx-0 px-4 sm:px-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 mx-0 px-0">
         <StatCard
           title="Total Savings"
           value={`$${stats?.totalSavings?.actual?.toLocaleString() ?? '0'}`}
@@ -118,17 +118,17 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       </div>
 
       {/* Savings Chart */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 -mx-4 sm:mx-0">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 px-4 sm:px-0">Monthly Savings Trend</h2>
-        <div className="h-[400px] sm:h-96">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 mx-0">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Savings Trend</h2>
+        <div className="h-80 sm:h-96 w-full overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={stats.monthlySavings}
               margin={{
                 top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5,
+                right: 10,
+                left: 0,
+                bottom: 20,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
@@ -138,7 +138,12 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 formatter={(value: number) => [`$${value}`, 'Savings']}
                 labelFormatter={(label: string) => `Month: ${label}`}
               />
-              <Legend />
+              <Legend 
+                layout="horizontal" 
+                verticalAlign="bottom" 
+                align="center"
+                wrapperStyle={{ paddingTop: "15px" }}
+              />
               <Line
                 type="monotone"
                 name="Estimated Savings"
@@ -163,8 +168,8 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       </div>
 
       {/* Recommendations Section */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 -mx-4 sm:mx-0">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 px-4 sm:px-0">Recommendations</h2>
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mx-0">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
         {stats.recommendations && stats.recommendations.length > 0 ? (
           <div className="space-y-4">
             {stats.recommendations.map((recommendation) => (
@@ -176,11 +181,11 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center text-gray-500 py-8 px-4 sm:px-0">
+          <div className="text-center text-gray-500 py-6">
             <p>No recommendations available.</p>
             <button
               onClick={() => window.location.href = '/energy-audit'}
-              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="mt-4 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 w-full sm:w-auto"
             >
               Start New Energy Audit
             </button>

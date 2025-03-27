@@ -104,17 +104,17 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm border">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0">
         <div className="flex-grow">
           <h3 className="text-lg font-medium text-gray-900">{recommendation.title}</h3>
           <p className="mt-1 text-sm text-gray-600">{recommendation.description}</p>
-          <div className="mt-2 flex items-center space-x-4 text-sm">
-            <span className="text-blue-600">Estimated: ${recommendation.estimatedSavings}</span>
+          <div className="mt-2 flex flex-wrap gap-3 text-sm">
+            <span className="text-blue-600 whitespace-nowrap">Estimated: ${recommendation.estimatedSavings}</span>
             {recommendation.actualSavings !== null && (
-              <span className="text-green-600">Actual: ${recommendation.actualSavings}</span>
+              <span className="text-green-600 whitespace-nowrap">Actual: ${recommendation.actualSavings}</span>
             )}
             {recommendation.implementationCost !== null && (
-              <span className="text-gray-500">Cost: ${recommendation.implementationCost}</span>
+              <span className="text-gray-500 whitespace-nowrap">Cost: ${recommendation.implementationCost}</span>
             )}
           </div>
           {error && (
@@ -124,7 +124,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
             </div>
           )}
         </div>
-        <div className="flex flex-col items-end space-y-2">
+        <div className="flex flex-row sm:flex-col items-start sm:items-end justify-between sm:justify-start w-full sm:w-auto space-y-0 sm:space-y-2 space-x-2 sm:space-x-0">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
             recommendation.priority === 'high' ? 'bg-red-100 text-red-800' :
             recommendation.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -138,7 +138,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
                 size="sm"
                 onClick={handleStatusUpdate}
                 disabled={isUpdating}
-                className="flex items-center space-x-1"
+                className="flex items-center justify-center space-x-1 w-full sm:w-auto text-xs sm:text-sm"
               >
                 {isUpdating ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -153,7 +153,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
                 variant="outline"
                 onClick={() => setShowSavingsDialog(true)}
                 disabled={isUpdating}
-                className="flex items-center space-x-1"
+                className="flex items-center justify-center space-x-1 w-full sm:w-auto text-xs sm:text-sm"
               >
                 <DollarSign className="h-4 w-4" />
                 <span>Update Savings</span>
