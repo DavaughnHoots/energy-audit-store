@@ -29,7 +29,7 @@ interface RecommendationsProps {
 }
 
 const ReportRecommendations: React.FC<RecommendationsProps> = ({ 
-  recommendations,
+  recommendations = [], // Default to empty array if undefined
   onUpdateStatus,
   onUpdatePriority,
   onUpdateImplementationDetails
@@ -92,7 +92,7 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
   }, [successStates]);
 
   // Sort recommendations by priority
-  const sortedRecommendations = [...recommendations].sort((a, b) => {
+  const sortedRecommendations = [...(recommendations || [])].sort((a, b) => {
     const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
     return (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3);
   });
@@ -266,14 +266,26 @@ const ReportRecommendations: React.FC<RecommendationsProps> = ({
     }
   };
 
+  // Updated formatCurrency with improved error handling
   const formatCurrency = (value: number | null | undefined): string => {
-    if (value === null || value === undefined) return 'N/A';
-    return `$${value.toLocaleString()}`;
+    // Make sure data exists and value is a number
+    if (value === null || value === undefined || typeof value !== 'number' || isNaN(value)) return 'N/A';
+    try {
+      return `$${value.toLocaleString()}`;
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `$${value}`;
+    }
   };
   
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'Not set';
-    return new Date(dateString).toLocaleDateString();
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
   };
 
   return (

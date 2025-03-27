@@ -1,20 +1,44 @@
 /**
- * Interface for product information
+ * Interface for product information in the frontend.
+ * Similar to the backend Product interface but optimized for UI display.
  */
 export interface Product {
   id: string;
   name: string;
-  category: string;
+  category: string; // Main category (replacing mainCategory)
+  subCategory?: string;
   price: number;
-  energyEfficiency: string;
+  energyEfficiency: string; // e.g. "A++", "A+", "A", etc.
   features: string[];
   description: string;
   imageUrl?: string;
+  manufacturerUrl?: string;
   annualSavings: number;
   roi: number;
   paybackPeriod: number;
+  rebateEligible?: boolean;
+  greenCertified?: boolean;
+  userRating?: number;
+  model?: string; // For backward compatibility with existing code
   audit_id?: string;
   audit_date?: string;
+}
+
+/**
+ * Interface for product filters used in the frontend.
+ */
+export interface ProductFilter {
+  mainCategory?: string; // For backward compatibility (maps to category)
+  subCategory?: string;
+  efficiency?: string; // Maps to energyEfficiency
+  search?: string;
+  priceRange?: {
+    min?: number;
+    max?: number;
+  };
+  rebateEligible?: boolean;
+  greenCertified?: boolean;
+  minUserRating?: number;
 }
 
 /**

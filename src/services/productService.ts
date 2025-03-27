@@ -1,11 +1,14 @@
 // src/services/productService.ts
 import { getApiUrl } from '../config/api';
 import { API_ENDPOINTS } from '../config/api';
-import { Product, ProductFilters } from '../../backend/src/types/product';
+import { Product, ProductFilter } from '../types/product';
 
 class ProductService {
   private products: Product[] = [];
   private categories: { main: string[]; sub: { [key: string]: string[] } } = { main: [], sub: {} };
+  // Maps for converting between mainCategory/category for backward compatibility
+  private mainCategoryToCategory = new Map<string, string>();
+  private categoryToMainCategory = new Map<string, string>();
   private initialized = false;
 
   // This method is kept for backward compatibility but now uses the API with CSV fallback
@@ -112,33 +115,30 @@ class ProductService {
           ? row.features.split('\n').filter(Boolean).map((f: string) => f.trim())
           : [];
 
-        // Extract specifications from description
-        const specifications: { [key: string]: string } = {};
-        if (row.description) {
-          row.description.split('\n').forEach((line: string) => {
-            const [key, value] = line.split(':').map((s: string) => s.trim());
-            if (key && value) {
-              specifications[key] = value;
-            }
-          });
-        }
+        // Store mapping for backward compatibility
+        const mainCategory = row.mainCategory || 'Uncategorized';
+        this.mainCategoryToCategory.set(mainCategory, mainCategory);
+        this.categoryToMainCategory.set(mainCategory, mainCategory);
 
+        // Convert to our Product interface format
         return {
           id: row.energyStarUniqueId || String(index + 1),
-          productUrl: row.productUrl || '',
-          mainCategory: row.mainCategory || 'Uncategorized',
-          subCategory: row.subCategory || 'General',
           name: row.productName || 'Unknown Product',
-          model: row.model || '',
-          description: row.description || '',
-          efficiency: row.efficiency || '',
+          category: row.mainCategory || 'Uncategorized', // Map mainCategory to category
+          subCategory: row.subCategory || 'General',
+          price: parseFloat(row.price) || 0,
+          energyEfficiency: row.efficiency || 'Standard',
           features: features,
-          marketInfo: row.market || '',
-          energyStarId: row.energyStarUniqueId || '',
-          upcCodes: row.upcCodes || '',
-          additionalModels: row.additionalModelNamesAndOrNumbers || '',
-          pdfUrl: row.pdfFileUrl || '',
-          specifications
+          description: row.description || '',
+          imageUrl: row.productUrl || '',
+          manufacturerUrl: row.manufacturerUrl || '',
+          annualSavings: parseFloat(row.annualSavings) || 0,
+          roi: parseFloat(row.roi) || 0,
+          paybackPeriod: parseFloat(row.paybackPeriod) || 0,
+          rebateEligible: row.rebateEligible === 'true' || false,
+          greenCertified: row.greenCertified === 'true' || false,
+          userRating: parseFloat(row.userRating) || 0,
+          model: row.model || ''
         };
       });
       
@@ -161,13 +161,16 @@ class ProductService {
     };
 
     this.products.forEach(product => {
-      if (!this.categories.main.includes(product.mainCategory)) {
-        this.categories.main.push(product.mainCategory);
-        this.categories.sub[product.mainCategory] = [];
+      // Get or create mainCategory (for backward compatibility with UI)
+      const mainCategory = this.categoryToMainCategory.get(product.category) || product.category;
+      
+      if (!this.categories.main.includes(mainCategory)) {
+        this.categories.main.push(mainCategory);
+        this.categories.sub[mainCategory] = [];
       }
 
-      if (!this.categories.sub[product.mainCategory]!.includes(product.subCategory)) {
-        this.categories.sub[product.mainCategory]!.push(product.subCategory);
+      if (product.subCategory && !this.categories.sub[mainCategory]!.includes(product.subCategory)) {
+        this.categories.sub[mainCategory]!.push(product.subCategory);
       }
     });
   }
@@ -212,7 +215,7 @@ class ProductService {
     }
   }
 
-  async getProducts(filters?: ProductFilters): Promise<Product[]> {
+  async getProducts(filters?: ProductFilter): Promise<Product[]> {
     if (!this.initialized) {
       await this.loadProductsFromCSV(''); // Parameter is ignored now
     }
@@ -238,13 +241,16 @@ class ProductService {
         if (!contentType || !contentType.includes('application/json')) {
           console.warn(`API returned non-JSON response: ${contentType}`);
           return this.products.filter(p => {
-            if (filters.mainCategory && p.mainCategory.toLowerCase() !== filters.mainCategory.toLowerCase()) return false;
-            if (filters.subCategory && p.subCategory.toLowerCase() !== filters.subCategory.toLowerCase()) return false;
+            // Convert category to mainCategory for filtering
+            const productMainCategory = this.categoryToMainCategory.get(p.category) || p.category;
+            
+            if (filters.mainCategory && productMainCategory.toLowerCase() !== filters.mainCategory.toLowerCase()) return false;
+            if (filters.subCategory && p.subCategory?.toLowerCase() !== filters.subCategory.toLowerCase()) return false;
             if (filters.search) {
               const searchLower = filters.search.toLowerCase();
               return p.name.toLowerCase().includes(searchLower) ||
                 p.description.toLowerCase().includes(searchLower) ||
-                p.model.toLowerCase().includes(searchLower);
+                (p.model ? p.model.toLowerCase().includes(searchLower) : false);
             }
             return true;
           });
@@ -259,13 +265,16 @@ class ProductService {
         console.error('Error fetching filtered products:', error);
         // Fall back to client-side filtering
         return this.products.filter(p => {
-          if (filters.mainCategory && p.mainCategory.toLowerCase() !== filters.mainCategory.toLowerCase()) return false;
-          if (filters.subCategory && p.subCategory.toLowerCase() !== filters.subCategory.toLowerCase()) return false;
+          // Convert category to mainCategory for filtering
+          const productMainCategory = this.categoryToMainCategory.get(p.category) || p.category;
+          
+          if (filters.mainCategory && productMainCategory.toLowerCase() !== filters.mainCategory.toLowerCase()) return false;
+          if (filters.subCategory && p.subCategory?.toLowerCase() !== filters.subCategory.toLowerCase()) return false;
           if (filters.search) {
             const searchLower = filters.search.toLowerCase();
             return p.name.toLowerCase().includes(searchLower) ||
               p.description.toLowerCase().includes(searchLower) ||
-              p.model.toLowerCase().includes(searchLower);
+              (p.model ? p.model.toLowerCase().includes(searchLower) : false);
           }
           return true;
         });
@@ -279,7 +288,7 @@ class ProductService {
    * Get products with pagination and sorting
    */
   async getProductsPaginated(
-    filters?: ProductFilters,
+    filters?: ProductFilter,
     page: number = 1,
     limit: number = 20,
     sortBy: string = 'relevance',
@@ -347,7 +356,7 @@ class ProductService {
    * Fallback client-side pagination when API fails
    */
   private clientSidePagination(
-    filters?: ProductFilters,
+    filters?: ProductFilter,
     page: number = 1,
     limit: number = 20,
     sortBy: string = 'name',
@@ -372,16 +381,18 @@ class ProductService {
     if (filters) {
       if (filters.mainCategory) {
         console.log(`Client-side filtering for mainCategory: ${filters.mainCategory}`);
-        filteredProducts = filteredProducts.filter(
-          p => p.mainCategory.toLowerCase() === filters.mainCategory?.toLowerCase()
-        );
+        filteredProducts = filteredProducts.filter(p => {
+          // Convert category to mainCategory for filtering
+          const productMainCategory = this.categoryToMainCategory.get(p.category) || p.category;
+          return productMainCategory.toLowerCase() === filters.mainCategory?.toLowerCase();
+        });
         console.log(`Filtered to ${filteredProducts.length} products after applying mainCategory filter`);
       }
 
       if (filters.subCategory) {
         console.log(`Client-side filtering for subCategory: ${filters.subCategory}`);
-        filteredProducts = filteredProducts.filter(
-          p => p.subCategory.toLowerCase() === filters.subCategory?.toLowerCase()
+        filteredProducts = filteredProducts.filter(p => 
+          p.subCategory?.toLowerCase() === filters.subCategory?.toLowerCase()
         );
         console.log(`Filtered to ${filteredProducts.length} products after applying subCategory filter`);
       }
@@ -391,7 +402,7 @@ class ProductService {
         filteredProducts = filteredProducts.filter(p =>
           p.name.toLowerCase().includes(searchLower) ||
           p.description.toLowerCase().includes(searchLower) ||
-          p.model.toLowerCase().includes(searchLower)
+          (p.model ? p.model.toLowerCase().includes(searchLower) : false)
         );
       }
     }

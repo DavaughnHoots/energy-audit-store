@@ -1,5 +1,5 @@
 import React from 'react';
-import EnergyAuditForm from '../components/audit/EnergyAuditForm';
+import EnergyAuditForm from '../components/audit/EnergyAuditForm.tsx';
 import useAuth from '@/context/AuthContext';
 
 const EnergyAuditPage = () => {

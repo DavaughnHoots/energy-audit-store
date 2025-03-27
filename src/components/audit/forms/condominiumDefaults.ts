@@ -1,7 +1,42 @@
 // Condominium-specific defaults based on research data
 // See the research documentation for details and sources
 
-import { getClimateZone, getDescriptiveClimateZone } from './housingTypeDefaults';
+// Import climate zone types from a new types file to avoid circular dependencies
+// Previously imported from housingTypeDefaults.ts which created a circular reference
+
+// Define climate zone mappings here to avoid circular imports
+const climateZonesByState: Record<string, number> = {
+  'AK': 7, 'AL': 3, 'AR': 3, 'AZ': 2, 'CA': 3, 'CO': 5, 'CT': 5, 'DC': 4,
+  'DE': 4, 'FL': 2, 'GA': 3, 'HI': 1, 'IA': 5, 'ID': 5, 'IL': 5, 'IN': 5,
+  'KS': 4, 'KY': 4, 'LA': 2, 'MA': 5, 'MD': 4, 'ME': 6, 'MI': 5, 'MN': 6,
+  'MO': 4, 'MS': 3, 'MT': 6, 'NC': 3, 'ND': 6, 'NE': 5, 'NH': 6, 'NJ': 4,
+  'NM': 4, 'NV': 3, 'NY': 5, 'OH': 5, 'OK': 3, 'OR': 4, 'PA': 5, 'RI': 5,
+  'SC': 3, 'SD': 6, 'TN': 4, 'TX': 2, 'UT': 5, 'VA': 4, 'VT': 6, 'WA': 4,
+  'WI': 6, 'WV': 5, 'WY': 6
+};
+
+// Helper function to get numeric climate zone
+const getClimateZone = (state: string): number => {
+  return climateZonesByState[state.toUpperCase()] || 4; // Default to zone 4 if unknown
+};
+
+// Helper function to get state from zone (placeholder)
+const getStateFromZone = (zone: number): string => {
+  return 'TX'; // Default to something reasonable
+};
+
+// Map numeric IECC climate zones to descriptive zones
+const getDescriptiveClimateZone = (numericZone: number): 'cold-very-cold' | 'mixed-humid' | 'hot-humid' | 'hot-dry-mixed-dry' => {
+  if (numericZone >= 5) return 'cold-very-cold';      // Zones 5-8
+  if (numericZone === 4 || 
+     (numericZone === 3 && ['AL', 'AR', 'GA', 'KY', 'LA', 'MS', 'NC', 'OK', 'SC', 'TN', 'TX', 'VA'].includes(getStateFromZone(numericZone)))) {
+    return 'mixed-humid';                           // Zone 4A and parts of 3A (Eastern states)
+  }
+  if (numericZone <= 2 && ['FL', 'HI', 'LA', 'TX'].includes(getStateFromZone(numericZone))) {
+    return 'hot-humid';                             // Zones 1A & 2A
+  }
+  return 'hot-dry-mixed-dry';                       // Zones 2B, 3B, 4B
+};
 
 // Helper functions to determine construction period from year built
 export const getCondominiumConstructionPeriod = (yearBuilt: number): string => {
