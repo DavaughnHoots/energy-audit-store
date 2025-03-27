@@ -171,56 +171,111 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
           
           {/* Energy Bills */}
           <FormSubsection title="Detailed Energy Bills">
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 italic">
+                If your utilities are included in rent and you don't have access to this information, select "Not Available".
+              </p>
+            </div>
             <FormGrid>
-              <InputField
-                label="Monthly Electric Usage (kWh)"
-                type="text"
-                value={data.electricBill || ''}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  const inputValue = e.target.value;
-                  if (inputValue === '') {
-                    handleAdvancedFieldChange('electricBill', '');
-                  } else if (/^\d*\.?\d*$/.test(inputValue)) {
-                    const value = parseFloat(inputValue);
-                    if (!isNaN(value)) {
-                      handleAdvancedFieldChange('electricBill', value);
-                    }
-                  }
-                }}
-                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    // Could add visual feedback here if needed
-                  }
-                }}
-                pattern="[0-9]*\.?[0-9]*"
-                inputMode="decimal"
-              />
+              <div className="flex flex-col space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Monthly Electric Usage (kWh)</label>
+                <div className="flex items-center">
+                  <InputField
+                    label=""
+                    hideLabel={true}
+                    type="text"
+                    value={data.electricBill === -1 ? '' : data.electricBill || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                      const inputValue = e.target.value;
+                      if (inputValue === '') {
+                        handleAdvancedFieldChange('electricBill', '');
+                      } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                        const value = parseFloat(inputValue);
+                        if (!isNaN(value)) {
+                          handleAdvancedFieldChange('electricBill', value);
+                        }
+                      }
+                    }}
+                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                      const value = parseFloat(e.target.value);
+                      if (isNaN(value) || value < 0) {
+                        // Could add visual feedback here if needed
+                      }
+                    }}
+                    pattern="[0-9]*\.?[0-9]*"
+                    inputMode="decimal"
+                    disabled={data.electricBill === -1}
+                    className={data.electricBill === -1 ? "opacity-50" : ""}
+                  />
+                  <div className="ml-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="checkbox"
+                        className="rounded text-green-600"
+                        checked={data.electricBill === -1}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleAdvancedFieldChange('electricBill', -1);
+                          } else {
+                            handleAdvancedFieldChange('electricBill', '');
+                          }
+                        }}
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Not Available</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
 
-              <InputField
-                label="Monthly Gas Usage (therms)"
-                type="text"
-                value={data.gasBill || ''}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  const inputValue = e.target.value;
-                  if (inputValue === '') {
-                    handleAdvancedFieldChange('gasBill', '');
-                  } else if (/^\d*\.?\d*$/.test(inputValue)) {
-                    const value = parseFloat(inputValue);
-                    if (!isNaN(value)) {
-                      handleAdvancedFieldChange('gasBill', value);
-                    }
-                  }
-                }}
-                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    // Could add visual feedback here if needed
-                  }
-                }}
-                pattern="[0-9]*\.?[0-9]*"
-                inputMode="decimal"
-              />
+              <div className="flex flex-col space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Monthly Gas Usage (therms)</label>
+                <div className="flex items-center">
+                  <InputField
+                    label=""
+                    hideLabel={true}
+                    type="text"
+                    value={data.gasBill === -1 ? '' : data.gasBill || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                      const inputValue = e.target.value;
+                      if (inputValue === '') {
+                        handleAdvancedFieldChange('gasBill', '');
+                      } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                        const value = parseFloat(inputValue);
+                        if (!isNaN(value)) {
+                          handleAdvancedFieldChange('gasBill', value);
+                        }
+                      }
+                    }}
+                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                      const value = parseFloat(e.target.value);
+                      if (isNaN(value) || value < 0) {
+                        // Could add visual feedback here if needed
+                      }
+                    }}
+                    pattern="[0-9]*\.?[0-9]*"
+                    inputMode="decimal"
+                    disabled={data.gasBill === -1}
+                    className={data.gasBill === -1 ? "opacity-50" : ""}
+                  />
+                  <div className="ml-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="checkbox"
+                        className="rounded text-green-600"
+                        checked={data.gasBill === -1}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleAdvancedFieldChange('gasBill', -1);
+                          } else {
+                            handleAdvancedFieldChange('gasBill', '');
+                          }
+                        }}
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Not Available</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
 
               <InputField
                 label="Average Daily Power Consumption (kWh)"
@@ -251,6 +306,11 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
 
           {/* Occupancy Hours */}
           <FormSubsection title="Detailed Occupancy Hours">
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 italic">
+                This indicates how many hours you typically spend at your property during weekdays and weekends.
+              </p>
+            </div>
             <FormGrid>
               <SelectField
                 label="Weekday Hours at Home"

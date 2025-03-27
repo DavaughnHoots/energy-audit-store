@@ -617,6 +617,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
             data={formData.currentConditions}
             onInputChange={(field, value) => handleInputChange('currentConditions', field, value)}
             autofilledFields={autofilledFields.currentConditions}
+            propertyType={formData.basicInfo.propertyType}
           />
         );
       case 4:

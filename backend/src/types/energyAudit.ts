@@ -4,6 +4,7 @@ export interface BasicInfo {
   phone: string;
   address: string;
   propertyType: string;
+  ownershipStatus?: string; // 'owned' | 'leased'
   yearBuilt: number;
   occupants: number;
   auditDate: string;
@@ -102,14 +103,34 @@ export interface CoolingSystem {
   targetEfficiency?: number; // %
 }
 
+export interface WaterHeatingSystem {
+  type: string; // tankless | standard-tank | heat-pump | solar | not-sure
+  age: number;
+  efficiency?: number;
+  fuelType?: string; // electric | natural-gas | propane | oil
+  tankSize?: number; // gallons
+  temperature?: number; // °F
+}
+
+export interface RenewableEnergy {
+  hasSolar: boolean;
+  solarPanelCount?: number;
+  solarCapacity?: number; // kW
+  solarAge?: number; // years
+  solarGeneration?: number; // kWh/month
+  otherRenewables?: string[];
+}
+
 export interface HeatingCooling {
   heatingSystem: HeatingSystem;
   coolingSystem: CoolingSystem;
+  waterHeatingSystem?: WaterHeatingSystem;
   thermostatType: string;
   zoneCount: number;
   systemPerformance: 'works-well' | 'some-problems' | 'needs-attention';
   temperatureDifference?: number; // °F or °C
   temperatureDifferenceCategory?: 'small' | 'moderate' | 'large' | 'extreme';
+  renewableEnergy?: RenewableEnergy;
 }
 
 export interface OccupancyHours {

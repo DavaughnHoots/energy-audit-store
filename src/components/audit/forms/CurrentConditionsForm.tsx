@@ -12,7 +12,8 @@ import {
 const CurrentConditionsForm: React.FC<CurrentConditionsFormProps> = ({
   data,
   onInputChange,
-  autofilledFields = []
+  autofilledFields = [],
+  propertyType = 'single-family'
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -72,7 +73,7 @@ const CurrentConditionsForm: React.FC<CurrentConditionsFormProps> = ({
       {/* Basic Fields */}
       <FormGrid>
         <SelectField
-          label="Temperature Consistency Throughout Home"
+          label={`Temperature Consistency Throughout ${propertyType === 'apartment' || propertyType === 'condominium' ? 'Unit' : 'Home'}`}
           value={data.temperatureConsistency}
           onChange={handleBasicChange('temperatureConsistency')}
           options={[

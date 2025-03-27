@@ -73,6 +73,18 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
           isAutofilled={autofilledFields.includes('propertyType')}
         />
 
+        <SelectField
+          label="Ownership Status"
+          value={data.ownershipStatus || 'owned'}
+          onChange={handleChange('ownershipStatus')}
+          options={[
+            { value: 'owned', label: 'Owned' },
+            { value: 'leased', label: 'Leased/Rented' }
+          ]}
+          helpText="Your relationship to the property"
+          isAutofilled={autofilledFields.includes('ownershipStatus')}
+        />
+
         <InputField
           label="Year Built"
           type="text"

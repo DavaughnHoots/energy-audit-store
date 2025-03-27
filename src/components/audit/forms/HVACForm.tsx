@@ -477,6 +477,239 @@ const HVACForm: React.FC<HVACFormProps> = ({
             </FormSubsection>
           )}
 
+          {/* Water Heating System */}
+          <FormSubsection title="Water Heating System">
+            <FormGrid>
+              <SelectField
+                label="Water Heater Type"
+                value={data.waterHeatingSystem?.type || 'not-sure'}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                  const type = e.target.value;
+                  onInputChange('waterHeatingSystem', {
+                    ...(data.waterHeatingSystem || { age: 0 }),
+                    type
+                  });
+                }}
+                options={[
+                  { value: 'standard-tank', label: 'Standard Tank Water Heater' },
+                  { value: 'tankless', label: 'Tankless Water Heater' },
+                  { value: 'heat-pump', label: 'Heat Pump Water Heater' },
+                  { value: 'solar', label: 'Solar Water Heater' },
+                  { value: 'not-sure', label: 'Not Sure' }
+                ]}
+              />
+              
+              <SelectField
+                label="Fuel Type"
+                value={data.waterHeatingSystem?.fuelType || 'electric'}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                  const fuelType = e.target.value;
+                  onInputChange('waterHeatingSystem', {
+                    ...(data.waterHeatingSystem || { age: 0, type: 'not-sure' }),
+                    fuelType
+                  });
+                }}
+                options={[
+                  { value: 'electric', label: 'Electric' },
+                  { value: 'natural-gas', label: 'Natural Gas' },
+                  { value: 'propane', label: 'Propane' },
+                  { value: 'oil', label: 'Oil' }
+                ]}
+              />
+              
+              <InputField
+                label="System Age (years)"
+                type="text"
+                value={data.waterHeatingSystem?.age || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    onInputChange('waterHeatingSystem', {
+                      ...(data.waterHeatingSystem || { type: 'not-sure' }),
+                      age: ''
+                    });
+                  } else if (/^\d+$/.test(inputValue)) {
+                    const value = parseInt(inputValue);
+                    onInputChange('waterHeatingSystem', {
+                      ...(data.waterHeatingSystem || { type: 'not-sure' }),
+                      age: value
+                    });
+                  }
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                helpText="Age of water heater (0-30 years)"
+              />
+              
+              <InputField
+                label="Tank Size (gallons)"
+                type="text"
+                value={data.waterHeatingSystem?.tankSize || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    onInputChange('waterHeatingSystem', {
+                      ...(data.waterHeatingSystem || { age: 0, type: 'not-sure' }),
+                      tankSize: ''
+                    });
+                  } else if (/^\d+$/.test(inputValue)) {
+                    const value = parseInt(inputValue);
+                    onInputChange('waterHeatingSystem', {
+                      ...(data.waterHeatingSystem || { age: 0, type: 'not-sure' }),
+                      tankSize: value
+                    });
+                  }
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                helpText="Water heater tank size in gallons (if applicable)"
+              />
+              
+              <InputField
+                label="Temperature Setting (°F)"
+                type="text"
+                value={data.waterHeatingSystem?.temperature || ''}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    onInputChange('waterHeatingSystem', {
+                      ...(data.waterHeatingSystem || { age: 0, type: 'not-sure' }),
+                      temperature: ''
+                    });
+                  } else if (/^\d+$/.test(inputValue)) {
+                    const value = parseInt(inputValue);
+                    onInputChange('waterHeatingSystem', {
+                      ...(data.waterHeatingSystem || { age: 0, type: 'not-sure' }),
+                      temperature: value
+                    });
+                  }
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                helpText="Current temperature setting (typically 120-140°F)"
+              />
+            </FormGrid>
+          </FormSubsection>
+          
+          {/* Renewable Energy */}
+          <FormSubsection title="Renewable Energy">
+            <FormGrid>
+              <SelectField
+                label="Do you have solar panels?"
+                value={data.renewableEnergy?.hasSolar ? 'yes' : 'no'}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                  const hasSolar = e.target.value === 'yes';
+                  onInputChange('renewableEnergy', {
+                    ...(data.renewableEnergy || {}),
+                    hasSolar
+                  });
+                }}
+                options={[
+                  { value: 'no', label: 'No' },
+                  { value: 'yes', label: 'Yes' }
+                ]}
+              />
+              
+              {data.renewableEnergy?.hasSolar && (
+                <>
+                  <InputField
+                    label="Number of Solar Panels"
+                    type="text"
+                    value={data.renewableEnergy?.solarPanelCount || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                      const inputValue = e.target.value;
+                      if (inputValue === '') {
+                        onInputChange('renewableEnergy', {
+                          ...(data.renewableEnergy || { hasSolar: true }),
+                          solarPanelCount: ''
+                        });
+                      } else if (/^\d+$/.test(inputValue)) {
+                        const value = parseInt(inputValue);
+                        onInputChange('renewableEnergy', {
+                          ...(data.renewableEnergy || { hasSolar: true }),
+                          solarPanelCount: value
+                        });
+                      }
+                    }}
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                  />
+                  
+                  <InputField
+                    label="System Capacity (kW)"
+                    type="text"
+                    value={data.renewableEnergy?.solarCapacity || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                      const inputValue = e.target.value;
+                      if (inputValue === '') {
+                        onInputChange('renewableEnergy', {
+                          ...(data.renewableEnergy || { hasSolar: true }),
+                          solarCapacity: ''
+                        });
+                      } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                        const value = parseFloat(inputValue);
+                        onInputChange('renewableEnergy', {
+                          ...(data.renewableEnergy || { hasSolar: true }),
+                          solarCapacity: value
+                        });
+                      }
+                    }}
+                    pattern="[0-9]*\.?[0-9]*"
+                    inputMode="decimal"
+                    helpText="Total system capacity in kilowatts"
+                  />
+                  
+                  <InputField
+                    label="System Age (years)"
+                    type="text"
+                    value={data.renewableEnergy?.solarAge || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                      const inputValue = e.target.value;
+                      if (inputValue === '') {
+                        onInputChange('renewableEnergy', {
+                          ...(data.renewableEnergy || { hasSolar: true }),
+                          solarAge: ''
+                        });
+                      } else if (/^\d+$/.test(inputValue)) {
+                        const value = parseInt(inputValue);
+                        onInputChange('renewableEnergy', {
+                          ...(data.renewableEnergy || { hasSolar: true }),
+                          solarAge: value
+                        });
+                      }
+                    }}
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                  />
+                  
+                  <InputField
+                    label="Monthly Generation (kWh)"
+                    type="text"
+                    value={data.renewableEnergy?.solarGeneration || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                      const inputValue = e.target.value;
+                      if (inputValue === '') {
+                        onInputChange('renewableEnergy', {
+                          ...(data.renewableEnergy || { hasSolar: true }),
+                          solarGeneration: ''
+                        });
+                      } else if (/^\d+$/.test(inputValue)) {
+                        const value = parseInt(inputValue);
+                        onInputChange('renewableEnergy', {
+                          ...(data.renewableEnergy || { hasSolar: true }),
+                          solarGeneration: value
+                        });
+                      }
+                    }}
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    helpText="Average monthly electricity generation"
+                  />
+                </>
+              )}
+            </FormGrid>
+          </FormSubsection>
+          
           {/* Zone Control */}
           <FormSubsection title="Zone Control">
             <FormGrid>

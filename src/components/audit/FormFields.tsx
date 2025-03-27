@@ -8,6 +8,7 @@ interface FormFieldProps {
   helpText?: string;
   className?: string;
   isAutofilled?: boolean;
+  hideLabel?: boolean; // Add hideLabel property
   children: React.ReactNode;
 }
 
@@ -18,14 +19,17 @@ export const FormField: React.FC<FormFieldProps> = ({
   helpText,
   className = '',
   isAutofilled = false,
+  hideLabel = false,
   children
 }) => {
   return (
     <div className={`space-y-1 ${className}`}>
-      <label className="block text-sm font-medium text-gray-700">
-        {label} {required && <span className="text-red-500">*</span>}
-        <AutofillIndicator isAutofilled={isAutofilled} />
-      </label>
+      {!hideLabel && (
+        <label className="block text-sm font-medium text-gray-700">
+          {label} {required && <span className="text-red-500">*</span>}
+          <AutofillIndicator isAutofilled={isAutofilled} />
+        </label>
+      )}
       {children}
       {helpText && (
         <p className="mt-1 text-sm text-gray-500">{helpText}</p>
@@ -90,6 +94,7 @@ interface InputFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElemen
   helpText?: string;
   className?: string;
   isAutofilled?: boolean;
+  hideLabel?: boolean; // Add hideLabel property
 }
 
 export const InputField: React.FC<InputFieldProps> = ({
@@ -100,6 +105,7 @@ export const InputField: React.FC<InputFieldProps> = ({
   className = '',
   type = 'text',
   isAutofilled = false,
+  hideLabel = false,
   ...props
 }) => {
   return (
@@ -110,6 +116,7 @@ export const InputField: React.FC<InputFieldProps> = ({
       helpText={helpText}
       className={className}
       isAutofilled={isAutofilled}
+      hideLabel={hideLabel}
     >
       <input
         type={type}

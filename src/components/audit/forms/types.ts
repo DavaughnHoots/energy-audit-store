@@ -9,7 +9,9 @@ export interface FormComponentProps<T> {
 
 export type BasicInfoFormProps = FormComponentProps<BasicInfo>;
 export type HomeDetailsFormProps = FormComponentProps<HomeDetails>;
-export type CurrentConditionsFormProps = FormComponentProps<CurrentConditions>;
+export interface CurrentConditionsFormProps extends FormComponentProps<CurrentConditions> {
+  propertyType?: string; // Added to access the property type from BasicInfo
+}
 export type HVACFormProps = FormComponentProps<HeatingCooling>;
 export type EnergyUseFormProps = FormComponentProps<EnergyConsumption>;
 export type ProductPreferencesFormProps = FormComponentProps<ProductPreferences>;
