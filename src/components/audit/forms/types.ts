@@ -8,7 +8,9 @@ export interface FormComponentProps<T> {
 }
 
 export type BasicInfoFormProps = FormComponentProps<BasicInfo>;
-export type HomeDetailsFormProps = FormComponentProps<HomeDetails>;
+export interface HomeDetailsFormProps extends FormComponentProps<HomeDetails> {
+  propertyType?: string; // Property type passed from BasicInfoForm
+}
 export interface CurrentConditionsFormProps extends FormComponentProps<CurrentConditions> {
   propertyType?: string; // Added to access the property type from BasicInfo
 }

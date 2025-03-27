@@ -91,6 +91,72 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
       {/* Basic Fields */}
       <FormGrid>
         <SelectField
+          label="Renewable Energy Sources"
+          value={data.renewableEnergy?.hasSolar ? 'yes' : 'no'}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+            const hasSolar = e.target.value === 'yes';
+            onInputChange('renewableEnergy', {
+              ...(data.renewableEnergy || {}),
+              hasSolar
+            });
+          }}
+          options={[
+            { value: 'no', label: 'No Solar Panels' },
+            { value: 'yes', label: 'Yes, I Have Solar Panels' }
+          ]}
+          helpText="Do you have solar panels installed at your property?"
+        />
+
+        {data.renewableEnergy?.hasSolar && (
+          <>
+            <InputField
+              label="Number of Solar Panels"
+              type="text"
+              value={data.renewableEnergy?.solarPanelCount || ''}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                const inputValue = e.target.value;
+                if (inputValue === '') {
+                  handleBasicFieldChange('renewableEnergy', {
+                    ...(data.renewableEnergy || { hasSolar: true }),
+                    solarPanelCount: ''
+                  });
+                } else if (/^\d+$/.test(inputValue)) {
+                  const value = parseInt(inputValue);
+                  handleBasicFieldChange('renewableEnergy', {
+                    ...(data.renewableEnergy || { hasSolar: true }),
+                    solarPanelCount: value
+                  });
+                }
+              }}
+              pattern="[0-9]*"
+              inputMode="numeric"
+            />
+            
+            <InputField
+              label="System Age (years)"
+              type="text"
+              value={data.renewableEnergy?.solarAge || ''}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                const inputValue = e.target.value;
+                if (inputValue === '') {
+                  handleBasicFieldChange('renewableEnergy', {
+                    ...(data.renewableEnergy || { hasSolar: true }),
+                    solarAge: ''
+                  });
+                } else if (/^\d+$/.test(inputValue)) {
+                  const value = parseInt(inputValue);
+                  handleBasicFieldChange('renewableEnergy', {
+                    ...(data.renewableEnergy || { hasSolar: true }),
+                    solarAge: value
+                  });
+                }
+              }}
+              pattern="[0-9]*"
+              inputMode="numeric"
+            />
+          </>
+        )}
+        <SelectField
           label="Basic Occupancy Pattern"
           value={data.occupancyPattern}
           onChange={(e: ChangeEvent<HTMLSelectElement>) => handleBasicFieldChange('occupancyPattern', e.target.value)}
@@ -147,6 +213,60 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
       {/* Advanced Fields */}
       {showAdvanced && (
         <FormSectionAdvanced>
+          {/* Renewable Energy Details */}
+          {data.renewableEnergy?.hasSolar && (
+            <FormSubsection title="Renewable Energy Details">
+              <FormGrid>
+                <InputField
+                  label="System Capacity (kW)"
+                  type="text"
+                  value={data.renewableEnergy?.solarCapacity || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('renewableEnergy', {
+                        ...(data.renewableEnergy || { hasSolar: true }),
+                        solarCapacity: ''
+                      });
+                    } else if (/^\d*\.?\d*$/.test(inputValue)) {
+                      const value = parseFloat(inputValue);
+                      handleAdvancedFieldChange('renewableEnergy', {
+                        ...(data.renewableEnergy || { hasSolar: true }),
+                        solarCapacity: value
+                      });
+                    }
+                  }}
+                  pattern="[0-9]*\.?[0-9]*"
+                  inputMode="decimal"
+                  helpText="Total system capacity in kilowatts"
+                />
+                
+                <InputField
+                  label="Monthly Generation (kWh)"
+                  type="text"
+                  value={data.renewableEnergy?.solarGeneration || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleAdvancedFieldChange('renewableEnergy', {
+                        ...(data.renewableEnergy || { hasSolar: true }),
+                        solarGeneration: ''
+                      });
+                    } else if (/^\d+$/.test(inputValue)) {
+                      const value = parseInt(inputValue);
+                      handleAdvancedFieldChange('renewableEnergy', {
+                        ...(data.renewableEnergy || { hasSolar: true }),
+                        solarGeneration: value
+                      });
+                    }
+                  }}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  helpText="Average monthly electricity generation"
+                />
+              </FormGrid>
+            </FormSubsection>
+          )}
           {/* Power Factor */}
           <FormSubsection title="Advanced Energy Parameters">
             <FormGrid>

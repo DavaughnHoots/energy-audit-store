@@ -609,6 +609,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
           <HomeDetailsForm
             data={formData.homeDetails}
             onInputChange={(field, value) => handleInputChange('homeDetails', field, value)}
+            propertyType={formData.basicInfo.propertyType}
           />
         );
       case 3:
@@ -642,14 +643,16 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
           />
         );
       case 7:
-        // Ensure productPreferences is initialized
-        if (!formData.productPreferences) {
+        // Always ensure productPreferences is initialized with default values
+        // to prevent validation errors on first render
+        if (!formData.productPreferences || !formData.productPreferences.categories) {
           setFormData(prevData => ({
             ...prevData,
             productPreferences: {
-              categories: [],
-              features: [],
-              budgetConstraint: 5000
+              ...(prevData.productPreferences || {}),
+              categories: prevData.productPreferences?.categories || ['hvac'],
+              features: prevData.productPreferences?.features || [],
+              budgetConstraint: prevData.productPreferences?.budgetConstraint || 5000
             }
           }));
         }

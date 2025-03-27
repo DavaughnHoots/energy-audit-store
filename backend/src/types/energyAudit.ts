@@ -154,6 +154,7 @@ export interface EnergyConsumption {
   powerFactor?: number; // Power factor (0.8-1.0) for energy consumption calculation
   seasonalFactor?: number; // Seasonal factor (0.8-1.2) calculated from seasonalVariation
   occupancyFactor?: number; // Occupancy factor (0.6-1.0) calculated from occupancyPattern
+  renewableEnergy?: RenewableEnergy; // Added to support renewable energy data in energy consumption form
 }
 
 // Product preferences interface

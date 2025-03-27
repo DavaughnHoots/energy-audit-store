@@ -111,20 +111,6 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
     >
       {/* Basic Fields */}
       <FormGrid>
-        <SelectField
-          label="Property Type"
-          value={data.homeType}
-          onChange={handleBasicChange('homeType')}
-          options={[
-            { value: 'single-family', label: 'Single Family' },
-            { value: 'townhouse', label: 'Townhouse' },
-            { value: 'duplex', label: 'Duplex' },
-            { value: 'apartment', label: 'Apartment' },
-            { value: 'condominium', label: 'Condominium' },
-            { value: 'mobile-home', label: 'Mobile Home' }
-          ]}
-          required
-        />
 
         <SelectField
           label="Size Category"
