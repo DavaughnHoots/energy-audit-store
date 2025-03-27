@@ -86,7 +86,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   return (
     <div>
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 -mx-4 sm:mx-0 px-4 sm:px-0">
         <StatCard
           title="Total Savings"
           value={`$${stats?.totalSavings?.actual?.toLocaleString() ?? '0'}`}
@@ -118,9 +118,9 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       </div>
 
       {/* Savings Chart */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-8 overflow-hidden">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Savings Trend</h2>
-        <div className="h-[400px] sm:h-96 -mx-4 sm:mx-0">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 -mx-4 sm:mx-0">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 px-4 sm:px-0">Monthly Savings Trend</h2>
+        <div className="h-[400px] sm:h-96">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={stats.monthlySavings}
@@ -163,10 +163,10 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       </div>
 
       {/* Recommendations Section */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 -mx-4 sm:mx-0">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 px-4 sm:px-0">Recommendations</h2>
         {stats.recommendations && stats.recommendations.length > 0 ? (
-          <div className="space-y-4 -mx-4 sm:mx-0">
+          <div className="space-y-4">
             {stats.recommendations.map((recommendation) => (
               <RecommendationCard
                 key={recommendation.id}
@@ -176,7 +176,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-gray-500 py-8 px-4 sm:px-0">
             <p>No recommendations available.</p>
             <button
               onClick={() => window.location.href = '/energy-audit'}
