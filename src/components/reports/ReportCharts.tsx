@@ -54,34 +54,8 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percentage, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                  // Don't render labels on mobile for pie slices that are too small
-                  if (isMobile && percentage < 10) return null;
-                  
-                  // Calculate label position
-                  const RADIAN = Math.PI / 180;
-                  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                  const x = cx + radius * Math.cos(-midAngle * RADIAN) * 0.8;
-                  const y = cy + radius * Math.sin(-midAngle * RADIAN) * 0.8;
-                  
-                  // Shorter labels for mobile
-                  const displayName = isMobile ? 
-                    (name.length > 5 ? name.substring(0, 5) + '..' : name) : 
-                    name;
-                  
-                  return (
-                    <text 
-                      x={x} 
-                      y={y} 
-                      fill="#000" 
-                      textAnchor="middle" 
-                      dominantBaseline="central"
-                      fontSize={isMobile ? 10 : 12}
-                    >
-                      {percentage > 10 ? `${displayName}: ${percentage}%` : `${percentage}%`}
-                    </text>
-                  );
-                }}
+                // Don't use labels directly on the chart for mobile
+                label={!isMobile && (({ name, percentage }) => `${percentage}%`)}
                 outerRadius={isMobile ? 65 : 100}
                 innerRadius={isMobile ? 30 : 50}
                 fill="#8884d8"
@@ -97,10 +71,11 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
                 wrapperStyle={{ fontSize: '12px' }}
               />
               <Legend 
-                layout={isMobile ? "horizontal" : "vertical"}
-                align={isMobile ? "center" : "right"}
-                verticalAlign={isMobile ? "bottom" : "middle"}
+                layout="horizontal"
+                align="center"
+                verticalAlign="bottom"
                 wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                formatter={(value) => value}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -148,6 +123,7 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
             <BarChart
               data={data.savingsAnalysis}
               margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
+              barSize={isMobile ? 30 : 40}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
@@ -158,6 +134,8 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
               <YAxis 
                 tick={{ fontSize: isMobile ? 10 : 12 }}
                 width={isMobile ? 30 : 35}
+                // Set minimum value to ensure axes are visible even with minimal data
+                domain={[0, 'dataMax + 1']}
               />
               <Tooltip 
                 formatter={(value) => `$${value.toLocaleString()}`}
