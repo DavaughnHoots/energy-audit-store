@@ -50,6 +50,11 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
       const homeSize = field === 'homeSize' ? value as number : data.homeSize;
       const sizeCategory = getSizeCategory(homeSize);
       
+      // Automatically set squareFootage based on homeSize selection
+      if (field === 'homeSize') {
+        onInputChange('squareFootage', homeSize);
+      }
+      
       // Special handling for homes using research-based defaults
       if (homeType === 'mobile-home' || homeType === 'duplex') {
         try {
