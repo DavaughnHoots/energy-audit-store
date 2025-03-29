@@ -185,6 +185,15 @@ export class EnergyAuditService {
       waterHeatingSystem: auditData.heatingCooling.waterHeatingSystem || {
         type: 'not-sure',
         age: 0
+      },
+      // Ensure renewableEnergy is properly included if it exists
+      renewableEnergy: auditData.heatingCooling.renewableEnergy || {
+        hasSolar: false,
+        solarPanelCount: 0,
+        solarCapacity: 0,
+        solarAge: 0,
+        solarGeneration: 0,
+        otherRenewables: []
       }
     }),
     energy_consumption: JSON.stringify(auditData.energyConsumption),
@@ -1020,7 +1029,7 @@ export class EnergyAuditService {
 
 // Error handling
 export class AuditError extends Error {
-  constructor(message: string) {
+constructor(message: string) {
     super(message);
     this.name = 'AuditError';
   }
