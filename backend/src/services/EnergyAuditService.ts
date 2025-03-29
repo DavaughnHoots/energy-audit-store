@@ -174,19 +174,26 @@ export class EnergyAuditService {
     try {
       await client.query('BEGIN');
 
-      // Format data as JSONB
-      const jsonData = {
-        basic_info: JSON.stringify(auditData.basicInfo),
-        home_details: JSON.stringify(auditData.homeDetails),
-        current_conditions: JSON.stringify(auditData.currentConditions),
-        heating_cooling: JSON.stringify(auditData.heatingCooling),
-        energy_consumption: JSON.stringify(auditData.energyConsumption),
-        product_preferences: JSON.stringify(auditData.productPreferences || {
-          categories: [],
-          features: [],
-          budgetConstraint: 5000
-        })
-      };
+  // Format data as JSONB
+  const jsonData = {
+    basic_info: JSON.stringify(auditData.basicInfo),
+    home_details: JSON.stringify(auditData.homeDetails),
+    current_conditions: JSON.stringify(auditData.currentConditions),
+    heating_cooling: JSON.stringify({
+      ...auditData.heatingCooling,
+      // Ensure waterHeatingSystem is properly included if it exists
+      waterHeatingSystem: auditData.heatingCooling.waterHeatingSystem || {
+        type: 'not-sure',
+        age: 0
+      }
+    }),
+    energy_consumption: JSON.stringify(auditData.energyConsumption),
+    product_preferences: JSON.stringify(auditData.productPreferences || {
+      categories: [],
+      features: [],
+      budgetConstraint: 5000
+    })
+  };
 
       console.log('Formatted JSONB data:', jsonData);
 
