@@ -17,7 +17,6 @@ const validateBasicInfo = (data: EnergyAuditData['basicInfo']): boolean => {
 // Home Details validation
 const validateHomeDetails = (data: EnergyAuditData['homeDetails']): boolean => {
   return !!(
-    data.homeType &&
     data.homeSize &&
     data.stories &&
     data.basementType !== undefined
@@ -99,7 +98,6 @@ export const getSectionErrors = (
       break;
 
     case 'homeDetails':
-      if (!data.homeDetails.homeType) errors.push('Property type is required');
       if (!data.homeDetails.homeSize) errors.push('Home size is required');
       if (!data.homeDetails.stories) errors.push('Number of stories is required');
       break;

@@ -14,9 +14,17 @@ import { getMobileHomeDefaults } from './MobileHomeDefaults';
 
 const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
   data,
-  onInputChange
+  onInputChange,
+  propertyType
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // Set homeType based on propertyType from BasicInfoForm
+  useEffect(() => {
+    if (propertyType && !data.homeType) {
+      onInputChange('homeType', propertyType);
+    }
+  }, [propertyType, data.homeType, onInputChange]);
 
   // Method to access parent data (yearBuilt in basicInfo)
   const getParentData = () => {
@@ -114,6 +122,13 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
       showAdvanced={showAdvanced}
       onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
     >
+      {/* Hidden field for homeType to ensure it's included in the form data */}
+      <input 
+        type="hidden" 
+        name="homeType" 
+        value={data.homeType || (propertyType || '')} 
+      />
+      
       {/* Basic Fields */}
       <FormGrid>
 
