@@ -12,8 +12,13 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<React.ReactNode | null>(null);
 
+  // Helper function to validate audit ID
+  const isValidAuditId = (id: string | null): boolean => {
+    return id !== null && id !== "null" && id !== undefined && id !== "";
+  };
+
   const handleDownloadReport = async () => {
-    if (!auditId) {
+    if (!isValidAuditId(auditId)) {
       setError(
         <div className="text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
@@ -34,12 +39,8 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
     
     setIsGenerating(true);
     try {
-      // Ensure auditId is not null or "null" string
-      const validAuditId = auditId === "null" ? null : auditId;
-      
-      if (!validAuditId) {
-        throw new Error('Invalid audit ID');
-      }
+      // We already validated the audit ID is valid
+      const validAuditId = auditId;
       
       // Use the full URL with the API_BASE_URL to ensure cookies are sent to the correct domain
       const { API_BASE_URL } = await import('@/config/api');
@@ -141,10 +142,10 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
               </button>
               
               <button
-                onClick={() => auditId && navigate(`/reports/${auditId}`)}
-                disabled={!auditId}
+                onClick={() => isValidAuditId(auditId) && navigate(`/reports/${auditId}`)}
+                disabled={!isValidAuditId(auditId)}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
-                  !auditId 
+                  !isValidAuditId(auditId) 
                     ? 'bg-gray-300 cursor-not-allowed' 
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
@@ -154,7 +155,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
               </button>
             </div>
             
-            {!auditId && (
+            {!isValidAuditId(auditId) && (
               <p className="text-sm text-gray-500 mt-2">
                 No energy audit available. Complete an audit to generate a report.
               </p>

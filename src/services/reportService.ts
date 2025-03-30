@@ -3,6 +3,15 @@ import { ReportData } from '../types/report';
 import { fetchWithAuth } from '../utils/authUtils';
 
 /**
+ * Validates that an audit ID is a non-empty string that's not "null"
+ * @param auditId The audit ID to validate
+ * @returns Boolean indicating if the audit ID is valid
+ */
+const isValidAuditId = (auditId: string | null | undefined): boolean => {
+  return auditId !== null && auditId !== "null" && auditId !== undefined && auditId !== "";
+};
+
+/**
  * Fetches report data for the interactive preview
  * @param auditId The audit ID to fetch data for
  * @returns Promise resolving to the report data
@@ -10,6 +19,11 @@ import { fetchWithAuth } from '../utils/authUtils';
 export const fetchReportData = async (auditId: string): Promise<ReportData> => {
   try {
     console.log('Fetching report data for audit ID:', auditId);
+    
+    // Validate the audit ID before making the API call
+    if (!isValidAuditId(auditId)) {
+      throw new Error(`Invalid audit ID: ${auditId}`);
+    }
     
     // Use the fetchWithAuth utility which handles retries and token refresh
     const response = await fetchWithAuth(

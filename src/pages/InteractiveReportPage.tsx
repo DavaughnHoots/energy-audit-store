@@ -28,19 +28,29 @@ const InteractiveReportPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>('summary');
 
+  // Helper function to validate audit ID
+  const isValidAuditId = (id: string | null | undefined): boolean => {
+    return id !== null && id !== "null" && id !== undefined && id !== "";
+  };
+
   useEffect(() => {
     const loadReportData = async () => {
-      if (!auditId) {
-        setError('No audit ID provided');
+      if (!isValidAuditId(auditId)) {
+        setError('No valid audit ID provided. Please complete an energy audit first.');
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const data = await fetchReportData(auditId);
-        setReportData(data);
-        setError(null);
+        // TypeScript safety: Make sure we have a valid string before making the API call
+        if (typeof auditId === 'string') {
+          const data = await fetchReportData(auditId);
+          setReportData(data);
+          setError(null);
+        } else {
+          throw new Error('Invalid audit ID format');
+        }
       } catch (err) {
         console.error('Error loading report data:', err);
         setError('Failed to load report data. Please try again later.');
@@ -140,7 +150,7 @@ const InteractiveReportPage: React.FC = () => {
   };
 
   const handleDownloadPdf = () => {
-    if (!auditId) return;
+    if (!isValidAuditId(auditId)) return;
     window.open(`/api/energy-audit/${auditId}/report`, '_blank');
   };
 
