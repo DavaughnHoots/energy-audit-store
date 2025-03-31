@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, getApiUrl } from '@/config/api';
 import { fetchWithAuth } from '@/utils/authUtils';
 import { useLocalStorage } from '@/utils/authUtils';
-import { AlertCircle, Download, Loader2, Settings } from 'lucide-react';
+import { AlertCircle, Download, Loader2, Settings, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
 import RecommendationsTab from '@/components/dashboard/RecommendationsTab';
 import ProductComparisons from '@/components/dashboard/ProductComparisons';
 import ReportsTab from '@/components/dashboard/ReportsTab';
+import { fetchAuditHistory } from '@/services/reportService';
 
 interface DashboardStats {
   totalSavings: {
@@ -49,6 +50,8 @@ const UserDashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>(persistedStats);
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshKey, setRefreshKey] = useState(0); // Used to force refresh
+  const [effectiveAuditId, setEffectiveAuditId] = useState<string | null>(null);
+  const [usingFallbackAudit, setUsingFallbackAudit] = useState(false);
 
   const fetchDashboardData = useCallback(async (): Promise<number | undefined> => {
     try {
@@ -152,6 +155,42 @@ const UserDashboardPage: React.FC = () => {
     };
   }, [fetchDashboardData, refreshKey]);
 
+  // Fetch first audit from history if no latestAuditId is available
+  useEffect(() => {
+    // Only attempt to fetch a fallback if no valid audit ID exists yet
+    if ((!stats.latestAuditId || 
+         stats.latestAuditId === 'null' || 
+         stats.latestAuditId === 'undefined') && 
+        !effectiveAuditId) {
+      
+      console.log('No valid audit ID found, attempting to fetch from history');
+      
+      // Fetch just the first audit from history
+      fetchAuditHistory(1, 1)
+        .then(data => {
+          if (data.audits?.length > 0 && data.audits[0]?.id) {
+            const firstAuditId = data.audits[0].id;
+            console.log('Setting effective audit ID from history:', firstAuditId);
+            
+            // Store the effective ID
+            setEffectiveAuditId(firstAuditId);
+            
+            // Also update the stats object so all child components receive it
+            setStats(prevStats => ({
+              ...prevStats,
+              latestAuditId: firstAuditId
+            }));
+            
+            // Indicate we're using a fallback for notification
+            setUsingFallbackAudit(true);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching fallback audit ID:', err);
+        });
+    }
+  }, [stats.latestAuditId, effectiveAuditId]);
+  
 
   if (isLoading) {
     return (
@@ -245,6 +284,22 @@ const UserDashboardPage: React.FC = () => {
           </div>
         </div>
         
+        {/* Notification when using fallback audit */}
+        {usingFallbackAudit && (
+          <div className="mb-4 text-sm p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 flex items-center justify-between">
+            <p>Loaded your most recent audit from history.</p>
+            <Button
+              onClick={() => setRefreshKey(prev => prev + 1)}
+              variant="outline"
+              size="sm"
+              className="ml-4 text-xs flex items-center"
+            >
+              <RefreshCw className="h-3 w-3 mr-1" />
+              <span>Refresh Dashboard</span>
+            </Button>
+          </div>
+        )}
+        
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <DashboardOverview 
@@ -271,7 +326,7 @@ const UserDashboardPage: React.FC = () => {
         
         {activeTab === 'reports' && (
           <ReportsTab 
-            auditId={stats.latestAuditId || null} 
+            auditId={stats.latestAuditId || effectiveAuditId} 
           />
         )}
       </div>
