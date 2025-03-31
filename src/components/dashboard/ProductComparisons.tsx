@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '@/config/api';
 import { Loader2, Save, Trash, RefreshCw, AlertCircle, Info } from 'lucide-react';
 import ProductDetailModal from '../products/ProductDetailModal';
+import { formatCurrency, formatPercentage } from '@/utils/formatting';
 
 interface Product {
   id: string;
@@ -210,7 +211,7 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                     >
                       <h3 className="font-medium text-sm sm:text-base">{product.name}</h3>
                       <p className="text-xs sm:text-sm text-gray-600">{product.category}</p>
-                      <p className="text-xs sm:text-sm font-semibold">${product.price.toLocaleString()}</p>
+                      <p className="text-xs sm:text-sm font-semibold">{formatCurrency(product.price)}</p>
                     </div>
                     <div className="flex items-start">
                       <input 
@@ -271,7 +272,7 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                         </td>
                         {selectedProducts.map(product => (
                           <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                            ${product.price.toLocaleString()}
+                            {formatCurrency(product.price)}
                           </td>
                         ))}
                       </tr>
@@ -307,7 +308,7 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                         </td>
                         {selectedProducts.map(product => (
                           <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                            ${product.annualSavings.toLocaleString()}
+                            {formatCurrency(product.annualSavings)}
                           </td>
                         ))}
                       </tr>
@@ -319,7 +320,7 @@ const ProductComparisons: React.FC<ProductComparisonsProps> = ({ userId, audits 
                         </td>
                         {selectedProducts.map(product => (
                           <td key={product.id} className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                            {(product.roi * 100).toFixed(1)}%
+                            {formatPercentage(product.roi)}
                           </td>
                         ))}
                       </tr>
