@@ -15,6 +15,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "noEmitOnError": false,
     "types": ["node", "express"],
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
