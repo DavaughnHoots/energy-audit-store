@@ -14,7 +14,8 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
 
   // Helper function to validate audit ID
   const isValidAuditId = (id: string | null): boolean => {
-    return id !== null && id !== "null" && id !== undefined && id !== "";
+    // Check if the id is not null/undefined and is not a "null" or "undefined" string
+    return id !== null && id !== "null" && id !== undefined && id !== "undefined" && id !== "";
   };
 
   const handleDownloadReport = async () => {

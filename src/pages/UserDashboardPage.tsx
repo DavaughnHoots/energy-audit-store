@@ -79,6 +79,12 @@ const UserDashboardPage: React.FC = () => {
         requestUrl: `${API_ENDPOINTS.DASHBOARD.STATS}${auditIdFromUrl ? `?newAudit=${auditIdFromUrl}` : ''}`
       });
       
+      // Fix for 'null' string values for latestAuditId
+      if (data.latestAuditId === 'null' || data.latestAuditId === 'undefined') {
+        console.log('Fixing invalid latestAuditId value:', data.latestAuditId);
+        data.latestAuditId = null;
+      }
+      
       // Update both stats and persisted stats
       setStats(data);
       setPersistentStats(data);

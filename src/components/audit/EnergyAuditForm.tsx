@@ -583,7 +583,16 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         throw new Error(responseData.message || 'Failed to submit audit');
       }
 
+      // Verify response contains a valid ID
       const result = responseData as AuditResponse;
+      
+      if (!result.id || result.id === 'null' || result.id === 'undefined') {
+        console.error('Server returned invalid audit ID:', result.id);
+        throw new Error('Server returned invalid audit ID. Please try again later.');
+      }
+      
+      // Log successful ID for debugging
+      console.log('Successfully received audit ID:', result.id);
       setSubmittedAuditId(result.id);
       
       if (isAuthenticated) {
