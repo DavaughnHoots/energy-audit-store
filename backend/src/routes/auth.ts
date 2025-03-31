@@ -3,7 +3,7 @@ import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { UserAuthService, AuthError, ValidationError } from '../services/userAuthService.js';
 import { pool } from '../config/database.js';
-import { authenticate, csrfProtection } from '../middleware/auth.js';
+import { authenticate, csrfProtection, generateCsrfToken } from '../middleware/auth.js';
 import { authRateLimit } from '../middleware/rateLimit.js';
 
 // Cookie configuration
@@ -28,6 +28,11 @@ interface AuthRequest extends Request {
 
 const router = express.Router();
 const authService = new UserAuthService(pool);
+
+// CSRF token endpoint
+router.get('/csrf-token', generateCsrfToken, (req: Request, res: Response) => {
+  res.json({ message: 'CSRF token generated' });
+});
 
 // Register new user
 router.post('/register', authRateLimit, async (req: Request, res: Response) => {
@@ -101,6 +106,9 @@ router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
       maxAge: REFRESH_TOKEN_EXPIRY
     });
 
+    // Generate CSRF token after successful login
+    generateCsrfToken(req, res, () => {});
+
     // Send user data without tokens
     const { token, refreshToken, ...userData } = result;
     console.log('Sending response with user data');
@@ -128,12 +136,14 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
 
     res.clearCookie('accessToken', COOKIE_CONFIG);
     res.clearCookie('refreshToken', COOKIE_CONFIG);
+    res.clearCookie('XSRF-TOKEN', COOKIE_CONFIG);
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error instanceof Error ? error.message : String(error));
     // Still clear cookies even if blacklisting failed
     res.clearCookie('accessToken', COOKIE_CONFIG);
     res.clearCookie('refreshToken', COOKIE_CONFIG);
+    res.clearCookie('XSRF-TOKEN', COOKIE_CONFIG);
     res.status(500).json({ error: 'Logout failed, but cookies have been cleared' });
   }
 });
@@ -158,6 +168,9 @@ router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
       ...COOKIE_CONFIG,
       maxAge: REFRESH_TOKEN_EXPIRY
     });
+
+    // Generate a new CSRF token with token refresh
+    generateCsrfToken(req, res, () => {});
 
     res.json({ message: 'Tokens refreshed successfully' });
   } catch (error) {
@@ -190,6 +203,9 @@ router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => 
           message: 'The requested user profile could not be found'
         });
       }
+
+      // Generate CSRF token when getting profile
+      generateCsrfToken(req, res, () => {});
 
       res.json(result.rows[0]);
     } catch (dbError) {
@@ -231,6 +247,9 @@ router.put('/profile', authenticate, csrfProtection, async (req: AuthRequest, re
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    // Refresh CSRF token after profile update
+    generateCsrfToken(req, res, () => {});
 
     res.json(result.rows[0]);
   } catch (error) {

@@ -56,17 +56,29 @@ export const fetchWithAuth = async (
       // Add CSRF token for non-GET requests
       const method = options.method || 'GET';
       if (method !== 'GET') {
-        const csrfToken = getCookieValue('XSRF-TOKEN');
-        console.log('CSRF Token from cookie:', csrfToken ? 'Found token' : 'Token missing');
+        // First try to get the token from cookies
+        let csrfToken = getCookieValue('XSRF-TOKEN');
         
-        // Check all cookies for debugging
-        console.log('All cookies:', document.cookie);
+        // If no token exists in cookies, create a temporary one
+        if (!csrfToken) {
+          try {
+            // Attempt to fetch a CSRF token first
+            const tokenResponse = await fetch(url.includes('/api') ? '/api/auth/csrf-token' : '/auth/csrf-token', {
+              method: 'GET',
+              credentials: 'include',
+            });
+            
+            // The token should now be in cookies if the endpoint exists and works
+            csrfToken = getCookieValue('XSRF-TOKEN');
+          } catch (error) {
+            // Silently continue if the endpoint doesn't exist
+            console.log('Could not fetch CSRF token, proceeding without it');
+          }
+        }
         
+        // If we have a token, add it to headers
         if (csrfToken) {
           headers['x-xsrf-token'] = csrfToken;
-          console.log('Added CSRF token to headers');
-        } else {
-          console.warn('No CSRF token found in cookies. This will cause 403 errors for protected routes.');
         }
       }
       
