@@ -64,14 +64,20 @@ router.get('/health', async (req, res) => {
 /**
  * Get report data for a specific audit
  * Uses ReportDataService for robust parsing and error handling
+ * 
+ * This route is registered to match the frontend's expected pattern:
+ * /api/energy-audit/:id/report-data
  */
-router.get('/:id', optionalTokenValidation, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', optionalTokenValidation, async (req: AuthenticatedRequest, res: Response) => {
+  // Get the audit ID from the route parameter
   const auditId = req.params.id;
   const userId = req.user?.id;
   
   appLogger.info('Fetching report data with enhanced handler', createLogMetadata(req, {
     auditId,
-    authenticatedUser: !!userId
+    authenticatedUser: !!userId,
+    path: req.path,
+    originalUrl: req.originalUrl
   }));
   
   try {

@@ -205,7 +205,8 @@ app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/education', educationRoutes);
 // Register specialized routes BEFORE the main energy audit route to prevent route conflicts
 app.use('/api/energy-audit/history', authenticate, auditHistoryRoutes);
-app.use('/api/energy-audit/report-data', optionalTokenValidation, reportDataRoutes);
+// Use a parameter pattern that matches the frontend's expected URL format
+app.use('/api/energy-audit/:id/report-data', optionalTokenValidation, reportDataRoutes);
 app.use('/api/energy-audit', energyAuditRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
