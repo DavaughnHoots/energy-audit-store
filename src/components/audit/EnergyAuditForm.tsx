@@ -14,7 +14,11 @@ import ProductPreferencesForm from './forms/ProductPreferencesForm';
 import AuditSubmissionModal from './AuditSubmissionModal';
 import { Dialog } from '@/components/ui/Dialog';
 import { getStoredAuditData, storeAuditData, clearStoredAuditData } from '@/utils/auditStorage';
-import { fetchUserProfileData, updateUserProfileFromAudit } from '@/services/userProfileService';
+import { 
+  fetchUserProfileData, 
+  updateUserProfileFromAudit,
+  fetchLatestAuditData
+} from '@/services/userProfileService.enhanced';
 import { getMobileHomeDefaults } from './forms/MobileHomeDefaults';
 import { 
   EnergyAuditData,
@@ -53,6 +57,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
   
   // Auto-fill related state
   const [userProfileData, setUserProfileData] = useState<any>(null);
+  const [previousAuditData, setPreviousAuditData] = useState<EnergyAuditData | null>(null);
   const [userModified, setUserModified] = useState<Record<string, boolean>>({});
   const [showUpdateProfileDialog, setShowUpdateProfileDialog] = useState(false);
   const [fieldsToUpdate, setFieldsToUpdate] = useState<string[]>([]);
@@ -175,9 +180,10 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
     }
   }, [initialData]);
   
-  // Fetch user profile data for auto-fill
+  // Fetch user profile data and latest audit data for auto-fill
   useEffect(() => {
     if (isAuthenticated) {
+      // Fetch user profile
       const loadUserProfile = async () => {
         const profileData = await fetchUserProfileData();
         if (profileData) {
@@ -185,63 +191,276 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         }
       };
       
+      // Fetch latest audit data
+      const loadLatestAudit = async () => {
+        try {
+          console.log('Fetching latest audit data for pre-fill...');
+          const auditData = await fetchLatestAuditData();
+          if (auditData) {
+            console.log('Found previous audit data:', auditData.basicInfo?.propertyType);
+            setPreviousAuditData(auditData);
+          }
+        } catch (error) {
+          console.error('Error fetching latest audit data:', error);
+        }
+      };
+      
       loadUserProfile();
+      loadLatestAudit();
     }
   }, [isAuthenticated]);
   
-  // Auto-fill form with profile data
+  // Apply previous audit data after user profile and latest audit are loaded
   useEffect(() => {
-    if (userProfileData && !getStoredAuditData() && !initialData) {
-      // Only auto-fill if we don't have stored data or initial data
+    if (!getStoredAuditData() && !initialData && userProfileData && previousAuditData) {
+      console.log('Applying previous audit data for a new audit...');
+      
+      // Merge previous audit data with current form data, but prioritize user profile for basic info
       const newFormData = { ...formData };
       const newAutofilledFields = { ...autofilledFields };
       
-      // Auto-fill basic info
-      if (!userModified['basicInfo.fullName'] && userProfileData.fullName) {
+      // Keep track of which fields were pre-filled
+      const prefilledSummary: string[] = [];
+      
+      // Basic info - prioritize user profile data
+      if (userProfileData.fullName) {
         newFormData.basicInfo.fullName = userProfileData.fullName;
         newAutofilledFields.basicInfo.push('fullName');
+        prefilledSummary.push('name');
+      } else if (previousAuditData.basicInfo?.fullName) {
+        newFormData.basicInfo.fullName = previousAuditData.basicInfo.fullName;
+        newAutofilledFields.basicInfo.push('fullName');
+        prefilledSummary.push('name');
       }
-      if (!userModified['basicInfo.email'] && userProfileData.email) {
+      
+      if (userProfileData.email) {
         newFormData.basicInfo.email = userProfileData.email;
         newAutofilledFields.basicInfo.push('email');
+        prefilledSummary.push('email');
+      } else if (previousAuditData.basicInfo?.email) {
+        newFormData.basicInfo.email = previousAuditData.basicInfo.email;
+        newAutofilledFields.basicInfo.push('email');
+        prefilledSummary.push('email');
       }
-      if (!userModified['basicInfo.phone'] && userProfileData.phone) {
+      
+      if (userProfileData.phone) {
         newFormData.basicInfo.phone = userProfileData.phone;
         newAutofilledFields.basicInfo.push('phone');
+        prefilledSummary.push('phone');
+      } else if (previousAuditData.basicInfo?.phone) {
+        newFormData.basicInfo.phone = previousAuditData.basicInfo.phone;
+        newAutofilledFields.basicInfo.push('phone');
+        prefilledSummary.push('phone');
       }
-      if (!userModified['basicInfo.address'] && userProfileData.address) {
+      
+      if (userProfileData.address) {
         newFormData.basicInfo.address = userProfileData.address;
         newAutofilledFields.basicInfo.push('address');
+        prefilledSummary.push('address');
+      } else if (previousAuditData.basicInfo?.address) {
+        newFormData.basicInfo.address = previousAuditData.basicInfo.address;
+        newAutofilledFields.basicInfo.push('address');
+        prefilledSummary.push('address');
       }
       
-      // Auto-fill current conditions
-      if (!userModified['currentConditions.numWindows'] && userProfileData.windowMaintenance) {
-        newFormData.currentConditions.numWindows = userProfileData.windowMaintenance.windowCount;
-        newAutofilledFields.currentConditions.push('numWindows');
-        
-        // Set window count category based on number
-        if (userProfileData.windowMaintenance.windowCount < 10) {
-          newFormData.currentConditions.windowCount = 'few';
-        } else if (userProfileData.windowMaintenance.windowCount > 15) {
-          newFormData.currentConditions.windowCount = 'many';
-        } else {
-          newFormData.currentConditions.windowCount = 'average';
+      // User profile settings have specific property details
+      if (userProfileData.propertyDetails) {
+        // Property type
+        if (userProfileData.propertyDetails.propertyType) {
+          newFormData.basicInfo.propertyType = userProfileData.propertyDetails.propertyType;
+          prefilledSummary.push('property type');
         }
-        newAutofilledFields.currentConditions.push('windowCount');
+        
+        // Year built
+        if (userProfileData.propertyDetails.yearBuilt) {
+          newFormData.basicInfo.yearBuilt = userProfileData.propertyDetails.yearBuilt;
+          prefilledSummary.push('year built');
+        }
+        
+        // Square footage
+        if (userProfileData.propertyDetails.squareFootage) {
+          newFormData.homeDetails.squareFootage = userProfileData.propertyDetails.squareFootage;
+          newFormData.homeDetails.homeSize = userProfileData.propertyDetails.squareFootage;
+          prefilledSummary.push('square footage');
+        }
+        
+        // Stories
+        if (userProfileData.propertyDetails.stories) {
+          newFormData.homeDetails.stories = userProfileData.propertyDetails.stories;
+          prefilledSummary.push('number of stories');
+        }
+      } 
+      // Fill remaining fields from previous audit if no user profile data
+      else if (previousAuditData.basicInfo) {
+        if (previousAuditData.basicInfo.propertyType && !newFormData.basicInfo.propertyType) {
+          newFormData.basicInfo.propertyType = previousAuditData.basicInfo.propertyType;
+          prefilledSummary.push('property type');
+        }
+        
+        if (previousAuditData.basicInfo.yearBuilt && !newFormData.basicInfo.yearBuilt) {
+          newFormData.basicInfo.yearBuilt = previousAuditData.basicInfo.yearBuilt;
+          prefilledSummary.push('year built');
+        }
       }
       
-      // Auto-fill air leaks from draft locations
-      if (!userModified['currentConditions.airLeaks'] && 
-          userProfileData.weatherization?.draftLocations?.locations) {
-        newFormData.currentConditions.airLeaks = 
-          userProfileData.weatherization.draftLocations.locations;
+      // For home details, use previous audit data if not set from property details
+      if (previousAuditData.homeDetails) {
+        // Only use previous audit data if not already set from property details
+        if (previousAuditData.homeDetails.squareFootage && !newFormData.homeDetails.squareFootage) {
+          newFormData.homeDetails.squareFootage = previousAuditData.homeDetails.squareFootage;
+          newFormData.homeDetails.homeSize = previousAuditData.homeDetails.squareFootage;
+          prefilledSummary.push('square footage');
+        }
+        
+        if (previousAuditData.homeDetails.stories && !newFormData.homeDetails.stories) {
+          newFormData.homeDetails.stories = previousAuditData.homeDetails.stories;
+          prefilledSummary.push('number of stories');
+        }
+        
+        // These fields aren't in property details, so always use from previous audit
+        if (previousAuditData.homeDetails.bedrooms) {
+          newFormData.homeDetails.bedrooms = previousAuditData.homeDetails.bedrooms;
+          prefilledSummary.push('bedrooms');
+        }
+        
+        if (previousAuditData.homeDetails.bathrooms) {
+          newFormData.homeDetails.bathrooms = previousAuditData.homeDetails.bathrooms;
+          prefilledSummary.push('bathrooms');
+        }
+        
+        if (previousAuditData.homeDetails.homeType) {
+          newFormData.homeDetails.homeType = previousAuditData.homeDetails.homeType;
+          prefilledSummary.push('home type');
+        }
+      }
+      
+      // Current conditions - use window info from user profile if available
+      if (userProfileData.windowMaintenance) {
+        if (userProfileData.windowMaintenance.windowCount) {
+          newFormData.currentConditions.numWindows = userProfileData.windowMaintenance.windowCount;
+          newAutofilledFields.currentConditions.push('numWindows');
+          prefilledSummary.push('window count');
+          
+          // Set window count category based on number
+          if (userProfileData.windowMaintenance.windowCount < 10) {
+            newFormData.currentConditions.windowCount = 'few';
+          } else if (userProfileData.windowMaintenance.windowCount > 15) {
+            newFormData.currentConditions.windowCount = 'many';
+          } else {
+            newFormData.currentConditions.windowCount = 'average';
+          }
+          newAutofilledFields.currentConditions.push('windowCount');
+        }
+        
+        if (userProfileData.windowMaintenance.windowType) {
+          newFormData.currentConditions.windowType = userProfileData.windowMaintenance.windowType;
+          newAutofilledFields.currentConditions.push('windowType');
+          prefilledSummary.push('window type');
+        }
+      }
+      // If not available in user profile, use from previous audit
+      else if (previousAuditData.currentConditions) {
+        if (previousAuditData.currentConditions.numWindows) {
+          newFormData.currentConditions.numWindows = previousAuditData.currentConditions.numWindows;
+          newAutofilledFields.currentConditions.push('numWindows');
+          prefilledSummary.push('window count');
+        }
+        
+        if (previousAuditData.currentConditions.windowCount) {
+          newFormData.currentConditions.windowCount = previousAuditData.currentConditions.windowCount;
+          newAutofilledFields.currentConditions.push('windowCount');
+        }
+        
+        if (previousAuditData.currentConditions.windowType) {
+          newFormData.currentConditions.windowType = previousAuditData.currentConditions.windowType;
+          newAutofilledFields.currentConditions.push('windowType');
+          prefilledSummary.push('window type');
+        }
+      }
+      
+      // Air leaks from weatherization in user profile
+      if (userProfileData.weatherization?.draftLocations?.locations) {
+        newFormData.currentConditions.airLeaks = userProfileData.weatherization.draftLocations.locations;
         newAutofilledFields.currentConditions.push('airLeaks');
+        prefilledSummary.push('air leaks');
+      }
+      // Or from previous audit if not in user profile
+      else if (previousAuditData.currentConditions?.airLeaks?.length) {
+        newFormData.currentConditions.airLeaks = previousAuditData.currentConditions.airLeaks;
+        newAutofilledFields.currentConditions.push('airLeaks');
+        prefilledSummary.push('air leaks');
       }
       
+      // Copy other current conditions from previous audit
+      if (previousAuditData.currentConditions) {
+        if (previousAuditData.currentConditions.insulation) {
+          newFormData.currentConditions.insulation = {
+            ...newFormData.currentConditions.insulation,
+            ...previousAuditData.currentConditions.insulation
+          };
+          prefilledSummary.push('insulation details');
+        }
+        
+        if (previousAuditData.currentConditions.windowCondition) {
+          newFormData.currentConditions.windowCondition = previousAuditData.currentConditions.windowCondition;
+          prefilledSummary.push('window condition');
+        }
+        
+        if (previousAuditData.currentConditions.doorCount) {
+          newFormData.currentConditions.doorCount = previousAuditData.currentConditions.doorCount;
+          prefilledSummary.push('door count');
+        }
+        
+        if (previousAuditData.currentConditions.weatherStripping) {
+          newFormData.currentConditions.weatherStripping = previousAuditData.currentConditions.weatherStripping;
+          prefilledSummary.push('weather stripping');
+        }
+        
+        if (previousAuditData.currentConditions.temperatureConsistency) {
+          newFormData.currentConditions.temperatureConsistency = previousAuditData.currentConditions.temperatureConsistency;
+          prefilledSummary.push('temperature consistency');
+        }
+        
+        if (previousAuditData.currentConditions.comfortIssues?.length) {
+          newFormData.currentConditions.comfortIssues = previousAuditData.currentConditions.comfortIssues;
+          prefilledSummary.push('comfort issues');
+        }
+      }
+      
+      // Copy HVAC details from previous audit
+      if (previousAuditData.heatingCooling) {
+        newFormData.heatingCooling = {
+          ...newFormData.heatingCooling,
+          ...previousAuditData.heatingCooling
+        };
+        prefilledSummary.push('heating and cooling details');
+      }
+      
+      // Copy energy consumption details from previous audit
+      if (previousAuditData.energyConsumption) {
+        newFormData.energyConsumption = {
+          ...newFormData.energyConsumption,
+          ...previousAuditData.energyConsumption
+        };
+        prefilledSummary.push('energy consumption details');
+      }
+      
+      // Copy product preferences from previous audit
+      if (previousAuditData.productPreferences) {
+        newFormData.productPreferences = {
+          ...newFormData.productPreferences,
+          ...previousAuditData.productPreferences
+        };
+        prefilledSummary.push('product preferences');
+      }
+      
+      // Apply the updated form data and autofilled fields
       setFormData(newFormData);
       setAutofilledFields(newAutofilledFields);
+      
+      console.log('Pre-filled form with data from user profile and previous audit:', prefilledSummary.join(', '));
     }
-  }, [userProfileData, initialData, userModified]);
+  }, [userProfileData, previousAuditData, initialData, formData, autofilledFields]);
 
   // Save form data to localStorage when it changes
   useEffect(() => {
