@@ -76,12 +76,12 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       auditDate: new Date().toISOString().slice(0, 10)
     },
     homeDetails: {
-      squareFootage: 0,
-      stories: 0,
+      squareFootage: 1500, // Default to medium size instead of 0
+      stories: 1, // Default to 1 story
       bedrooms: 0,
       bathrooms: 0,
       homeType: '',
-      homeSize: 0,
+      homeSize: 1500, // Default to medium size
       constructionPeriod: 'after-2000',
       numRooms: 0,
       numFloors: 0,
@@ -496,6 +496,24 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       onSubmit(formData);
       return;
     }
+
+    // Check for missing square footage and fix it if needed
+    if (!formData.homeDetails.squareFootage || formData.homeDetails.squareFootage <= 0) {
+      // If square footage is missing or invalid, set it based on homeSize
+      setFormData(prevData => ({
+        ...prevData,
+        homeDetails: {
+          ...prevData.homeDetails,
+          squareFootage: prevData.homeDetails.homeSize || 1500
+        }
+      }));
+      
+      console.log('Fixed missing square footage before submission');
+    }
+
+    // Debug info
+    console.log('Final form data before submission:', JSON.stringify(formData, null, 2));
+    console.log('Square footage:', formData.homeDetails.squareFootage);
 
     // Validate all sections
     console.log('Validating all sections...');

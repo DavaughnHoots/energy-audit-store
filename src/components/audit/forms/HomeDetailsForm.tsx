@@ -60,7 +60,10 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
       
       // Automatically set squareFootage based on homeSize selection
       if (field === 'homeSize') {
-        onInputChange('squareFootage', homeSize);
+        const sizeValue = parseInt(value as string);
+        // Ensure we always set a positive value
+        onInputChange('squareFootage', sizeValue > 0 ? sizeValue : 1500);
+        console.log(`Setting squareFootage to ${sizeValue} based on homeSize selection`);
       }
       
       // Special handling for homes using research-based defaults
@@ -207,6 +210,25 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
             ]}
           />
         )}
+
+        <InputField
+          label="Square Footage"
+          type="text"
+          value={data.squareFootage || ''}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (inputValue === '') {
+              onInputChange('squareFootage', data.homeSize || 1500);
+            } else if (/^\d+$/.test(inputValue)) {
+              const value = parseInt(inputValue);
+              onInputChange('squareFootage', value > 0 ? value : data.homeSize || 1500);
+            }
+          }}
+          pattern="[0-9]*"
+          inputMode="numeric"
+          helpText="Enter the exact square footage of your home"
+          required
+        />
       </FormGrid>
 
       {/* Advanced Fields */}
@@ -220,10 +242,10 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
               onChange={(e) => {
                 const inputValue = e.target.value;
                 if (inputValue === '') {
-                  onInputChange('squareFootage', '');
+                  onInputChange('squareFootage', data.homeSize || 1500);
                 } else if (/^\d+$/.test(inputValue)) {
                   const value = parseInt(inputValue);
-                  onInputChange('squareFootage', value);
+                  onInputChange('squareFootage', value > 0 ? value : data.homeSize || 1500);
                 }
               }}
               pattern="[0-9]*"
