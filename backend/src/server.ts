@@ -200,7 +200,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/education', educationRoutes);
 app.use('/api/energy-audit', energyAuditRoutes);
-app.use('/api/energy-audit/history', auditHistoryRoutes);
+app.use('/api/energy-audit/history', authenticate, auditHistoryRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
 app.use('/api/recommendations/products', productRecommendationsRoutes);
