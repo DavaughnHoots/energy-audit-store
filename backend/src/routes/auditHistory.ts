@@ -1,7 +1,7 @@
 import express, { Response } from 'express';
 import { validateToken } from '../middleware/tokenValidation.js';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
-import { EnergyAuditService } from '../services/EnergyAuditService.js';
+import { EnergyAuditService } from '../services/energyAuditService.js';
 import { AuthenticatedRequest } from '../types/auth.js';
 import { pool } from '../config/database.js';
 

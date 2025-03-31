@@ -7,7 +7,7 @@ import { optionalTokenValidation } from '../middleware/optionalTokenValidation.j
 import pkg from 'pg';
 const { Pool } = pkg;
 import { dbConfig } from '../config/database.js';
-import { EnergyAuditService } from '../services/EnergyAuditService.js';
+import { EnergyAuditService } from '../services/energyAuditService.js';
 
 // Create a database pool
 const pool = new Pool(dbConfig);
