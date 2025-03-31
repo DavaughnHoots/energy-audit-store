@@ -34,7 +34,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     if (isOpen && productId) {
       fetchProductDetails();
     }
-  }, [isOpen, productId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, productId]); // Adding fetchProductDetails to deps would cause an infinite loop
   
   const fetchProductDetails = async () => {
     try {

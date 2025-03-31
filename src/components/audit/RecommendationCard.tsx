@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { API_ENDPOINTS } from '@/config/api';
+import { formatCurrency } from '@/utils/formatting';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
@@ -109,13 +110,15 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
           <h3 className="text-lg font-medium text-gray-900">{recommendation.title}</h3>
           <p className="mt-1 text-sm text-gray-600">{recommendation.description}</p>
           <div className="mt-2 flex flex-wrap gap-3 text-sm">
-            <span className="text-blue-600 whitespace-nowrap">Estimated: ${recommendation.estimatedSavings}</span>
-            {recommendation.actualSavings !== null && (
-              <span className="text-green-600 whitespace-nowrap">Actual: ${recommendation.actualSavings}</span>
-            )}
-            {recommendation.implementationCost !== null && (
-              <span className="text-gray-500 whitespace-nowrap">Cost: ${recommendation.implementationCost}</span>
-            )}
+            <span className="text-blue-600 whitespace-nowrap">
+              Estimated: {formatCurrency(recommendation.estimatedSavings)}
+            </span>
+            <span className="text-green-600 whitespace-nowrap">
+              Actual: {formatCurrency(recommendation.actualSavings, "$0")}
+            </span>
+            <span className="text-gray-500 whitespace-nowrap">
+              Cost: {formatCurrency(recommendation.implementationCost, "$0")}
+            </span>
           </div>
           {error && (
             <div className="mt-2 text-sm text-red-600 flex items-center">
