@@ -1,12 +1,21 @@
 import express, { Response } from 'express';
 import { validateToken } from '../middleware/tokenValidation.js';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
-import { EnergyAuditService } from '../services/EnergyAuditService.js';
+import { EnergyAuditService } from '../services/energyAuditService.js';
 import { AuthenticatedRequest } from '../types/auth.js';
 import { pool } from '../config/database.js';
 
 const router = express.Router();
 const energyAuditService = new EnergyAuditService(pool);
+
+// Debug logging for the route
+router.use((req, res, next) => {
+  appLogger.debug('Audit history route accessed', createLogMetadata(req, {
+    query: req.query,
+    user: req.user?.id || 'none'
+  }));
+  next();
+});
 
 /**
  * Get paginated audit history for the authenticated user

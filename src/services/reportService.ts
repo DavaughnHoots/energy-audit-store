@@ -30,8 +30,11 @@ export const fetchAuditHistory = async (
     console.log(`Fetching audit history: page=${page}, limit=${limit}`);
     
     const response = await fetchWithAuth(
-      getApiUrl(`${API_ENDPOINTS.ENERGY_AUDIT}/history?page=${page}&limit=${limit}`),
-      { method: 'GET' }
+      getApiUrl(`${API_ENDPOINTS.AUDIT_HISTORY}?page=${page}&limit=${limit}`),
+      { 
+        method: 'GET',
+        credentials: 'include' // Ensure cookies are sent with the request
+      }
     );
 
     if (!response.ok) {

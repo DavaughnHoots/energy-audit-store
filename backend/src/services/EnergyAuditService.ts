@@ -25,6 +25,15 @@ import {
 import { reportGenerationService } from './ReportGenerationService.js';
 import { calculationService } from './calculateService.js';
 import { extendedCalculationService } from './extendedCalculationService.js';
+import { appLogger, createLogMetadata } from '../utils/logger.js';
+
+// Custom error class for audit-related errors
+class AuditError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuditError';
+  }
+}
 
 interface DbRecommendation {
   id: string;
@@ -44,7 +53,10 @@ interface DbRecommendation {
 
 const mapDbToAuditRecommendation = (dbRec: DbRecommendation): AuditRecommendation => {
   const { category, ...recommendation } = dbRec;
-  return recommendation;
+  return {
+    ...recommendation,
+    type: category // Ensuring 'type' property is set from 'category'
+  };
 };
 
 const mapAuditToDbRecommendation = (rec: AuditRecommendation, category: string): DbRecommendation => {
@@ -78,10 +90,199 @@ interface ReportGenerationOptions {
 }
 
 export class EnergyAuditService {
-  private pool: Pool;
+  private pool: any; // Using 'any' to avoid type issues with pg Pool
 
-  constructor(pool: Pool) {
+  constructor(pool: any) {
     this.pool = pool;
+  }
+
+  /**
+   * Get paginated audit history for a user
+   * @param userId User ID to get audits for
+   * @param page Page number (1-indexed)
+   * @param limit Number of items per page
+   * @returns Object with audits array and pagination metadata
+   */
+  async getPaginatedAuditHistory(userId: string, page: number = 1, limit: number = 5): Promise<{
+    audits: {
+      id: string;
+      date: string;
+      address: string;
+      recommendations: number;
+      title: string;
+      status: string;
+    }[];
+    pagination: {
+      totalRecords: number;
+      totalPages: number;
+      currentPage: number;
+      limit: number;
+    };
+  }> {
+    // Input validation
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    if (page < 1) page = 1;
+    if (limit < 1) limit = 5;
+    if (limit > 50) limit = 50;
+
+    // Calculate offset for pagination
+    const offset = (page - 1) * limit;
+
+    const client = await this.pool.connect();
+    try {
+      // Get count of total records for pagination
+      const countResult = await client.query(
+        'SELECT COUNT(*) FROM energy_audits WHERE user_id = $1',
+        [userId]
+      );
+
+      if (!countResult || !countResult.rows || countResult.rows.length === 0) {
+        // Return empty result if no records found
+        return {
+          audits: [],
+          pagination: {
+            totalRecords: 0,
+            totalPages: 0,
+            currentPage: page,
+            limit
+          }
+        };
+      }
+
+      const totalRecords = parseInt(countResult.rows[0]?.count || '0');
+      const totalPages = Math.ceil(totalRecords / limit) || 1; // Ensure at least 1 page
+
+      // If no records return empty result
+      if (totalRecords === 0) {
+        return {
+          audits: [],
+          pagination: {
+            totalRecords: 0,
+            totalPages: 0,
+            currentPage: page,
+            limit
+          }
+        };
+      }
+
+      // Get paginated audits with recommendation count
+      // Simplified, ultra-defensive SQL query that handles all potential null values
+      const result = await client.query(
+        `SELECT
+          ea.id,
+          ea.created_at as date,
+          COALESCE(ea.basic_info->>'address', 'No address') as address,
+          COALESCE((SELECT COUNT(*) FROM audit_recommendations WHERE audit_id = ea.id), 0) as recommendations,
+          COALESCE(
+            NULLIF(TRIM(ea.basic_info->>'propertyName'), ''),
+            to_char(ea.created_at, 'Month DD, YYYY') || ' Energy Audit'
+          ) as title,
+          'completed' as status
+        FROM energy_audits ea
+        WHERE ea.user_id = $1
+        ORDER BY ea.created_at DESC
+        LIMIT $2 OFFSET $3`,
+        [userId, limit, offset]
+      );
+      
+      appLogger.info('Successfully executed paginated audit history query', {
+        userId: userId.substring(0, 8) + '...',
+        resultCount: result.rows?.length || 0,
+        page,
+        limit,
+        offset
+      });
+
+      // Process rows to extract address
+      const audits = (result.rows || []).map((row: any) => {
+        try {
+          // Safe default values for all properties
+          const id = row.id || '';
+          const date = row.date ? new Date(row.date).toISOString() : new Date().toISOString();
+          let title = row.title || 'Energy Audit';
+          const status = row.status || 'completed';
+
+          // Handle recommendations count safely
+          let recommendations = 0;
+          try {
+            recommendations = parseInt(row.recommendations) || 0;
+          } catch (e) {
+            // If parsing fails use 0
+          }
+
+          // Handle address which might be stored in various formats
+          let address = 'No address provided';
+          
+          if (row.address) {
+            if (typeof row.address === 'string') {
+              if (row.address.startsWith('{') || row.address.startsWith('[')) {
+                try {
+                  const addressObj = JSON.parse(row.address);
+                  // Try various possible address fields
+                  address = addressObj.street ||
+                            addressObj.full ||
+                            addressObj.line1 ||
+                            addressObj.formatted ||
+                            'No address provided';
+                } catch (e) {
+                  // If parsing fails use the raw string
+                  address = row.address;
+                }
+              } else {
+                address = row.address;
+              }
+            } else if (typeof row.address === 'object' && row.address !== null) {
+              // Handle if it's already an object
+              address = row.address.street ||
+                        row.address.full ||
+                        row.address.line1 ||
+                        row.address.formatted ||
+                        JSON.stringify(row.address);
+            }
+          }
+
+          return {
+            id,
+            date,
+            address: address.toString(),
+            recommendations,
+            title,
+            status
+          };
+        } catch (error) {
+          console.error('Error processing audit row:', error);
+          // Return a default object if row processing fails
+          return {
+            id: row.id || '',
+            date: new Date().toISOString(),
+            address: 'Error processing address',
+            recommendations: 0,
+            title: 'Energy Audit',
+            status: 'completed'
+          };
+        }
+      });
+      
+      return {
+        audits,
+        pagination: {
+          totalRecords,
+          totalPages,
+          currentPage: page,
+          limit
+        }
+      };
+    } catch (error) {
+      console.error('Error in getPaginatedAuditHistory:', error);
+      throw new AuditError(
+        `Failed to retrieve audit history: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    } finally {
+      client.release();
+    }
   }
 
   private calculateInsulationScore(conditions: CurrentConditions): number {
@@ -174,35 +375,35 @@ export class EnergyAuditService {
     try {
       await client.query('BEGIN');
 
-  // Format data as JSONB
-  const jsonData = {
-    basic_info: JSON.stringify(auditData.basicInfo),
-    home_details: JSON.stringify(auditData.homeDetails),
-    current_conditions: JSON.stringify(auditData.currentConditions),
-    heating_cooling: JSON.stringify({
-      ...auditData.heatingCooling,
-      // Ensure waterHeatingSystem is properly included if it exists
-      waterHeatingSystem: auditData.heatingCooling.waterHeatingSystem || {
-        type: 'not-sure',
-        age: 0
-      },
-      // Ensure renewableEnergy is properly included if it exists
-      renewableEnergy: auditData.heatingCooling.renewableEnergy || {
-        hasSolar: false,
-        solarPanelCount: 0,
-        solarCapacity: 0,
-        solarAge: 0,
-        solarGeneration: 0,
-        otherRenewables: []
-      }
-    }),
-    energy_consumption: JSON.stringify(auditData.energyConsumption),
-    product_preferences: JSON.stringify(auditData.productPreferences || {
-      categories: [],
-      features: [],
-      budgetConstraint: 5000
-    })
-  };
+      // Format data as JSONB
+      const jsonData = {
+        basic_info: JSON.stringify(auditData.basicInfo),
+        home_details: JSON.stringify(auditData.homeDetails),
+        current_conditions: JSON.stringify(auditData.currentConditions),
+        heating_cooling: JSON.stringify({
+          ...auditData.heatingCooling,
+          // Ensure waterHeatingSystem is properly included if it exists
+          waterHeatingSystem: auditData.heatingCooling.waterHeatingSystem || {
+            type: 'not-sure',
+            age: 0
+          },
+          // Ensure renewableEnergy is properly included if it exists
+          renewableEnergy: auditData.heatingCooling.renewableEnergy || {
+            hasSolar: false,
+            solarPanelCount: 0,
+            solarCapacity: 0,
+            solarAge: 0,
+            solarGeneration: 0,
+            otherRenewables: []
+          }
+        }),
+        energy_consumption: JSON.stringify(auditData.energyConsumption),
+        product_preferences: JSON.stringify(auditData.productPreferences || {
+          categories: [],
+          features: [],
+          budgetConstraint: 5000
+        })
+      };
 
       console.log('Formatted JSONB data:', jsonData);
 
@@ -412,6 +613,140 @@ export class EnergyAuditService {
   }
 
   /**
+   * Generate basic recommendations based on audit data
+   * This is used as a fallback when extended calculation service fails
+   */
+  private _generateBasicRecommendations(auditData: EnergyAuditData): DbRecommendation[] {
+    // Calculate component scores
+    const insulation = this.calculateInsulationScore(auditData.currentConditions);
+    const windows = this.calculateWindowScore(auditData.currentConditions);
+    const hvac = this.calculateHVACScore(auditData.heatingCooling);
+    
+    // Calculate potential savings using calculationService
+    const savingsPotential = calculationService.calculateSavingsPotential(auditData);
+    
+    const recommendations: DbRecommendation[] = [];
+    const now = new Date().toISOString();
+
+    // Generate recommendations based on scores and calculated savings
+    if (insulation < 2) {
+      // Calculate insulation-specific savings
+      const envelopeSavings = savingsPotential.breakdowns.envelope;
+      const estimatedSavings = Math.round(envelopeSavings * 0.12); // Convert kWh to dollars using average rate
+      const estimatedCost = 2000; // Base cost for insulation upgrades
+      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
+      
+      recommendations.push({
+        id: `INS-${Date.now()}`,
+        category: 'Insulation',
+        title: 'Improve Home Insulation',
+        description: 'Add or upgrade insulation in walls and attic to reduce heat transfer and improve energy efficiency.',
+        priority: 'high',
+        status: 'active',
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod,
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
+      });
+    }
+
+    if (windows < 1.5) {
+      // Calculate window-specific savings
+      // Windows typically account for about 30% of envelope losses
+      const windowSavings = savingsPotential.breakdowns.envelope * 0.3;
+      const estimatedSavings = Math.round(windowSavings * 0.12); // Convert kWh to dollars
+      
+      // Window costs vary by home size
+      const windowCount = auditData.currentConditions.numWindows || 
+                           Math.ceil(auditData.homeDetails.squareFootage / 100); // Estimate 1 window per 100 sq ft
+      const estimatedCost = windowCount * 500; // Average cost per window
+      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
+      
+      recommendations.push({
+        id: `WIN-${Date.now()}`,
+        category: 'Windows',
+        title: 'Upgrade Windows',
+        description: 'Replace single-pane windows with energy-efficient double-pane windows to reduce heat loss and improve comfort.',
+        priority: 'medium',
+        status: 'active',
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod,
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
+      });
+    }
+
+    if (hvac < 2) {
+      // Calculate HVAC-specific savings
+      const hvacSavings = savingsPotential.breakdowns.hvac;
+      const estimatedSavings = Math.round(hvacSavings * 0.12); // Convert kWh to dollars
+      
+      // HVAC costs depend on system type and home size
+      const homeSize = auditData.homeDetails.squareFootage;
+      const estimatedCost = Math.max(1000, Math.round(homeSize * 7)); // $7 per sq ft with $1000 minimum
+      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
+      
+      recommendations.push({
+        id: `HVAC-${Date.now()}`,
+        category: 'HVAC',
+        title: 'HVAC Maintenance/Upgrade',
+        description: 'Service or upgrade your heating and cooling systems to improve efficiency and reduce energy costs.',
+        priority: 'high',
+        status: 'active',
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod,
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
+      });
+    }
+
+    // Add appliance recommendations if high energy use
+    // Safely access energy consumption data with type checking
+    const energyUse = (auditData.energyConsumption as any).annualKwh || 
+                     (auditData.energyConsumption as any).monthlyKwh * 12 || 
+                     10000; // Default value for calculation
+    
+    if (energyUse > 10000) {
+      // Try to access the appliances breakdown, with fallback
+      const applianceSavings = 
+        (savingsPotential.breakdowns as any).appliances || 
+        (savingsPotential.breakdowns as any).other || 
+        savingsPotential.breakdowns.lighting * 0.5; // Use lighting as fallback if no appliance data
+        
+      const estimatedSavings = Math.round(applianceSavings * 0.12);
+      const estimatedCost = 1500; // Average cost for appliance upgrades
+      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
+      
+      recommendations.push({
+        id: `APPL-${Date.now()}`,
+        category: 'Appliances',
+        title: 'Upgrade High-Usage Appliances',
+        description: 'Replace older appliances with ENERGY STAR certified models to reduce electricity consumption.',
+        priority: 'medium',
+        status: 'active',
+        estimatedSavings,
+        estimatedCost,
+        paybackPeriod,
+        actualSavings: 0,
+        implementationDate: null,
+        implementationCost: 0,
+        lastUpdate: now
+      });
+    }
+
+    return recommendations;
+  }
+
+  /**
    * Generate recommendations using both basic and extended calculation services
    */
   async generateRecommendations(auditData: EnergyAuditData): Promise<DbRecommendation[]> {
@@ -487,9 +822,7 @@ export class EnergyAuditService {
         }
       }
       
-      // Add lighting-specific recommendations based on bulb type
-      this._addLightingRecommendations(auditData, recommendations, now);
-      
+      // Skip adding lighting recommendations
       // If no recommendations were generated, fall back to the original method
       if (recommendations.length === 0) {
         return this._generateBasicRecommendations(auditData);
@@ -502,7 +835,7 @@ export class EnergyAuditService {
       return this._generateBasicRecommendations(auditData);
     }
   }
-  
+
   /**
    * Add lighting-specific recommendations based on bulb type
    */
@@ -543,7 +876,7 @@ export class EnergyAuditService {
         actualSavings: 0,
         implementationDate: null,
         implementationCost: 0,
-        lastUpdate: now,
+        lastUpdate: now
       });
     } else if (auditData.currentConditions.primaryBulbType === 'mixed') {
       // Medium savings for mixed bulb types
@@ -589,637 +922,290 @@ export class EnergyAuditService {
         rec.paybackPeriod = calculationService.calculatePaybackPeriod(rec.estimatedCost, rec.estimatedSavings);
       }
     }
-    
-    // If we have detailed fixture data, add specific recommendations
-    if (auditData.currentConditions.fixtures && auditData.currentConditions.fixtures.length > 0) {
-      // Calculate inefficient fixtures (less than 50 lm/W is inefficient)
-      const inefficientFixtures = auditData.currentConditions.fixtures.filter(
-        fixture => (fixture.watts || 0) > 0 && (fixture.lumens || 0) / (fixture.watts || 1) < 50
-      );
-      
-      if (inefficientFixtures.length > 0) {
-        const fixtureSavings = Math.round(
-          inefficientFixtures.reduce(
-            (sum, f) => sum + (f.watts || 0) * (f.hoursPerDay || 0) * 365 * 0.12 / 1000 * 0.7, 
-            0
-          )
-        ); // 70% savings
-        
-        const fixtureCost = inefficientFixtures.length * 25; // $25 per fixture
-        
-        recommendations.push({
-          id: `LIGHT-FIXTURE-${Date.now()}`,
-          category: 'Lighting',
-          title: 'Replace Inefficient Light Fixtures',
-          description: `Replace ${inefficientFixtures.length} inefficient light fixtures with high-efficiency LED alternatives.`,
-          priority: 'medium',
-          status: 'active',
-          estimatedSavings: fixtureSavings,
-          estimatedCost: fixtureCost,
-          paybackPeriod: calculationService.calculatePaybackPeriod(fixtureCost, fixtureSavings),
-          actualSavings: 0,
-          implementationDate: null,
-          implementationCost: 0,
-          lastUpdate: now
-        });
-      }
-    }
   }
 
   /**
-   * Generate basic recommendations (original implementation as fallback)
+   * Get all energy audits for a user
    */
-  private _generateBasicRecommendations(auditData: EnergyAuditData): DbRecommendation[] {
-    // Calculate component scores
-    const insulation = this.calculateInsulationScore(auditData.currentConditions);
-    const windows = this.calculateWindowScore(auditData.currentConditions);
-    const hvac = this.calculateHVACScore(auditData.heatingCooling);
-
-    // Calculate potential savings using calculationService
-    const savingsPotential = calculationService.calculateSavingsPotential(auditData);
-    
-    const recommendations: DbRecommendation[] = [];
-    const now = new Date().toISOString();
-
-    // Generate recommendations based on scores and calculated savings
-    if (insulation < 2) {
-      // Calculate insulation-specific savings
-      const envelopeSavings = savingsPotential.breakdowns.envelope;
-      const estimatedSavings = Math.round(envelopeSavings * 0.12); // Convert kWh to dollars using average rate
-      const estimatedCost = 2000; // Base cost for insulation upgrades
-      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
-      
-      recommendations.push({
-        id: `INS-${Date.now()}`,
-        category: 'Insulation',
-        title: 'Improve Home Insulation',
-        description: 'Add or upgrade insulation in walls and attic to reduce heat transfer and improve energy efficiency.',
-        priority: 'high',
-        status: 'active',
-        estimatedSavings,
-        estimatedCost,
-        paybackPeriod,
-        actualSavings: 0,
-        implementationDate: null,
-        implementationCost: 0,
-        lastUpdate: now
-      });
-    }
-
-    if (windows < 1.5) {
-      // Calculate window-specific savings
-      // Windows typically account for about 30% of envelope losses
-      const windowSavings = savingsPotential.breakdowns.envelope * 0.3;
-      const estimatedSavings = Math.round(windowSavings * 0.12); // Convert kWh to dollars
-      
-      // Window costs vary by home size
-      const windowCount = auditData.currentConditions.numWindows || 
-                          Math.ceil(auditData.homeDetails.squareFootage / 100); // Estimate 1 window per 100 sq ft
-      const estimatedCost = windowCount * 500; // Average cost per window
-      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
-      
-      recommendations.push({
-        id: `WIN-${Date.now()}`,
-        category: 'Windows',
-        title: 'Upgrade Windows',
-        description: 'Replace single-pane windows with energy-efficient double-pane windows to reduce heat loss and improve comfort.',
-        priority: 'medium',
-        status: 'active',
-        estimatedSavings,
-        estimatedCost,
-        paybackPeriod,
-        actualSavings: 0,
-        implementationDate: null,
-        implementationCost: 0,
-        lastUpdate: now
-      });
-    }
-
-    if (hvac < 2) {
-      // Calculate HVAC-specific savings
-      const hvacSavings = savingsPotential.breakdowns.hvac;
-      const estimatedSavings = Math.round(hvacSavings * 0.12); // Convert kWh to dollars
-      
-      // HVAC costs depend on system type and home size
-      const homeSize = auditData.homeDetails.squareFootage;
-      const estimatedCost = Math.max(1000, Math.round(homeSize * 7)); // $7 per sq ft with $1000 minimum
-      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
-      
-      recommendations.push({
-        id: `HVAC-${Date.now()}`,
-        category: 'HVAC',
-        title: 'HVAC Maintenance/Upgrade',
-        description: 'Schedule professional HVAC maintenance or consider upgrading to a more efficient system to improve performance and reduce energy use.',
-        priority: 'high',
-        status: 'active',
-        estimatedSavings,
-        estimatedCost,
-        paybackPeriod,
-        actualSavings: 0,
-        implementationDate: null,
-        implementationCost: 0,
-        lastUpdate: now
-      });
-    }
-
-    // Add lighting recommendation if not already covered
-    if (savingsPotential.breakdowns.lighting > 100) { // Only if significant savings potential
-      const lightingSavings = savingsPotential.breakdowns.lighting;
-      const estimatedSavings = Math.round(lightingSavings * 0.12); // Convert kWh to dollars
-      const estimatedCost = Math.round(auditData.homeDetails.squareFootage * 0.5); // $0.50 per sq ft for LED upgrades
-      const paybackPeriod = calculationService.calculatePaybackPeriod(estimatedCost, estimatedSavings);
-      
-      recommendations.push({
-        id: `LIGHT-${Date.now()}`,
-        category: 'Lighting',
-        title: 'Upgrade to LED Lighting',
-        description: 'Replace conventional light bulbs with energy-efficient LED lighting throughout your home.',
-        priority: estimatedSavings > 200 ? 'high' : 'medium',
-        status: 'active',
-        estimatedSavings,
-        estimatedCost,
-        paybackPeriod,
-        actualSavings: 0,
-        implementationDate: null,
-        implementationCost: 0,
-        lastUpdate: now
-      });
-    }
-
-    return recommendations;
-  }
-
-  async getAuditById(auditId: string): Promise<AuditData> {
-    const result = await this.pool.query(
-      `SELECT 
-        ea.*,
-        COALESCE(json_agg(ar.*) FILTER (WHERE ar.id IS NOT NULL), '[]') as recommendations
-      FROM energy_audits ea
-      LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
-      WHERE ea.id = $1
-      GROUP BY ea.id`,
-      [auditId]
-    );
-
-    if (result.rows.length === 0) {
-      throw new Error('Audit not found');
-    }
-
-    return {
-      ...result.rows[0],
-      recommendations: (result.rows[0].recommendations as DbRecommendation[])
-        .map(mapDbToAuditRecommendation)
-    };
-  }
-
-  async getRecommendations(auditId: string): Promise<AuditRecommendation[]> {
-    const result = await this.pool.query(
-      'SELECT * FROM audit_recommendations WHERE audit_id = $1',
-      [auditId]
-    );
-
-    return result.rows.map(row => mapDbToAuditRecommendation(row as DbRecommendation));
-  }
-
   async getAuditHistory(userId: string): Promise<AuditData[]> {
-    const result = await this.pool.query(
-      `SELECT 
-        ea.*,
-        COALESCE(json_agg(ar.*) FILTER (WHERE ar.id IS NOT NULL), '[]') as recommendations
-      FROM energy_audits ea
-      LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
-      WHERE ea.user_id = $1
-      GROUP BY ea.id
-      ORDER BY ea.created_at DESC`,
-      [userId]
-    );
-
-    return result.rows.map(row => ({
-      ...row,
-      recommendations: (row.recommendations as DbRecommendation[]).map(mapDbToAuditRecommendation)
-    }));
-  }
-  
-  /**
-   * Get paginated audit history for a user
-   * @param userId User ID to get audits for
-   * @param page Page number (1-indexed)
-   * @param limit Number of items per page
-   * @returns Object with audits array and pagination metadata
-   */
-  /**
-   * Get paginated audit history for a user
-   * @param userId User ID to get audits for
-   * @param page Page number (1-indexed)
-   * @param limit Number of items per page
-   * @returns Object with audits array and pagination metadata
-   */
-async getPaginatedAuditHistory(userId: string, page: number = 1, limit: number = 5): Promise<{
-audits: {
-      id: string;
-      date: string;
-      address: string;
-      recommendations: number;
-      title: string;
-      status: string;
-    }[];
-    pagination: {
-      totalRecords: number;
-      totalPages: number;
-      currentPage: number;
-      limit: number;
-    };
-  }> {
-    // Input validation
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
-
-    if (page < 1) page = 1;
-    if (limit < 1) limit = 5;
-    if (limit > 50) limit = 50;
-
-    // Calculate offset for pagination
-    const offset = (page - 1) * limit;
-
     const client = await this.pool.connect();
     try {
-      // Get count of total records for pagination
-      const countResult = await client.query(
-        'SELECT COUNT(*) FROM energy_audits WHERE user_id = $1',
+      const result = await client.query(
+        `SELECT * FROM energy_audits WHERE user_id = $1 ORDER BY created_at DESC`,
         [userId]
       );
-
-      if (!countResult || !countResult.rows || countResult.rows.length === 0) {
-        // Return empty result if no records found
-        return {
-          audits: [],
-          pagination: {
-            totalRecords: 0,
-            totalPages: 0,
-            currentPage: page,
-            limit
-          }
-        };
-      }
-
-      const totalRecords = parseInt(countResult.rows[0]?.count || '0');
-      const totalPages = Math.ceil(totalRecords / limit) || 1; // Ensure at least 1 page
-
-      // If no records return empty result
-      if (totalRecords === 0) {
-        return {
-          audits: [],
-          pagination: {
-            totalRecords: 0,
-            totalPages: 0,
-            currentPage: page,
-            limit
-          }
-        };
-      }
-
-      // Get paginated audits with recommendation count
-      // Use more defensive SQL query that handles potential null values
-      const result = await client.query(
-        `SELECT
-          ea.id,
-          ea.created_at as date,
-          COALESCE(ea.basic_info->>'address', '{}') as address,
-          COALESCE((SELECT COUNT(*) FROM audit_recommendations WHERE audit_id = ea.id), 0) as recommendations,
-          CASE
-            WHEN ea.basic_info->>'propertyName' IS NOT NULL AND ea.basic_info->>'propertyName' != ''
-            THEN ea.basic_info->>'propertyName'
-            ELSE to_char(ea.created_at, 'Month YYYY') || ' Energy Audit'
-          END as title,
-          'completed' as status
-        FROM energy_audits ea
-        WHERE ea.user_id = $1
-        ORDER BY ea.created_at DESC
-        LIMIT $2 OFFSET $3`,
-        [userId, limit, offset]
-      );
-
-      // Process rows to extract address
-      const audits = (result.rows || []).map(row => {
-        try {
-          // Safe default values for all properties
-          const id = row.id || '';
-          const date = row.date ? new Date(row.date).toISOString() : new Date().toISOString();
-          let title = row.title || 'Energy Audit';
-          const status = row.status || 'completed';
-
-          // Handle recommendations count safely
-          let recommendations = 0;
-          try {
-            recommendations = parseInt(row.recommendations) || 0;
-          } catch (e) {
-            // If parsing fails use 0
-          }
-
-          // Handle address which might be stored in various formats
-          let address = 'No address provided';
-          
-          if (row.address) {
-            if (typeof row.address === 'string') {
-              if (row.address.startsWith('{') || row.address.startsWith('[')) {
-                try {
-                  const addressObj = JSON.parse(row.address);
-                  // Try various possible address fields
-                  address = addressObj.street ||
-                            addressObj.full ||
-                            addressObj.line1 ||
-                            addressObj.formatted ||
-                            'No address provided';
-                } catch (e) {
-                  // If parsing fails use the raw string
-                  address = row.address;
-                }
-              } else {
-                address = row.address;
-              }
-            } else if (typeof row.address === 'object' && row.address !== null) {
-              // Handle if it's already an object
-              address = row.address.street ||
-                        row.address.full ||
-                        row.address.line1 ||
-                        row.address.formatted ||
-                        JSON.stringify(row.address);
-            }
-          }
-
-          return {
-            id,
-            date,
-            address: address.toString(),
-            recommendations,
-            title,
-            status
-          };
-        } catch (error) {
-          console.error('Error processing audit row:', error);
-          // Return a default object if row processing fails
-          return {
-            id: row.id || '',
-            date: new Date().toISOString(),
-            address: 'Error processing address',
-            recommendations: 0,
-            title: 'Energy Audit',
-            status: 'completed'
-          };
-        }
-      });
       
-      return {
-        audits,
-        pagination: {
-          totalRecords,
-          totalPages,
-          currentPage: page,
-          limit
-        }
-      };
+      return result.rows.map((row: any) => this._transformDbRowToAuditData(row));
     } catch (error) {
-      console.error('Error in getPaginatedAuditHistory:', error);
-      throw new AuditError(
-        `Failed to retrieve audit history: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      console.error('Error fetching audit history:', error);
+      throw new AuditError('Failed to retrieve audit history');
     } finally {
       client.release();
     }
   }
 
+  /**
+   * Get audits by client ID (for anonymous users)
+   */
   async getAuditsByClientId(clientId: string): Promise<AuditData[]> {
-    const result = await this.pool.query(
-      `SELECT 
-        ea.*,
-        COALESCE(json_agg(ar.*) FILTER (WHERE ar.id IS NOT NULL), '[]') as recommendations
-      FROM energy_audits ea
-      LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
-      WHERE ea.client_id = $1
-      GROUP BY ea.id
-      ORDER BY ea.created_at DESC`,
-      [clientId]
-    );
-
-    return result.rows.map(row => ({
-      ...row,
-      recommendations: (row.recommendations as DbRecommendation[]).map(mapDbToAuditRecommendation)
-    }));
-  }
-
-  async associateAuditsWithUser(userId: string, clientId: string): Promise<void> {
-    await this.pool.query(
-      'SELECT associate_anonymous_audits($1, $2)',
-      [userId, clientId]
-    );
-  }
-
-  async generateReport(auditId: string, options: ReportGenerationOptions = {}): Promise<Buffer> {
     const client = await this.pool.connect();
     try {
-      await client.query('BEGIN');
-
-      // Get audit data with recommendations
       const result = await client.query(
-        `SELECT 
-          ea.*,
-          COALESCE(json_agg(ar.*) FILTER (WHERE ar.id IS NOT NULL), '[]') as recommendations
-        FROM energy_audits ea
-        LEFT JOIN audit_recommendations ar ON ea.id = ar.audit_id
-        WHERE ea.id = $1
-        GROUP BY ea.id`,
-        [auditId]
+        `SELECT * FROM energy_audits WHERE client_id = $1 ORDER BY created_at DESC`,
+        [clientId]
       );
-
-      if (result.rows.length === 0) {
-        throw new Error('Audit not found');
-      }
-
-      const auditData = {
-        ...result.rows[0],
-        recommendations: (result.rows[0].recommendations as DbRecommendation[])
-          .map(mapDbToAuditRecommendation)
-      };
-
-      // Update report generation status
-      await client.query(
-        `UPDATE energy_audits 
-        SET report_generated = true,
-            report_generated_at = CURRENT_TIMESTAMP,
-            report_download_count = report_download_count + 1
-        WHERE id = $1`,
-        [auditId]
-      );
-
-      await client.query('COMMIT');
-
-      // Get the recommendations
-      const recommendations = await this.getRecommendations(auditId);
       
-      // Use the reportGenerationService to generate the PDF
-      return await reportGenerationService.generateReport(auditData, recommendations);
-
+      return result.rows.map((row: any) => this._transformDbRowToAuditData(row));
     } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
+      console.error('Error fetching audits by client ID:', error);
+      throw new AuditError('Failed to retrieve audits');
     } finally {
       client.release();
     }
   }
 
+  /**
+   * Get a specific audit by ID
+   */
+  async getAuditById(auditId: string): Promise<AuditData> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM energy_audits WHERE id = $1`,
+        [auditId]
+      );
+      
+      if (result.rows.length === 0) {
+        throw new AuditError('Audit not found');
+      }
+      
+      return this._transformDbRowToAuditData(result.rows[0]);
+    } catch (error) {
+      console.error('Error fetching audit by ID:', error);
+      throw new AuditError(`Failed to retrieve audit: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Get recommendations for an audit
+   */
+  async getRecommendations(auditId: string): Promise<AuditRecommendation[]> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM audit_recommendations WHERE audit_id = $1`,
+        [auditId]
+      );
+      
+      return result.rows.map((row: any) => mapDbToAuditRecommendation(row));
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      throw new AuditError('Failed to retrieve recommendations');
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Update an existing audit
+   */
   async updateAudit(auditId: string, userId: string, auditData: Partial<EnergyAuditData>): Promise<AuditData | null> {
     const client = await this.pool.connect();
     try {
-      await client.query('BEGIN');
-
-      // Verify ownership
-      const audit = await client.query(
-        'SELECT * FROM energy_audits WHERE id = $1 AND user_id = $2',
+      // First check if audit exists and belongs to user
+      const checkResult = await client.query(
+        `SELECT id FROM energy_audits WHERE id = $1 AND user_id = $2`,
         [auditId, userId]
       );
-
-      if (audit.rows.length === 0) {
+      
+      if (checkResult.rows.length === 0) {
         return null;
       }
-
-      // Format data as JSONB for the fields that are provided
-      const jsonData: Record<string, string | null> = {};
+      
+      // Build update query dynamically based on provided fields
+      const updates = [];
+      const values = [auditId];
+      let paramIndex = 2;
       
       if (auditData.basicInfo) {
-        jsonData.basic_info = JSON.stringify(auditData.basicInfo);
+        updates.push(`basic_info = $${paramIndex}::jsonb`);
+        values.push(JSON.stringify(auditData.basicInfo));
+        paramIndex++;
       }
       
       if (auditData.homeDetails) {
-        jsonData.home_details = JSON.stringify(auditData.homeDetails);
+        updates.push(`home_details = $${paramIndex}::jsonb`);
+        values.push(JSON.stringify(auditData.homeDetails));
+        paramIndex++;
       }
       
       if (auditData.currentConditions) {
-        jsonData.current_conditions = JSON.stringify(auditData.currentConditions);
+        updates.push(`current_conditions = $${paramIndex}::jsonb`);
+        values.push(JSON.stringify(auditData.currentConditions));
+        paramIndex++;
       }
       
       if (auditData.heatingCooling) {
-        jsonData.heating_cooling = JSON.stringify(auditData.heatingCooling);
+        updates.push(`heating_cooling = $${paramIndex}::jsonb`);
+        values.push(JSON.stringify(auditData.heatingCooling));
+        paramIndex++;
       }
       
       if (auditData.energyConsumption) {
-        jsonData.energy_consumption = JSON.stringify(auditData.energyConsumption);
+        updates.push(`energy_consumption = $${paramIndex}::jsonb`);
+        values.push(JSON.stringify(auditData.energyConsumption));
+        paramIndex++;
       }
       
-      if (auditData.productPreferences) {
-        jsonData.product_preferences = JSON.stringify(auditData.productPreferences);
+      if (updates.length === 0) {
+        // Nothing to update
+        const audit = await this.getAuditById(auditId);
+        return audit;
       }
-
-      // Build the SQL query dynamically based on what fields are provided
-      const setClauses = [];
-      const queryParams = [];
-      let paramIndex = 1;
       
-      for (const [key, value] of Object.entries(jsonData)) {
-        if (value !== null) {
-          setClauses.push(`${key} = $${paramIndex}::jsonb`);
-          queryParams.push(value);
-          paramIndex++;
+      // Execute update
+      await client.query('BEGIN');
+      
+      const updateQuery = `
+        UPDATE energy_audits 
+        SET ${updates.join(', ')}
+        WHERE id = $1
+      `;
+      
+      await client.query(updateQuery, values);
+      
+      // Generate and store new recommendations if data changed significantly
+      if (auditData.currentConditions || auditData.heatingCooling || auditData.energyConsumption) {
+        // Get current full audit data
+        const currentAudit = await this.getAuditById(auditId);
+        
+        // Delete existing recommendations
+        await client.query(
+          `DELETE FROM audit_recommendations WHERE audit_id = $1`,
+          [auditId]
+        );
+        
+        // Generate new recommendations
+        const recommendations = await this.generateRecommendations({
+          basicInfo: currentAudit.basicInfo,
+          homeDetails: currentAudit.homeDetails,
+          currentConditions: currentAudit.currentConditions,
+          heatingCooling: currentAudit.heatingCooling,
+          energyConsumption: currentAudit.energyConsumption,
+          productPreferences: currentAudit.product_preferences
+        });
+        
+        // Store new recommendations
+        for (const rec of recommendations) {
+          await client.query(
+            `INSERT INTO audit_recommendations (
+              audit_id, category, priority, title,
+              description, estimated_savings, estimated_cost,
+              payback_period, status
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [
+              auditId,
+              rec.category,
+              rec.priority,
+              rec.title,
+              rec.description,
+              rec.estimatedSavings,
+              rec.estimatedCost,
+              rec.paybackPeriod,
+              'active'
+            ]
+          );
         }
       }
       
-      // Always add updated_at
-      setClauses.push(`updated_at = CURRENT_TIMESTAMP`);
-      
-      // Add the WHERE clause parameters
-      queryParams.push(auditId);
-      queryParams.push(userId);
-      
-      // If no fields to update, just return the current audit
-      if (setClauses.length === 1) { // Only updated_at
-        const currentAudit = await client.query(
-          'SELECT * FROM energy_audits WHERE id = $1',
-          [auditId]
-        );
-        await client.query('COMMIT');
-        return currentAudit.rows[0];
-      }
-      
-      // Build and execute the query
-      const updateQuery = `
-        UPDATE energy_audits
-        SET ${setClauses.join(', ')}
-        WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1}
-        RETURNING *
-      `;
-      
-      const result = await client.query(updateQuery, queryParams);
-
       await client.query('COMMIT');
-      return result.rows[0];
+      
+      // Return updated audit
+      const updatedAudit = await this.getAuditById(auditId);
+      return updatedAudit;
     } catch (error) {
       await client.query('ROLLBACK');
-      throw error;
+      console.error('Error updating audit:', error);
+      throw new AuditError(`Failed to update audit: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       client.release();
     }
   }
 
+  /**
+   * Delete an audit
+   */
   async deleteAudit(auditId: string, userId: string): Promise<void> {
     const client = await this.pool.connect();
     try {
-      await client.query('BEGIN');
-
-      // Verify ownership
-      const audit = await client.query(
-        'SELECT * FROM energy_audits WHERE id = $1 AND user_id = $2',
+      // First check if audit exists and belongs to user
+      const checkResult = await client.query(
+        `SELECT id FROM energy_audits WHERE id = $1 AND user_id = $2`,
         [auditId, userId]
       );
-
-      if (audit.rows.length === 0) {
-        throw new Error('Audit not found or not authorized');
+      
+      if (checkResult.rows.length === 0) {
+        throw new AuditError('Audit not found or not authorized');
       }
-
-      // Delete recommendations first due to foreign key constraint
+      
+      await client.query('BEGIN');
+      
+      // Delete recommendations
       await client.query(
-        'DELETE FROM audit_recommendations WHERE audit_id = $1',
+        `DELETE FROM audit_recommendations WHERE audit_id = $1`,
         [auditId]
       );
-
-      // Delete the audit
+      
+      // Delete audit
       await client.query(
-        'DELETE FROM energy_audits WHERE id = $1 AND user_id = $2',
-        [auditId, userId]
+        `DELETE FROM energy_audits WHERE id = $1`,
+        [auditId]
       );
-
+      
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
-      throw error;
+      console.error('Error deleting audit:', error);
+      throw new AuditError(`Failed to delete audit: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       client.release();
     }
   }
 
-  async updateRecommendationStatus(
-    auditId: string,
-    recommendationId: string,
-    status: RecommendationStatus,
-    actualSavings?: number,
-    notes?: string
-  ): Promise<void> {
-    await this.pool.query(
-      `UPDATE audit_recommendations
-      SET status = $1,
-          actual_savings = COALESCE($2, actual_savings),
-          notes = COALESCE($3, notes),
-          implementation_date = CASE WHEN $1 = 'implemented' THEN CURRENT_TIMESTAMP ELSE implementation_date END,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $4 AND audit_id = $5`,
-      [status, actualSavings, notes, recommendationId, auditId]
-    );
+  /**
+   * Associate anonymous audits with user
+   */
+  async associateAuditsWithUser(userId: string, clientId: string): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query(
+        `UPDATE energy_audits SET user_id = $1 WHERE client_id = $2 AND user_id IS NULL`,
+        [userId, clientId]
+      );
+    } catch (error) {
+      console.error('Error associating audits with user:', error);
+      throw new AuditError('Failed to associate audits with user');
+    } finally {
+      client.release();
+    }
   }
-}
 
-// Error handling
-export class AuditError extends Error {
-constructor(message: string) {
-    super(message);
-    this.name = 'AuditError';
+  /**
+   * Helper method to transform database row to AuditData object
+   */
+  private _transformDbRowToAuditData(row: any): AuditData {
+    return {
+      id: row.id,
+      userId: row.user_id,
+      basicInfo: typeof row.basic_info === 'string' ? JSON.parse(row.basic_info) : row.basic_info,
+      homeDetails: typeof row.home_details === 'string' ? JSON.parse(row.home_details) : row.home_details,
+      currentConditions: typeof row.current_conditions === 'string' ? JSON.parse(row.current_conditions) : row.current_conditions,
+      heatingCooling: typeof row.heating_cooling === 'string' ? JSON.parse(row.heating_cooling) : row.heating_cooling,
+      energyConsumption: typeof row.energy_consumption === 'string' ? JSON.parse(row.energy_consumption) : row.energy_consumption,
+      createdAt: row.created_at,
+      product_preferences: typeof row.product_preferences === 'string' ? JSON.parse(row.product_preferences) : row.product_preferences
+    };
   }
 }
