@@ -57,8 +57,16 @@ export const fetchWithAuth = async (
       const method = options.method || 'GET';
       if (method !== 'GET') {
         const csrfToken = getCookieValue('XSRF-TOKEN');
+        console.log('CSRF Token from cookie:', csrfToken ? 'Found token' : 'Token missing');
+        
+        // Check all cookies for debugging
+        console.log('All cookies:', document.cookie);
+        
         if (csrfToken) {
           headers['x-xsrf-token'] = csrfToken;
+          console.log('Added CSRF token to headers');
+        } else {
+          console.warn('No CSRF token found in cookies. This will cause 403 errors for protected routes.');
         }
       }
       
