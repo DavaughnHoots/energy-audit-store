@@ -3,7 +3,8 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import HomeConditionsSection from '../components/user-settings/HomeConditionsSection';
 import WindowMaintenanceSection from '../components/user-settings/WindowMaintenanceSection';
 import WeatherizationMonitoringSection from '../components/user-settings/WeatherizationMonitoringSection';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS, getApiUrl } from '../config/api';
+import { fetchWithAuth, getAuthHeaders } from '../utils/authUtils';
 import { WindowMaintenance, WeatherizationMonitoring, UpdateWindowMaintenanceDto, UpdateWeatherizationDto } from '../types/propertySettings';
 
 interface Props {
@@ -41,45 +42,38 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const fetchWindowData = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.SETTINGS.WINDOWS, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WINDOWS);
 
       if (!response.ok) throw new Error('Failed to fetch window data');
 
       const data = await response.json();
       setWindowData(data);
     } catch (err) {
+      console.error('Window data fetch error:', err);
       setError('Failed to load window maintenance data');
     }
   };
 
   const fetchWeatherizationData = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.SETTINGS.WEATHERIZATION, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WEATHERIZATION);
 
       if (!response.ok) throw new Error('Failed to fetch weatherization data');
 
       const data = await response.json();
       setWeatherizationData(data);
     } catch (err) {
+      console.error('Weatherization data fetch error:', err);
       setError('Failed to load weatherization data');
     }
   };
 
   const handleSaveWindowData = async (data: UpdateWindowMaintenanceDto) => {
     try {
-      const response = await fetch(API_ENDPOINTS.SETTINGS.WINDOWS, {
+      const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WINDOWS, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
       });
@@ -90,17 +84,17 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       setWindowData(updatedData);
       setSuccess('Window maintenance data saved successfully');
     } catch (err) {
+      console.error('Window data save error:', err);
       setError('Failed to save window maintenance data');
     }
   };
 
   const handleSaveWeatherizationData = async (data: UpdateWeatherizationDto) => {
     try {
-      const response = await fetch(API_ENDPOINTS.SETTINGS.WEATHERIZATION, {
+      const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WEATHERIZATION, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
       });
@@ -111,17 +105,17 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       setWeatherizationData(updatedData);
       setSuccess('Weatherization data saved successfully');
     } catch (err) {
+      console.error('Weatherization data save error:', err);
       setError('Failed to save weatherization data');
     }
   };
 
   const handleSaveHomeConditions = async (data: any) => {
     try {
-      const response = await fetch(API_ENDPOINTS.SETTINGS.PROPERTY, {
+      const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.PROPERTY, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
       });
@@ -131,6 +125,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       setSuccess('Property details saved successfully');
       return response.json();
     } catch (err) {
+      console.error('Property details save error:', err);
       setError('Failed to save property details');
       throw err;
     }
@@ -138,17 +133,14 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.AUTH.PROFILE}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await fetchWithAuth(`${API_ENDPOINTS.AUTH.PROFILE}`);
       
       if (!response.ok) throw new Error('Failed to fetch settings');
       
       const data = await response.json();
       setSettings(data);
     } catch (err) {
+      console.error('Settings fetch error:', err);
       setError('Failed to load settings');
     }
   };
@@ -178,20 +170,24 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_ENDPOINTS.AUTH.PROFILE}`, {
+      const response = await fetchWithAuth(`${API_ENDPOINTS.AUTH.PROFILE}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(settings)
       });
 
-      if (!response.ok) throw new Error('Failed to update settings');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Settings update failed:', response.status, errorData);
+        throw new Error(errorData.message || 'Failed to update settings');
+      }
 
       setSuccess('Settings updated successfully');
     } catch (err) {
-      setError('Failed to update settings');
+      console.error('Settings update error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update settings');
     } finally {
       setIsLoading(false);
     }
@@ -199,11 +195,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleExportData = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.AUTH.PROFILE}/export`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await fetchWithAuth(`${API_ENDPOINTS.AUTH.PROFILE}/export`);
 
       if (!response.ok) throw new Error('Failed to export data');
 
@@ -215,27 +207,32 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       a.download = 'user-data.json';
       a.click();
     } catch (err) {
+      console.error('Export data error:', err);
       setError('Failed to export data');
     }
   };
 
   const handleDeleteAccount = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.AUTH.PROFILE}`, {
+      const response = await fetchWithAuth(`${API_ENDPOINTS.AUTH.PROFILE}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ password: deletePassword })
       });
 
-      if (!response.ok) throw new Error('Failed to delete account');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Delete account failed:', response.status, errorData);
+        throw new Error(errorData.message || 'Failed to delete account');
+      }
 
       localStorage.clear();
       window.location.href = '/';
     } catch (err) {
-      setError('Failed to delete account');
+      console.error('Delete account error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete account');
     }
   };
 
