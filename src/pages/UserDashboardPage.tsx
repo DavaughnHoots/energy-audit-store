@@ -155,6 +155,40 @@ const UserDashboardPage: React.FC = () => {
     };
   }, [fetchDashboardData, refreshKey]);
 
+  /**
+   * Function to fetch dashboard data for a specific audit ID
+   */
+  const fetchAuditSpecificData = useCallback(async (auditId: string) => {
+    try {
+      console.log('Fetching audit-specific dashboard data for audit:', auditId);
+      
+      // Use the new API endpoint we created
+      const response = await fetchWithAuth(
+        getApiUrl(API_ENDPOINTS.DASHBOARD.AUDIT_STATS(auditId))
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to fetch audit-specific data: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Audit-specific dashboard data received:', {
+        hasLatestAuditId: !!data.latestAuditId,
+        specificAuditId: data.specificAuditId,
+        completedAudits: data.completedAudits
+      });
+      
+      // Update the stats with the audit-specific data
+      setStats(data);
+      setPersistentStats(data);
+      
+    } catch (err) {
+      console.error('Error fetching audit-specific dashboard data:', err);
+      // Don't clear the existing stats on error
+    }
+  }, []);
+
   // Fetch first audit from history if no latestAuditId is available
   useEffect(() => {
     // Only attempt to fetch a fallback if no valid audit ID exists yet
@@ -183,13 +217,23 @@ const UserDashboardPage: React.FC = () => {
             
             // Indicate we're using a fallback for notification
             setUsingFallbackAudit(true);
+            
+            // Fetch dashboard data specific to this audit
+            fetchAuditSpecificData(firstAuditId);
           }
         })
         .catch(err => {
           console.error('Error fetching fallback audit ID:', err);
         });
     }
-  }, [stats.latestAuditId, effectiveAuditId]);
+  }, [stats.latestAuditId, effectiveAuditId, fetchAuditSpecificData]);
+  
+  // When refreshKey changes, also refresh the audit-specific data if we're using a fallback
+  useEffect(() => {
+    if (usingFallbackAudit && effectiveAuditId) {
+      fetchAuditSpecificData(effectiveAuditId);
+    }
+  }, [refreshKey, usingFallbackAudit, effectiveAuditId, fetchAuditSpecificData]);
   
 
   if (isLoading) {

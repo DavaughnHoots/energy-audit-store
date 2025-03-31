@@ -142,4 +142,83 @@ router.get('/product-history', async (req: AuthenticatedRequest, res) => {
   }
 });
 
+/**
+ * @route GET /api/dashboard/audit-stats/:auditId
+ * @desc Get dashboard statistics for a specific audit ID
+ * @access Private
+ */
+router.get('/audit-stats/:auditId', async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        details: 'Please sign in to access your dashboard statistics',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+    
+    const auditId = req.params.auditId;
+    if (!auditId) {
+      return res.status(400).json({
+        error: 'Bad request',
+        details: 'Audit ID is required',
+        code: 'MISSING_AUDIT_ID'
+      });
+    }
+    
+    appLogger.info(`Fetching specific audit stats for user ${userId} and audit ${auditId}`, createLogMetadata(req, {
+      auditId,
+      userId
+    }));
+    
+    // Verify the audit belongs to the user or is public
+    const auditResult = await pool.query(
+      `SELECT user_id FROM energy_audits WHERE id = $1`,
+      [auditId]
+    );
+    
+    if (auditResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Audit not found',
+        details: 'The requested audit does not exist',
+        code: 'AUDIT_NOT_FOUND'
+      });
+    }
+    
+    if (auditResult.rows[0].user_id && auditResult.rows[0].user_id !== userId) {
+      return res.status(403).json({
+        error: 'Access denied',
+        details: 'You do not have permission to access this audit',
+        code: 'ACCESS_DENIED'
+      });
+    }
+    
+    // Get dashboard stats for this specific audit
+    const stats = await dashboardService.getUserStats(userId, auditId);
+    
+    // Add last updated timestamp
+    const response = {
+      ...stats,
+      lastUpdated: new Date().toISOString(),
+      refreshInterval: 300000, // 5 minutes in milliseconds
+      specificAuditId: auditId // Include the audit ID for reference
+    };
+    
+    res.json(response);
+    
+  } catch (error) {
+    appLogger.error('Error fetching specific audit stats:', createLogMetadata(req, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    }));
+    
+    res.status(500).json({
+      error: 'Internal server error',
+      details: 'An unexpected error occurred while fetching audit statistics',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
 export default router;
