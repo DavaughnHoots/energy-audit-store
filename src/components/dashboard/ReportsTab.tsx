@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
 import { Download, Loader2, AlertCircle, BarChart2 } from 'lucide-react';
+import { fetchAuditHistory } from '@/services/reportService';
+import { AuditHistoryEntry } from '@/types/report';
+import AuditHistoryList from './AuditHistoryList';
+import Pagination from '@/components/common/Pagination';
 
 interface ReportsTabProps {
   auditId: string | null;
@@ -11,12 +15,41 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<React.ReactNode | null>(null);
+  
+  // Audit history state
+  const [audits, setAudits] = useState<AuditHistoryEntry[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   // Helper function to validate audit ID
   const isValidAuditId = (id: string | null): boolean => {
     // Check if the id is not null/undefined and is not a "null" or "undefined" string
     return id !== null && id !== "null" && id !== undefined && id !== "undefined" && id !== "";
   };
+
+  // Fetch audit history when component mounts or page changes
+  useEffect(() => {
+    const loadAuditHistory = async () => {
+      setIsLoadingHistory(true);
+      setHistoryError(null);
+      
+      try {
+        const data = await fetchAuditHistory(currentPage, 5);
+        setAudits(data.audits);
+        setTotalPages(data.pagination.totalPages);
+      } catch (error) {
+        console.error('Failed to load audit history:', error);
+        setHistoryError('Unable to load audit history. Please try again later.');
+        setAudits([]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    
+    loadAuditHistory();
+  }, [currentPage]);
 
   const handleDownloadReport = async () => {
     if (!isValidAuditId(auditId)) {
@@ -165,9 +198,22 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ auditId }) => {
           
           <div className="border-t border-gray-200 pt-6">
             <h3 className="text-md font-medium mb-3">Previous Reports</h3>
-            <p className="text-gray-500 italic">
-              Report history will be available in a future update.
-            </p>
+            
+            {historyError ? (
+              <div className="text-red-500 py-4">{historyError}</div>
+            ) : (
+              <>
+                <AuditHistoryList audits={audits} isLoading={isLoadingHistory} />
+                
+                {!isLoadingHistory && audits.length > 0 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

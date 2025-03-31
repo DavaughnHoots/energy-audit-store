@@ -3,6 +3,19 @@
  */
 
 /**
+ * Format a Date object to a human-readable string
+ * @param date Date to format
+ * @returns Formatted date string like "March 28, 2025"
+ */
+export const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+/**
  * Formats a number as currency with dollar sign
  * Safely handles undefined or null values
  * @param value Number to format as currency
@@ -10,8 +23,6 @@
  * @returns Formatted currency string
  */
 export const formatCurrency = (value: number | undefined | null, fallback: string = "$0"): string => {
-  console.log(`Formatting currency value: ${value}, type: ${typeof value}`);
-  
   // Check if value is undefined, null, or NaN
   if (value === undefined || value === null || Number.isNaN(value)) {
     return fallback;

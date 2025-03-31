@@ -1,5 +1,30 @@
 import { AuditRecommendation } from './energyAudit';
 
+/**
+ * Interface for an individual audit history entry
+ */
+export interface AuditHistoryEntry {
+  id: string;
+  date: string;
+  address: string;
+  recommendations: number;
+  title: string;
+  status: 'completed' | 'in_progress';
+}
+
+/**
+ * Interface for paginated audit history response
+ */
+export interface PaginatedAuditHistory {
+  audits: AuditHistoryEntry[];
+  pagination: {
+    totalRecords: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
+}
+
 export interface ReportData {
   metadata: {
     reportId: string;

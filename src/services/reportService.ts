@@ -1,5 +1,5 @@
 import { API_ENDPOINTS, API_BASE_URL, getApiUrl } from '../config/api';
-import { ReportData } from '../types/report';
+import { ReportData, PaginatedAuditHistory } from '../types/report';
 import { fetchWithAuth } from '../utils/authUtils';
 
 /**
@@ -16,6 +16,37 @@ const isValidAuditId = (auditId: string | null | undefined): boolean => {
  * @param auditId The audit ID to fetch data for
  * @returns Promise resolving to the report data
  */
+/**
+ * Fetches paginated audit history for the current user
+ * @param page Page number (default: 1)
+ * @param limit Number of records per page (default: 5)
+ * @returns Promise resolving to paginated audit history
+ */
+export const fetchAuditHistory = async (
+  page = 1,
+  limit = 5
+): Promise<PaginatedAuditHistory> => {
+  try {
+    console.log(`Fetching audit history: page=${page}, limit=${limit}`);
+    
+    const response = await fetchWithAuth(
+      getApiUrl(`${API_ENDPOINTS.ENERGY_AUDIT}/history?page=${page}&limit=${limit}`),
+      { method: 'GET' }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch audit history: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('Successfully retrieved audit history', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching audit history:', error);
+    throw error;
+  }
+};
+
 export const fetchReportData = async (auditId: string): Promise<ReportData> => {
   try {
     console.log('Fetching report data for audit ID:', auditId);
