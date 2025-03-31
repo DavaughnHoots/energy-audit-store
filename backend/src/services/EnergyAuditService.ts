@@ -814,8 +814,8 @@ export class EnergyAuditService {
    * @param limit Number of items per page
    * @returns Object with audits array and pagination metadata
    */
-  async getPaginatedAuditHistory(userId: string, page: number = 1, limit: number = 5): Promise<{
-    audits: {
+async getPaginatedAuditHistory(userId: string, page: number = 1, limit: number = 5): Promise<{
+audits: {
       id: string;
       date: string;
       address: string;
@@ -834,14 +834,14 @@ export class EnergyAuditService {
     if (!userId) {
       throw new Error('User ID is required');
     }
-    
+
     if (page < 1) page = 1;
     if (limit < 1) limit = 5;
     if (limit > 50) limit = 50;
-    
+
     // Calculate offset for pagination
     const offset = (page - 1) * limit;
-    
+
     const client = await this.pool.connect();
     try {
       // Get count of total records for pagination
@@ -849,7 +849,7 @@ export class EnergyAuditService {
         'SELECT COUNT(*) FROM energy_audits WHERE user_id = $1',
         [userId]
       );
-      
+
       if (!countResult || !countResult.rows || countResult.rows.length === 0) {
         // Return empty result if no records found
         return {
@@ -862,11 +862,11 @@ export class EnergyAuditService {
           }
         };
       }
-      
+
       const totalRecords = parseInt(countResult.rows[0]?.count || '0');
       const totalPages = Math.ceil(totalRecords / limit) || 1; // Ensure at least 1 page
-      
-      // If no records, return empty result
+
+      // If no records return empty result
       if (totalRecords === 0) {
         return {
           audits: [],
@@ -878,14 +878,14 @@ export class EnergyAuditService {
           }
         };
       }
-      
+
       // Get paginated audits with recommendation count
       // Use more defensive SQL query that handles potential null values
       const result = await client.query(
-        `SELECT 
-          ea.id, 
-          ea.created_at as date, 
-          COALESCE(ea.basic_info->>'address', ea.basic_info->'address', '{}') as address,
+        `SELECT
+          ea.id,
+          ea.created_at as date,
+          COALESCE(ea.basic_info->>'address', '{}') as address,
           COALESCE((SELECT COUNT(*) FROM audit_recommendations WHERE audit_id = ea.id), 0) as recommendations,
           CASE
             WHEN ea.basic_info->>'propertyName' IS NOT NULL AND ea.basic_info->>'propertyName' != ''
@@ -899,50 +899,55 @@ export class EnergyAuditService {
         LIMIT $2 OFFSET $3`,
         [userId, limit, offset]
       );
-      
+
       // Process rows to extract address
       const audits = (result.rows || []).map(row => {
         try {
           // Safe default values for all properties
           const id = row.id || '';
-          const date = row.date || new Date().toISOString();
+          const date = row.date ? new Date(row.date).toISOString() : new Date().toISOString();
           let title = row.title || 'Energy Audit';
           const status = row.status || 'completed';
-          
+
           // Handle recommendations count safely
           let recommendations = 0;
           try {
             recommendations = parseInt(row.recommendations) || 0;
           } catch (e) {
-            // If parsing fails, use 0
+            // If parsing fails use 0
           }
-          
+
           // Handle address which might be stored in various formats
-          let address = row.address || 'No address provided';
+          let address = 'No address provided';
           
-          if (typeof address === 'string') {
-            if (address.startsWith('{') || address.startsWith('[')) {
-              try {
-                const addressObj = JSON.parse(address);
-                // Try various possible address fields
-                address = addressObj.street || 
-                          addressObj.full || 
-                          addressObj.line1 || 
-                          addressObj.formatted || 
-                          'No address provided';
-              } catch (e) {
-                // If parsing fails, keep as is
+          if (row.address) {
+            if (typeof row.address === 'string') {
+              if (row.address.startsWith('{') || row.address.startsWith('[')) {
+                try {
+                  const addressObj = JSON.parse(row.address);
+                  // Try various possible address fields
+                  address = addressObj.street ||
+                            addressObj.full ||
+                            addressObj.line1 ||
+                            addressObj.formatted ||
+                            'No address provided';
+                } catch (e) {
+                  // If parsing fails use the raw string
+                  address = row.address;
+                }
+              } else {
+                address = row.address;
               }
+            } else if (typeof row.address === 'object' && row.address !== null) {
+              // Handle if it's already an object
+              address = row.address.street ||
+                        row.address.full ||
+                        row.address.line1 ||
+                        row.address.formatted ||
+                        JSON.stringify(row.address);
             }
-          } else if (typeof address === 'object' && address !== null) {
-            // Handle if it's already an object
-            address = address.street || 
-                      address.full || 
-                      address.line1 || 
-                      address.formatted || 
-                      JSON.stringify(address);
           }
-          
+
           return {
             id,
             date,
@@ -956,7 +961,7 @@ export class EnergyAuditService {
           // Return a default object if row processing fails
           return {
             id: row.id || '',
-            date: row.date || new Date().toISOString(),
+            date: new Date().toISOString(),
             address: 'Error processing address',
             recommendations: 0,
             title: 'Energy Audit',
