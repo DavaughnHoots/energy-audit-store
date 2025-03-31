@@ -16,6 +16,8 @@ const energyAuditService = new EnergyAuditService(pool);
  */
 router.get('/', validateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    appLogger.info('Fetching audit history', createLogMetadata(req));
+    
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -34,11 +36,30 @@ router.get('/', validateToken, async (req: AuthenticatedRequest, res: Response) 
     }
 
     // Get paginated audit history
-    const result = await energyAuditService.getPaginatedAuditHistory(userId, page, limit);
-
-    res.json(result);
+    try {
+      const result = await energyAuditService.getPaginatedAuditHistory(userId, page, limit);
+      appLogger.info('Successfully retrieved audit history', createLogMetadata(req, {
+        count: result.audits.length,
+        page,
+        limit,
+        totalPages: result.pagination.totalPages
+      }));
+      
+      res.json(result);
+    } catch (serviceError) {
+      appLogger.error('Error in energy audit service:', createLogMetadata(req, { 
+        serviceError, 
+        message: serviceError instanceof Error ? serviceError.message : 'Unknown service error'
+      }));
+      throw serviceError; // Re-throw to be caught by outer catch block
+    }
   } catch (error) {
-    appLogger.error('Error fetching paginated audit history:', createLogMetadata(req, { error }));
+    appLogger.error('Error fetching paginated audit history:', createLogMetadata(req, { 
+      error,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }));
+    
     res.status(500).json({ 
       error: 'Failed to fetch audit history',
       message: error instanceof Error ? error.message : 'Unknown error'
