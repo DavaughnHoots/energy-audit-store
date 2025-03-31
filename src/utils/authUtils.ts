@@ -23,6 +23,16 @@ export const getAccessToken = (): string => {
 };
 
 /**
+ * Get a cookie value by name
+ * @param name The name of the cookie
+ * @returns The cookie value or empty string if not found
+ */
+export const getCookieValue = (name: string): string => {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match && match[2] ? match[2] : '';
+};
+
+/**
  * Fetch with authentication and retry logic for failed requests
  * @param url The URL to fetch
  * @param options Fetch options
@@ -37,15 +47,30 @@ export const fetchWithAuth = async (
   
   while (attempt < maxRetries) {
     try {
-      // Add auth headers and credentials to each request
-      const response = await fetch(url, {
-        ...options,
-        credentials: 'include',
-        headers: {
-          ...getAuthHeaders(),
-          ...options.headers,
+      // Create headers with auth headers and any custom headers
+      const headers: HeadersInit = {
+        ...getAuthHeaders(),
+        ...(options.headers as Record<string, string> || {})
+      };
+      
+      // Add CSRF token for non-GET requests
+      const method = options.method || 'GET';
+      if (method !== 'GET') {
+        const csrfToken = getCookieValue('XSRF-TOKEN');
+        if (csrfToken) {
+          headers['x-xsrf-token'] = csrfToken;
         }
-      });
+      }
+      
+      // Prepare request options with proper typing
+      const requestOptions: RequestInit = {
+        ...options,
+        credentials: 'include' as RequestCredentials,
+        headers
+      };
+      
+      // Make the request with auth and CSRF protection
+      const response = await fetch(url, requestOptions);
       
       if (response.ok) return response;
       
