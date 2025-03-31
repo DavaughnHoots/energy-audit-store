@@ -201,8 +201,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/education', educationRoutes);
-app.use('/api/energy-audit', energyAuditRoutes);
+// Register the audit history route BEFORE the main energy audit route to prevent route confusion
 app.use('/api/energy-audit/history', authenticate, auditHistoryRoutes);
+app.use('/api/energy-audit', energyAuditRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
 app.use('/api/recommendations/products', productRecommendationsRoutes);
