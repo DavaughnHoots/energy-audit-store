@@ -18,13 +18,15 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { standardLimiter, authLimiter, apiLimiter, productsLimiter, productDetailLimiter, productSearchLimiter } from './middleware/rateLimitMiddleware.js';
 import { authenticate } from './middleware/auth.js';
+import { optionalTokenValidation } from './middleware/optionalTokenValidation.js';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import educationRoutes from './routes/education.js';
 import energyAuditRoutes from './routes/energyAudit.js';
-// Import enhanced audit history routes (with better error handling)
+// Import enhanced routes (with better error handling)
 import auditHistoryRoutes from './routes/auditHistory.enhanced.js';
-// Original audit history import kept but disabled: ./routes/auditHistory.js
+import reportDataRoutes from './routes/reportData.enhanced.js';
+// Original imports kept but disabled: ./routes/auditHistory.js
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
 import recommendationsRoutes from './routes/recommendations.js';
 import userProfileRoutes from './routes/userProfile.js';
@@ -201,8 +203,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/education', educationRoutes);
-// Register the audit history route BEFORE the main energy audit route to prevent route confusion
+// Register specialized routes BEFORE the main energy audit route to prevent route conflicts
 app.use('/api/energy-audit/history', authenticate, auditHistoryRoutes);
+app.use('/api/energy-audit/report-data', optionalTokenValidation, reportDataRoutes);
 app.use('/api/energy-audit', energyAuditRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
