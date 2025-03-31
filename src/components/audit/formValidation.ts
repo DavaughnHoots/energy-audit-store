@@ -100,7 +100,8 @@ export const getSectionErrors = (
     case 'homeDetails':
       if (!data.homeDetails.homeSize) errors.push('Home size is required');
       if (!data.homeDetails.stories) errors.push('Number of stories is required');
-      if (!data.homeDetails.squareFootage) errors.push('Square footage is required');
+      if (!data.homeDetails.basementType) errors.push('Basement type is required');
+      // Square footage will be automatically set based on homeSize
       break;
 
     case 'currentConditions':

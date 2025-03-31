@@ -708,6 +708,62 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
     setValidationErrors([]);
   };
 
+  // Function to autofill missing advanced fields with reasonable defaults
+  const autofillAdvancedFields = () => {
+    // Create a deep copy of the current form data
+    const updatedData = { ...formData };
+    
+    // 1. Autofill home details advanced fields
+    if (!updatedData.homeDetails.bedrooms || updatedData.homeDetails.bedrooms <= 0) {
+      // Estimate bedrooms based on size category
+      const sizeValue = updatedData.homeDetails.homeSize;
+      if (sizeValue <= 1000) updatedData.homeDetails.bedrooms = 1;
+      else if (sizeValue <= 1500) updatedData.homeDetails.bedrooms = 2;
+      else if (sizeValue <= 2500) updatedData.homeDetails.bedrooms = 3;
+      else updatedData.homeDetails.bedrooms = 4;
+    }
+    
+    if (!updatedData.homeDetails.bathrooms || updatedData.homeDetails.bathrooms <= 0) {
+      // Estimate bathrooms based on bedrooms and size
+      const bedroomCount = updatedData.homeDetails.bedrooms;
+      updatedData.homeDetails.bathrooms = Math.max(1, Math.floor(bedroomCount * 0.75));
+    }
+    
+    if (!updatedData.homeDetails.numRooms || updatedData.homeDetails.numRooms <= 0) {
+      // Estimate total rooms based on bedrooms
+      const bedroomCount = updatedData.homeDetails.bedrooms;
+      updatedData.homeDetails.numRooms = bedroomCount + 3; // bedrooms + kitchen + living + dining
+    }
+    
+    if (!updatedData.homeDetails.numFloors || updatedData.homeDetails.numFloors <= 0) {
+      // Use stories as floors if not set
+      updatedData.homeDetails.numFloors = updatedData.homeDetails.stories || 1;
+    }
+    
+    // Set default wall dimensions based on square footage for rectangular homes
+    if (!updatedData.homeDetails.wallLength || updatedData.homeDetails.wallLength <= 0) {
+      const squareFootage = updatedData.homeDetails.squareFootage || updatedData.homeDetails.homeSize;
+      updatedData.homeDetails.wallLength = Math.round(Math.sqrt(squareFootage));
+    }
+    
+    if (!updatedData.homeDetails.wallWidth || updatedData.homeDetails.wallWidth <= 0) {
+      const squareFootage = updatedData.homeDetails.squareFootage || updatedData.homeDetails.homeSize;
+      const length = updatedData.homeDetails.wallLength;
+      updatedData.homeDetails.wallWidth = Math.round(squareFootage / length);
+    }
+    
+    if (!updatedData.homeDetails.ceilingHeight || updatedData.homeDetails.ceilingHeight <= 0) {
+      // Default ceiling height
+      updatedData.homeDetails.ceilingHeight = 8; // Standard 8ft ceiling
+    }
+    
+    // 2. Update the form data with the autofilled values
+    setFormData(updatedData);
+    
+    console.log('Autofilled advanced fields with reasonable defaults');
+    return updatedData;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -716,23 +772,12 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       return;
     }
 
-    // Check for missing square footage and fix it if needed
-    if (!formData.homeDetails.squareFootage || formData.homeDetails.squareFootage <= 0) {
-      // If square footage is missing or invalid, set it based on homeSize
-      setFormData(prevData => ({
-        ...prevData,
-        homeDetails: {
-          ...prevData.homeDetails,
-          squareFootage: prevData.homeDetails.homeSize || 1500
-        }
-      }));
-      
-      console.log('Fixed missing square footage before submission');
-    }
+    // Autofill missing advanced fields with reasonable defaults
+    const completeFormData = autofillAdvancedFields();
 
     // Debug info
-    console.log('Final form data before submission:', JSON.stringify(formData, null, 2));
-    console.log('Square footage:', formData.homeDetails.squareFootage);
+    console.log('Final form data before submission:', JSON.stringify(completeFormData, null, 2));
+    console.log('Square footage:', completeFormData.homeDetails.squareFootage);
 
     // Validate all sections
     console.log('Validating all sections...');

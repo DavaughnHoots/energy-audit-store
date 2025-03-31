@@ -234,18 +234,15 @@ export const validateBasicInfo = (info: BasicInfo): string[] => {
 export const validateHomeDetails = (details: HomeDetails): string[] => {
   const errors: string[] = [];
   
+  // Only validate essential fields (basic questions)
   if (!details.squareFootage) errors.push('Square footage is required');
   if (!details.stories) errors.push('Number of stories is required');
-  if (!details.bedrooms) errors.push('Number of bedrooms is required');
-  if (!details.bathrooms) errors.push('Number of bathrooms is required');
   if (!details.homeType) errors.push('Home type is required');
   if (!details.homeSize) errors.push('Home size is required');
-  if (!details.numRooms) errors.push('Number of rooms is required');
-  if (!details.numFloors) errors.push('Number of floors is required');
-  if (!details.wallLength) errors.push('Wall length is required');
-  if (!details.wallWidth) errors.push('Wall width is required');
-  if (!details.ceilingHeight) errors.push('Ceiling height is required');
   if (!details.basementType) errors.push('Basement type is required');
+  
+  // Advanced fields should be auto-filled with defaults if not provided
+  // These fields are not required for the basic form submission
   
   return errors;
 };

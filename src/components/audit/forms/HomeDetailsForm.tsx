@@ -140,10 +140,12 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
           value={data.homeSize.toString()}
           onChange={handleBasicChange('homeSize')}
           options={[
-            { value: '1500', label: 'Small (under 1,500 sq ft)' },
+            { value: '1000', label: 'Small (under 1,000 sq ft)' },
+            { value: '1500', label: 'Medium-Small (1,000-1,500 sq ft)' },
             { value: '2500', label: 'Medium (1,500-2,500 sq ft)' },
             { value: '3500', label: 'Large (over 2,500 sq ft)' }
           ]}
+          helpText="This will automatically estimate your square footage"
           required
         />
         
@@ -210,25 +212,6 @@ const HomeDetailsForm: React.FC<HomeDetailsFormProps> = ({
             ]}
           />
         )}
-
-        <InputField
-          label="Square Footage"
-          type="text"
-          value={data.squareFootage || ''}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (inputValue === '') {
-              onInputChange('squareFootage', data.homeSize || 1500);
-            } else if (/^\d+$/.test(inputValue)) {
-              const value = parseInt(inputValue);
-              onInputChange('squareFootage', value > 0 ? value : data.homeSize || 1500);
-            }
-          }}
-          pattern="[0-9]*"
-          inputMode="numeric"
-          helpText="Enter the exact square footage of your home"
-          required
-        />
       </FormGrid>
 
       {/* Advanced Fields */}
