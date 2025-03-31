@@ -22,7 +22,9 @@ import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import educationRoutes from './routes/education.js';
 import energyAuditRoutes from './routes/energyAudit.js';
-import auditHistoryRoutes from './routes/auditHistory.js';
+// Import enhanced audit history routes (with better error handling)
+import auditHistoryRoutes from './routes/auditHistory.enhanced.js';
+// Original audit history import kept but disabled: ./routes/auditHistory.js
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
 import recommendationsRoutes from './routes/recommendations.js';
 import userProfileRoutes from './routes/userProfile.js';
