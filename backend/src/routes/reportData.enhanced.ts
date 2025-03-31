@@ -69,15 +69,19 @@ router.get('/health', async (req, res) => {
  * /api/energy-audit/:id/report-data
  */
 router.get('/', optionalTokenValidation, async (req: AuthenticatedRequest, res: Response) => {
-  // Get the audit ID from the route parameter
-  const auditId = req.params.id;
+  // Extract audit ID from the original URL since we're using a router
+  // URL format: /api/energy-audit/:id/report-data
+  const urlParts = req.originalUrl.split('/');
+  const auditIdIndex = urlParts.findIndex(part => part === 'energy-audit') + 1;
+  const auditId = urlParts[auditIdIndex] || '';
   const userId = req.user?.id;
   
   appLogger.info('Fetching report data with enhanced handler', createLogMetadata(req, {
     auditId,
     authenticatedUser: !!userId,
     path: req.path,
-    originalUrl: req.originalUrl
+    originalUrl: req.originalUrl,
+    urlParts
   }));
   
   try {
