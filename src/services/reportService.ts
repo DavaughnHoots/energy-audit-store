@@ -1,6 +1,50 @@
 import { API_ENDPOINTS, API_BASE_URL, getApiUrl } from '../config/api';
-import { ReportData, PaginatedAuditHistory } from '../types/report';
+import { ReportData, PaginatedAuditHistory, SavingsChartDataPoint } from '../types/report';
 import { fetchWithAuth } from '../utils/authUtils';
+import { getRecommendationSavings, getActualSavings } from '../utils/financialCalculations';
+
+/**
+ * Ensures that savings data points have valid non-zero values by using a safe
+ * property access approach. This addresses inconsistencies between different
+ * data sources in the application.
+ * 
+ * @param data Array of data points to transform
+ * @returns Transformed data with consistent non-zero values where available
+ */
+export const ensureNonZeroValues = (data: SavingsChartDataPoint[]): SavingsChartDataPoint[] => {
+  return data.map(item => {
+    // Create a standardized object we'll return
+    const standardizedItem: SavingsChartDataPoint = {
+      name: item.name,
+      estimatedSavings: 0,
+      actualSavings: 0
+    };
+    
+    // Safely extract the estimated savings value from any possible field name
+    // Using type assertion with 'any' to allow flexible property access
+    const dataItem = item as any;
+    
+    // For estimated savings - check all possible field names
+    if (typeof dataItem.estimatedSavings === 'number' && !isNaN(dataItem.estimatedSavings)) {
+      standardizedItem.estimatedSavings = dataItem.estimatedSavings;
+    } else if (typeof dataItem.estimated_savings === 'number' && !isNaN(dataItem.estimated_savings)) {
+      standardizedItem.estimatedSavings = dataItem.estimated_savings;
+    } else if (typeof dataItem.estimated === 'number' && !isNaN(dataItem.estimated)) {
+      standardizedItem.estimatedSavings = dataItem.estimated;
+    }
+    
+    // For actual savings - check all possible field names
+    if (typeof dataItem.actualSavings === 'number' && !isNaN(dataItem.actualSavings)) {
+      standardizedItem.actualSavings = dataItem.actualSavings;
+    } else if (typeof dataItem.actual_savings === 'number' && !isNaN(dataItem.actual_savings)) {
+      standardizedItem.actualSavings = dataItem.actual_savings;
+    } else if (typeof dataItem.actual === 'number' && !isNaN(dataItem.actual)) {
+      standardizedItem.actualSavings = dataItem.actual;
+    }
+    
+    return standardizedItem;
+  });
+};
 
 /**
  * Validates that an audit ID is a non-empty string that's not "null"
@@ -71,6 +115,13 @@ export const fetchReportData = async (auditId: string): Promise<ReportData> => {
 
     const data = await response.json();
     console.log('Successfully retrieved report data');
+    
+    // Apply data transformations to ensure financial data consistency
+    if (data?.charts?.savingsAnalysis) {
+      data.charts.savingsAnalysis = ensureNonZeroValues(data.charts.savingsAnalysis);
+      console.log('Applied financial data consistency transformations to savings chart data');
+    }
+    
     return data;
   } catch (error) {
     console.error('Error fetching report data:', error);
