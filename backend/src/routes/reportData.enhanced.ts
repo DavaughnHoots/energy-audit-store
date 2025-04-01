@@ -6,7 +6,7 @@ import { AuthenticatedRequest } from '../types/auth.js';
 import { AuditRecommendation } from '../types/energyAudit.js';
 import { pool } from '../config/database.js';
 import { EnergyAuditService } from '../services/EnergyAuditService.js';
-import { reportDataService } from '../services/ReportDataService.js';
+import { enhancedReportDataService } from '../services/ReportDataService.enhanced.js';
 
 const router = express.Router();
 const energyAuditService = new EnergyAuditService(pool);
@@ -174,7 +174,7 @@ router.get('/', optionalTokenValidation, async (req: AuthenticatedRequest, res: 
     
     // Generate report data using the specialized service
     try {
-      const reportData = await reportDataService.generateReportData(audit, recommendations);
+      const reportData = await enhancedReportDataService.generateReportData(audit, recommendations, userId);
       
       appLogger.info('Report data generated successfully', createLogMetadata(req, {
         auditId,

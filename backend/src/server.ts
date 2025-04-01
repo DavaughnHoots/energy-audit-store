@@ -41,6 +41,7 @@ import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import { runEnergyConsumptionMigration } from './scripts/run_energy_consumption_migration.js';
 import { runEducationMigration } from './scripts/run_education_migration.js';
+import { runRecommendationUpdatesMigration } from './scripts/run_recommendation_updates_migration.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 // Product comparison migration removed - table already exists
@@ -88,6 +89,15 @@ if (process.env.NODE_ENV === 'production') {
     })
     .catch(error => {
       appLogger.error('Error running education tables migration on startup', { error });
+    });
+    
+  // Run recommendation updates migration
+  runRecommendationUpdatesMigration()
+    .then(result => {
+      appLogger.info('Recommendation updates migration completed on startup', { result });
+    })
+    .catch(error => {
+      appLogger.error('Error running recommendation updates migration on startup', { error });
     });
     
   // Run initial orphaned audit association
