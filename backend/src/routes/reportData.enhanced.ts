@@ -214,3 +214,4 @@ router.get('/', optionalTokenValidation, async (req: AuthenticatedRequest, res: 
   }
 });
 
+export default router;
