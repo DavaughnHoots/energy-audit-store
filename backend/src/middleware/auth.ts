@@ -33,8 +33,13 @@ export const authenticate = async (
     // Log authentication attempt for debugging
     console.log(`Authentication attempt for path: ${req.path}`);
     console.log('Cookies:', req.cookies);
+    console.log('Headers:', {
+      authorization: req.headers.authorization ? 'Present' : 'Missing',
+      'content-type': req.headers['content-type'],
+      host: req.headers.host
+    });
     
-    const accessToken = req.cookies.accessToken;
+    const accessToken = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
     const refreshToken = req.cookies.refreshToken;
 
     console.log('Access Token:', accessToken ? 'Present' : 'Missing');

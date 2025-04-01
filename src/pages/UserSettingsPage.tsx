@@ -457,4 +457,3 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
   );
 };
 
-export default UserSettingsPage;

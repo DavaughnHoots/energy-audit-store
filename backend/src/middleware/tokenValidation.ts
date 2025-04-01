@@ -10,9 +10,14 @@ interface TokenValidationError extends Error {
 }
 
 export async function validateToken(req: Request, res: Response, next: NextFunction) {
+  console.log('Token validation middleware called');
+  console.log('Cookies:', req.cookies);
+  console.log('Headers:', req.headers);
+  
   const token = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
 
   if (!token) {
+    console.log('No token found in request');
     return res.status(401).json({ error: 'No token provided' });
   }
 

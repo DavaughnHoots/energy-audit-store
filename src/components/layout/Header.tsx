@@ -37,47 +37,55 @@ const Header: React.FC = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  <User className="h-5 w-5" />
-                  <span>Dashboard</span>
-                </Link>
-                <button
-                  onClick={logout}
-                  className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/sign-in"
-                  className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/sign-up"
-                  className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600"
-                >
-                  Get Started
-                </Link>
-              </>
-            )}
+            <div className="hidden sm:flex items-center space-x-4">
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    <User className="h-5 w-5" />
+                    <span>Dashboard</span>
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/sign-in"
+                    className="text-gray-600 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/sign-up"
+                    className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
+            </div>
             
-            {/* Mobile menu button */}
+            {/* Mobile menu button - always visible on mobile */}
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
               className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+              aria-label="Open menu"
             >
               <Menu className="h-6 w-6" />
             </button>
-            <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+            <MobileMenu 
+              isOpen={isMobileMenuOpen} 
+              onClose={() => setIsMobileMenuOpen(false)}
+              isAuthenticated={isAuthenticated}
+              onLogout={logout}
+            />
           </div>
         </div>
       </nav>

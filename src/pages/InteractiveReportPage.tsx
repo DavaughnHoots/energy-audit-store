@@ -15,7 +15,7 @@ import ReportPropertyInfo from '../components/reports/ReportPropertyInfo';
 import ReportCurrentConditions from '../components/reports/ReportCurrentConditions';
 import ReportEnergyConsumption from '../components/reports/ReportEnergyConsumption';
 import ReportLighting from '../components/reports/ReportLighting';
-import ReportRecommendations from '../components/reports/ReportRecommendations';
+import EnhancedReportRecommendations from '../components/reports/EnhancedReportRecommendations';
 import ReportCharts from '../components/reports/ReportCharts';
 import ReportSummary from '../components/reports/ReportSummary';
 
@@ -249,12 +249,37 @@ const InteractiveReportPage: React.FC = () => {
         )}
         
         {activeSection === 'recommendations' && (
-          <ReportRecommendations 
-            recommendations={reportData.recommendations}
-            onUpdateStatus={handleUpdateStatus}
-            onUpdatePriority={handleUpdatePriority}
-            onUpdateImplementationDetails={handleUpdateImplementationDetails}
-          />
+          <>
+            {/* Debug info panel for recommendations */}
+            <div className="mb-6 p-4 bg-yellow-100 border-2 border-yellow-500 rounded-lg">
+              <h3 className="text-lg font-bold text-yellow-800">Debug Information (v1.0.1)</h3>
+              <p className="text-sm text-yellow-700 mb-2">This panel is only visible in development/testing.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p><strong>Recommendations Count:</strong> {reportData.recommendations.length}</p>
+                  <p><strong>Product Preferences Available:</strong> {reportData.productPreferences ? 'Yes' : 'No'}</p>
+                  <p><strong>Budget Constraint:</strong> ${reportData.productPreferences?.budgetConstraint || 0}</p>
+                </div>
+                <div>
+                  <p><strong>User Categories:</strong> {(reportData.productPreferences?.categories || []).length > 0 ? 
+                    reportData.productPreferences?.categories.join(', ') : 'None specified'}</p>
+                  <p><strong>Active Section:</strong> {activeSection}</p>
+                  <p><strong>Report ID:</strong> {auditId}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Enhanced recommendations with visible marker */}
+            <EnhancedReportRecommendations 
+              recommendations={reportData.recommendations}
+              userCategories={reportData.productPreferences?.categories || []}
+              budgetConstraint={reportData.productPreferences?.budgetConstraint}
+              onUpdateStatus={handleUpdateStatus}
+              onUpdatePriority={handleUpdatePriority}
+              onUpdateImplementationDetails={handleUpdateImplementationDetails}
+            />
+          </>
         )}
         
         {activeSection === 'charts' && (

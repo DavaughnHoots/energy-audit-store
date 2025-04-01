@@ -96,7 +96,29 @@ export class ReportValidationHelper {
     }
 
     // Add isEstimated flag if we had to generate any financial data
-    validatedRec.isEstimated = true;
+    // Only set isEstimated to true if we didn't have valid values before
+    if (
+      typeof recommendation.estimatedSavings !== 'number' || 
+      typeof recommendation.estimatedCost !== 'number' || 
+      typeof recommendation.paybackPeriod !== 'number' ||
+      isNaN(recommendation.estimatedSavings) ||
+      isNaN(recommendation.estimatedCost) ||
+      isNaN(recommendation.paybackPeriod)
+    ) {
+      validatedRec.isEstimated = true;
+    } else {
+      // If values were already provided, preserve the isEstimated flag
+      validatedRec.isEstimated = recommendation.isEstimated ?? false;
+    }
+    
+    // Log the validated recommendation for debugging
+    appLogger.debug('Validated recommendation data', {
+      title: validatedRec.title,
+      estimatedSavings: validatedRec.estimatedSavings,
+      estimatedCost: validatedRec.estimatedCost,
+      paybackPeriod: validatedRec.paybackPeriod,
+      isEstimated: validatedRec.isEstimated
+    });
 
     return validatedRec;
   }

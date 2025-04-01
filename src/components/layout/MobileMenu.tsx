@@ -6,10 +6,16 @@ import useAuth from '@/context/AuthContext';
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  isAuthenticated: boolean;
+  onLogout: () => void;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
-  const { isAuthenticated, logout } = useAuth();
+const MobileMenu: React.FC<MobileMenuProps> = ({ 
+  isOpen, 
+  onClose,
+  isAuthenticated,
+  onLogout
+}) => {
 
   const navigationItems = [
     { name: 'Products', path: '/products' },
@@ -64,10 +70,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                 </li>
                 <li>
                   <button
-                    onClick={() => {
-                      logout();
-                      onClose();
-                    }}
+                  onClick={() => {
+                    onLogout();
+                    onClose();
+                  }}
                     className="block w-full text-left py-2 text-base font-medium text-gray-900 hover:text-green-600"
                   >
                     Sign Out

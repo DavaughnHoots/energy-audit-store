@@ -34,11 +34,25 @@ export async function optionalTokenValidation(req: AuthenticatedRequest, res: Re
     // Check token blacklist cache
     const isBlacklisted = await cache.get(`blacklisted_token:${token}`);
     if (isBlacklisted) {
+      appLogger.debug('Token is blacklisted, continuing as anonymous', createLogMetadata(req));
       return next(); // Skip blacklisted token but continue
     }
 
+    // Enhanced debug logging
+    appLogger.debug('Verifying JWT token', createLogMetadata(req, {
+      token: token.substring(0, 10) + '...' // Only log first few chars for security
+    }));
+
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload;
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload;
+    } catch (jwtError) {
+      appLogger.debug('JWT verification failed', createLogMetadata(req, { 
+        error: jwtError instanceof Error ? jwtError.message : 'Unknown JWT error' 
+      }));
+      return next(); // Continue as anonymous on JWT error
+    }
 
     // Note: We're skipping the session check for optional validation
     // This allows valid JWT tokens to be accepted even if they're not in the sessions table
