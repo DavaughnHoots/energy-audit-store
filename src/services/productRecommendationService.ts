@@ -25,41 +25,157 @@ export interface ProductRecommendationMatch {
 }
 
 /**
- * Maps recommendation types to product categories
+ * Maps recommendation types to product categories and subcategories
  * @param type The recommendation type
- * @returns The corresponding product category
+ * @param title The recommendation title (optional)
+ * @returns The corresponding product main category and subcategory
  */
-export const mapRecommendationTypeToCategory = (type: string): string => {
-  const typeToCategory: Record<string, string> = {
-    'hvac': 'hvac',
-    'heating': 'hvac',
-    'cooling': 'hvac',
-    'insulation': 'insulation',
-    'windows': 'windows & doors',
-    'doors': 'windows & doors',
-    'lighting': 'lighting',
-    'appliances': 'energy-efficient appliances',
-    'water-heating': 'water heating',
-    'smart-home': 'smart home devices',
-    'renewable': 'renewable energy',
-    'solar': 'renewable energy',
-    'weatherization': 'windows & doors',
-    'thermostat': 'smart home devices',
-    'dehumidification': 'hvac'
+export interface CategoryMapping {
+  mainCategory: string;
+  subCategory: string;
+}
+
+export const mapRecommendationTypeToCategory = (type: string, title?: string): CategoryMapping => {
+  // Basic category mapping
+  const typeToMainCategory: Record<string, string> = {
+    'hvac': 'Heating & Cooling',
+    'heating': 'Heating & Cooling',
+    'cooling': 'Heating & Cooling',
+    'insulation': 'Building Products',
+    'windows': 'Building Products',
+    'doors': 'Building Products',
+    'lighting': 'Lighting & Fans',
+    'appliances': 'Appliances',
+    'water-heating': 'Water Heaters',
+    'smart-home': 'Electronics',
+    'renewable': 'Electronics',
+    'solar': 'Electronics',
+    'weatherization': 'Building Products',
+    'thermostat': 'Heating & Cooling',
+    'dehumidification': 'Heating & Cooling'
+  };
+
+  // Subcategory mappings
+  const typeToSubCategory: Record<string, Record<string, string>> = {
+    'lighting': {
+      'fixture': 'Light Fixtures',
+      'bulb': 'Light Bulbs',
+      'led': 'Light Bulbs',
+      'lamp': 'Light Fixtures',
+      'ceiling': 'Ceiling Fans',
+      'default': 'Light Bulbs'
+    },
+    'hvac': {
+      'furnace': 'Furnaces',
+      'air conditioner': 'Air Conditioners',
+      'heat pump': 'Heat Pumps',
+      'thermostat': 'Thermostats',
+      'default': 'HVAC Systems'
+    },
+    'insulation': {
+      'default': 'Insulation'
+    },
+    'windows': {
+      'default': 'Windows'
+    },
+    'doors': {
+      'default': 'Doors'
+    }
   };
 
   // Convert to lowercase for case-insensitive matching
   const lowercaseType = type.toLowerCase();
+  const lowercaseTitle = title ? title.toLowerCase() : '';
   
-  // Find the first match (some types might be substrings of others)
-  for (const [key, value] of Object.entries(typeToCategory)) {
+  // Find main category
+  let mainCategory = 'General';
+  for (const [key, value] of Object.entries(typeToMainCategory)) {
     if (lowercaseType.includes(key)) {
-      return value;
+      mainCategory = value;
+      break;
     }
   }
   
-  // Default to general category if no match
-  return 'general';
+  // Find subcategory based on title and type
+  let subCategory = '';
+  
+  // Special case for differentiating fixtures vs bulbs using the title
+  if (lowercaseType.includes('lighting')) {
+    const subCategoryMap = typeToSubCategory['lighting'] || { default: 'Light Bulbs' };
+    
+    // Check title for keywords if available
+    if (lowercaseTitle) {
+      // Check for fixture-related keywords in title
+      if (lowercaseTitle.includes('fixture') || 
+          lowercaseTitle.includes('ceiling') || 
+          lowercaseTitle.includes('replace')) {
+        subCategory = subCategoryMap['fixture'] || 'Light Fixtures';
+      } 
+      // Check for bulb-related keywords in title
+      else if (lowercaseTitle.includes('bulb') || 
+               lowercaseTitle.includes('led') || 
+               lowercaseTitle.includes('lamp')) {
+        subCategory = subCategoryMap['bulb'] || 'Light Bulbs';
+      }
+      // Check for fan-related keywords in title
+      else if (lowercaseTitle.includes('fan')) {
+        subCategory = subCategoryMap['ceiling'] || 'Ceiling Fans';
+      }
+      // Default for lighting
+      else {
+        subCategory = subCategoryMap['default'] || 'Light Bulbs';
+      }
+    } else {
+      subCategory = subCategoryMap['default'] || 'Light Bulbs';
+    }
+  } 
+  // For HVAC systems
+  else if (lowercaseType.includes('hvac') || 
+           lowercaseType.includes('heating') || 
+           lowercaseType.includes('cooling')) {
+    const subCategoryMap = typeToSubCategory['hvac'] || { default: 'HVAC Systems' };
+    
+    // Check title for HVAC subtypes if available
+    if (lowercaseTitle) {
+      if (lowercaseTitle.includes('furnace')) {
+        subCategory = subCategoryMap['furnace'] || 'Furnaces';
+      }
+      else if (lowercaseTitle.includes('air condition')) {
+        subCategory = subCategoryMap['air conditioner'] || 'Air Conditioners';
+      }
+      else if (lowercaseTitle.includes('heat pump')) {
+        subCategory = subCategoryMap['heat pump'] || 'Heat Pumps';
+      }
+      else if (lowercaseTitle.includes('thermostat')) {
+        subCategory = subCategoryMap['thermostat'] || 'Thermostats';
+      }
+      else {
+        subCategory = subCategoryMap['default'] || 'HVAC Systems';
+      }
+    } else {
+      subCategory = subCategoryMap['default'] || 'HVAC Systems';
+    }
+  } 
+  // For insulation
+  else if (lowercaseType.includes('insulation')) {
+    const insulationMap = typeToSubCategory['insulation'] || { default: 'Insulation' };
+    subCategory = insulationMap['default'] || 'Insulation';
+  }
+  // For windows
+  else if (lowercaseType.includes('windows')) {
+    const windowsMap = typeToSubCategory['windows'] || { default: 'Windows' };
+    subCategory = windowsMap['default'] || 'Windows';
+  }
+  // For doors
+  else if (lowercaseType.includes('doors')) {
+    const doorsMap = typeToSubCategory['doors'] || { default: 'Doors' };
+    subCategory = doorsMap['default'] || 'Doors';
+  }
+  
+  return {
+    mainCategory,
+    subCategory
+  };
 };
 
 /**
@@ -297,21 +413,26 @@ export const matchProductsToRecommendations = async (
     for (const recommendation of recommendations) {
       console.log(`Processing recommendation: ${recommendation.title} (type: ${recommendation.type})`);
       
-      // Map recommendation type to product category
-      const recommendationCategory = mapRecommendationTypeToCategory(recommendation.type);
-      console.log(`Mapped recommendation type to category: ${recommendationCategory}`);
+      // Map recommendation type and title to product category
+      const recommendationCategory = mapRecommendationTypeToCategory(recommendation.type, recommendation.title);
+      console.log(`Mapped recommendation type and title to category: ${JSON.stringify(recommendationCategory)}`);
       
       // Skip recommendations that don't match user preferences if preferences are provided
       if (userCategoryPreferences.length > 0 && 
-          !userCategoryPreferences.some(pref => pref.toLowerCase() === recommendationCategory.toLowerCase())) {
+          !userCategoryPreferences.some(pref => 
+            pref.toLowerCase() === recommendationCategory.mainCategory.toLowerCase() || 
+            pref.toLowerCase() === recommendationCategory.subCategory.toLowerCase()
+          )) {
         console.log(`Skipping recommendation as it doesn't match user preferences`);
         continue;
       }
       
       // Find matching products for this recommendation
       const matchingProducts = productCatalog.filter(product => {
-        // Match by category
-        const categoryMatch = product.category.toLowerCase() === recommendationCategory.toLowerCase();
+        // Match by main category or subcategory
+        const categoryMatch = 
+          product.category.toLowerCase() === recommendationCategory.mainCategory.toLowerCase() || 
+          product.category.toLowerCase() === recommendationCategory.subCategory.toLowerCase();
         
         // Check budget constraint if provided
         const withinBudget = budgetConstraint <= 0 || product.price <= budgetConstraint;
@@ -359,7 +480,12 @@ export const filterRecommendationsByUserPreferences = (
   
   // Filter recommendations by category match
   return recommendations.filter(recommendation => {
-    const category = mapRecommendationTypeToCategory(recommendation.type);
-    return userCategoryPreferences.some(pref => pref.toLowerCase() === category.toLowerCase());
+    const categoryMapping = mapRecommendationTypeToCategory(recommendation.type, recommendation.title);
+    
+    // Check if any user preference matches either the main category or subcategory
+    return userCategoryPreferences.some(pref => 
+      pref.toLowerCase() === categoryMapping.mainCategory.toLowerCase() || 
+      pref.toLowerCase() === categoryMapping.subCategory.toLowerCase()
+    );
   });
 };

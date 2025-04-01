@@ -22,6 +22,8 @@ The `EnhancedReportRecommendations` component provides an improved visualization
 - **Interactive editing**: Supports updating recommendation status, priority, and implementation details
 - **Change tracking**: Records and displays a history of changes made to recommendations
 - **Budget awareness**: Highlights products that fit within the user's defined budget constraints
+- **Subcategory matching**: Uses both main categories and subcategories for more precise product matching
+- **Fallback links**: Provides alternative product sources when specific products aren't available
 
 ## Component Structure
 
@@ -65,17 +67,19 @@ graph TD
 
 The component fetches product suggestions for each recommendation using the `matchProductsToRecommendations` function from the `productRecommendationService`. Products are matched based on:
 
-1. Recommendation type (e.g., HVAC, lighting)
+1. Recommendation type and title (e.g., HVAC, lighting) - using more specific matching for better categorization
 2. User category preferences (if specified)
 3. Budget constraints
+4. Both main categories and subcategories (e.g., "lighting" → "Light Bulbs" or "Light Fixtures")
 
 Products that fit within the user's budget are highlighted with a green border and "Within Budget" tag.
 
-The component works with the `ProductSuggestionCard` to provide a seamless user experience:
+When specific products aren't available, the component:
+1. Displays a user-friendly message about potential Energy Star link issues
+2. Provides alternative links to Amazon search and Energy Star general product pages
+3. Uses category-specific language to guide users to the right type of product
 
-- Even when specific product URLs aren't available, users can still access relevant Energy Star product categories
-- The system intelligently labels links as "View Product" for direct product links and "Browse Similar" for category fallbacks
-- Each recommendation displays its matching product category to help users understand why specific products were suggested
+The improved mapping system uses both the recommendation type and title to determine the appropriate product category and subcategory, allowing for more precise product matching and preventing duplicate suggestions across different recommendation types.
 
 ### Recommendation Filtering
 
@@ -105,10 +109,12 @@ The component maintains a history of changes made to recommendations (status, pr
 - `src/services/productRecommendationService.ts`: Service for fetching and matching product recommendations
 - `src/types/report.ts`: Updated to include productPreferences
 - `backend/src/services/ReportDataService.ts`: Enhanced to include product preferences in report data
+- `src/assets/product-images/`: Directory containing category-specific product images
 
 ## Notes/To-Do
 
 - Consider adding an option to sort recommendations by different criteria (e.g., ROI, cost)
 - Implement product comparison feature directly within the recommendations view
 - Add ability to filter recommendations by status (active vs. implemented)
-- Consider adding images for product suggestions to make them more engaging
+- Consider adding more product images for other categories (insulation, windows/doors, water heaters, smart home)
+- Add support for more subcategories in the product mapping system

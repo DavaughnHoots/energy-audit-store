@@ -689,21 +689,34 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
                 <div className="bg-gray-100 p-3 rounded-lg text-gray-600 text-sm">
                   <p className="mb-2">No specific product suggestions available for this recommendation.</p>
                   
-                  {/* Force display a mock product to verify component is working */}
-                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="font-medium text-sm mb-1">Mock Product (Debug Only)</p>
-                    <p className="text-xs text-green-700">
-                      This mock product is shown to verify the product suggestion component is working correctly.
+                  {/* Energy Star Links Notice */}
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="font-medium text-sm mb-1">Looking for product options?</p>
+                    <p className="text-xs text-blue-700 mb-2">
+                      We suggest exploring energy-efficient products in the {recommendation.type} category.
+                      Note that some Energy Star links may be unavailable due to government website changes.
                     </p>
                     
-                    <div className="mt-2 p-2 bg-white rounded border border-green-200">
-                      <p className="text-sm font-semibold">Energy Efficient {recommendation.type.charAt(0).toUpperCase() + recommendation.type.slice(1)} Solution</p>
-                      <p className="text-xs text-gray-600">Price: $199.99 | ROI: 85%</p>
-                      <div className="mt-1 flex justify-end">
-                        <button className="bg-green-600 text-white px-2 py-1 text-xs rounded hover:bg-green-700">
-                          View Details
-                        </button>
-                      </div>
+                    <div className="mt-2 flex flex-col space-y-2">
+                      <a 
+                        href={`https://www.amazon.com/s?k=energy+efficient+${recommendation.type}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                      >
+                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs mr-2">Amazon</span>
+                        Browse energy-efficient {recommendation.type} products
+                      </a>
+                      
+                      <a 
+                        href={`https://www.energystar.gov/products`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                      >
+                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs mr-2">Energy Star</span>
+                        Explore all Energy Star certified products
+                      </a>
                     </div>
                   </div>
                 </div>
