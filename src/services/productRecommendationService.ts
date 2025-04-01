@@ -706,14 +706,22 @@ export const matchProductsToRecommendations = async (
         const avgPayback = +(topMatches.reduce((sum, p) => sum + p.paybackPeriod, 0) / topMatches.length).toFixed(1);
         
         // Directly attempt to update the recommendation object with this financial data
+        // Update both estimatedSavings and related fields to ensure consistency across UI components
         if (recommendation.estimatedSavings === undefined || recommendation.estimatedSavings === 0) {
           recommendation.estimatedSavings = avgSavings;
           console.log(`Updated recommendation savings to $${avgSavings}`);
         }
         
+        // Update both cost fields for proper display in all UI components
+        // This ensures costs show up regardless of which field components check first
+        if (recommendation.estimatedCost === undefined || recommendation.estimatedCost === 0) {
+          recommendation.estimatedCost = avgCost;
+          console.log(`Updated recommendation estimatedCost to $${avgCost}`);
+        }
+        
         if (recommendation.implementationCost === undefined || recommendation.implementationCost === 0) {
           recommendation.implementationCost = avgCost;
-          console.log(`Updated recommendation cost to $${avgCost}`);
+          console.log(`Updated recommendation implementationCost to $${avgCost}`);
         }
         
         if (recommendation.paybackPeriod === undefined || recommendation.paybackPeriod === 0) {
