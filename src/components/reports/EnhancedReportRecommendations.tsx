@@ -669,23 +669,11 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
             </div>
             
             {/* Product Suggestions Section - ENHANCED V2 */}
-            <div className="mt-6 relative border-2 border-pink-500 rounded-lg p-4">
-              {/* Version marker badge */}
-              <div className="absolute top-0 right-0 bg-pink-500 text-white px-2 py-1 text-xs font-bold rounded-bl-lg">
-                ENHANCED v2.0
-              </div>
-              
+            <div className="mt-6 relative border rounded-lg p-4">
               <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
                 <Tag className="h-4 w-4 mr-1 text-blue-500" />
                 Suggested Products
               </h4>
-              
-              {/* Debug info about this recommendation */}
-              <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md text-xs">
-                <p><strong>Debug:</strong> Recommendation Type: <span className="font-mono">{recommendation.type}</span></p>
-                <p><strong>Mapped Category:</strong> <span className="font-mono">{mapRecommendationTypeToCategory(recommendation.type)}</span></p>
-                <p><strong>Matched Products:</strong> <span className="font-mono">{getProductSuggestions(recommendation.id).length}</span></p>
-              </div>
               
               {getProductSuggestions(recommendation.id).length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

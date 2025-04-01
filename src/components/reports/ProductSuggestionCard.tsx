@@ -55,22 +55,46 @@ const getProductUrl = (product: Product): string => {
   const category = product.category?.toLowerCase() || 'general';
   const mappedCategory = energyStarCategoryMapping[category] || energyStarCategoryMapping['general'];
   
-  // Amazon search fallback URL
-  const getAmazonUrl = (searchTerm: string) => {
+  // Amazon search fallback URL - create more targeted search terms based on the product name and category
+  const getAmazonUrl = (product: Product) => {
+    // Extract more specific terms from product name
+    const productName = product.name.toLowerCase();
+    let searchTerm = '';
+    
+    if (category === 'light bulbs') {
+      searchTerm = 'energy saving light bulbs';
+    } else if (category === 'light fixtures' || (category === 'lighting' && productName.includes('fixture'))) {
+      searchTerm = 'energy saving light fixtures';
+    } else if (category === 'lighting') {
+      // General lighting but not specifically fixtures or bulbs
+      searchTerm = productName.includes('bulb') ? 'energy saving light bulbs' : 'energy saving lighting';
+    } else {
+      // For other categories, use the category itself plus energy efficient
+      searchTerm = `energy efficient ${category}`;
+    }
+    
     return `https://www.amazon.com/s?k=energy+star+${encodeURIComponent(searchTerm)}`;
   };
   
   // Home Depot search URL (tertiary fallback)
-  const getHomeDepotUrl = (searchTerm: string) => {
+  const getHomeDepotUrl = (product: Product) => {
+    const searchTerm = `energy star ${product.category}`;
     return `https://www.homedepot.com/s/${encodeURIComponent(searchTerm)}?NCNI-5`;
   };
   
-  // Check if we should use Amazon (Energy Star categories we know are broken)
-  if (category === 'light bulbs' || category === 'lighting') {
-    return getAmazonUrl('energy saving light bulbs');
+  // Specific logic for light bulbs (known to have issues on Energy Star)
+  if (category === 'light bulbs') {
+    return getAmazonUrl(product);
   }
   
-  // Build the Energy Star product finder URL (with /results suffix)
+  // For other lighting products, use Energy Star links as they are working
+  if (category === 'lighting' || category === 'light fixtures') {
+    // Build the Energy Star product finder URL (with /results suffix)
+    const baseUrl = "https://www.energystar.gov/productfinder/product/certified-";
+    return `${baseUrl}${mappedCategory}`;
+  }
+  
+  // For all other products, follow the standard pattern
   const baseUrl = "https://www.energystar.gov/productfinder/product/certified-";
   return `${baseUrl}${mappedCategory}`;
 };

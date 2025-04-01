@@ -210,8 +210,9 @@ export const matchProductsToRecommendations = async (
       budgetConstraint
     });
 
-    // Default mock product for testing if no products are available
-    const mockProduct: Product = {
+  // Default mock products for testing if no products are available
+  const mockProducts: Product[] = [
+    {
       id: 'mock-product-1',
       name: 'Energy Efficient LED Light Bulb Pack',
       category: 'lighting',
@@ -222,8 +223,8 @@ export const matchProductsToRecommendations = async (
       annualSavings: 55,
       roi: 183,
       paybackPeriod: 0.5
-    };
-    const mockProduct2: Product = {
+    },
+    {
       id: 'mock-product-2',
       name: 'Smart Thermostat',
       category: 'hvac',
@@ -234,7 +235,44 @@ export const matchProductsToRecommendations = async (
       annualSavings: 180,
       roi: 90,
       paybackPeriod: 1.1
-    };
+    },
+    {
+      id: 'mock-product-3',
+      name: 'Energy Efficient Light Fixtures',
+      category: 'light fixtures',
+      price: 120.00,
+      energyEfficiency: 'High',
+      features: ['Energy Star certified', 'Modern design', 'Easy installation'],
+      description: 'Energy efficient ceiling fixtures that work with LED bulbs for maximum efficiency.',
+      annualSavings: 40,
+      roi: 33,
+      paybackPeriod: 3.0
+    },
+    {
+      id: 'mock-product-4',
+      name: 'Programmable Light Switch',
+      category: 'lighting',
+      price: 45.99,
+      energyEfficiency: 'Medium',
+      features: ['Programmable schedule', 'Motion sensing', 'Compatible with most fixtures'],
+      description: 'Smart light switch that automatically turns off lights when not in use.',
+      annualSavings: 25,
+      roi: 54,
+      paybackPeriod: 1.8
+    },
+    {
+      id: 'mock-product-5',
+      name: 'Smart LED Light Strip',
+      category: 'lighting',
+      price: 39.99,
+      energyEfficiency: 'High',
+      features: ['Color changing', 'Phone controlled', 'Voice assistant compatible'],
+      description: 'Flexible LED light strip that uses minimal power while providing customizable lighting.',
+      annualSavings: 30,
+      roi: 75,
+      paybackPeriod: 1.3
+    }
+  ];
     
     // Use the enhanced fetching method first
     let productCatalog = await fetchEnhancedProductCatalog();
@@ -250,7 +288,7 @@ export const matchProductsToRecommendations = async (
     // If product catalog is still empty, use mock products for testing
     if (productCatalog.length === 0) {
       console.log('Using mock products since catalog is empty');
-      productCatalog = [mockProduct, mockProduct2];
+      productCatalog = mockProducts;
     }
     
     // Create matches for each recommendation
