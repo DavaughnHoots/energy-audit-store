@@ -145,6 +145,15 @@ export class ReportDataService {
     // Ensure homeDetails has minimum required fields
     if (!auditData.homeDetails.squareFootage) auditData.homeDetails.squareFootage = 1500;
     
+    // Initialize product preferences if they don't exist
+    if (!auditData.productPreferences) {
+      auditData.productPreferences = {
+        categories: [],
+        features: [],
+        budgetConstraint: 0
+      };
+    }
+    
     // Ensure currentConditions.insulation exists and has structure
     if (!auditData.currentConditions.insulation) {
       auditData.currentConditions.insulation = {
@@ -244,14 +253,29 @@ export class ReportDataService {
         throw new ReportDataError('Failed to process audit data for report generation', 500);
       }
       
-      // Generate report data using the report generation service
+      // Prepare the report data with enhanced product recommendations
       try {
+        // Extract product preferences from the audit data
+        const productPreferences = normalizedAuditData.productPreferences || {
+          categories: [],
+          features: [],
+          budgetConstraint: 0
+        };
+        
+        // Generate report data using the report generation service
         const reportData = await reportGenerationService.prepareReportData(
           normalizedAuditData, 
           normalizedRecommendations
         );
         
-        appLogger.info('Report data generated successfully');
+        // Add product preferences to the report data
+        reportData.productPreferences = {
+          categories: productPreferences.categories || [],
+          features: productPreferences.features || [],
+          budgetConstraint: productPreferences.budgetConstraint || 0
+        };
+        
+        appLogger.info('Report data generated successfully with product preferences');
         return reportData;
       } catch (error) {
         appLogger.error('Error in report generation service', { 

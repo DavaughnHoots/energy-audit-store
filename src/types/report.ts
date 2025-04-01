@@ -67,6 +67,11 @@ export interface ReportData {
     controls: string;
   };
   recommendations: AuditRecommendation[];
+  productPreferences?: {
+    categories: string[];
+    features?: string[];
+    budgetConstraint: number;
+  };
   charts: {
     energyBreakdown: ChartDataPoint[];
     savingsAnalysis: SavingsChartDataPoint[];
