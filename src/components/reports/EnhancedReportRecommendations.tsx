@@ -693,7 +693,7 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
                   <Tag className="h-4 w-4 mr-1 text-blue-500" />
                   Suggested Products
                 </h4>
-                <span className="text-xs px-2 py-1 bg-pink-100 text-pink-800 rounded-full">ENHANCED v2.1</span>
+                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">Personalized</span>
               </div>
               
               {getProductSuggestions(recommendation.id).length > 0 ? (

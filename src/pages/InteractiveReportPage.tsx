@@ -267,7 +267,10 @@ const InteractiveReportPage: React.FC = () => {
         )}
         
         {activeSection === 'overview' && (
-          <ReportSummary data={reportData.summary} />
+          <ReportSummary 
+            data={reportData.summary} 
+            recommendations={reportData.recommendations} 
+          />
         )}
       </div>
     </div>
