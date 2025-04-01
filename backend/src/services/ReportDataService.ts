@@ -247,7 +247,8 @@ export class ReportDataService {
     try {
       // Normalize and validate the input data
       const normalizedAuditData = this.normalizeAuditData(rawAudit);
-      const normalizedRecommendations = this.normalizeRecommendations(recommendations);
+        // Normalize recommendations and ensure they use consistent financial calculation methods
+        const normalizedRecommendations = this.normalizeRecommendations(recommendations);
       
       // Check if we have valid data after normalization
       if (!normalizedAuditData) {

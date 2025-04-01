@@ -4,6 +4,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import { ChartDataPoint, SavingsChartDataPoint } from '../../types/report';
+import { formatCurrency } from '../../utils/financialCalculations';
 
 interface ChartProps {
   data: {
@@ -138,7 +139,7 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
                 domain={[0, 'dataMax + 1']}
               />
               <Tooltip 
-                formatter={(value) => `$${value.toLocaleString()}`}
+                formatter={(value) => formatCurrency(Number(value))}
                 wrapperStyle={{ fontSize: '12px' }}
               />
               <Legend 

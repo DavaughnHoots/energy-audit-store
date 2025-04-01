@@ -300,11 +300,11 @@ export class ReportGenerationService {
         { name: 'Natural Gas', value: gasKwhPerYear }
       ];
       
-      // Prepare savings analysis data
+      // Prepare savings analysis data using financial calculation utilities for consistency
       const savingsAnalysisData = recommendations.map(rec => ({
         name: rec.title.split(' ').slice(0, 2).join(' '), // Shorten name for display
-        estimatedSavings: rec.estimatedSavings || 0,
-        actualSavings: rec.actualSavings || 0
+        estimatedSavings: getRecommendationSavings(rec),
+        actualSavings: getActualSavings(rec)
       }));
       
       // Prepare consumption data
