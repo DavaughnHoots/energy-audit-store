@@ -12,6 +12,14 @@ import {
   generateLightingEfficiencyChart,
   generateHumidityLevelsChart
 } from '../utils/chartHelpers.js';
+import {
+  getRecommendationCost,
+  getRecommendationSavings,
+  getActualSavings, 
+  calculateTotalEstimatedSavings,
+  calculateTotalActualSavings,
+  calculateSavingsAccuracy
+} from '../utils/financialCalculations.js';
 
 export class ReportGenerationService {
   /**

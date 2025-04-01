@@ -8,6 +8,13 @@ import {
   mapRecommendationTypeToCategory,
   ProductRecommendationMatch
 } from '../../services/productRecommendationService';
+import {
+  getRecommendationCost,
+  getRecommendationSavings,
+  getActualSavings,
+  formatCurrency,
+  formatPercentage
+} from '../../utils/financialCalculations';
 
 // Interface for tracking edits to recommendations
 interface RecommendationEdit {
@@ -325,25 +332,7 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
     }
   };
 
-  // Enhanced formatCurrency with better handling of potential zero values
-  const formatCurrency = (value: number | null | undefined): string => {
-    // Check for undefined, null, or NaN
-    if (value === undefined || value === null) return 'N/A';
-    
-    // Convert string values to numbers if needed (API might return strings)
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    
-    // Only return N/A if it's not a valid number after conversion
-    if (isNaN(numValue)) return 'N/A';
-    
-    // Even zero is a valid value that should be displayed
-    try {
-      return `$${numValue.toLocaleString()}`;
-    } catch (error) {
-      console.error('Error formatting currency:', error);
-      return `$${numValue}`;
-    }
-  };
+  // Using formatting functions from financialCalculations utility
   
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'Not set';
@@ -359,7 +348,7 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
   const getProductSuggestions = (recommendationId: string) => {
     const match = productMatches.find(m => m.recommendationId === recommendationId);
     const products = match?.products || [];
-    console.log(`Getting product suggestions for recommendation ${recommendationId}: found ${products.length} products`);
+    // Remove debug logging in production
     return products;
   };
 

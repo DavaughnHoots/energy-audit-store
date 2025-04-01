@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../../services/productRecommendationService';
-import { formatCurrency, formatPercentage } from '../../utils/formatting';
+import { formatCurrency, formatPercentage } from '../../utils/financialCalculations';
 import { DollarSign, Star, Clock, Info, ExternalLink } from 'lucide-react';
 
 // Import our product images

@@ -59,7 +59,7 @@ graph TD
 
 - React hooks: `useState`
 - Types: `Product` from `productRecommendationService`
-- Utilities: `formatCurrency`, `formatPercentage` from `formatting`
+- Utilities: `formatCurrency`, `formatPercentage` from `financialCalculations`
 - Icons: `DollarSign`, `Star`, `Clock`, `Info`, `ExternalLink` from 'lucide-react'
 
 ## Implementation Details
@@ -131,8 +131,9 @@ const ProductList: React.FC<{
 
 - `src/components/reports/EnhancedReportRecommendations.tsx`: Parent component that uses ProductSuggestionCard
 - `src/services/productRecommendationService.ts`: Service providing product data and matching logic
-- `src/utils/formatting.ts`: Utility functions for formatting currency and percentages
+- `src/utils/financialCalculations.ts`: Utility functions for formatting currency and percentages
 - `src/types/report.ts`: Types related to report data structures
+- `energy-audit-vault/frontend/utils/financial_calculations.md`: Documentation for financial calculations utilities
 
 ## Notes/To-Do
 

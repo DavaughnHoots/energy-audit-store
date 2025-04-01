@@ -1,6 +1,7 @@
 import { appLogger, createLogMetadata } from '../utils/logger.js';
 import { EnergyAuditData, AuditRecommendation } from '../types/energyAudit.js';
 import { reportGenerationService } from './ReportGenerationService.js';
+import { getRecommendationCost, getRecommendationSavings } from '../utils/financialCalculations.js';
 
 /**
  * Custom error class for Report Data Service errors

@@ -59,7 +59,7 @@ graph TD
 - Icons: `Calendar`, `DollarSign`, `Clock`, etc. from 'lucide-react'
 - Related components: `ProductSuggestionCard`
 - Services: `filterRecommendationsByUserPreferences`, `matchProductsToRecommendations` from `productRecommendationService`
-- Utils: `formatCurrency`, `formatPercentage`
+- Utils: `getRecommendationCost`, `getRecommendationSavings`, `getActualSavings`, `formatCurrency`, `formatPercentage` from `financialCalculations.ts`
 
 ## Implementation Details
 

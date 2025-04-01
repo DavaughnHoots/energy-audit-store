@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCurrency, formatPercentage } from '../../utils/financialCalculations';
 
 interface SummaryProps {
   data: {
@@ -10,17 +11,6 @@ interface SummaryProps {
 }
 
 const ReportSummary: React.FC<SummaryProps> = ({ data }) => {
-  // Helper function to safely format currency values with improved null checking
-  const formatCurrency = (value: number | null | undefined): string => {
-    // Make sure data exists and value is a number
-    if (value === null || value === undefined || typeof value !== 'number' || isNaN(value)) return 'N/A';
-    try {
-      return `$${value.toLocaleString()}`;
-    } catch (error) {
-      console.error('Error formatting currency:', error);
-      return `$${value}`;
-    }
-  };
   
   // Ensure data object exists to prevent "cannot read properties of undefined" errors
   const safeData = data || {
@@ -57,11 +47,7 @@ const ReportSummary: React.FC<SummaryProps> = ({ data }) => {
             <div className="bg-white px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500">Savings Accuracy</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                {safeData.savingsAccuracy !== null && 
-                 safeData.savingsAccuracy !== undefined && 
-                 !isNaN(safeData.savingsAccuracy) 
-                  ? `${safeData.savingsAccuracy.toFixed(1)}%` 
-                  : 'N/A'}
+                {formatPercentage(safeData.savingsAccuracy)}
               </dd>
             </div>
           </dl>

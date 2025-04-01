@@ -161,6 +161,36 @@ Error handling occurs at multiple levels:
    - Fallback UI ensures usable interface
    - Retry logic handles temporary network issues
 
+## Financial Data Consistency
+
+The system ensures financial data consistency through dedicated utilities in both frontend and backend:
+
+```mermaid
+flowchart LR
+    DB[(Database)] --> |Raw financial data| BS[Backend Services]
+    BS --> |Normalize & validate| BU[Backend Utils]
+    BS --> |Standardized data| API[API Response]
+    API --> |Financial data| FE[Frontend Components]
+    FE --> |Format & display| FU[Frontend Utils]
+    
+    subgraph Utilities
+        BU[financialCalculations.js]
+        FU[financialCalculations.ts]
+    end
+    
+    BU --> |Consistent calculations| BS
+    FU --> |Consistent display| FE
+```
+
+Financial calculations are standardized using utilities that maintain consistency in several key areas:
+
+1. **Recommendation Costs**: Prioritizing implementation cost with fallback to estimated cost
+2. **Savings Validation**: Validating and normalizing savings values to prevent NaN/undefined
+3. **Aggregation Functions**: Standardized calculations for totals across recommendations
+4. **Formatting Functions**: Consistent currency and percentage formatting
+
+These utilities solve previous issues with inconsistent financial data display and calculation methods.
+
 ## Data Structure Transformations
 
 ### Database → Service
@@ -248,6 +278,8 @@ This pattern must be maintained to ensure compatibility with the frontend compon
 - Frontend: [[InteractiveReportPage]]
 - Frontend: [[ReportCharts]]
 - Frontend: [[ReportService]]
+- Frontend: [[financial_calculations]]
+- Backend: [[utils/financialCalculations.js]]
 - Database: `energy_audits` and `audit_recommendations` tables
 
 ## Known Issues and Solutions
