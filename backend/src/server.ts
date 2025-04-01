@@ -26,9 +26,9 @@ import energyAuditRoutes from './routes/energyAudit.js';
 // Import enhanced routes (with better error handling)
 import auditHistoryRoutes from './routes/auditHistory.enhanced.js';
 import reportDataRoutes from './routes/reportData.enhanced.js';
-// Original imports kept but disabled: ./routes/auditHistory.js
+import recommendationsRoutes from './routes/recommendations.enhanced.js';
+// Original imports kept but disabled: ./routes/auditHistory.js, ./routes/recommendations.js
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
-import recommendationsRoutes from './routes/recommendations.js';
 import userProfileRoutes from './routes/userProfile.js';
 import productsRoutes from './routes/products.js';
 import visualizationRoutes from './routes/visualization.js';
