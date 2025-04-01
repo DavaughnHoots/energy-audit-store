@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product } from '../../services/productRecommendationService';
 import { formatCurrency, formatPercentage } from '../../utils/financialCalculations';
 import { DollarSign, Star, Clock, Info, ExternalLink } from 'lucide-react';
@@ -123,6 +123,28 @@ const ProductSuggestionCard: React.FC<ProductSuggestionCardProps> = ({
   // Check if product is within budget
   const isWithinBudget = !budgetConstraint || product.price <= budgetConstraint;
 
+  // Debug logging for financial data
+  useEffect(() => {
+    console.log(`[ProductSuggestionCard v2.1][${product.id}] Financial Data:`, {
+      price: {
+        raw: product.price,
+        formatted: formatCurrency(product.price)
+      },
+      savings: {
+        raw: product.annualSavings,
+        formatted: formatCurrency(product.annualSavings)
+      },
+      roi: {
+        raw: product.roi,
+        formatted: formatPercentage(product.roi)
+      },
+      payback: {
+        raw: product.paybackPeriod,
+        formatted: product.paybackPeriod.toFixed(1) + ' years'
+      }
+    });
+  }, [product]);
+
   return (
     <div 
       className={`border rounded-md overflow-hidden ${
@@ -132,12 +154,17 @@ const ProductSuggestionCard: React.FC<ProductSuggestionCardProps> = ({
       <div className="flex flex-col h-full">
         {/* Product Header */}
         <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex justify-between items-center">
-          <h4 className="font-medium text-sm text-gray-800 truncate">{product.name}</h4>
-          {isWithinBudget && (
-            <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
-              Within Budget
-            </span>
-          )}
+          <div className="flex flex-col">
+            <h4 className="font-medium text-sm text-gray-800 truncate">{product.name}</h4>
+            <span className="text-xs text-gray-500">v2.1</span>
+          </div>
+          <div className="flex items-center">
+            {isWithinBudget && (
+              <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
+                Within Budget
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Product Body */}
