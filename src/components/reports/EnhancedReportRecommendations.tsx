@@ -332,8 +332,29 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
     }
   };
 
+  // For debugging purposes - log when component mounts and receives data
+  useEffect(() => {
+    console.log('EnhancedReportRecommendations v2.1 mounted with data:', {
+      recommendationsCount: recommendations.length,
+      firstRecommendation: recommendations[0] ? {
+        id: recommendations[0].id,
+        title: recommendations[0].title,
+        estimatedSavings: recommendations[0].estimatedSavings,
+        actualSavings: recommendations[0].actualSavings,
+      } : 'No recommendations'
+    });
+  }, [recommendations]);
+
+  // Enhanced logging for financial values
+  const logFinancialData = (source: string, data: any) => {
+    console.log(`[Financial Data][${source}]`, {
+      value: data,
+      type: typeof data,
+      formatted: formatCurrency(data)
+    });
+  };
+
   // Using formatting functions from financialCalculations utility
-  
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'Not set';
     try {
@@ -511,7 +532,13 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
                   Estimated Savings:
                 </span>
                 <div className="flex items-center">
-                  <span className="font-medium text-green-600">{formatCurrency(recommendation.estimatedSavings)}/year</span>
+                  <span className="font-medium text-green-600">
+                    {(() => {
+                      // Log the data for debugging
+                      logFinancialData('Estimated Savings', recommendation.estimatedSavings);
+                      return formatCurrency(recommendation.estimatedSavings);
+                    })()}/year
+                  </span>
                   {recommendation.isEstimated && 
                     <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Estimated</span>
                   }
@@ -661,10 +688,13 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
             
             {/* Product Suggestions Section - ENHANCED V2 */}
             <div className="mt-6 relative border rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                <Tag className="h-4 w-4 mr-1 text-blue-500" />
-                Suggested Products
-              </h4>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-sm font-medium text-gray-700 flex items-center">
+                  <Tag className="h-4 w-4 mr-1 text-blue-500" />
+                  Suggested Products
+                </h4>
+                <span className="text-xs px-2 py-1 bg-pink-100 text-pink-800 rounded-full">ENHANCED v2.1</span>
+              </div>
               
               {getProductSuggestions(recommendation.id).length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
