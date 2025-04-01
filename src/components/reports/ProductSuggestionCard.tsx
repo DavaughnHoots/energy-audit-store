@@ -27,83 +27,86 @@ const getProductImage = (product: Product): string => {
 };
 
 /**
- * Helper function to generate product URLs with fallbacks
- * 1. Use imageUrl if available (direct product link)
- * 2. Try Energy Star with updated URL format
- * 3. Fallback to Amazon search if category exists
+ * Helper function to generate Energy Star product URLs
  */
-const getProductUrl = (product: Product): string => {
-  // Use imageUrl if available (direct product URL)
-  if (product.imageUrl) return product.imageUrl;
-  
+const getEnergyStarUrl = (product: Product): string => {
   // Define category mappings for Energy Star URLs
   const energyStarCategoryMapping: Record<string, string> = {
     'lighting': 'light-fixtures/results',
     'light bulbs': 'light-fixtures/results', 
     'light fixtures': 'light-fixtures/results',
-    'hvac': 'heating-cooling/results',
+    'ceiling fans': 'ceiling-fans/results',
+    'hvac systems': 'heating-cooling/results',
+    'thermostats': 'connected-thermostats/results',
+    'furnaces': 'furnaces/results',
+    'air conditioners': 'central-air-conditioners/results',
+    'heat pumps': 'heat-pumps/results',
     'insulation': 'home-envelope/results',
-    'windows & doors': 'windows-doors/results',
-    'water heating': 'water-heaters/results',
-    'energy-efficient appliances': 'appliances/results',
-    'smart home devices': 'connected-home/results',
+    'windows': 'windows/results',
+    'doors': 'exterior-doors/results',
+    'water heaters': 'water-heaters/results',
+    'appliances': 'appliances/results',
+    'refrigerators': 'refrigerators/results',
+    'dishwashers': 'dishwashers/results',
+    'clothes washers': 'clothes-washers/results',
+    'dehumidifiers': 'dehumidifiers/results',
+    'smart home': 'connected-home/results',
     'renewable energy': 'renewable-energy/results',
     'general': 'products/results'
   };
+  
+  // If product has a direct URL, use it
+  if (product.imageUrl) return product.imageUrl;
   
   // Try to get Energy Star category
   const category = product.category?.toLowerCase() || 'general';
   const mappedCategory = energyStarCategoryMapping[category] || energyStarCategoryMapping['general'];
   
-  // Amazon search fallback URL - create more targeted search terms based on the product name and category
-  const getAmazonUrl = (product: Product) => {
-    // Extract more specific terms from product name
-    const productName = product.name.toLowerCase();
-    let searchTerm = '';
-    
-    if (category === 'light bulbs') {
-      searchTerm = 'energy saving light bulbs';
-    } else if (category === 'light fixtures' || (category === 'lighting' && productName.includes('fixture'))) {
-      searchTerm = 'energy saving light fixtures';
-    } else if (category === 'lighting') {
-      // General lighting but not specifically fixtures or bulbs
-      searchTerm = productName.includes('bulb') ? 'energy saving light bulbs' : 'energy saving lighting';
-    } else {
-      // For other categories, use the category itself plus energy efficient
-      searchTerm = `energy efficient ${category}`;
-    }
-    
-    return `https://www.amazon.com/s?k=energy+star+${encodeURIComponent(searchTerm)}`;
-  };
-  
-  // Home Depot search URL (tertiary fallback)
-  const getHomeDepotUrl = (product: Product) => {
-    const searchTerm = `energy star ${product.category}`;
-    return `https://www.homedepot.com/s/${encodeURIComponent(searchTerm)}?NCNI-5`;
-  };
-  
-  // Specific logic for light bulbs (known to have issues on Energy Star)
-  if (category === 'light bulbs') {
-    return getAmazonUrl(product);
-  }
-  
-  // For other lighting products, use Energy Star links as they are working
-  if (category === 'lighting' || category === 'light fixtures') {
-    // Build the Energy Star product finder URL (with /results suffix)
-    const baseUrl = "https://www.energystar.gov/productfinder/product/certified-";
-    return `${baseUrl}${mappedCategory}`;
-  }
-  
-  // For all other products, follow the standard pattern
+  // Build the Energy Star product finder URL (with /results suffix)
   const baseUrl = "https://www.energystar.gov/productfinder/product/certified-";
   return `${baseUrl}${mappedCategory}`;
 };
 
 /**
- * Determines if the URL points to a specific product or a general search
+ * Helper function to generate Amazon product search URLs
  */
-const isSpecificProductUrl = (product: Product): boolean => {
-  return !!product.imageUrl;
+const getAmazonUrl = (product: Product): string => {
+  // Extract more specific terms from product name and category
+  const productName = product.name.toLowerCase();
+  const category = product.category?.toLowerCase() || 'general';
+  let searchTerm = '';
+  
+  if (category === 'light bulbs') {
+    searchTerm = 'energy saving light bulbs';
+  } else if (category === 'light fixtures' || (category === 'lighting' && productName.includes('fixture'))) {
+    searchTerm = 'energy saving light fixtures';
+  } else if (category === 'lighting') {
+    // General lighting but not specifically fixtures or bulbs
+    searchTerm = productName.includes('bulb') ? 'energy saving light bulbs' : 'energy saving lighting';
+  } else if (category.includes('hvac') || category.includes('heating') || category.includes('cooling')) {
+    // HVAC-related search
+    if (productName.includes('thermostat')) {
+      searchTerm = 'smart thermostat energy star';
+    } else if (productName.includes('heat pump')) {
+      searchTerm = 'energy efficient heat pump';
+    } else {
+      searchTerm = `energy efficient ${category}`;
+    }
+  } else {
+    // For other categories, use the category itself plus energy efficient
+    searchTerm = `energy efficient ${category}`;
+  }
+  
+  // Include the product name in the search for more specific results
+  return `https://www.amazon.com/s?k=energy+star+${encodeURIComponent(searchTerm)}`;
+};
+
+/**
+ * Helper function to generate Home Depot product search URLs (tertiary fallback)
+ */
+const getHomeDepotUrl = (product: Product): string => {
+  const searchTerm = `energy star ${product.category}`;
+  return `https://www.homedepot.com/s/${encodeURIComponent(searchTerm)}?NCNI-5`;
 };
 
 interface ProductSuggestionCardProps {
@@ -190,7 +193,7 @@ const ProductSuggestionCard: React.FC<ProductSuggestionCardProps> = ({
             </div>
           )}
 
-          {/* Card Footer */}
+          {/* Card Footer with Details Button and Shopping Links */}
           <div className="flex justify-between items-center mt-auto pt-2">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
@@ -200,16 +203,30 @@ const ProductSuggestionCard: React.FC<ProductSuggestionCardProps> = ({
               {isExpanded ? 'Less Details' : 'More Details'}
             </button>
             
-            {/* Always show product link - with fallback URL if needed */}
-            <a
-              href={getProductUrl(product)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 text-xs flex items-center"
-            >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              {product.imageUrl ? 'View Product' : 'Browse Similar'}
-            </a>
+            {/* Shopping Links Section */}
+            <div className="flex space-x-2">
+              {/* Energy Star Link */}
+              <a
+                href={getEnergyStarUrl(product)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 text-xs flex items-center"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Energy Star
+              </a>
+              
+              {/* Amazon Link */}
+              <a
+                href={getAmazonUrl(product)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 text-xs flex items-center"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Amazon
+              </a>
+            </div>
           </div>
         </div>
       </div>

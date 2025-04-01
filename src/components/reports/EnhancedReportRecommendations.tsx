@@ -535,7 +535,9 @@ const EnhancedReportRecommendations: React.FC<EnhancedRecommendationsProps> = ({
                   Implementation Cost:
                 </span>
                 <div className="flex items-center">
-                  <span className="font-medium">{formatCurrency(recommendation.estimatedCost)}</span>
+                  <span className="font-medium">
+                    {formatCurrency(recommendation.implementationCost || recommendation.estimatedCost)}
+                  </span>
                   {recommendation.isEstimated && 
                     <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Estimated</span>
                   }
