@@ -4,6 +4,7 @@ import { fetchWithAuth } from '../utils/authUtils';
 import { getRecommendationSavings, getActualSavings } from '../utils/financialCalculations';
 
 /**
+ * V2.1: Enhanced version with detailed logging
  * Ensures that savings data points have valid non-zero values by using a safe
  * property access approach. This addresses inconsistencies between different
  * data sources in the application.
@@ -12,7 +13,17 @@ import { getRecommendationSavings, getActualSavings } from '../utils/financialCa
  * @returns Transformed data with consistent non-zero values where available
  */
 export const ensureNonZeroValues = (data: SavingsChartDataPoint[]): SavingsChartDataPoint[] => {
-  return data.map(item => {
+  console.log('ensureNonZeroValues v2.1 called with data:', data);
+  
+  if (!data || !Array.isArray(data)) {
+    console.warn('ensureNonZeroValues received invalid data:', data);
+    return [];
+  }
+  
+  const transformedData = data.map(item => {
+    // Log the raw input item
+    console.log(`[DataTransform][${item.name}] Raw input:`, JSON.stringify(item));
+    
     // Create a standardized object we'll return
     const standardizedItem: SavingsChartDataPoint = {
       name: item.name,
@@ -27,23 +38,38 @@ export const ensureNonZeroValues = (data: SavingsChartDataPoint[]): SavingsChart
     // For estimated savings - check all possible field names
     if (typeof dataItem.estimatedSavings === 'number' && !isNaN(dataItem.estimatedSavings)) {
       standardizedItem.estimatedSavings = dataItem.estimatedSavings;
+      console.log(`[DataTransform][${item.name}] Using direct estimatedSavings:`, dataItem.estimatedSavings);
     } else if (typeof dataItem.estimated_savings === 'number' && !isNaN(dataItem.estimated_savings)) {
       standardizedItem.estimatedSavings = dataItem.estimated_savings;
+      console.log(`[DataTransform][${item.name}] Using snake_case estimated_savings:`, dataItem.estimated_savings);
     } else if (typeof dataItem.estimated === 'number' && !isNaN(dataItem.estimated)) {
       standardizedItem.estimatedSavings = dataItem.estimated;
+      console.log(`[DataTransform][${item.name}] Using shorthand estimated:`, dataItem.estimated);
+    } else {
+      console.warn(`[DataTransform][${item.name}] No valid estimated savings found in:`, dataItem);
     }
     
     // For actual savings - check all possible field names
     if (typeof dataItem.actualSavings === 'number' && !isNaN(dataItem.actualSavings)) {
       standardizedItem.actualSavings = dataItem.actualSavings;
+      console.log(`[DataTransform][${item.name}] Using direct actualSavings:`, dataItem.actualSavings);
     } else if (typeof dataItem.actual_savings === 'number' && !isNaN(dataItem.actual_savings)) {
       standardizedItem.actualSavings = dataItem.actual_savings;
+      console.log(`[DataTransform][${item.name}] Using snake_case actual_savings:`, dataItem.actual_savings);
     } else if (typeof dataItem.actual === 'number' && !isNaN(dataItem.actual)) {
       standardizedItem.actualSavings = dataItem.actual;
+      console.log(`[DataTransform][${item.name}] Using shorthand actual:`, dataItem.actual);
+    } else {
+      console.warn(`[DataTransform][${item.name}] No valid actual savings found in:`, dataItem);
     }
+    
+    console.log(`[DataTransform][${item.name}] Final transformed data:`, standardizedItem);
     
     return standardizedItem;
   });
+  
+  console.log('ensureNonZeroValues final result:', transformedData);
+  return transformedData;
 };
 
 /**
@@ -118,8 +144,12 @@ export const fetchReportData = async (auditId: string): Promise<ReportData> => {
     
     // Apply data transformations to ensure financial data consistency
     if (data?.charts?.savingsAnalysis) {
+      console.log('Before transformation - savingsAnalysis chart data:', JSON.stringify(data.charts.savingsAnalysis));
       data.charts.savingsAnalysis = ensureNonZeroValues(data.charts.savingsAnalysis);
-      console.log('Applied financial data consistency transformations to savings chart data');
+      console.log('After transformation - savingsAnalysis chart data:', JSON.stringify(data.charts.savingsAnalysis));
+      console.log('Applied financial data consistency transformations to savings chart data v2.1');
+    } else {
+      console.warn('No savingsAnalysis data found in the response');
     }
     
     return data;

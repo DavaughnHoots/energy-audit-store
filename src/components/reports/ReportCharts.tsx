@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -17,6 +17,39 @@ interface ChartProps {
 const ReportCharts: React.FC<ChartProps> = ({ data }) => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
   const [isMobile, setIsMobile] = useState(false);
+  const mountedRef = useRef(false);
+  
+  // Debug log charts data on mount and updates
+  useEffect(() => {
+    if (!mountedRef.current) {
+      console.log('ReportCharts v2.1 mounted with data:', {
+        energyBreakdown: data.energyBreakdown,
+        savingsAnalysis: data.savingsAnalysis,
+        consumption: data.consumption
+      });
+      
+      // Add specific debug for savingsAnalysis data
+      if (data.savingsAnalysis?.length) {
+        console.log('SavingsAnalysis chart data details:');
+        data.savingsAnalysis.forEach(item => {
+          console.log(`[SavingsChart][${item.name}]`, {
+            estimatedSavings: {
+              value: item.estimatedSavings,
+              formatted: formatCurrency(Number(item.estimatedSavings))
+            },
+            actualSavings: {
+              value: item.actualSavings,
+              formatted: formatCurrency(Number(item.actualSavings))
+            }
+          });
+        });
+      } else {
+        console.log('SavingsAnalysis data is empty or undefined');
+      }
+      
+      mountedRef.current = true;
+    }
+  }, [data]);
   
   // Check if we're on mobile using a media query
   useEffect(() => {
@@ -118,7 +151,10 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
       </div>
       
       <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
-        <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Savings Analysis</h3>
+        <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">
+          Savings Analysis
+          <span className="text-xs ml-2 px-2 py-0.5 bg-pink-100 text-pink-800 rounded-full">v2.1</span>
+        </h3>
         <div className="h-60 sm:h-80 overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -126,6 +162,8 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
               margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
               barSize={isMobile ? 30 : 40}
             >
+              {/* Debug - Log chart data on render */}
+              {console.log('Rendering BarChart with savingsAnalysis data:', data.savingsAnalysis)}
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="name" 
