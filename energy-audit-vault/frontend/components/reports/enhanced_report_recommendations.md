@@ -71,6 +71,12 @@ The component fetches product suggestions for each recommendation using the `mat
 
 Products that fit within the user's budget are highlighted with a green border and "Within Budget" tag.
 
+The component works with the `ProductSuggestionCard` to provide a seamless user experience:
+
+- Even when specific product URLs aren't available, users can still access relevant Energy Star product categories
+- The system intelligently labels links as "View Product" for direct product links and "Browse Similar" for category fallbacks
+- Each recommendation displays its matching product category to help users understand why specific products were suggested
+
 ### Recommendation Filtering
 
 Users can toggle between viewing all recommendations or only those related to their preferred product categories. This helps focus the report on areas the user is most interested in.

@@ -3,6 +3,30 @@ import { Product } from '../../services/productRecommendationService';
 import { formatCurrency, formatPercentage } from '../../utils/formatting';
 import { DollarSign, Star, Clock, Info, ExternalLink } from 'lucide-react';
 
+// Helper function to generate product URLs even when imageUrl is not available
+const getProductUrl = (product: Product): string => {
+  // Use imageUrl if available
+  if (product.imageUrl) return product.imageUrl;
+  
+  // Define category mappings for Energy Star URLs
+  const categoryMapping: Record<string, string> = {
+    'lighting': 'light-bulbs',
+    'hvac': 'heating-cooling',
+    'insulation': 'insulation-products',
+    'windows & doors': 'windows-doors',
+    'water heating': 'water-heaters',
+    'energy-efficient appliances': 'appliances',
+    'smart home devices': 'smart-home',
+    'renewable energy': 'renewable-energy',
+    'general': 'products'
+  };
+  
+  // Build the Energy Star product finder URL
+  const baseUrl = "https://www.energystar.gov/productfinder/product/certified-";
+  const category = categoryMapping[product.category.toLowerCase()] || product.category.toLowerCase();
+  return `${baseUrl}${category}`;
+};
+
 interface ProductSuggestionCardProps {
   product: Product;
   budgetConstraint?: number;
@@ -87,18 +111,16 @@ const ProductSuggestionCard: React.FC<ProductSuggestionCardProps> = ({
               {isExpanded ? 'Less Details' : 'More Details'}
             </button>
             
-            {/* Add external link if available */}
-            {product.imageUrl && (
-              <a
-                href={product.imageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 text-xs flex items-center"
-              >
-                <ExternalLink className="h-3 w-3 mr-1" />
-                View Product
-              </a>
-            )}
+            {/* Always show product link - with fallback URL if needed */}
+            <a
+              href={getProductUrl(product)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 text-xs flex items-center"
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              {product.imageUrl ? 'View Product' : 'Browse Similar'}
+            </a>
           </div>
         </div>
       </div>

@@ -2,10 +2,10 @@
 title: "ProductSuggestionCard"
 type: "Component"
 path: "src/components/reports/ProductSuggestionCard.tsx"
-description: "Component for displaying product suggestions in recommendation reports"
-tags: [frontend, component, product, recommendation]
+description: "Card component for displaying product suggestions in recommendations"
+tags: [frontend, product, recommendations, card]
 status: "up-to-date"
-last_verified: "2025-03-31"
+last_verified: "2025-04-01"
 ---
 
 # Product Suggestion Card Component
@@ -20,7 +20,9 @@ The `ProductSuggestionCard` component displays individual product suggestions wi
 - **Budget awareness**: Visually highlights products that fit within the user's defined budget
 - **Key metrics**: Displays price, energy efficiency rating, savings, and payback period
 - **Expandable details**: Allows users to view additional product information on demand
-- **External linking**: Provides links to product pages when available
+- **Smart external linking**: Always provides product links, using fallback URLs when specific links aren't available
+- **Energy Star integration**: Automatically generates links to Energy Star product categories when specific URLs aren't available
+- **Conditional link labels**: Uses "View Product" for direct links and "Browse Similar" for category fallbacks
 
 ## Component Structure
 
