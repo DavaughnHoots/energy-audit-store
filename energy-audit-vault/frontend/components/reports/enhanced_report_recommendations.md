@@ -5,7 +5,7 @@ path: "src/components/reports/EnhancedReportRecommendations.tsx"
 description: "Enhanced recommendations component for reports with product suggestions"
 tags: [frontend, report, recommendations, product suggestions]
 status: "up-to-date"
-last_verified: "2025-03-31"
+last_verified: "2025-04-01"
 ---
 
 # Enhanced Report Recommendations Component

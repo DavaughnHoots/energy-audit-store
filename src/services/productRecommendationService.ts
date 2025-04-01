@@ -1,5 +1,5 @@
 import { API_ENDPOINTS } from '../config/api';
-import { fetchWithAuth } from '../utils/authUtils';
+import { fetchWithAuth, getAccessToken } from '../utils/authUtils';
 import { AuditRecommendation } from '../types/energyAudit';
 
 // Product interface from ProductComparisons.tsx
@@ -69,6 +69,9 @@ export const mapRecommendationTypeToCategory = (type: string): string => {
 export const fetchProductCatalog = async (): Promise<Product[]> => {
   try {
     console.log('Fetching product catalog...');
+    console.log('API URL:', API_ENDPOINTS.PRODUCTS);
+    console.log('Auth token present:', !!getAccessToken());
+    
     const response = await fetchWithAuth(`${API_ENDPOINTS.PRODUCTS}`, {
       method: 'GET'
     });
@@ -80,11 +83,63 @@ export const fetchProductCatalog = async (): Promise<Product[]> => {
 
     const data = await response.json();
     console.log('Product catalog data:', data);
+    console.log('Response status:', response.status);
+    console.log('First 100 chars of response:', JSON.stringify(data).substring(0, 100));
+    
     const products = data.products || [];
     console.log(`Retrieved ${products.length} products from the catalog`);
     return products;
   } catch (error) {
     console.error('Error fetching product catalog:', error);
+    return []; // Return empty array on error
+  }
+};
+
+/**
+ * Enhanced product catalog fetching that tries multiple methods
+ * @returns Promise resolving to the product catalog
+ */
+export const fetchEnhancedProductCatalog = async (): Promise<Product[]> => {
+  try {
+    console.log('Fetching product catalog using enhanced method...');
+    
+    // First try the product history endpoint (which we know works)
+    const historyResponse = await fetch(`${API_ENDPOINTS.DASHBOARD.PRODUCT_HISTORY}`, {
+      method: 'GET',
+      credentials: 'include'  // Critical for auth cookies
+    });
+    
+    if (historyResponse.ok) {
+      const historyData = await historyResponse.json();
+      const products = historyData.productHistory || [];
+      console.log(`Retrieved ${products.length} products from history`);
+      
+      if (products.length > 0) {
+        return products;
+      }
+    }
+    
+    // If history fails or returns empty, try the products endpoint
+    const productsResponse = await fetch(`${API_ENDPOINTS.PRODUCTS}`, {
+      method: 'GET',
+      credentials: 'include'  // Critical for auth cookies
+    });
+    
+    if (!productsResponse.ok) {
+      console.error(`Failed to fetch product catalog: ${productsResponse.status} ${productsResponse.statusText}`);
+      return [];
+    }
+    
+    const data = await productsResponse.json();
+    console.log('Product catalog data:', data);
+    
+    // Try different response formats that the API might be using
+    const products = data.products || data.items || data.productCatalog || [];
+    console.log(`Retrieved ${products.length} products from catalog`);
+    
+    return products;
+  } catch (error) {
+    console.error('Error fetching enhanced product catalog:', error);
     return []; // Return empty array on error
   }
 };
@@ -181,11 +236,18 @@ export const matchProductsToRecommendations = async (
       paybackPeriod: 1.1
     };
     
-    // Fetch product catalog
-    let productCatalog = await fetchProductCatalog();
-    console.log(`Product catalog has ${productCatalog.length} items`);
+    // Use the enhanced fetching method first
+    let productCatalog = await fetchEnhancedProductCatalog();
+    console.log(`Enhanced product catalog has ${productCatalog.length} items`);
     
-    // If product catalog is empty, use mock products for testing
+    // Fallback to the original method if that returned nothing
+    if (productCatalog.length === 0) {
+      console.log('Enhanced catalog empty, trying original method...');
+      productCatalog = await fetchProductCatalog();
+      console.log(`Original product catalog has ${productCatalog.length} items`);
+    }
+    
+    // If product catalog is still empty, use mock products for testing
     if (productCatalog.length === 0) {
       console.log('Using mock products since catalog is empty');
       productCatalog = [mockProduct, mockProduct2];
