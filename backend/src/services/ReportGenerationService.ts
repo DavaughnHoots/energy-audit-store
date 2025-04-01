@@ -301,11 +301,34 @@ export class ReportGenerationService {
       ];
       
       // Prepare savings analysis data using financial calculation utilities for consistency
-      const savingsAnalysisData = recommendations.map(rec => ({
-        name: rec.title.split(' ').slice(0, 2).join(' '), // Shorten name for display
-        estimatedSavings: getRecommendationSavings(rec),
-        actualSavings: getActualSavings(rec)
-      }));
+      const savingsAnalysisData = recommendations.map(rec => {
+        const estimatedSavings = getRecommendationSavings(rec);
+        const actualSavings = getActualSavings(rec);
+        
+        // Debug log for savings analysis chart data
+        appLogger.debug(`Preparing savings chart data for ${rec.title}`, {
+          estimatedSavings,
+          actualSavings,
+          rawRec: {
+            id: rec.id,
+            title: rec.title,
+            estimatedSavings: rec.estimatedSavings,
+            actualSavings: rec.actualSavings
+          }
+        });
+        
+        return {
+          name: rec.title.split(' ').slice(0, 2).join(' '), // Shorten name for display
+          estimatedSavings, 
+          actualSavings
+        };
+      });
+      
+      // Additional logging for entire savings analysis dataset
+      appLogger.debug('Complete savings analysis dataset', {
+        count: savingsAnalysisData.length,
+        data: savingsAnalysisData
+      });
       
       // Prepare consumption data
       const baseConsumption = this.getBaselineConsumption(

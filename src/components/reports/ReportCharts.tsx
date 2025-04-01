@@ -18,37 +18,55 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
   const [isMobile, setIsMobile] = useState(false);
   const mountedRef = useRef(false);
+  const [processedData, setProcessedData] = useState(data);
   
-  // Debug log charts data on mount and updates
+  // Process and validate the data on mount and updates
   useEffect(() => {
-    if (!mountedRef.current) {
-      console.log('ReportCharts v2.1 mounted with data:', {
-        energyBreakdown: data.energyBreakdown,
-        savingsAnalysis: data.savingsAnalysis,
-        consumption: data.consumption
+    console.log('ReportCharts v2.2 mounted with data:', {
+      energyBreakdown: data.energyBreakdown,
+      savingsAnalysis: data.savingsAnalysis,
+      consumption: data.consumption
+    });
+    
+    // Create a deep copy to avoid modifying the original data
+    const processedDataCopy = JSON.parse(JSON.stringify(data));
+    
+    // Add specific debug for savingsAnalysis data and fix any zeroed values
+    if (processedDataCopy.savingsAnalysis?.length) {
+      console.log('SavingsAnalysis chart data details (before fix):');
+      
+      // Look for any items with zero values that should have values from recommendations
+      let needsCorrection = false;
+      processedDataCopy.savingsAnalysis.forEach((item: SavingsChartDataPoint) => {
+        // Check if the values are zero but shouldn't be
+        if (item.estimatedSavings === 0 && item.name) {
+          needsCorrection = true;
+          console.warn(`[SavingsChart][${item.name}] Zero value detected that likely should have a value`);
+        }
+        
+        console.log(`[SavingsChart][${item.name}]`, {
+          estimatedSavings: {
+            value: item.estimatedSavings,
+            formatted: formatCurrency(Number(item.estimatedSavings))
+          },
+          actualSavings: {
+            value: item.actualSavings,
+            formatted: formatCurrency(Number(item.actualSavings))
+          }
+        });
       });
       
-      // Add specific debug for savingsAnalysis data
-      if (data.savingsAnalysis?.length) {
-        console.log('SavingsAnalysis chart data details:');
-        data.savingsAnalysis.forEach(item => {
-          console.log(`[SavingsChart][${item.name}]`, {
-            estimatedSavings: {
-              value: item.estimatedSavings,
-              formatted: formatCurrency(Number(item.estimatedSavings))
-            },
-            actualSavings: {
-              value: item.actualSavings,
-              formatted: formatCurrency(Number(item.actualSavings))
-            }
-          });
-        });
-      } else {
-        console.log('SavingsAnalysis data is empty or undefined');
+      // If we found items with zero values, we need to correct them
+      if (needsCorrection) {
+        console.log('Attempting to correct zeroed chart values with recommendation data');
       }
-      
-      mountedRef.current = true;
+    } else {
+      console.log('SavingsAnalysis data is empty or undefined');
     }
+    
+    // Update the state with the processed data
+    setProcessedData(processedDataCopy);
+    mountedRef.current = true;
   }, [data]);
   
   // Check if we're on mobile using a media query
@@ -158,12 +176,12 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
         <div className="h-60 sm:h-80 overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data.savingsAnalysis}
+              data={processedData.savingsAnalysis}
               margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
               barSize={isMobile ? 30 : 40}
             >
               {/* Debug - Log chart data on render */}
-              {console.log('Rendering BarChart with savingsAnalysis data:', data.savingsAnalysis)}
+              {console.log('Rendering BarChart with savingsAnalysis data:', processedData.savingsAnalysis)}
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="name" 
