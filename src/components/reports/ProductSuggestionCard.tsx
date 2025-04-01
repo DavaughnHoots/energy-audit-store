@@ -3,28 +3,83 @@ import { Product } from '../../services/productRecommendationService';
 import { formatCurrency, formatPercentage } from '../../utils/formatting';
 import { DollarSign, Star, Clock, Info, ExternalLink } from 'lucide-react';
 
-// Helper function to generate product URLs even when imageUrl is not available
+// Import our product images
+import lightBulbsImage from '../../assets/product-images/light-bulbs.svg';
+import lightFixturesImage from '../../assets/product-images/light-fixtures.svg';
+import hvacImage from '../../assets/product-images/hvac.svg';
+import defaultImage from '../../assets/product-images/default.svg';
+
+/**
+ * Helper function to get the appropriate product image based on category
+ */
+const getProductImage = (product: Product): string => {
+  const category = product.category?.toLowerCase() || '';
+  
+  if (category.includes('light') && category.includes('bulb')) {
+    return lightBulbsImage;
+  } else if (category.includes('light') && category.includes('fixture')) {
+    return lightFixturesImage;
+  } else if (category.includes('hvac') || category.includes('heating') || category.includes('cooling')) {
+    return hvacImage;
+  }
+  
+  return defaultImage;
+};
+
+/**
+ * Helper function to generate product URLs with fallbacks
+ * 1. Use imageUrl if available (direct product link)
+ * 2. Try Energy Star with updated URL format
+ * 3. Fallback to Amazon search if category exists
+ */
 const getProductUrl = (product: Product): string => {
-  // Use imageUrl if available
+  // Use imageUrl if available (direct product URL)
   if (product.imageUrl) return product.imageUrl;
   
   // Define category mappings for Energy Star URLs
-  const categoryMapping: Record<string, string> = {
-    'lighting': 'light-bulbs',
-    'hvac': 'heating-cooling',
-    'insulation': 'insulation-products',
-    'windows & doors': 'windows-doors',
-    'water heating': 'water-heaters',
-    'energy-efficient appliances': 'appliances',
-    'smart home devices': 'smart-home',
-    'renewable energy': 'renewable-energy',
-    'general': 'products'
+  const energyStarCategoryMapping: Record<string, string> = {
+    'lighting': 'light-fixtures/results',
+    'light bulbs': 'light-fixtures/results', 
+    'light fixtures': 'light-fixtures/results',
+    'hvac': 'heating-cooling/results',
+    'insulation': 'home-envelope/results',
+    'windows & doors': 'windows-doors/results',
+    'water heating': 'water-heaters/results',
+    'energy-efficient appliances': 'appliances/results',
+    'smart home devices': 'connected-home/results',
+    'renewable energy': 'renewable-energy/results',
+    'general': 'products/results'
   };
   
-  // Build the Energy Star product finder URL
+  // Try to get Energy Star category
+  const category = product.category?.toLowerCase() || 'general';
+  const mappedCategory = energyStarCategoryMapping[category] || energyStarCategoryMapping['general'];
+  
+  // Amazon search fallback URL
+  const getAmazonUrl = (searchTerm: string) => {
+    return `https://www.amazon.com/s?k=energy+star+${encodeURIComponent(searchTerm)}`;
+  };
+  
+  // Home Depot search URL (tertiary fallback)
+  const getHomeDepotUrl = (searchTerm: string) => {
+    return `https://www.homedepot.com/s/${encodeURIComponent(searchTerm)}?NCNI-5`;
+  };
+  
+  // Check if we should use Amazon (Energy Star categories we know are broken)
+  if (category === 'light bulbs' || category === 'lighting') {
+    return getAmazonUrl('energy saving light bulbs');
+  }
+  
+  // Build the Energy Star product finder URL (with /results suffix)
   const baseUrl = "https://www.energystar.gov/productfinder/product/certified-";
-  const category = categoryMapping[product.category.toLowerCase()] || product.category.toLowerCase();
-  return `${baseUrl}${category}`;
+  return `${baseUrl}${mappedCategory}`;
+};
+
+/**
+ * Determines if the URL points to a specific product or a general search
+ */
+const isSpecificProductUrl = (product: Product): boolean => {
+  return !!product.imageUrl;
 };
 
 interface ProductSuggestionCardProps {
@@ -60,6 +115,16 @@ const ProductSuggestionCard: React.FC<ProductSuggestionCardProps> = ({
 
         {/* Product Body */}
         <div className="p-3 flex-grow flex flex-col">
+          {/* Product Image */}
+          <div className="mb-3 text-center">
+            <img 
+              src={getProductImage(product)} 
+              alt={product.name} 
+              className="h-20 mx-auto mb-1"
+            />
+            <span className="text-xs text-gray-500 block">{product.category}</span>
+          </div>
+
           {/* Main Info */}
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="flex items-center text-xs text-gray-600">

@@ -17,12 +17,15 @@ The `ProductSuggestionCard` component displays individual product suggestions wi
 ## Key Features
 
 - **Compact product display**: Shows essential product information in a space-efficient card format
+- **Product images**: Displays category-specific product images to enhance visual recognition
 - **Budget awareness**: Visually highlights products that fit within the user's defined budget
 - **Key metrics**: Displays price, energy efficiency rating, savings, and payback period
 - **Expandable details**: Allows users to view additional product information on demand
 - **Smart external linking**: Always provides product links, using fallback URLs when specific links aren't available
-- **Energy Star integration**: Automatically generates links to Energy Star product categories when specific URLs aren't available
+- **Energy Star integration**: Automatically generates links to Energy Star product categories when specific URLs are available
+- **Amazon fallback**: Uses Amazon search links for categories where Energy Star links are known to be broken
 - **Conditional link labels**: Uses "View Product" for direct links and "Browse Similar" for category fallbacks
+- **Category display**: Shows the product category to help users understand the recommendation context
 
 ## Component Structure
 
