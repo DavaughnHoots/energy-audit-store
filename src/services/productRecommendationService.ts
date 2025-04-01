@@ -418,13 +418,17 @@ export const matchProductsToRecommendations = async (
       console.log(`Mapped recommendation type and title to category: ${JSON.stringify(recommendationCategory)}`);
       
       // Skip recommendations that don't match user preferences if preferences are provided
-      if (userCategoryPreferences.length > 0 && 
-          !userCategoryPreferences.some(pref => 
-            pref.toLowerCase() === recommendationCategory.mainCategory.toLowerCase() || 
-            pref.toLowerCase() === recommendationCategory.subCategory.toLowerCase()
-          )) {
-        console.log(`Skipping recommendation as it doesn't match user preferences`);
-        continue;
+      if (userCategoryPreferences.length > 0) {
+        const matchesUserPreference = userCategoryPreferences.some(pref => 
+          isPreferenceMatchingCategory(pref, recommendationCategory.mainCategory) || 
+          isPreferenceMatchingCategory(pref, recommendationCategory.subCategory) ||
+          pref.toLowerCase() === recommendation.type.toLowerCase()
+        );
+        
+        if (!matchesUserPreference) {
+          console.log(`Skipping recommendation as it doesn't match user preferences`);
+          continue;
+        }
       }
       
       // Find matching products for this recommendation
@@ -464,6 +468,60 @@ export const matchProductsToRecommendations = async (
 };
 
 /**
+ * Maps user preference strings to category names
+ * This helps bridge the gap between UI preference strings and internal category names
+ */
+const userPreferenceToCategory: Record<string, string[]> = {
+  'hvac': ['Heating & Cooling', 'HVAC Systems', 'Furnaces', 'Air Conditioners', 'Heat Pumps', 'Thermostats'],
+  'heating': ['Heating & Cooling', 'HVAC Systems', 'Furnaces', 'Heat Pumps'],
+  'cooling': ['Heating & Cooling', 'HVAC Systems', 'Air Conditioners'],
+  'lighting': ['Lighting & Fans', 'Light Bulbs', 'Light Fixtures', 'Ceiling Fans'],
+  'insulation': ['Building Products', 'Insulation'],
+  'windows': ['Building Products', 'Windows'],
+  'doors': ['Building Products', 'Doors'],
+  'appliances': ['Appliances'],
+  'water_heating': ['Water Heaters'],
+  'water-heating': ['Water Heaters'],
+  'smart-home': ['Electronics', 'Smart Home'],
+  'renewable': ['Electronics', 'Renewable Energy'],
+  'solar': ['Electronics', 'Solar']
+};
+
+/**
+ * Checks if a user preference matches a category
+ * @param preference User preference string
+ * @param category Category name to match against
+ * @returns Whether there's a match
+ */
+const isPreferenceMatchingCategory = (preference: string, category: string): boolean => {
+  // Direct match (case-insensitive)
+  if (preference.toLowerCase() === category.toLowerCase()) {
+    return true;
+  }
+  
+  // Check if preference is a known key with mapped categories
+  const mappedCategories = userPreferenceToCategory[preference.toLowerCase()];
+  if (mappedCategories) {
+    return mappedCategories.some(mappedCat => 
+      mappedCat.toLowerCase() === category.toLowerCase()
+    );
+  }
+  
+  // Handle special case for underscores vs dashes
+  const normalizedPreference = preference.toLowerCase().replace(/_/g, '-');
+  if (normalizedPreference !== preference.toLowerCase()) {
+    const mappedCategories = userPreferenceToCategory[normalizedPreference];
+    if (mappedCategories) {
+      return mappedCategories.some(mappedCat => 
+        mappedCat.toLowerCase() === category.toLowerCase()
+      );
+    }
+  }
+  
+  return false;
+};
+
+/**
  * Filters recommendations by user's category preferences
  * @param recommendations The recommendations to filter
  * @param userCategoryPreferences User's preferred product categories
@@ -478,14 +536,22 @@ export const filterRecommendationsByUserPreferences = (
     return recommendations;
   }
   
+  console.log('Filtering recommendations with user preferences:', userCategoryPreferences);
+  
   // Filter recommendations by category match
   return recommendations.filter(recommendation => {
     const categoryMapping = mapRecommendationTypeToCategory(recommendation.type, recommendation.title);
+    console.log(`Checking recommendation ${recommendation.title} with categories:`, categoryMapping);
     
     // Check if any user preference matches either the main category or subcategory
-    return userCategoryPreferences.some(pref => 
-      pref.toLowerCase() === categoryMapping.mainCategory.toLowerCase() || 
-      pref.toLowerCase() === categoryMapping.subCategory.toLowerCase()
+    const match = userCategoryPreferences.some(pref => 
+      isPreferenceMatchingCategory(pref, categoryMapping.mainCategory) || 
+      isPreferenceMatchingCategory(pref, categoryMapping.subCategory) ||
+      // Also check if preference matches the recommendation type directly
+      pref.toLowerCase() === recommendation.type.toLowerCase()
     );
+    
+    console.log(`Result for ${recommendation.title}: ${match ? 'MATCH' : 'NO MATCH'}`);
+    return match;
   });
 };
