@@ -260,7 +260,10 @@ const InteractiveReportPage: React.FC = () => {
         )}
         
         {activeSection === 'charts' && (
-          <ReportCharts data={reportData.charts} />
+          <ReportCharts 
+            data={reportData.charts} 
+            recommendations={reportData.recommendations} 
+          />
         )}
         
         {activeSection === 'overview' && (
