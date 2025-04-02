@@ -3,7 +3,8 @@
  */
 
 import express from 'express';
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { authenticate } from '../middleware/auth.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
 import AnalyticsService from '../services/analyticsService.js';
