@@ -22,25 +22,8 @@ router.get('/stats', async (req: AuthenticatedRequest, res) => {
     // Check if a specific audit ID is requested
     const newAuditId = req.query.newAudit as string | undefined;
 
-    // Check if user has completed initial setup
-    const userSetupResult = await pool.query(
-      `SELECT EXISTS (
-         SELECT 1 FROM user_settings
-         WHERE user_id = $1
-         AND property_details IS NOT NULL
-       ) as has_setup`,
-      [userId]
-    );
-
-    if (!userSetupResult.rows[0].has_setup) {
-      return res.status(403).json({
-        error: 'Setup required',
-        details: 'Please complete your property setup to view dashboard statistics',
-        code: 'SETUP_REQUIRED',
-        setupUrl: '/settings/property'
-      });
-    }
-
+    // Property setup check removed to allow all users to access dashboard
+    
     // Get dashboard stats, passing the newAuditId if provided
     const stats = await dashboardService.getUserStats(userId, newAuditId);
 
