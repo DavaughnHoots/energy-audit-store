@@ -41,9 +41,21 @@ import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import { runEnergyConsumptionMigration } from './scripts/run_energy_consumption_migration.js';
 import { runEducationMigration } from './scripts/run_education_migration.js';
-import { runRecommendationUpdatesMigration } from './scripts/run_recommendation_updates_migration.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
+
+// Import recommendation updates migration conditionally to avoid crashes if file is missing
+let runRecommendationUpdatesMigration: any;
+try {
+  const module = await import('./scripts/run_recommendation_updates_migration.js');
+  runRecommendationUpdatesMigration = module.runRecommendationUpdatesMigration;
+} catch (error: any) {
+  console.error('Could not load recommendation updates migration:', error?.message || 'Unknown error');
+  runRecommendationUpdatesMigration = async () => {
+    appLogger.warn('Recommendation updates migration skipped - migration script not found');
+    return { success: false, reason: 'Migration script not found' };
+  };
+}
 // Product comparison migration removed - table already exists
 
 const __filename = fileURLToPath(import.meta.url);
@@ -91,14 +103,17 @@ if (process.env.NODE_ENV === 'production') {
       appLogger.error('Error running education tables migration on startup', { error });
     });
     
-  // Run recommendation updates migration
-  runRecommendationUpdatesMigration()
-    .then(result => {
+  // Run recommendation updates migration if available
+  if (runRecommendationUpdatesMigration) {
+    try {
+      const result = await runRecommendationUpdatesMigration();
       appLogger.info('Recommendation updates migration completed on startup', { result });
-    })
-    .catch(error => {
-      appLogger.error('Error running recommendation updates migration on startup', { error });
-    });
+    } catch (error) {
+      appLogger.error('Error running recommendation updates migration on startup', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  }
     
   // Run initial orphaned audit association
   associateOrphanedAudits()
