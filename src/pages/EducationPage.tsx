@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { EducationalResource, ResourceCollection, ResourceFilters } from '@/types/education';
 import { educationService } from '@/services/educationService';
+import usePageTracking from '@/hooks/analytics/usePageTracking';
+import { AnalyticsArea } from '@/types/analytics';
 import ResourceCard from '@/components/education/ResourceCard';
 import FeaturedResourcesCarousel from '@/components/education/FeaturedResourcesCarousel';
 import ResourceCollectionComponent from '@/components/education/ResourceCollection';
@@ -14,6 +16,17 @@ import { Button } from '@/components/ui/button';
 import useAuth from '@/context/AuthContext';
 
 const EducationPage: React.FC = () => {
+  // Initialize page tracking
+  try {
+    usePageTracking({
+      area: AnalyticsArea.EDUCATION,
+      pageTitle: 'Educational Resources'
+    });
+  } catch (err) {
+    // Silently catch any analytics errors to prevent page disruption
+    console.error('Analytics tracking error (non-critical):', err);
+  }
+
   // State for resources and collections
   const [featuredResources, setFeaturedResources] = useState<EducationalResource[]>([]);
   const [collections, setCollections] = useState<ResourceCollection[]>([]);

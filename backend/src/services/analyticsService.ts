@@ -1,230 +1,351 @@
-// backend/src/services/analyticsService.ts
+/**
+ * Analytics Service to handle storage and processing of pilot study analytics data
+ */
 
-import pkg from 'pg';
-const { Pool } = pkg;
+import { Pool } from 'pg';
+import { v4 as uuidv4 } from 'uuid';
+import { appLogger, createLogMetadata } from '../utils/logger.js';
 
-interface UserMetrics {
-  totalAudits: number;
-  completedAudits: number;
-  productViews: number;
-  recommendationsViewed: number;
-  recommendationsActioned: number;
-  estimatedSavings: number;
-  actualSavings: number;
-}
+// Interface imports
+import {
+  AnalyticsConsentModel,
+  AnalyticsEventModel,
+  AnalyticsSessionModel,
+  GetMetricsRequest,
+  GetMetricsResponse,
+  SaveEventsRequest,
+  SaveEventsResponse
+} from '../types/analytics.js';
 
-interface PlatformMetrics {
-  activeUsers: number;
-  newUsers: number;
-  totalAudits: number;
-  productEngagement: Record<string, number>;
-  averageSavings: number;
-  topProducts: Array<{id: string, views: number}>;
-}
-
-export class AnalyticsService {
+class AnalyticsService {
   private pool: Pool;
 
   constructor(pool: Pool) {
     this.pool = pool;
   }
 
-  async trackUserAction(userId: string, action: string, metadata: Record<string, any>): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO user_actions (user_id, action_type, metadata, created_at)
-       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
-      [userId, action, metadata]
-    );
-  }
+  /**
+   * Save analytics events to database
+   */
+  async saveEvents(
+    userId: string | null,
+    sessionId: string,
+    events: SaveEventsRequest['events']
+  ): Promise<SaveEventsResponse> {
+    try {
+      // First check if consent is given for this user
+      if (userId) {
+        const consentStatus = await this.getConsentStatus(userId);
+        if (consentStatus !== 'granted') {
+          appLogger.warn('Analytics events rejected - no consent', createLogMetadata(undefined, {
+            userId,
+            sessionId,
+            eventCount: events.length
+          }));
+          return { success: false, eventsProcessed: 0 };
+        }
+      }
 
-  async getUserMetrics(userId: string, timeframe: string): Promise<UserMetrics> {
-    const timeframeClause = this.getTimeframeClause(timeframe);
-    
-    const [auditStats, productStats, savingsStats] = await Promise.all([
-      this.getAuditStats(userId, timeframeClause),
-      this.getProductEngagementStats(userId, timeframeClause),
-      this.getSavingsStats(userId, timeframeClause)
-    ]);
+      // Update the session record or create if it doesn't exist
+      await this.updateSession(sessionId, userId);
 
-    return {
-      ...auditStats,
-      ...productStats,
-      ...savingsStats
-    };
-  }
+      // Batch insert the events
+      const values = events.map(event => ({
+        id: uuidv4(),
+        sessionId,
+        userId: userId || null,
+        eventType: event.eventType,
+        area: event.area,
+        timestamp: new Date(event.timestamp),
+        data: event.data ? JSON.stringify(event.data) : '{}'
+      }));
 
-  async getPlatformMetrics(timeframe: string): Promise<PlatformMetrics> {
-    const timeframeClause = this.getTimeframeClause(timeframe);
+      // If no events, return early
+      if (values.length === 0) {
+        return { success: true, eventsProcessed: 0 };
+      }
 
-    const [userStats, auditStats, productStats, savingsStats] = await Promise.all([
-      this.getUserStats(timeframeClause),
-      this.getAggregateAuditStats(timeframeClause),
-      this.getAggregateProductStats(timeframeClause),
-      this.getAggregateSavingsStats(timeframeClause)
-    ]);
+      // Build parameterized query for batch insert
+      const placeholders = values.map((_, i) => {
+        const base = i * 6;
+        return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
+      }).join(', ');
 
-    return {
-      ...userStats,
-      ...auditStats,
-      ...productStats,
-      ...savingsStats
-    };
-  }
+      const flatParams = values.flatMap(v => [
+        v.id,
+        v.sessionId,
+        v.userId,
+        v.eventType,
+        v.area,
+        v.timestamp,
+        v.data
+      ]);
 
-  private async getAuditStats(userId: string, timeframeClause: string) {
-    const result = await this.pool.query(
-      `SELECT 
-        COUNT(*) as total_audits,
-        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_audits
-       FROM energy_audits
-       WHERE user_id = $1 ${timeframeClause}`,
-      [userId]
-    );
+      const query = `
+        INSERT INTO analytics_events (id, session_id, user_id, event_type, area, timestamp, data)
+        VALUES ${placeholders}
+        RETURNING id
+      `;
 
-    return {
-      totalAudits: result.rows[0].total_audits,
-      completedAudits: result.rows[0].completed_audits
-    };
-  }
+      const result = await this.pool.query(query, flatParams);
+      const insertedCount = result.rowCount || 0;
 
-  private async getProductEngagementStats(userId: string, timeframeClause: string) {
-    const result = await this.pool.query(
-      `SELECT 
-        COUNT(DISTINCT CASE WHEN action_type = 'product_view' THEN metadata->>'productId' END) as product_views,
-        COUNT(DISTINCT CASE WHEN action_type = 'recommendation_view' THEN id END) as recommendations_viewed,
-        COUNT(DISTINCT CASE WHEN action_type = 'recommendation_action' THEN id END) as recommendations_actioned
-       FROM user_actions
-       WHERE user_id = $1 ${timeframeClause}`,
-      [userId]
-    );
+      // Update the session with the new event count
+      const updateSessionQuery = `
+        UPDATE analytics_sessions
+        SET events_count = events_count + $1, 
+            updated_at = NOW()
+        WHERE id = $2
+      `;
+      await this.pool.query(updateSessionQuery, [insertedCount, sessionId]);
 
-    return {
-      productViews: result.rows[0].product_views,
-      recommendationsViewed: result.rows[0].recommendations_viewed,
-      recommendationsActioned: result.rows[0].recommendations_actioned
-    };
-  }
+      appLogger.info('Analytics events saved successfully', createLogMetadata(undefined, {
+        userId,
+        sessionId,
+        eventCount: insertedCount
+      }));
 
-  private async getSavingsStats(userId: string, timeframeClause: string) {
-    const result = await this.pool.query(
-      `SELECT 
-        COALESCE(SUM(estimated_savings), 0) as estimated_savings,
-        COALESCE(SUM(actual_savings), 0) as actual_savings
-       FROM user_savings
-       WHERE user_id = $1 ${timeframeClause}`,
-      [userId]
-    );
-
-    return {
-      estimatedSavings: result.rows[0].estimated_savings,
-      actualSavings: result.rows[0].actual_savings
-    };
-  }
-
-  private async getUserStats(timeframeClause: string) {
-    const result = await this.pool.query(
-      `SELECT 
-        COUNT(DISTINCT user_id) as active_users,
-        COUNT(DISTINCT CASE 
-          WHEN created_at ${timeframeClause} THEN user_id 
-        END) as new_users
-       FROM users`
-    );
-
-    return {
-      activeUsers: result.rows[0].active_users,
-      newUsers: result.rows[0].new_users
-    };
-  }
-
-  private async getAggregateAuditStats(timeframeClause: string) {
-    const result = await this.pool.query(
-      `SELECT COUNT(*) as total_audits
-       FROM energy_audits
-       WHERE created_at ${timeframeClause}`
-    );
-
-    return {
-      totalAudits: result.rows[0].total_audits
-    };
-  }
-
-  private async getAggregateProductStats(timeframeClause: string) {
-    const result = await this.pool.query(
-      `SELECT 
-        metadata->>'productId' as product_id,
-        COUNT(*) as view_count
-       FROM user_actions
-       WHERE action_type = 'product_view'
-       AND created_at ${timeframeClause}
-       GROUP BY metadata->>'productId'
-       ORDER BY view_count DESC
-       LIMIT 10`
-    );
-
-    return {
-      productEngagement: result.rows.reduce((acc, row) => {
-        acc[row.product_id] = row.view_count;
-        return acc;
-      }, {}),
-      topProducts: result.rows.map(row => ({
-        id: row.product_id,
-        views: row.view_count
-      }))
-    };
-  }
-
-  private async getAggregateSavingsStats(timeframeClause: string) {
-    const result = await this.pool.query(
-      `SELECT AVG(actual_savings) as average_savings
-       FROM user_savings
-       WHERE created_at ${timeframeClause}`
-    );
-
-    return {
-      averageSavings: result.rows[0].average_savings || 0
-    };
-  }
-
-  private getTimeframeClause(timeframe: string): string {
-    switch (timeframe) {
-      case 'day':
-        return '>= CURRENT_DATE';
-      case 'week':
-        return '>= CURRENT_DATE - INTERVAL \'7 days\'';
-      case 'month':
-        return '>= CURRENT_DATE - INTERVAL \'30 days\'';
-      case 'year':
-        return '>= CURRENT_DATE - INTERVAL \'1 year\'';
-      default:
-        return '';
+      return { success: true, eventsProcessed: insertedCount };
+    } catch (error) {
+      appLogger.error('Error saving analytics events', createLogMetadata(undefined, {
+        userId,
+        sessionId,
+        eventCount: events.length,
+        error
+      }));
+      return { success: false, eventsProcessed: 0 };
     }
   }
 
-  async generateAnalyticsReport(timeframe: string = 'month'): Promise<string> {
-    const metrics = await this.getPlatformMetrics(timeframe);
-    
-    const reportId = crypto.randomUUID();
-    await this.pool.query(
-      `INSERT INTO analytics_reports (
-        id, timeframe, metrics, created_at
-      ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
-      [reportId, timeframe, metrics]
-    );
+  /**
+   * Update or create a session record
+   */
+  private async updateSession(
+    sessionId: string,
+    userId?: string | null
+  ): Promise<void> {
+    try {
+      // Check if session exists
+      const existingSession = await this.pool.query(
+        'SELECT id FROM analytics_sessions WHERE id = $1',
+        [sessionId]
+      );
 
-    return reportId;
+      if (existingSession.rowCount && existingSession.rowCount > 0) {
+        // Update existing session
+        await this.pool.query(
+          'UPDATE analytics_sessions SET updated_at = NOW() WHERE id = $1',
+          [sessionId]
+        );
+      } else {
+        // Create new session
+        await this.pool.query(
+          `INSERT INTO analytics_sessions (
+            id, user_id, start_time, is_active, events_count, created_at, updated_at
+          ) VALUES ($1, $2, NOW(), TRUE, 0, NOW(), NOW())`,
+          [sessionId, userId || null]
+        );
+      }
+    } catch (error) {
+      appLogger.error('Error updating session record', createLogMetadata(undefined, {
+        sessionId,
+        userId,
+        error
+      }));
+      // Don't rethrow - we want to continue even if session update fails
+    }
   }
 
-  async getAnalyticsReport(reportId: string) {
-    const result = await this.pool.query(
-      'SELECT * FROM analytics_reports WHERE id = $1',
-      [reportId]
-    );
-
-    if (result.rows.length === 0) {
-      throw new Error('Report not found');
+  /**
+   * End a session
+   */
+  async endSession(sessionId: string, duration?: number): Promise<boolean> {
+    try {
+      const query = `
+        UPDATE analytics_sessions
+        SET 
+          is_active = FALSE, 
+          end_time = NOW(), 
+          duration = $1,
+          updated_at = NOW()
+        WHERE id = $2
+      `;
+      
+      await this.pool.query(query, [duration || 0, sessionId]);
+      return true;
+    } catch (error) {
+      appLogger.error('Error ending session', createLogMetadata(undefined, {
+        sessionId,
+        error
+      }));
+      return false;
     }
+  }
 
-    return result.rows[0];
+  /**
+   * Get current consent status for a user
+   */
+  async getConsentStatus(userId: string): Promise<string> {
+    try {
+      const query = `
+        SELECT status 
+        FROM analytics_consent 
+        WHERE user_id = $1 
+        ORDER BY consent_date DESC 
+        LIMIT 1
+      `;
+      
+      const result = await this.pool.query(query, [userId]);
+      
+      if (result.rowCount === 0) {
+        return 'not_asked';
+      }
+      
+      return result.rows[0].status;
+    } catch (error) {
+      appLogger.error('Error getting consent status', createLogMetadata(undefined, {
+        userId,
+        error
+      }));
+      return 'not_asked';
+    }
+  }
+
+  /**
+   * Update consent status for a user
+   */
+  async updateConsent(
+    userId: string,
+    status: 'granted' | 'denied' | 'withdrawn'
+  ): Promise<boolean> {
+    try {
+      const consentId = uuidv4();
+      const consentVersion = '1.0'; // Update this when consent text changes
+      
+      const query = `
+        INSERT INTO analytics_consent (
+          id, user_id, status, consent_date, consent_version, 
+          data_usage_accepted, created_at, updated_at
+        ) 
+        VALUES ($1, $2, $3, NOW(), $4, $5, NOW(), NOW())
+      `;
+      
+      await this.pool.query(query, [
+        consentId, 
+        userId, 
+        status, 
+        consentVersion,
+        status === 'granted'
+      ]);
+      
+      return true;
+    } catch (error) {
+      appLogger.error('Error updating consent status', createLogMetadata(undefined, {
+        userId,
+        status,
+        error
+      }));
+      return false;
+    }
+  }
+
+  /**
+   * Get analytics metrics for pilot study dashboard
+   */
+  async getMetrics(request: GetMetricsRequest): Promise<GetMetricsResponse> {
+    try {
+      const { startDate, endDate, filters } = request;
+      const dateStart = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default to last 30 days
+      const dateEnd = endDate ? new Date(endDate) : new Date();
+      
+      // Query for total sessions
+      const sessionsQuery = `
+        SELECT COUNT(*) as total_sessions,
+               AVG(COALESCE(duration, 0)) as avg_duration
+        FROM analytics_sessions
+        WHERE start_time BETWEEN $1 AND $2
+      `;
+      
+      const sessionsResult = await this.pool.query(sessionsQuery, [dateStart, dateEnd]);
+      
+      // Query for form completions
+      const formCompletionsQuery = `
+        SELECT COUNT(*) as completions
+        FROM analytics_events
+        WHERE event_type = 'form_interaction'
+        AND (data->>'action' = 'submit' OR data->>'action' = 'completion')
+        AND timestamp BETWEEN $1 AND $2
+      `;
+      
+      const formCompletionsResult = await this.pool.query(formCompletionsQuery, [dateStart, dateEnd]);
+      
+      // Query for page views by area
+      const pageViewsQuery = `
+        SELECT area, COUNT(*) as count
+        FROM analytics_events
+        WHERE event_type = 'page_view'
+        AND timestamp BETWEEN $1 AND $2
+        GROUP BY area
+        ORDER BY count DESC
+        LIMIT 10
+      `;
+      
+      const pageViewsResult = await this.pool.query(pageViewsQuery, [dateStart, dateEnd]);
+      
+      // Query for feature usage
+      const featureUsageQuery = `
+        SELECT data->>'featureId' as feature, COUNT(*) as count
+        FROM analytics_events
+        WHERE event_type = 'feature_usage'
+        AND timestamp BETWEEN $1 AND $2
+        GROUP BY data->>'featureId'
+        ORDER BY count DESC
+        LIMIT 10
+      `;
+      
+      const featureUsageResult = await this.pool.query(featureUsageQuery, [dateStart, dateEnd]);
+      
+      return {
+        success: true,
+        metrics: {
+          totalSessions: parseInt(sessionsResult.rows[0]?.total_sessions || '0'),
+          avgSessionDuration: Math.round(parseFloat(sessionsResult.rows[0]?.avg_duration || '0')),
+          formCompletions: parseInt(formCompletionsResult.rows[0]?.completions || '0'),
+          pageViewsByArea: pageViewsResult.rows.map(row => ({
+            area: row.area,
+            count: row.count
+          })),
+          featureUsage: featureUsageResult.rows.map(row => ({
+            feature: row.feature,
+            count: row.count
+          }))
+        },
+        dateRange: {
+          startDate: dateStart.toISOString(),
+          endDate: dateEnd.toISOString()
+        }
+      };
+    } catch (error) {
+      appLogger.error('Error getting analytics metrics', createLogMetadata(undefined, {
+        error
+      }));
+      
+      return {
+        success: false,
+        metrics: {
+          totalSessions: 0,
+          avgSessionDuration: 0,
+          formCompletions: 0,
+          pageViewsByArea: [],
+          featureUsage: []
+        },
+        dateRange: {
+          startDate: new Date().toISOString(),
+          endDate: new Date().toISOString()
+        }
+      };
+    }
   }
 }
+
+export default AnalyticsService;

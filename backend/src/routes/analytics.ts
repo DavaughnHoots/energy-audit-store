@@ -1,169 +1,139 @@
-// backend/src/routes/analytics.ts
+/**
+ * API routes for analytics data collection for the pilot study
+ */
 
 import express from 'express';
-import { authenticate, requireRole } from '../middleware/auth.js';
-import { rateLimiter } from '../middleware/security.js';
-import { AnalyticsService } from '../services/analyticsService.js';
-import { pool } from '../config/database.js';
+import { Pool } from 'pg';
+import { authenticate } from '../middleware/auth.js';
+import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
+import AnalyticsService from '../services/analyticsService.js';
+import { appLogger, createLogMetadata } from '../utils/logger.js';
+import { 
+  GetMetricsRequest, 
+  SaveEventsRequest, 
+  UpdateConsentRequest 
+} from '../types/analytics.js';
 
 const router = express.Router();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Create analytics service instance
 const analyticsService = new AnalyticsService(pool);
 
 /**
- * @route GET /api/analytics/dashboard
- * @desc Get dashboard analytics data
- * @access Private (Admin)
+ * Endpoint to save analytics events
+ * POST /api/analytics/events
  */
-router.get('/dashboard',
-  authenticate,
-  requireRole(['admin']),
-  rateLimiter,
-  async (req, res) => {
-    try {
-      const timeframe = req.query.timeframe as string || 'month';
-      const metrics = await analyticsService.getPlatformMetrics(timeframe);
-      res.json(metrics);
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/user/:userId
- * @desc Get user-specific analytics
- * @access Private (Admin or User's own data)
- */
-router.get('/user/:userId',
-  authenticate,
-  async (req, res) => {
-    try {
-      // Check if user is requesting their own data or is an admin
-      if (req.user!.userId !== req.params.userId && req.user!.role !== 'admin') {
-        return res.status(403).json({ error: 'Unauthorized access' });
-      }
-
-      const timeframe = req.query.timeframe as string || 'month';
-      const metrics = await analyticsService.getUserMetrics(req.params.userId, timeframe);
-      res.json(metrics);
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route POST /api/analytics/track
- * @desc Track user action
- * @access Private
- */
-router.post('/track',
-  authenticate,
-  rateLimiter,
-  async (req, res) => {
-    try {
-      const { action, metadata } = req.body;
-      await analyticsService.trackUserAction(req.user!.userId, action, metadata);
-      res.status(200).end();
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/reports
- * @desc Get analytics reports
- * @access Private (Admin)
- */
-router.get('/reports',
-  authenticate,
-  requireRole(['admin']),
-  async (req, res) => {
-    try {
-      const timeframe = req.query.timeframe as string || 'month';
-      const reportId = await analyticsService.generateAnalyticsReport(timeframe);
-      res.json({ reportId });
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/reports/:reportId
- * @desc Get specific analytics report
- * @access Private (Admin)
- */
-router.get('/reports/:reportId',
-  authenticate,
-  requireRole(['admin']),
-  async (req, res) => {
-    try {
-      const report = await analyticsService.getAnalyticsReport(req.params.reportId);
-      res.json(report);
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/energy-savings
- * @desc Get platform-wide energy savings metrics
- * @access Public
- */
-router.get('/energy-savings',
-  rateLimiter,
-  async (req, res) => {
-    try {
-      const timeframe = req.query.timeframe as string || 'all';
-      const result = await pool.query(
-        `SELECT 
-          COUNT(DISTINCT user_id) as total_users,
-          SUM(energy_savings) as total_savings,
-          AVG(energy_savings) as average_savings
-         FROM user_progress
-         WHERE ${timeframe === 'all' ? '1=1' : `created_at >= NOW() - INTERVAL '1 ${timeframe}'`}`
-      );
-
-      res.json({
-        totalUsers: result.rows[0].total_users,
-        totalSavings: result.rows[0].total_savings,
-        averageSavings: result.rows[0].average_savings
+router.post('/events', optionalTokenValidation, async (req, res) => {
+  try {
+    const userId = req.user?.id || null;
+    const { events, sessionId } = req.body as SaveEventsRequest;
+    
+    if (!events || !Array.isArray(events) || !sessionId) {
+      return res.status(400).json({ 
+        error: 'Invalid request format', 
+        message: 'Events array and sessionId are required' 
       });
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
     }
+    
+    const result = await analyticsService.saveEvents(userId, sessionId, events);
+    res.json(result);
+  } catch (error) {
+    appLogger.error('Error saving analytics events', createLogMetadata(req, { error }));
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      message: 'Error processing analytics data' 
+    });
   }
-);
+});
 
 /**
- * @route GET /api/analytics/product-engagement/:productId
- * @desc Get product engagement metrics
- * @access Private (Admin)
+ * Endpoint to get user's consent status
+ * GET /api/analytics/consent
  */
-router.get('/product-engagement/:productId',
-  authenticate,
-  requireRole(['admin']),
-  async (req, res) => {
-    try {
-      const result = await pool.query(
-        `SELECT 
-          COUNT(*) as view_count,
-          COUNT(DISTINCT user_id) as unique_viewers,
-          COUNT(CASE WHEN action_type = 'purchase' THEN 1 END) as purchase_count
-         FROM user_actions
-         WHERE metadata->>'productId' = $1
-         AND created_at >= NOW() - INTERVAL '30 days'`,
-        [req.params.productId]
-      );
-
-      res.json(result.rows[0]);
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
+router.get('/consent', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const status = await analyticsService.getConsentStatus(userId);
+    res.json({ status });
+  } catch (error) {
+    appLogger.error('Error getting consent status', createLogMetadata(req, { error }));
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      message: 'Error retrieving consent status' 
+    });
   }
-);
+});
+
+/**
+ * Endpoint to update user's consent status
+ * POST /api/analytics/consent
+ */
+router.post('/consent', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { consent } = req.body as UpdateConsentRequest;
+    
+    if (typeof consent !== 'boolean') {
+      return res.status(400).json({ 
+        error: 'Invalid request format', 
+        message: 'Consent boolean value is required' 
+      });
+    }
+    
+    const status = consent ? 'granted' : 'denied';
+    const result = await analyticsService.updateConsent(userId, status);
+    
+    if (result) {
+      res.json({ success: true, status });
+    } else {
+      res.status(500).json({ 
+        error: 'Internal server error', 
+        message: 'Failed to update consent status' 
+      });
+    }
+  } catch (error) {
+    appLogger.error('Error updating consent status', createLogMetadata(req, { error }));
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      message: 'Error updating consent status' 
+    });
+  }
+});
+
+/**
+ * Endpoint to get analytics metrics for pilot study dashboard
+ * GET /api/analytics/metrics
+ * Admin only
+ */
+router.get('/metrics', authenticate, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ 
+        error: 'Forbidden', 
+        message: 'Admin access required' 
+      });
+    }
+    
+    const request: GetMetricsRequest = {
+      startDate: req.query.startDate as string | undefined,
+      endDate: req.query.endDate as string | undefined,
+      filters: req.query.filters ? JSON.parse(req.query.filters as string) : undefined
+    };
+    
+    const result = await analyticsService.getMetrics(request);
+    res.json(result);
+  } catch (error) {
+    appLogger.error('Error getting analytics metrics', createLogMetadata(req, { error }));
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      message: 'Error retrieving analytics metrics' 
+    });
+  }
+});
 
 export default router;

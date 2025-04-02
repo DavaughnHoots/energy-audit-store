@@ -36,17 +36,20 @@ import visualizationRoutes from './routes/visualization.js';
 import productRecommendationsRoutes from './routes/productRecommendations.js';
 import comparisonsRoutes from './routes/comparisons.js';
 import energyConsumptionRoutes from './routes/energyConsumption.js';
+import analyticsRoutes from './routes/analytics.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import { runEnergyConsumptionMigration } from './scripts/run_energy_consumption_migration.js';
 import { runEducationMigration } from './scripts/run_education_migration.js';
+import { runAnalyticsMigration } from './scripts/run_analytics_migration.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 
 // Import recommendation updates migration conditionally to avoid crashes if file is missing
 let runRecommendationUpdatesMigration: any;
+let runAnalyticsMigrationFallback: any;
 try {
   const module = await import('./scripts/run_recommendation_updates_migration.js');
   runRecommendationUpdatesMigration = module.runRecommendationUpdatesMigration;
@@ -84,6 +87,15 @@ if (process.env.NODE_ENV === 'production') {
     })
     .catch(error => {
       appLogger.error('Error running search migration on startup', { error });
+    });
+    
+  // Run analytics migration
+  runAnalyticsMigration()
+    .then(result => {
+      appLogger.info('Analytics migration completed on startup', { result });
+    })
+    .catch(error => {
+      appLogger.error('Error running analytics migration on startup', { error });
     });
     
   // Run energy consumption migration
@@ -245,6 +257,7 @@ app.use('/api/user-profile', userProfileRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/visualization', visualizationRoutes);
 app.use('/api/energy-consumption', energyConsumptionRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

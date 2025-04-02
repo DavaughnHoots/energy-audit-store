@@ -1,5 +1,5 @@
 // src/components/education/ResourceCard.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { EducationalResource, ResourceType } from '@/types/education';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Video, PieChart, Calculator, HelpCircle, Star } from 'lucide-react';
@@ -7,6 +7,8 @@ import BookmarkButton from './BookmarkButton';
 import ProgressIndicator from './ProgressIndicator';
 import ResourceRatingAndReview from './ResourceRatingAndReview';
 import { educationService } from '@/services/educationService';
+import useComponentTracking from '@/hooks/analytics/useComponentTracking';
+import { AnalyticsArea, ComponentInteractionType } from '@/types/analytics';
 
 interface ResourceCardProps {
   resource: EducationalResource;
@@ -23,6 +25,44 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
   onBookmarkChange,
   showProgress = false
 }) => {
+  // Get the analytics tracking functions
+  const { 
+    trackComponentInteraction, 
+    trackLinkClick 
+  } = useComponentTracking({
+    area: AnalyticsArea.EDUCATION,
+    componentPrefix: 'education-resource'
+  });
+
+  // Define tracking functions with error handling
+  const safeTrackComponentView = useCallback(() => {
+    try {
+      // Track resource card view
+      trackComponentInteraction('resource-card', 'card', ComponentInteractionType.CLICK, {
+        resourceId: resource.id,
+        resourceType: resource.type,
+        resourceTitle: resource.title,
+        isFeatured: featured,
+        action: 'view'
+      });
+    } catch (err) {
+      console.error('Analytics tracking error (non-critical):', err);
+    }
+  }, [resource.id, resource.type, resource.title, featured, trackComponentInteraction]);
+
+  // Track view when component renders
+  React.useEffect(() => {
+    safeTrackComponentView();
+  }, [safeTrackComponentView]);
+
+  // Handler for tracking Learn More clicks
+  const handleLearnMoreClick = useCallback(() => {
+    try {
+      trackLinkClick('learn-more', resource.url, resource.title);
+    } catch (err) {
+      // Silently fail for analytics errors
+    }
+  }, [resource.id, resource.url, resource.title, trackLinkClick]);
   const getResourceIcon = (type: ResourceType) => {
     switch (type) {
       case 'article':
@@ -116,6 +156,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           <a
             href={resource.url}
             className="text-green-600 hover:text-green-700 font-medium text-sm"
+            onClick={handleLearnMoreClick}
           >
             Learn More →
           </a>

@@ -1,7 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { AnalyticsProvider } from './context/AnalyticsContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import AnalyticsErrorBoundary from './components/analytics/AnalyticsErrorBoundary';
+import PilotStudyConsentManager from './components/analytics/PilotStudyConsentManager';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
 import Header from './components/layout/Header';
@@ -113,13 +116,21 @@ const Home: React.FC = () => {
   );
 };
 
+// Check for feature flag - can be set in .env file
+const isAnalyticsEnabled = process.env.REACT_APP_ANALYTICS_ENABLED !== 'false';
+
 // Main App component with routing
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <Router>
         <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-gray-50">
+          <AnalyticsErrorBoundary>
+            <AnalyticsProvider>
+              {/* Pilot study consent management */}
+              <PilotStudyConsentManager />
+              
+              <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
         <main className="flex-grow">
           <Routes>
@@ -160,7 +171,9 @@ const App: React.FC = () => {
           </Routes>
         </main>
         <Footer />
-        </div>
+              </div>
+            </AnalyticsProvider>
+          </AnalyticsErrorBoundary>
         </AuthProvider>
       </Router>
     </ErrorBoundary>
