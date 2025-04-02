@@ -3,7 +3,11 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 import 'dotenv/config';
-import { appLogger } from '../utils/logger.js';
+// Using console.log instead of appLogger since it might not be available
+const logger = {
+  info: (msg, data) => console.log(`[INFO] ${msg}`, data || ''),
+  error: (msg, data) => console.error(`[ERROR] ${msg}`, data || '')
+};
 
 /**
  * Migration to create analytics tables for the pilot study
@@ -97,12 +101,12 @@ export async function runAnalyticsMigration() {
     // Commit transaction
     await pool.query('COMMIT');
 
-    appLogger.info('Successfully created analytics tables');
+    logger.info('Successfully created analytics tables');
     return { success: true };
   } catch (error) {
     // Rollback transaction on error
     await pool.query('ROLLBACK');
-    appLogger.error('Error creating analytics tables', { error: error.message });
+    logger.error('Error creating analytics tables', { error: error.message });
     return { success: false, error: error.message };
   } finally {
     await pool.end();
