@@ -1,8 +1,31 @@
 // src/config/api.ts
+import axios from 'axios';
 
 // In production, API calls will be made to the Heroku backend
 // In development, we use Vite's proxy
 const API_BASE_URL = 'https://energy-audit-store-e66479ed4f2b.herokuapp.com';
+
+// Create an axios instance for API requests
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add request interceptor to include auth token if present
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -50,4 +73,4 @@ export const getApiUrl = (endpoint: string): string => {
   return `${API_BASE_URL}${endpoint}`;
 };
 
-export { API_BASE_URL };
+export { API_BASE_URL, api };

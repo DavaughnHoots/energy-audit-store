@@ -56,6 +56,19 @@ try {
     return { success: false, reason: 'Migration script not found' };
   };
 }
+
+// Import pilot token table creation function from analytics service
+let initPilotTokenTable: any;
+try {
+  const { initPilotTokenTable: initFunc } = await import('./services/analyticsService.js');
+  initPilotTokenTable = initFunc;
+} catch (error: any) {
+  console.error('Could not load pilot token table initialization:', error?.message || 'Unknown error');
+  initPilotTokenTable = async () => {
+    appLogger.warn('Pilot token table initialization skipped - function not found');
+    return { success: false, reason: 'Function not found' };
+  };
+}
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 
@@ -108,6 +121,20 @@ if (process.env.NODE_ENV === 'production') {
       appLogger.info('Analytics migration completed on startup', { result });
     } catch (error) {
       appLogger.error('Error running analytics migration on startup', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  }
+  
+  // Initialize pilot token table
+  if (initPilotTokenTable) {
+    try {
+      // Import the pool from the same module that AnalyticsService uses
+      const { pool } = await import('./config/database.js');
+      const result = await initPilotTokenTable(pool);
+      appLogger.info('Pilot token table initialization completed', { result });
+    } catch (error) {
+      appLogger.error('Error initializing pilot token table', { 
         error: error instanceof Error ? error.message : String(error) 
       });
     }

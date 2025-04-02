@@ -150,3 +150,39 @@ export interface GetMetricsResponse {
   metrics: AnalyticsMetrics;
   dateRange: DateRange;
 }
+
+/**
+ * Pilot Study Token Validation Request
+ */
+export interface ValidateTokenRequest {
+  token: string;
+}
+
+/**
+ * Pilot Study Token Validation Response
+ */
+export interface ValidateTokenResponse {
+  valid: boolean;
+  participantType?: string;
+  message?: string;
+}
+
+/**
+ * Pilot Study Registration Request
+ */
+export interface PilotRegistrationRequest {
+  email: string;
+  password: string;
+  token: string;
+  participantType: string;
+}
+
+/**
+ * Pilot Study Registration Response
+ */
+export interface PilotRegistrationResponse {
+  success: boolean;
+  userId?: string;
+  token?: string;
+  message?: string;
+}

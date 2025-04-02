@@ -15,13 +15,65 @@ import {
   GetMetricsRequest,
   GetMetricsResponse,
   SaveEventsRequest,
-  SaveEventsResponse
+  SaveEventsResponse,
+  ValidateTokenResponse,
+  PilotRegistrationResponse
 } from '../types/analytics.js';
 
-class AnalyticsService {
-  private pool: typeof Pool;
+// Function to initialize the pilot token table
+export async function initPilotTokenTable(pool: any): Promise<{success: boolean, message: string}> {
+  try {
+    // Create the pilot tokens table if it doesn't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pilot_tokens (
+        id SERIAL PRIMARY KEY,
+        token VARCHAR(50) NOT NULL UNIQUE,
+        participant_type VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        used_at TIMESTAMP,
+        used_by VARCHAR(50)
+      )
+    `);
+    
+    // Insert the default tokens if they don't exist
+    const defaultTokens = [
+      { token: 'ENERGY-PILOT-HC-001', participantType: 'homeowner-energy-conscious' },
+      { token: 'ENERGY-PILOT-HL-001', participantType: 'homeowner-limited-knowledge' },
+      { token: 'ENERGY-PILOT-HT-001', participantType: 'homeowner-technical' },
+      { token: 'ENERGY-PILOT-HN-001', participantType: 'homeowner-non-technical' }
+    ];
+    
+    for (const tokenData of defaultTokens) {
+      // Check if token already exists
+      const existingToken = await pool.query(
+        'SELECT token FROM pilot_tokens WHERE token = $1',
+        [tokenData.token]
+      );
+      
+      // Insert token if it doesn't exist
+      if (existingToken.rowCount === 0) {
+        await pool.query(
+          'INSERT INTO pilot_tokens (token, participant_type) VALUES ($1, $2)',
+          [tokenData.token, tokenData.participantType]
+        );
+        appLogger.info('Inserted default pilot token', createLogMetadata(undefined, {
+          token: tokenData.token,
+          participantType: tokenData.participantType
+        }));
+      }
+    }
+    
+    return { success: true, message: 'Pilot token table initialized' };
+  } catch (error) {
+    appLogger.error('Error initializing pilot token table', createLogMetadata(undefined, { error }));
+    return { success: false, message: `Error initializing pilot token table: ${error instanceof Error ? error.message : 'Unknown error'}` };
+  }
+}
 
-  constructor(pool: typeof Pool) {
+class AnalyticsService {
+  private pool: any;
+
+  constructor(pool: any) {
     this.pool = pool;
   }
 
@@ -251,6 +303,102 @@ class AnalyticsService {
   }
 
   /**
+   * Validate a pilot study invitation token
+   */
+  async validatePilotToken(token: string): Promise<ValidateTokenResponse> {
+    try {
+      // Query the pilot_tokens table
+      const result = await this.pool.query(
+        'SELECT token, participant_type, used_at FROM pilot_tokens WHERE token = $1',
+        [token]
+      );
+      
+      // If token doesn't exist
+      if (result.rowCount === 0) {
+        return {
+          valid: false,
+          message: 'Invalid token'
+        };
+      }
+      
+      // If token has already been used
+      if (result.rows[0].used_at) {
+        return {
+          valid: false,
+          message: 'Token has already been used'
+        };
+      }
+      
+      const participantType = result.rows[0].participant_type;
+      
+      return {
+        valid: true,
+        participantType
+      };
+    } catch (error) {
+      appLogger.error('Error validating pilot token', createLogMetadata(undefined, {
+        token,
+        error
+      }));
+      
+      return {
+        valid: false,
+        message: 'Error processing token'
+      };
+    }
+  }
+
+  /**
+   * Register a pilot study participant
+   */
+  async registerPilotParticipant(
+    email: string,
+    password: string,
+    token: string,
+    participantType: string
+  ): Promise<PilotRegistrationResponse> {
+    try {
+      // In a real implementation, we would:
+      // 1. Register the user in the auth system
+      // 2. Set a pilot study flag in their profile
+      // 3. Store the participant type
+      // 4. Return the auth token
+      
+      // For now, we'll simulate success with a fake user ID
+      const userId = uuidv4();
+      const authToken = uuidv4(); // In real impl, this would be a JWT
+      
+      // Automatically set analytics consent for pilot participants
+      await this.updateConsent(userId, 'granted');
+      
+      // Log the registration event
+      appLogger.info('Pilot participant registered', createLogMetadata(undefined, {
+        userId,
+        participantType,
+        email
+      }));
+      
+      return {
+        success: true,
+        userId,
+        token: authToken
+      };
+    } catch (error) {
+      appLogger.error('Error registering pilot participant', createLogMetadata(undefined, {
+        email,
+        token,
+        participantType,
+        error
+      }));
+      
+      return {
+        success: false,
+        message: 'Error processing registration'
+      };
+    }
+  }
+
+  /**
    * Get analytics metrics for pilot study dashboard
    */
   async getMetrics(request: GetMetricsRequest): Promise<GetMetricsResponse> {
@@ -312,11 +460,11 @@ class AnalyticsService {
           totalSessions: parseInt(sessionsResult.rows[0]?.total_sessions || '0'),
           avgSessionDuration: Math.round(parseFloat(sessionsResult.rows[0]?.avg_duration || '0')),
           formCompletions: parseInt(formCompletionsResult.rows[0]?.completions || '0'),
-          pageViewsByArea: pageViewsResult.rows.map((row: { area: string, count: number }) => ({
+          pageViewsByArea: pageViewsResult.rows.map((row: any) => ({
             area: row.area,
             count: row.count
           })),
-          featureUsage: featureUsageResult.rows.map((row: { feature: string, count: number }) => ({
+          featureUsage: featureUsageResult.rows.map((row: any) => ({
             feature: row.feature,
             count: row.count
           }))

@@ -1,137 +1,214 @@
 /**
- * API routes for analytics data collection for the pilot study
+ * Routes for analytics data collection and pilot study management
  */
 
 import express from 'express';
-import pkg from 'pg';
-const { Pool } = pkg;
+import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middleware/auth.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
 import AnalyticsService from '../services/analyticsService.js';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
-import { 
-  GetMetricsRequest, 
-  SaveEventsRequest, 
-  UpdateConsentRequest 
-} from '../types/analytics.js';
 
 const router = express.Router();
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
-
-// Create analytics service instance
-const analyticsService = new AnalyticsService(pool);
 
 /**
- * Endpoint to save analytics events
- * POST /api/analytics/events
+ * Initialize with database connection in server.ts
+ */
+let analyticsService: AnalyticsService;
+
+export const initAnalyticsRoutes = (service: AnalyticsService) => {
+  analyticsService = service;
+};
+
+/**
+ * Save analytics events
+ * This can be used by both logged-in and anonymous users
  */
 router.post('/events', optionalTokenValidation, async (req, res) => {
   try {
+    const { sessionId, events } = req.body;
     const userId = req.user?.id || null;
-    const { events, sessionId } = req.body as SaveEventsRequest;
     
-    if (!events || !Array.isArray(events) || !sessionId) {
-      return res.status(400).json({ 
-        error: 'Invalid request format', 
-        message: 'Events array and sessionId are required' 
-      });
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'Session ID is required' });
+    }
+    
+    if (!Array.isArray(events)) {
+      return res.status(400).json({ success: false, message: 'Events must be an array' });
     }
     
     const result = await analyticsService.saveEvents(userId, sessionId, events);
-    res.json(result);
+    
+    return res.json(result);
   } catch (error) {
     appLogger.error('Error saving analytics events', createLogMetadata(req, { error }));
-    res.status(500).json({ 
-      error: 'Internal server error', 
-      message: 'Error processing analytics data' 
-    });
+    return res.status(500).json({ success: false, message: 'Error processing analytics events' });
   }
 });
 
 /**
- * Endpoint to get user's consent status
- * GET /api/analytics/consent
+ * End a session
  */
-router.get('/consent', authenticate, async (req, res) => {
+router.post('/session/:sessionId/end', optionalTokenValidation, async (req, res) => {
   try {
-    const userId = req.user.id;
-    const status = await analyticsService.getConsentStatus(userId);
-    res.json({ status });
+    const { sessionId } = req.params;
+    const { duration } = req.body;
+    
+    const result = await analyticsService.endSession(sessionId, duration);
+    
+    return res.json({ success: result });
   } catch (error) {
-    appLogger.error('Error getting consent status', createLogMetadata(req, { error }));
-    res.status(500).json({ 
-      error: 'Internal server error', 
-      message: 'Error retrieving consent status' 
-    });
+    appLogger.error('Error ending analytics session', createLogMetadata(req, { error }));
+    return res.status(500).json({ success: false, message: 'Error ending session' });
   }
 });
 
 /**
- * Endpoint to update user's consent status
- * POST /api/analytics/consent
+ * Update user consent for analytics collection
+ * Requires authentication
  */
 router.post('/consent', authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { consent } = req.body as UpdateConsentRequest;
+    const { status } = req.body;
     
-    if (typeof consent !== 'boolean') {
+    if (!['granted', 'denied', 'withdrawn'].includes(status)) {
       return res.status(400).json({ 
-        error: 'Invalid request format', 
-        message: 'Consent boolean value is required' 
+        success: false, 
+        message: 'Status must be one of: granted, denied, withdrawn' 
       });
     }
     
-    const status = consent ? 'granted' : 'denied';
     const result = await analyticsService.updateConsent(userId, status);
     
-    if (result) {
-      res.json({ success: true, status });
-    } else {
-      res.status(500).json({ 
-        error: 'Internal server error', 
-        message: 'Failed to update consent status' 
-      });
-    }
+    return res.json({ success: result });
   } catch (error) {
     appLogger.error('Error updating consent status', createLogMetadata(req, { error }));
-    res.status(500).json({ 
-      error: 'Internal server error', 
-      message: 'Error updating consent status' 
+    return res.status(500).json({ success: false, message: 'Error updating consent status' });
+  }
+});
+
+/**
+ * Get current consent status
+ * Requires authentication
+ */
+router.get('/consent/status', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const status = await analyticsService.getConsentStatus(userId);
+    
+    return res.json({ status });
+  } catch (error) {
+    appLogger.error('Error getting consent status', createLogMetadata(req, { error }));
+    return res.status(500).json({ success: false, message: 'Error retrieving consent status' });
+  }
+});
+
+/**
+ * Validate a pilot study invitation token
+ * Public route - no authentication required
+ */
+router.get('/pilot/validate-token', async (req, res) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ 
+        valid: false, 
+        message: 'Token is required' 
+      });
+    }
+    
+    const result = await analyticsService.validatePilotToken(token);
+    
+    return res.json(result);
+  } catch (error) {
+    appLogger.error('Error validating pilot token', createLogMetadata(req, { error }));
+    return res.status(500).json({ 
+      valid: false, 
+      message: 'Error processing token' 
     });
   }
 });
 
 /**
- * Endpoint to get analytics metrics for pilot study dashboard
- * GET /api/analytics/metrics
- * Admin only
+ * Register a pilot study participant
+ * Public route - no authentication required
  */
-router.get('/metrics', authenticate, async (req, res) => {
+router.post('/pilot/register', async (req, res) => {
   try {
-    // Check if user is admin
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ 
-        error: 'Forbidden', 
-        message: 'Admin access required' 
+    const { email, password, token, participantType } = req.body;
+    
+    // Validate required fields
+    if (!email || !password || !token || !participantType) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing required fields: email, password, token, and participantType are required' 
       });
     }
     
-    const request: GetMetricsRequest = {
-      startDate: req.query.startDate as string | undefined,
-      endDate: req.query.endDate as string | undefined,
-      filters: req.query.filters ? JSON.parse(req.query.filters as string) : undefined
-    };
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid email format' 
+      });
+    }
     
-    const result = await analyticsService.getMetrics(request);
-    res.json(result);
+    // Validate password strength
+    if (password.length < 8) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 8 characters long' 
+      });
+    }
+    
+    // Create the user account and set up pilot study status
+    const result = await analyticsService.registerPilotParticipant(
+      email, 
+      password, 
+      token, 
+      participantType
+    );
+    
+    return res.json(result);
+  } catch (error) {
+    appLogger.error('Error registering pilot participant', createLogMetadata(req, { error }));
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error processing registration' 
+    });
+  }
+});
+
+/**
+ * Get analytics metrics
+ * Admin-only route, requires admin role
+ */
+router.get('/metrics', authenticate, async (req, res) => {
+  try {
+    // Check admin role
+    if (!req.user.roles.includes('admin')) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Unauthorized: Admin privileges required' 
+      });
+    }
+    
+    const { startDate, endDate, filters } = req.query;
+    
+    const result = await analyticsService.getMetrics({
+      startDate: startDate as string,
+      endDate: endDate as string,
+      filters: filters ? JSON.parse(filters as string) : undefined
+    });
+    
+    return res.json(result);
   } catch (error) {
     appLogger.error('Error getting analytics metrics', createLogMetadata(req, { error }));
-    res.status(500).json({ 
-      error: 'Internal server error', 
+    return res.status(500).json({ 
+      success: false, 
       message: 'Error retrieving analytics metrics' 
     });
   }

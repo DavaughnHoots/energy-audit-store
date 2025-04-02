@@ -5,6 +5,7 @@ import { AnalyticsProvider } from './context/AnalyticsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsErrorBoundary from './components/analytics/AnalyticsErrorBoundary';
 import PilotStudyConsentManager from './components/analytics/PilotStudyConsentManager';
+import PilotStudyRegistration from './components/analytics/PilotStudyRegistration';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
 import Header from './components/layout/Header';
@@ -144,6 +145,7 @@ const App: React.FC = () => {
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/pilot-registration" element={<PilotStudyRegistration />} />
             <Route
               path="/dashboard"
               element={
