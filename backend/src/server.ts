@@ -23,6 +23,7 @@ import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import educationRoutes from './routes/education.js';
 import energyAuditRoutes from './routes/energyAudit.js';
+import energyAuditFinancialFixRoutes from './routes/energyAudit.financial-data-fix.js';
 // Import enhanced routes (with better error handling)
 import auditHistoryRoutes from './routes/auditHistory.enhanced.js';
 import reportDataRoutes from './routes/reportData.enhanced.js';
@@ -232,6 +233,9 @@ app.use('/api/education', educationRoutes);
 app.use('/api/energy-audit/history', authenticate, auditHistoryRoutes);
 // Use a parameter pattern that matches the frontend's expected URL format
 app.use('/api/energy-audit/:id/report-data', optionalTokenValidation, reportDataRoutes);
+// Add the enhanced PDF report route
+app.use('/api/energy-audit', energyAuditFinancialFixRoutes);
+// Add the main energy audit routes last (fallback for any routes not matched above)
 app.use('/api/energy-audit', energyAuditRoutes);
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
