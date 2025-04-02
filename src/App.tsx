@@ -5,7 +5,8 @@ import { AnalyticsProvider } from './context/AnalyticsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsErrorBoundary from './components/analytics/AnalyticsErrorBoundary';
 import PilotStudyConsentManager from './components/analytics/PilotStudyConsentManager';
-import PilotStudyRegistration from './components/analytics/PilotStudyRegistration';
+import PilotStudyBanner from './components/analytics/PilotStudyBanner';
+import AboutPilotStudyPage from './pages/AboutPilotStudyPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
 import Header from './components/layout/Header';
@@ -128,11 +129,13 @@ const App: React.FC = () => {
         <AuthProvider>
           <AnalyticsErrorBoundary>
             <AnalyticsProvider>
-              {/* Pilot study consent management */}
+              {/* Analytics consent management */}
               <PilotStudyConsentManager />
               
               <div className="min-h-screen flex flex-col bg-gray-50">
-        <Header />
+                {/* Pilot study banner */}
+                <PilotStudyBanner />
+                <Header />
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -145,7 +148,8 @@ const App: React.FC = () => {
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
-            <Route path="/pilot-registration" element={<PilotStudyRegistration />} />
+            <Route path="/about-pilot-study" element={<AboutPilotStudyPage />} />
+            {/* Pilot registration route removed in favor of site-wide banner approach */}
             <Route
               path="/dashboard"
               element={
