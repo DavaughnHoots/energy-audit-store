@@ -7,6 +7,8 @@ import AnalyticsErrorBoundary from './components/analytics/AnalyticsErrorBoundar
 import PilotStudyConsentManager from './components/analytics/PilotStudyConsentManager';
 import PilotStudyBanner from './components/analytics/PilotStudyBanner';
 import AboutPilotStudyPage from './pages/AboutPilotStudyPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
 import Header from './components/layout/Header';
@@ -149,6 +151,9 @@ const App: React.FC = () => {
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/about-pilot-study" element={<AboutPilotStudyPage />} />
+            {/* Admin routes */}
+            <Route path="/admin" element={<AdminLoginPage />} />
+            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             {/* Pilot registration route removed in favor of site-wide banner approach */}
             <Route
               path="/dashboard"

@@ -37,6 +37,7 @@ import productRecommendationsRoutes from './routes/productRecommendations.js';
 import comparisonsRoutes from './routes/comparisons.js';
 import energyConsumptionRoutes from './routes/energyConsumption.js';
 import analyticsRoutes from './routes/analytics.js';
+import adminRoutes, { initAdminRoutes } from './routes/admin.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -300,6 +301,22 @@ app.use('/api/products', productsRoutes);
 app.use('/api/visualization', visualizationRoutes);
 app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/admin', adminRoutes);
+
+// Initialize admin routes with analytics service
+try {
+  // Import the analytics service to use for admin routes
+  const { default: AnalyticsService } = await import('./services/analyticsService.js');
+  const { pool } = await import('./config/database.js');
+  
+  // Initialize admin routes with the analytics service
+  initAdminRoutes(new AnalyticsService(pool));
+  appLogger.info('Admin routes initialized successfully');
+} catch (error) {
+  appLogger.error('Error initializing admin routes', { 
+    error: error instanceof Error ? error.message : String(error) 
+  });
+}
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
