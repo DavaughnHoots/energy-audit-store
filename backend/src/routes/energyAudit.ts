@@ -275,6 +275,7 @@ router.get('/:id/report-data', optionalTokenValidation, async (req: Authenticate
   const auditId = req.params.id;
   let audit: any = null;
   let recommendations: any[] = [];
+  let transformedAudit: Partial<EnergyAuditData> = {};
 
   try {
     // Validate audit ID
@@ -300,21 +301,32 @@ router.get('/:id/report-data', optionalTokenValidation, async (req: Authenticate
     recommendations = await energyAuditService.getRecommendations(auditId);
     
     // Transform the audit data to match the expected format for ReportGenerationService
-    const transformedAudit = {
-      basicInfo: typeof audit.basic_info === 'string' ? JSON.parse(audit.basic_info) : audit.basic_info,
-      homeDetails: typeof audit.home_details === 'string' ? JSON.parse(audit.home_details) : audit.home_details,
-      currentConditions: typeof audit.current_conditions === 'string' ? JSON.parse(audit.current_conditions) : audit.current_conditions,
-      heatingCooling: typeof audit.heating_cooling === 'string' ? JSON.parse(audit.heating_cooling) : audit.heating_cooling,
-      energyConsumption: typeof audit.energy_consumption === 'string' ? JSON.parse(audit.energy_consumption) : audit.energy_consumption,
-      productPreferences: typeof audit.product_preferences === 'string' ? JSON.parse(audit.product_preferences) : audit.product_preferences
-    };
+    // ENHANCED: Safe transformation with defaults for missing data
+    try {
+      transformedAudit = safelyTransformAuditData(audit);
+      
+      // Additional validation
+      if (!transformedAudit.basicInfo || !transformedAudit.homeDetails) {
+        throw new Error('Missing basic information or home details');
+      }
+      
+      appLogger.debug('Transformed audit data for report data generation:', createLogMetadata(req, {
+        originalKeys: Object.keys(audit),
+        transformedKeys: Object.keys(transformedAudit),
+        hasProductPreferences: !!audit.product_preferences,
+        productPreferencesType: audit.product_preferences ? typeof audit.product_preferences : 'undefined'
+      }));
+    } catch (error) {
+      const transformError = error as Error;
+      appLogger.error('Error transforming audit data for report data:', createLogMetadata(req, {
+        error: transformError,
+        auditId: auditId,
+        auditKeys: audit ? Object.keys(audit) : []
+      }));
+      throw new Error(`Invalid audit data structure: ${transformError.message}`);
+    }
     
-    appLogger.debug('Transformed audit data for report data generation:', createLogMetadata(req, {
-      originalKeys: Object.keys(audit),
-      transformedKeys: Object.keys(transformedAudit)
-    }));
-    
-    const reportData: ReportData = await reportGenerationService.prepareReportData(transformedAudit, recommendations);
+    const reportData: ReportData = await reportGenerationService.prepareReportData(transformedAudit as EnergyAuditData, recommendations);
 
     res.json(reportData);
 
@@ -343,12 +355,96 @@ router.get('/:id/report-data', optionalTokenValidation, async (req: Authenticate
 });
 
 // Generate PDF report
+/**
+ * Enhanced function to safely transform audit data from database format (snake_case)
+ * to the expected EnergyAuditData format (camelCase) with proper defaults
+ */
+function safelyTransformAuditData(audit: any): EnergyAuditData {
+  if (!audit) {
+    throw new Error('Cannot transform null or undefined audit data');
+  }
+  
+  // Create a deep copy to avoid modifying the original
+  const auditCopy = JSON.parse(JSON.stringify(audit));
+  
+  // Set up all required sections with defaults if needed
+  const transformedAudit: EnergyAuditData = {
+    basicInfo: typeof auditCopy.basic_info === 'string' 
+      ? JSON.parse(auditCopy.basic_info) 
+      : (auditCopy.basic_info || {}),
+      
+    homeDetails: typeof auditCopy.home_details === 'string' 
+      ? JSON.parse(auditCopy.home_details) 
+      : (auditCopy.home_details || {}),
+      
+    currentConditions: typeof auditCopy.current_conditions === 'string' 
+      ? JSON.parse(auditCopy.current_conditions) 
+      : (auditCopy.current_conditions || {}),
+      
+    heatingCooling: typeof auditCopy.heating_cooling === 'string' 
+      ? JSON.parse(auditCopy.heating_cooling) 
+      : (auditCopy.heating_cooling || {}),
+      
+    energyConsumption: typeof auditCopy.energy_consumption === 'string' 
+      ? JSON.parse(auditCopy.energy_consumption) 
+      : (auditCopy.energy_consumption || {})
+  };
+  
+  // Add product preferences if they exist
+  if (auditCopy.product_preferences) {
+    transformedAudit.productPreferences = typeof auditCopy.product_preferences === 'string'
+      ? JSON.parse(auditCopy.product_preferences)
+      : auditCopy.product_preferences;
+  }
+  
+  // Ensure required nested objects exist with reasonable defaults
+  if (!transformedAudit.currentConditions.insulation) {
+    transformedAudit.currentConditions.insulation = {
+      attic: 'unknown',
+      walls: 'unknown',
+      basement: 'unknown',
+      floor: 'unknown'
+    };
+  }
+  
+  // Ensure heating system exists
+  if (!transformedAudit.heatingCooling.heatingSystem) {
+    transformedAudit.heatingCooling.heatingSystem = {
+      type: 'unknown',
+      fuel: 'unknown',
+      fuelType: 'unknown',
+      age: 0,
+      efficiency: 0,
+      lastService: 'unknown'
+    };
+  }
+  
+  // Ensure cooling system exists
+  if (!transformedAudit.heatingCooling.coolingSystem) {
+    transformedAudit.heatingCooling.coolingSystem = {
+      type: 'unknown',
+      age: 0,
+      efficiency: 0
+    };
+  }
+  
+  // Log successful transformation
+  appLogger.debug('Transformed audit data successfully', {
+    originalKeys: Object.keys(audit),
+    transformedKeys: Object.keys(transformedAudit)
+  });
+  
+  return transformedAudit;
+}
+
+// Generate PDF report [ENHANCED with better data validation]
 router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter], async (req: AuthenticatedRequest, res: Response) => {
   // Define variables outside try/catch for error logging
   const userId = req.user?.id;
   const auditId = req.params.id;
   let audit: any = null;
   let recommendations: any[] = [];
+  let transformedAudit: EnergyAuditData;
 
   try {
     // No longer requiring authentication for report generation
@@ -376,23 +472,40 @@ router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter],
 
     recommendations = await energyAuditService.getRecommendations(auditId);
     
-    // Transform the audit data to match the expected format for ReportGenerationService
-    const transformedAudit = {
-      basicInfo: typeof audit.basic_info === 'string' ? JSON.parse(audit.basic_info) : audit.basic_info,
-      homeDetails: typeof audit.home_details === 'string' ? JSON.parse(audit.home_details) : audit.home_details,
-      currentConditions: typeof audit.current_conditions === 'string' ? JSON.parse(audit.current_conditions) : audit.current_conditions,
-      heatingCooling: typeof audit.heating_cooling === 'string' ? JSON.parse(audit.heating_cooling) : audit.heating_cooling,
-      energyConsumption: typeof audit.energy_consumption === 'string' ? JSON.parse(audit.energy_consumption) : audit.energy_consumption,
-      productPreferences: typeof audit.product_preferences === 'string' ? JSON.parse(audit.product_preferences) : audit.product_preferences
-    };
+    // Use the enhanced transformation function to ensure all required data is present
+    try {
+      transformedAudit = safelyTransformAuditData(audit);
+      
+      // Additional validation
+      if (!transformedAudit.basicInfo || !transformedAudit.homeDetails) {
+        throw new Error('Missing basic information or home details');
+      }
+      
+      // Log the transformed audit structure for debugging
+      appLogger.debug('Audit data structure for report generation:', createLogMetadata(req, {
+        auditId: auditId,
+        transformedStructure: {
+          basicInfoKeys: Object.keys(transformedAudit.basicInfo),
+          homeDetailsKeys: Object.keys(transformedAudit.homeDetails),
+          currentConditionsKeys: Object.keys(transformedAudit.currentConditions),
+          heatingCoolingKeys: Object.keys(transformedAudit.heatingCooling),
+          energyConsumptionKeys: Object.keys(transformedAudit.energyConsumption)
+        }
+      }));
+    } catch (error) {
+      const transformError = error as Error;
+      appLogger.error('Error transforming audit data:', createLogMetadata(req, {
+        error: transformError,
+        auditId: auditId,
+        auditKeys: audit ? Object.keys(audit) : []
+      }));
+      throw new Error(`Invalid audit data structure: ${transformError.message}`);
+    }
     
-    appLogger.debug('Transformed audit data for report generation:', createLogMetadata(req, {
-      originalKeys: Object.keys(audit),
-      transformedKeys: Object.keys(transformedAudit)
-    }));
-    
+    // Generate the PDF report
     const report = await reportGenerationService.generateReport(transformedAudit, recommendations);
 
+    // Send the PDF as a download
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=energy-audit-report-${auditId}.pdf`);
     res.send(report);
@@ -408,7 +521,6 @@ router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter],
       } : String(error),
       auditId: auditId,
       userId: userId,
-      recommendationsCount: recommendations ? recommendations.length : 0,
       auditDataKeys: audit ? Object.keys(audit) : []
     }));
     
