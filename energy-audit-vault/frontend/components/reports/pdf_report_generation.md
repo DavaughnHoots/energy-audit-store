@@ -1,9 +1,9 @@
 ---
 title: "PDF Report Generation"
 type: "Component Documentation"
-path: "backend/src/services/ReportGenerationService.ts"
-description: "Documentation for the PDF report generation functionality"
-tags: [reports, pdf, export, documentation]
+path: "backend/src/routes/energyAudit.ts"
+description: "PDF Report Generation process for energy audits"
+tags: [reports, pdf, download, data]
 status: "up-to-date"
 last_verified: "2025-04-02"
 ---
@@ -12,121 +12,98 @@ last_verified: "2025-04-02"
 
 ## Overview
 
-The PDF Report Generation feature allows users to export their energy audit data and recommendations as a professionally formatted PDF document. This provides a portable, shareable version of their audit results that can be saved, printed, or sent to contractors/service providers.
+The PDF report generation system creates downloadable PDF reports containing energy audit results, recommendations, savings information, and graphical visualizations for users. These reports can be downloaded by both authenticated and anonymous users.
 
-## Architecture
+## Key Features
 
-The PDF generation process follows these steps:
+- Dynamic generation of PDF reports from audit data
+- Comprehensive charts and visualizations
+- Consistent data between interactive dashboard and PDF reports
+- Proper handling of missing or incomplete data fields
+- Support for anonymous downloads (no login required)
 
-1. The user initiates PDF generation from the Reports tab in the Dashboard
-2. The frontend sends a request to the backend API endpoint
-3. The backend retrieves the audit data and recommendations
-4. The `ReportGenerationService` transforms the data into a structured PDF document
-5. The PDF is returned to the user for download
+## Implementation Details
 
-## Key Components
-
-### Backend Service
-
-- **ReportGenerationService**: Main service that handles PDF generation
-  - Located at `backend/src/services/ReportGenerationService.ts`
-  - Uses PDFKit and Canvas/ChartJS for PDF creation and chart generation
-  - Implements error handling and logging
-
-### API Routes
-
-- **Energy Audit Routes**: Contains the endpoint that triggers PDF generation
-  - Located at `backend/src/routes/energyAudit.ts`
-  - Handles the GET request to `/:auditId/report`
-
-### Frontend Components
-
-- **ReportsTab**: UI component that contains the "Download PDF" button
-  - Located at `src/components/dashboard/ReportsTab.tsx`
-  - Uses the report service to make the API request
-
-## Data Flow
+### Data Flow
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant Backend
-    participant ReportGenerationService
-    participant Database
-
-    User->>Frontend: Clicks "Download PDF" button
-    Frontend->>Backend: GET /api/energy-audit/:auditId/report
-    Backend->>Database: Retrieve audit data and recommendations
-    Database-->>Backend: Return data
-    Backend->>ReportGenerationService: Generate PDF
-    ReportGenerationService-->>Backend: Return PDF buffer
-    Backend-->>Frontend: Return PDF file
-    Frontend-->>User: Download PDF
+graph TD
+    A[User requests PDF] --> B[Fetch Audit Data]
+    B --> C[Fetch Recommendations]
+    C --> D[Transform using ReportDataService]
+    D --> E[Generate ReportData]
+    E --> F[Convert to PDF format]
+    F --> G[Generate PDF with charts]
+    G --> H[Send PDF to user]
 ```
 
-## Field Naming Conventions
+### Key Components
 
-To ensure compatibility between database records (snake_case) and JavaScript objects (camelCase), the service implements robust handling of both naming conventions:
+1. **Route Handler**: `/api/energy-audit/:id/report` endpoint in `energyAudit.ts`
+2. **Data Service**: `ReportDataService` for consistent data transformation
+3. **PDF Generator**: `ReportGenerationService.generateReport` method
+4. **Data Transformation**: Converts dashboard format to PDF format
+
+### Data Consistency Implementation
+
+The system ensures consistency between interactive dashboard data and PDF reports through:
+
+- **Unified Data Source**: Both the interactive dashboard and PDF reports use the same `ReportDataService`
+- **Common Data Structure**: The `ReportData` interface serves as the common format
+- **Standardized Calculations**: Financial calculations use the same utility functions
+- **Field Mapping**: Careful mapping between dashboard fields and PDF fields
+
+### Error Handling
+
+- Comprehensive validation of audit data before processing
+- Default values for missing or incomplete data
+- Detailed error logging with context information
+- User-friendly error messages based on environment
+
+## Dependencies / Imports
+
+- `ReportGenerationService` - Handles the PDF generation process
+- `ReportDataService` - Normalizes audit data for consistent processing
+- `PDFKit` - PDF document generation library
+- `Chart.js` - Chart generation for visualizations
+- `Canvas` - Required for server-side chart rendering
+
+## Usage Examples
 
 ```typescript
-// Example of field access with dual convention support
-const productPreferences = auditData.productPreferences || 
-                          (auditData as any).product_preferences;
+// Route implementation
+router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter], 
+  async (req: AuthenticatedRequest, res: Response) => {
+    // Validation and data fetching
+    const auditId = req.params.id;
+    const audit = await energyAuditService.getAuditById(auditId);
+    const recommendations = await energyAuditService.getRecommendations(auditId);
+    
+    // Use common data service for consistent results
+    const reportData = await reportDataService.generateReportData(audit, recommendations);
+    
+    // Convert to format needed for PDF generation
+    const transformedAudit = convertToPdfFormat(reportData);
+    
+    // Generate PDF
+    const report = await reportGenerationService.generateReport(transformedAudit, recommendations);
+    
+    // Send to client
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(report);
+});
 ```
 
-Refer to the [[field_naming_conventions]] document for more details on this approach.
+## Notes and To-Do
 
-## PDF Content Sections
+- Future improvement: Refactor PDF generator to accept ReportData directly
+- Consider adding customization options (e.g., including/excluding sections)
+- Potential performance optimization for large reports by adding caching
 
-The generated PDF includes the following sections:
+## Related Files
 
-1. **Header & Metadata**: Report title, date, ID
-2. **Executive Summary**: Key metrics and findings
-3. **Property Information**: Details about the audited property
-4. **Current Conditions**: Summary of existing energy systems
-5. **HVAC System Details**: Heating and cooling system information
-6. **Energy Consumption**: Usage data and patterns
-7. **Energy Breakdown Chart**: Visual representation of energy sources
-8. **Energy Consumption Analysis**: Detailed breakdown of usage factors
-9. **Efficiency Metrics Analysis**: Radar chart of efficiency metrics
-10. **HVAC Performance Analysis**: Comparison with target values
-11. **Lighting Assessment** (if data available): Bulb types and patterns
-12. **Recommendations**: Prioritized list of energy-saving measures
-13. **Savings Analysis**: Charts comparing estimated vs. actual savings
-14. **Product Recommendations** (if preferences available): Suggested products
-15. **Summary**: Total potential savings and implementation status
-
-## Error Handling
-
-The service implements comprehensive error handling to deal with:
-
-- Missing or invalid audit data
-- Various field naming conventions (camelCase vs snake_case)
-- Data type issues (null, undefined, NaN values)
-- Chart generation failures
-
-Each major section is wrapped in try/catch blocks to ensure that failures in one section don't prevent the entire report from generating.
-
-## Testing
-
-The PDF generation can be tested using the test script:
-
-```bash
-node test-pdf-generation.mjs
-```
-
-This script generates sample PDFs with different data scenarios to ensure the service can handle:
-
-1. Complete data
-2. Incomplete data
-3. Edge case data
-4. Problematic data (null/undefined values)
-5. Zero recommendations
-
-## Related Documentation
-
-- [[report_data_flow]]: Overview of data flow for reports
-- [[field_naming_conventions]]: Guidelines for field naming consistency
-- [[enhanced_report_recommendations]]: Documentation for recommendation display
-- [[report_charts]]: Details about chart generation in reports
+- [[frontend/components/reports/enhanced_report_recommendations]]
+- [[frontend/components/reports/report_charts]]
+- [[frontend/components/reports/report_summary_data_validation]]
+- [[data_flows/report_data_flow]]
+- [[backend/services/report_generation_service]]
