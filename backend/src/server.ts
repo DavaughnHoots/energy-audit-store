@@ -43,7 +43,19 @@ import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import { runEnergyConsumptionMigration } from './scripts/run_energy_consumption_migration.js';
 import { runEducationMigration } from './scripts/run_education_migration.js';
-import { runAnalyticsMigration } from './scripts/run_analytics_migration.js';
+// Import analytics migration conditionally to avoid errors if file is missing
+let runAnalyticsMigration: any;
+try {
+  // The script imports the function from migrations
+  const { runAnalyticsMigration: migrationFunc } = await import('./migrations/20250402_add_analytics_tables.js');
+  runAnalyticsMigration = migrationFunc;
+} catch (error: any) {
+  console.error('Could not load analytics migration:', error?.message || 'Unknown error');
+  runAnalyticsMigration = async () => {
+    appLogger.warn('Analytics migration skipped - migration script not found');
+    return { success: false, reason: 'Migration script not found' };
+  };
+}
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 
@@ -89,14 +101,17 @@ if (process.env.NODE_ENV === 'production') {
       appLogger.error('Error running search migration on startup', { error });
     });
     
-  // Run analytics migration
-  runAnalyticsMigration()
-    .then(result => {
+// Run analytics migration if available
+  if (runAnalyticsMigration) {
+    try {
+      const result = await runAnalyticsMigration();
       appLogger.info('Analytics migration completed on startup', { result });
-    })
-    .catch(error => {
-      appLogger.error('Error running analytics migration on startup', { error });
-    });
+    } catch (error) {
+      appLogger.error('Error running analytics migration on startup', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  }
     
   // Run energy consumption migration
   runEnergyConsumptionMigration()
