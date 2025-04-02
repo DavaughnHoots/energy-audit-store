@@ -24,13 +24,13 @@ export default defineConfig({
     // Disable type checking during build
     target: 'esnext',
     rollupOptions: {
-      external: [
-        'aws-sdk',
-        'mock-aws-s3',
-        'nock',
-        '@mapbox/node-pre-gyp',
-        'axios',
-      ],
+    external: [
+      'aws-sdk',
+      'mock-aws-s3',
+      'nock',
+      '@mapbox/node-pre-gyp',
+      // 'axios' removed from external to fix module resolution issues
+    ],
     },
     minify: true,
     sourcemap: false,

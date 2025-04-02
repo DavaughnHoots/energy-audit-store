@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { AnalyticsEventType } from '../types/analytics';
-import axios from 'axios';
+import * as axiosModule from 'axios';
+const axios = axiosModule.default || axiosModule;
 import { API_BASE_URL } from '../config/api';
 
 // Create API instance with axios

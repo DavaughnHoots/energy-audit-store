@@ -2,7 +2,8 @@
  * Analytics Service to handle storage and processing of pilot study analytics data
  */
 
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { v4 as uuidv4 } from 'uuid';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
 
@@ -18,9 +19,9 @@ import {
 } from '../types/analytics.js';
 
 class AnalyticsService {
-  private pool: Pool;
+  private pool: typeof Pool;
 
-  constructor(pool: Pool) {
+  constructor(pool: typeof Pool) {
     this.pool = pool;
   }
 
@@ -311,11 +312,11 @@ class AnalyticsService {
           totalSessions: parseInt(sessionsResult.rows[0]?.total_sessions || '0'),
           avgSessionDuration: Math.round(parseFloat(sessionsResult.rows[0]?.avg_duration || '0')),
           formCompletions: parseInt(formCompletionsResult.rows[0]?.completions || '0'),
-          pageViewsByArea: pageViewsResult.rows.map(row => ({
+          pageViewsByArea: pageViewsResult.rows.map((row: { area: string, count: number }) => ({
             area: row.area,
             count: row.count
           })),
-          featureUsage: featureUsageResult.rows.map(row => ({
+          featureUsage: featureUsageResult.rows.map((row: { feature: string, count: number }) => ({
             feature: row.feature,
             count: row.count
           }))

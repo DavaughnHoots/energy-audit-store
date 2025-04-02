@@ -1,10 +1,13 @@
-const fs = require('fs');
-const path = require('path');
-const { 
-  reportGenerationService
-} = require('./backend/src/services/report-generation/index.js');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-// __dirname is already available in CommonJS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Use dynamic import for ESM modules
+let reportGenerationService;
 
 // Define mock data scenarios
 const mockScenarios = [
@@ -639,7 +642,20 @@ async function generateTestPDFs() {
   console.log('PDF generation complete!');
 }
 
-// Run the generator
-generateTestPDFs()
-  .then(() => console.log('All done!'))
-  .catch(err => console.error('Fatal error:', err));
+// Initialize and run the generator
+async function main() {
+  try {
+    // Load the report generation service dynamically
+    const module = await import('./backend/build/services/ReportGenerationService.js');
+    reportGenerationService = module.reportGenerationService;
+    
+    // Run the generator
+    await generateTestPDFs();
+    console.log('All done!');
+  } catch (err) {
+    console.error('Fatal error:', err);
+  }
+}
+
+// Execute the main function
+main();
