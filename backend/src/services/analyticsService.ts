@@ -439,86 +439,221 @@ export class AnalyticsService {
    * Get analytics metrics for pilot study dashboard
    */
   async getMetrics(request: GetMetricsRequest): Promise<GetMetricsResponse> {
-    appLogger.info('Getting analytics metrics', createLogMetadata(undefined, {
-      startDate: request.startDate,
-      endDate: request.endDate,
-      filters: request.filters || 'none'
+    // Log the raw request for debugging
+    appLogger.info('Getting analytics metrics raw request', createLogMetadata(undefined, {
+      rawRequest: request
     }));
+
     try {
       const { startDate, endDate, filters } = request;
-      const dateStart = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default to last 30 days
-      const dateEnd = endDate ? new Date(endDate) : new Date();
       
-      // Query for total sessions
-      const sessionsQuery = `
-        SELECT COUNT(*) as total_sessions,
-               AVG(COALESCE(duration, 0)) as avg_duration
-        FROM analytics_sessions
-        WHERE start_time BETWEEN $1 AND $2
-      `;
+      // Ensure we have valid dates - additional safety checks
+      let dateStart, dateEnd;
+      try {
+        // Use a default if no startDate or if it's invalid
+        if (!startDate || startDate.trim() === '') {
+          const defaultDate = new Date();
+          defaultDate.setDate(defaultDate.getDate() - 30); // Default to last 30 days
+          dateStart = defaultDate;
+          appLogger.info('Using default start date', createLogMetadata(undefined, {
+            defaultDate: dateStart.toISOString()
+          }));
+        } else {
+          dateStart = new Date(startDate);
+          // Check if valid date
+          if (isNaN(dateStart.getTime())) {
+            const defaultDate = new Date();
+            defaultDate.setDate(defaultDate.getDate() - 30);
+            dateStart = defaultDate;
+            appLogger.warn('Invalid start date provided, using default', createLogMetadata(undefined, {
+              providedStartDate: startDate,
+              defaultDate: dateStart.toISOString()
+            }));
+          }
+        }
+
+        // Use a default if no endDate or if it's invalid
+        if (!endDate || endDate.trim() === '') {
+          dateEnd = new Date();
+          appLogger.info('Using default end date', createLogMetadata(undefined, {
+            defaultDate: dateEnd.toISOString()
+          }));
+        } else {
+          dateEnd = new Date(endDate);
+          // Check if valid date
+          if (isNaN(dateEnd.getTime())) {
+            dateEnd = new Date();
+            appLogger.warn('Invalid end date provided, using default', createLogMetadata(undefined, {
+              providedEndDate: endDate,
+              defaultDate: dateEnd.toISOString()
+            }));
+          }
+        }
+      } catch (dateError) {
+        // If any date parsing error occurs, use defaults
+        appLogger.error('Error parsing dates, using defaults', createLogMetadata(undefined, {
+          error: dateError,
+          startDate,
+          endDate
+        }));
+        const defaultStart = new Date();
+        defaultStart.setDate(defaultStart.getDate() - 30);
+        dateStart = defaultStart;
+        dateEnd = new Date();
+      }
+
+      // Log the parsed dates
+      appLogger.info('Using date range for metrics', createLogMetadata(undefined, {
+        dateStart: dateStart.toISOString(),
+        dateEnd: dateEnd.toISOString()
+      }));
       
-      const sessionsResult = await this.pool.query(sessionsQuery, [dateStart, dateEnd]);
+      let totalSessions = 0;
+      let avgSessionDuration = 0;
+      let formCompletions = 0;
+      let pageViewsByArea = [];
+      let featureUsage = [];
+
+      // Run each query separately with individual try/catch to prevent one failure from breaking everything
+      try {
+        // Query for total sessions
+        const sessionsQuery = `
+          SELECT COUNT(*) as total_sessions,
+                 AVG(COALESCE(duration, 0)) as avg_duration
+          FROM analytics_sessions
+          WHERE start_time BETWEEN $1 AND $2
+        `;
+        
+        const sessionsResult = await this.pool.query(sessionsQuery, [dateStart, dateEnd]);
+        totalSessions = parseInt(sessionsResult.rows[0]?.total_sessions || '0');
+        avgSessionDuration = Math.round(parseFloat(sessionsResult.rows[0]?.avg_duration || '0'));
+        
+        appLogger.info('Sessions query result', createLogMetadata(undefined, {
+          totalSessions,
+          avgSessionDuration,
+          rawResult: sessionsResult.rows[0]
+        }));
+      } catch (sessionsError) {
+        appLogger.error('Error in sessions query', createLogMetadata(undefined, {
+          error: sessionsError instanceof Error ? sessionsError.message : 'Unknown error',
+          stack: sessionsError instanceof Error ? sessionsError.stack : ''
+        }));
+      }
       
-      // Query for form completions
-      const formCompletionsQuery = `
-        SELECT COUNT(*) as completions
-        FROM analytics_events
-        WHERE event_type = 'form_interaction'
-        AND (data->>'action' = 'submit' OR data->>'action' = 'completion')
-        AND timestamp BETWEEN $1 AND $2
-      `;
+      try {
+        // Query for form completions
+        const formCompletionsQuery = `
+          SELECT COUNT(*) as completions
+          FROM analytics_events
+          WHERE event_type = 'form_interaction'
+          AND (data->>'action' = 'submit' OR data->>'action' = 'completion')
+          AND timestamp BETWEEN $1 AND $2
+        `;
+        
+        const formCompletionsResult = await this.pool.query(formCompletionsQuery, [dateStart, dateEnd]);
+        formCompletions = parseInt(formCompletionsResult.rows[0]?.completions || '0');
+
+        appLogger.info('Form completions query result', createLogMetadata(undefined, { 
+          formCompletions,
+          rawResult: formCompletionsResult.rows[0]
+        }));
+      } catch (formError) {
+        appLogger.error('Error in form completions query', createLogMetadata(undefined, {
+          error: formError instanceof Error ? formError.message : 'Unknown error',
+          stack: formError instanceof Error ? formError.stack : ''
+        }));
+      }
       
-      const formCompletionsResult = await this.pool.query(formCompletionsQuery, [dateStart, dateEnd]);
+      try {
+        // Query for page views by area
+        const pageViewsQuery = `
+          SELECT area, COUNT(*) as count
+          FROM analytics_events
+          WHERE event_type = 'page_view'
+          AND timestamp BETWEEN $1 AND $2
+          GROUP BY area
+          ORDER BY count DESC
+          LIMIT 10
+        `;
+        
+        const pageViewsResult = await this.pool.query(pageViewsQuery, [dateStart, dateEnd]);
+        pageViewsByArea = pageViewsResult.rows.map((row: any) => ({
+          area: row.area,
+          count: parseInt(row.count)
+        }));
+
+        appLogger.info('Page views query result', createLogMetadata(undefined, { 
+          pageViewsCount: pageViewsByArea.length,
+          rawResult: pageViewsResult.rows
+        }));
+      } catch (pageViewsError) {
+        appLogger.error('Error in page views query', createLogMetadata(undefined, {
+          error: pageViewsError instanceof Error ? pageViewsError.message : 'Unknown error',
+          stack: pageViewsError instanceof Error ? pageViewsError.stack : ''
+        }));
+      }
       
-      // Query for page views by area
-      const pageViewsQuery = `
-        SELECT area, COUNT(*) as count
-        FROM analytics_events
-        WHERE event_type = 'page_view'
-        AND timestamp BETWEEN $1 AND $2
-        GROUP BY area
-        ORDER BY count DESC
-        LIMIT 10
-      `;
+      try {
+        // Query for feature usage
+        const featureUsageQuery = `
+          SELECT data->>'featureId' as feature, COUNT(*) as count
+          FROM analytics_events
+          WHERE event_type = 'feature_usage'
+          AND timestamp BETWEEN $1 AND $2
+          GROUP BY data->>'featureId'
+          ORDER BY count DESC
+          LIMIT 10
+        `;
+        
+        const featureUsageResult = await this.pool.query(featureUsageQuery, [dateStart, dateEnd]);
+        featureUsage = featureUsageResult.rows.map((row: any) => ({
+          feature: row.feature,
+          count: parseInt(row.count)
+        }));
+
+        appLogger.info('Feature usage query result', createLogMetadata(undefined, { 
+          featureUsageCount: featureUsage.length,
+          rawResult: featureUsageResult.rows
+        }));
+      } catch (featureUsageError) {
+        appLogger.error('Error in feature usage query', createLogMetadata(undefined, {
+          error: featureUsageError instanceof Error ? featureUsageError.message : 'Unknown error',
+          stack: featureUsageError instanceof Error ? featureUsageError.stack : ''
+        }));
+      }
       
-      const pageViewsResult = await this.pool.query(pageViewsQuery, [dateStart, dateEnd]);
-      
-      // Query for feature usage
-      const featureUsageQuery = `
-        SELECT data->>'featureId' as feature, COUNT(*) as count
-        FROM analytics_events
-        WHERE event_type = 'feature_usage'
-        AND timestamp BETWEEN $1 AND $2
-        GROUP BY data->>'featureId'
-        ORDER BY count DESC
-        LIMIT 10
-      `;
-      
-      const featureUsageResult = await this.pool.query(featureUsageQuery, [dateStart, dateEnd]);
-      
-      return {
+      // All queries are complete (successful or not)
+      // Construct the response with whatever data we have
+      const response = {
         success: true,
         metrics: {
-          totalSessions: parseInt(sessionsResult.rows[0]?.total_sessions || '0'),
-          avgSessionDuration: Math.round(parseFloat(sessionsResult.rows[0]?.avg_duration || '0')),
-          formCompletions: parseInt(formCompletionsResult.rows[0]?.completions || '0'),
-          pageViewsByArea: pageViewsResult.rows.map((row: any) => ({
-            area: row.area,
-            count: row.count
-          })),
-          featureUsage: featureUsageResult.rows.map((row: any) => ({
-            feature: row.feature,
-            count: row.count
-          }))
+          totalSessions,
+          avgSessionDuration,
+          formCompletions,
+          pageViewsByArea,
+          featureUsage
         },
         dateRange: {
           startDate: dateStart.toISOString(),
           endDate: dateEnd.toISOString()
         }
       };
+
+      appLogger.info('Analytics metrics response', createLogMetadata(undefined, {
+        response
+      }));
+
+      return response;
     } catch (error) {
-      appLogger.error('Error getting analytics metrics', createLogMetadata(undefined, {
-        error
+      // Catch any other unexpected errors
+      appLogger.error('Unexpected error getting analytics metrics', createLogMetadata(undefined, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : '',
+        requestData: {
+          startDate: request.startDate,
+          endDate: request.endDate,
+          filters: request.filters || 'none'
+        }
       }));
       
       return {
