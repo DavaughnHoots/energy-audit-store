@@ -39,39 +39,114 @@ router.get('/analytics/metrics', requireAdmin, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     
-    // Add logging to check the input parameters
-    console.log('Admin metrics request:', {
-      startDate,
-      endDate,
-      query: req.query
+    // Enhanced logging of request parameters
+    console.log('Admin metrics request received:', {
+      startDate: typeof startDate === 'string' ? startDate : 'null or undefined',
+      endDate: typeof endDate === 'string' ? endDate : 'null or undefined',
+      queryParams: JSON.stringify(req.query)
     });
     
-    // Handle empty string date params which can cause date parsing issues
-    const sanitizedStartDate = startDate && (startDate as string).trim() ? startDate as string : null;
-    const sanitizedEndDate = endDate && (endDate as string).trim() ? endDate as string : null;
+    // Enhanced santization logic
+    let sanitizedStartDate: string | null = null;
+    let sanitizedEndDate: string | null = null;
     
-    // Handle date validation with explicit defaults
+    // Process start date
+    if (startDate && typeof startDate === 'string' && startDate.trim()) {
+      try {
+        // Check if it's a valid date by attempting to parse it
+        const parsedDate = new Date(startDate);
+        if (!isNaN(parsedDate.getTime())) {
+          sanitizedStartDate = startDate.trim();
+          console.log(`Valid start date: ${sanitizedStartDate}`);
+        } else {
+          console.log(`Invalid start date format: ${startDate}`);
+        }
+      } catch (error) {
+        console.error(`Error parsing start date: ${startDate}`, error);
+      }
+    } else {
+      console.log('Start date is empty, null, or undefined');
+    }
+    
+    // Process end date
+    if (endDate && typeof endDate === 'string' && endDate.trim()) {
+      try {
+        // Check if it's a valid date by attempting to parse it
+        const parsedDate = new Date(endDate);
+        if (!isNaN(parsedDate.getTime())) {
+          sanitizedEndDate = endDate.trim();
+          console.log(`Valid end date: ${sanitizedEndDate}`);
+        } else {
+          console.log(`Invalid end date format: ${endDate}`);
+        }
+      } catch (error) {
+        console.error(`Error parsing end date: ${endDate}`, error);
+      }
+    } else {
+      console.log('End date is empty, null, or undefined');
+    }
+    
+    // Create default dates
     const defaultStartDate = new Date();
     defaultStartDate.setDate(defaultStartDate.getDate() - 30); // Default to 30 days ago
+    const defaultEndDate = new Date();
     
-    const result = await analyticsService.getMetrics({
-      startDate: sanitizedStartDate || defaultStartDate.toISOString(),
-      endDate: sanitizedEndDate || new Date().toISOString(),
-      filters: undefined
+    // Ensure we have valid dates (either from input or defaults)
+    const startDateValue = sanitizedStartDate || defaultStartDate.toISOString();
+    const endDateValue = sanitizedEndDate || defaultEndDate.toISOString();
+    
+    console.log('Using dates for analytics query:', {
+      startDate: startDateValue,
+      endDate: endDateValue,
+      usingDefaults: {
+        startDate: !sanitizedStartDate,
+        endDate: !sanitizedEndDate
+      }
     });
     
-    return res.json(result);
+    // Call the analytics service with the processed dates
+    try {
+      const result = await analyticsService.getMetrics({
+        startDate: startDateValue,
+        endDate: endDateValue,
+        filters: undefined
+      });
+      
+      console.log('Analytics metrics fetched successfully');
+      return res.json(result);
+    } catch (metricsError) {
+      console.error('Error in analytics service getMetrics call:', metricsError);
+      
+      // Detailed error logging
+      if (metricsError instanceof Error) {
+        console.error('Error details:', {
+          name: metricsError.name,
+          message: metricsError.message,
+          stack: metricsError.stack
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Error retrieving analytics metrics from service',
+        error: metricsError instanceof Error ? metricsError.message : 'Unknown metrics service error'
+      });
+    }
   } catch (error) {
-    console.error('Error getting admin analytics metrics', error);
+    console.error('Unhandled error in admin analytics metrics endpoint', error);
     
     // Log more details about the error
     if (error instanceof Error) {
-      console.error('Error details:', error.message, error.stack);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
     }
     
     return res.status(500).json({ 
       success: false, 
-      message: 'Error retrieving analytics metrics',
+      message: 'Error processing analytics metrics request',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

@@ -305,17 +305,40 @@ app.use('/api/admin', adminRoutes);
 
 // Initialize admin routes with analytics service
 try {
-  // Import the analytics service to use for admin routes
-  const { default: AnalyticsService } = await import('./services/analyticsService.js');
+  // Import the pool and analytics service
   const { pool } = await import('./config/database.js');
   
+  appLogger.info('Importing analytics service for admin routes');
+  
+  // Create a direct reference to the AnalyticsService class
+  // This is necessary because there's a case sensitivity issue between analyticsService.ts and AnalyticsService.ts
+  const { AnalyticsService } = await import('./services/analyticsService.js');
+  
+  if (!AnalyticsService) {
+    throw new Error('AnalyticsService class not found in import');
+  }
+  
   // Initialize admin routes with the analytics service
-  initAdminRoutes(new AnalyticsService(pool));
+  const analyticsService = new AnalyticsService(pool);
+  
+  // Add extra logging to help debug initialization issues
+  appLogger.info('Analytics service created successfully', {
+    serviceType: typeof analyticsService,
+    hasGetMetrics: typeof analyticsService.getMetrics === 'function'
+  });
+  
+  initAdminRoutes(analyticsService);
   appLogger.info('Admin routes initialized successfully');
 } catch (error) {
-  appLogger.error('Error initializing admin routes', { 
-    error: error instanceof Error ? error.message : String(error) 
+  // Log the full error details to help with debugging
+  appLogger.error('Failed to initialize admin routes with analytics service', { 
+    errorType: error?.constructor?.name,
+    errorMessage: error instanceof Error ? error.message : String(error),
+    errorStack: error instanceof Error ? error.stack : undefined
   });
+  
+  // Continue without analytics service - this will cause admin routes to fail gracefully
+  appLogger.warn('Admin dashboard analytics will not be available');
 }
 
 // Health check endpoint
