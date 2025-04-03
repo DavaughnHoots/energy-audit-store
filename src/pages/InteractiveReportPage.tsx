@@ -20,8 +20,12 @@ import ReportCharts from '../components/reports/ReportCharts';
 import ReportSummary from '../components/reports/ReportSummary';
 
 const InteractiveReportPage: React.FC = () => {
-  const { auditId } = useParams<{ auditId: string }>();
+  const { auditId: urlAuditId } = useParams<{ auditId: string }>();
   const navigate = useNavigate();
+  
+  // If there's no audit ID in the URL, check localStorage for anonymous users
+  const storedAuditId = localStorage.getItem('anonymous_audit_id');
+  const auditId = urlAuditId || storedAuditId;
   
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);

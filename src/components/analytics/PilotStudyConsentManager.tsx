@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAnalytics } from '../../context/AnalyticsContext';
-import AnalyticsConsentModal from '../common/AnalyticsConsentModal';
 
 /**
  * Component responsible for managing analytics consent for the pilot study
- * Determines when to show the consent modal based on user status and consent state
+ * For pilot study, we automatically grant consent without showing a modal
+ * Users are informed via the site-wide banner instead
  */
 const PilotStudyConsentManager: React.FC = () => {
-  const { consentStatus } = useAnalytics();
-  const [showConsentModal, setShowConsentModal] = useState(false);
+  const { consentStatus, updateConsent } = useAnalytics();
   
-  // Check if user should be prompted for consent
+  // Auto-grant consent without showing modal
   useEffect(() => {
     const isPilotStudy = process.env.REACT_APP_PILOT_STUDY === 'true';
     const hasSeenConsentPrompt = localStorage.getItem('pilot_study_consent_prompted');
@@ -18,36 +17,23 @@ const PilotStudyConsentManager: React.FC = () => {
     // Force pilot study mode to true for the pilot study phase
     const forcePilotMode = true;
     
-    // Only show consent modal if:
+    // Auto-grant consent if:
     // 1. This is the pilot study environment
-    // 2. The user hasn't been asked for consent yet or previously denied
-    // 3. Show for both logged-in and anonymous users during the pilot study
+    // 2. The user hasn't been asked for consent yet
     if (
       (isPilotStudy || forcePilotMode) &&
       consentStatus === 'not_asked' &&
       !hasSeenConsentPrompt
     ) {
-      // Small delay to avoid showing modal immediately on load
-      const timer = setTimeout(() => {
-        setShowConsentModal(true);
-        localStorage.setItem('pilot_study_consent_prompted', 'true');
-      }, 1000);
-      
-      return () => clearTimeout(timer);
+      // Automatically grant consent without showing the popup
+      updateConsent(true);
+      localStorage.setItem('pilot_study_consent_prompted', 'true');
+      console.log('Analytics consent automatically granted for pilot study');
     }
-  }, [consentStatus]);
+  }, [consentStatus, updateConsent]);
   
-  const handleModalClose = () => {
-    setShowConsentModal(false);
-  };
-  
-  return (
-    <AnalyticsConsentModal
-      isOpen={showConsentModal}
-      onClose={handleModalClose}
-      isPilotStudy={true}
-    />
-  );
+  // No UI rendered - consent is handled automatically
+  return null;
 };
 
 export default PilotStudyConsentManager;

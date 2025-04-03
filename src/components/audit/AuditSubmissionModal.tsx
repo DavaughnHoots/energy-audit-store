@@ -42,6 +42,19 @@ const AuditSubmissionModal: React.FC<AuditSubmissionModalProps> = ({
             Your audit has been saved and recommendations are ready.
           </p>
           
+          <Link
+            to={`/reports/${auditId}`}
+            className="inline-block w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 mb-4"
+            onClick={() => {
+              // Store audit ID in local storage for anonymous users
+              if (!isAuthenticated) {
+                localStorage.setItem('anonymous_audit_id', auditId);
+              }
+            }}
+          >
+            View Your Report
+          </Link>
+          
           {!isAuthenticated && (
             <div className="mb-6">
               <p className="text-sm text-gray-600 mb-4">
