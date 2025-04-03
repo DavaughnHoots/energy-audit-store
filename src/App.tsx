@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsErrorBoundary from './components/analytics/AnalyticsErrorBoundary';
 import PilotStudyConsentManager from './components/analytics/PilotStudyConsentManager';
 import PilotStudyBanner from './components/analytics/PilotStudyBanner';
+import AnalyticsDiagnosticTool from './components/analytics/AnalyticsDiagnosticTool';
 import AboutPilotStudyPage from './pages/AboutPilotStudyPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -146,6 +147,9 @@ const App: React.FC = () => {
             <AnalyticsProvider>
               {/* Analytics consent management */}
               <PilotStudyConsentManager />
+              
+              {/* Analytics diagnostic tool */}
+              <AnalyticsDiagnosticTool />
               
               {/* Global route tracker for analytics */}
               <RouteTracker />

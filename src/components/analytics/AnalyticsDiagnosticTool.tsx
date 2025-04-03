@@ -1,112 +1,204 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAnalytics } from '../../context/AnalyticsContext';
 import { AnalyticsEventType } from '../../types/analytics';
+import * as axiosModule from 'axios';
+const axios = axiosModule.default || axiosModule;
+import { API_BASE_URL } from '../../config/api';
 
 /**
- * A diagnostic tool to test analytics tracking functionality
- * This component is used for troubleshooting analytics issues
+ * A diagnostic tool to help troubleshoot analytics issues
  */
 const AnalyticsDiagnosticTool: React.FC = () => {
-  const { trackEvent, isTrackingEnabled, sessionId, consentStatus } = useAnalytics();
-  const [logMessages, setLogMessages] = useState<string[]>([]);
-  
-  // Function to add logs to the display
-  const addLog = (message: string) => {
-    setLogMessages(prev => [...prev, `[${new Date().toISOString()}] ${message}`]);
+  const { trackEvent, consentStatus, updateConsent, isTrackingEnabled, sessionId } = useAnalytics();
+  const [events, setEvents] = useState<any[]>([]);
+  const [localStorageEvents, setLocalStorageEvents] = useState<string>('');
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    // Check localStorage for events
+    const storedEvents = localStorage.getItem('energy_audit_event_queue');
+    if (storedEvents) {
+      setLocalStorageEvents(storedEvents);
+    }
+  }, [isOpen]);
+
+  const generateTestEvent = () => {
+    const eventType = AnalyticsEventType.FEATURE_USAGE;
+    const area = 'diagnostics';
+    const data = {
+      featureId: 'analytics_test',
+      testTime: new Date().toISOString(),
+      testId: Math.floor(Math.random() * 1000)
+    };
+
+    // Clear previous test result
+    setTestResult(null);
+
+    // Track the event
+    trackEvent(eventType, area, data);
+
+    // Add to local list for display
+    const newEvent = {
+      eventType,
+      area,
+      timestamp: new Date().toISOString(),
+      data
+    };
+    
+    setEvents(prev => [...prev, newEvent]);
   };
-  
-  // Test tracking a page view event
-  const testPageViewEvent = () => {
+
+  const forceFlushEvents = async () => {
+    setTestResult(null);
+    
     try {
-      trackEvent(AnalyticsEventType.PAGE_VIEW, 'diagnostic-page', {
-        path: '/admin/diagnostic',
-        title: 'Analytics Diagnostic Tool'
+      // Force flush by calling the API directly
+      const storedEvents = localStorage.getItem('energy_audit_event_queue');
+      const storedSessionId = localStorage.getItem('energy_audit_session_id');
+      
+      if (!storedEvents || !storedSessionId) {
+        setTestResult({
+          success: false,
+          message: `No events to flush. Events: ${!!storedEvents}, SessionId: ${!!storedSessionId}`
+        });
+        return;
+      }
+      
+      const events = JSON.parse(storedEvents);
+      
+      const response = await axios.post(`${API_BASE_URL}/api/analytics/events`, {
+        events,
+        sessionId: storedSessionId
       });
       
-      addLog('✅ PAGE_VIEW event dispatched to AnalyticsContext');
-    } catch (error) {
-      addLog(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  };
-  
-  // Test tracking a feature usage event
-  const testFeatureEvent = () => {
-    try {
-      trackEvent(AnalyticsEventType.FEATURE_USAGE, 'diagnostic-tool', {
-        featureId: 'analytics-test-button',
-        action: 'click'
+      setTestResult({
+        success: true,
+        message: `Successfully flushed ${events.length} events. Response: ${response.status} ${response.statusText}`
       });
       
-      addLog('✅ FEATURE_USAGE event dispatched to AnalyticsContext');
+      // Clear localStorage
+      localStorage.removeItem('energy_audit_event_queue');
+      setLocalStorageEvents('');
+      
     } catch (error) {
-      addLog(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
+      let errorMessage = 'Unknown error';
+      if (axios.isAxiosError(error)) {
+        errorMessage = `${error.message} - Status: ${error.response?.status} ${error.response?.statusText}`;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setTestResult({
+        success: false,
+        message: `Error flushing events: ${errorMessage}`
+      });
     }
   };
-  
-  // Test clearing all logs
-  const clearLogs = () => {
-    setLogMessages([]);
+
+  const clearEvents = () => {
+    setEvents([]);
   };
-  
+
+  const toggleConsent = async () => {
+    await updateConsent(!isTrackingEnabled);
+  };
+
+  if (!isOpen) {
+    return (
+      <button 
+        onClick={() => setIsOpen(true)}
+        style={{
+          position: 'fixed',
+          bottom: '10px',
+          right: '10px',
+          zIndex: 9999,
+          padding: '5px 10px',
+          backgroundColor: '#f0f0f0',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          opacity: 0.7
+        }}
+      >
+        Analytics Debug
+      </button>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Analytics Diagnostic Tool</h2>
+    <div style={{
+      position: 'fixed',
+      bottom: '10px',
+      right: '10px',
+      width: '400px',
+      maxHeight: '80vh',
+      overflowY: 'auto',
+      backgroundColor: 'white',
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+      padding: '10px',
+      zIndex: 9999,
+      boxShadow: '0 0 10px rgba(0,0,0,0.2)'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <h3 style={{ margin: 0 }}>Analytics Diagnostic Tool</h3>
+        <button onClick={() => setIsOpen(false)}>Close</button>
+      </div>
       
-      {/* Status information */}
-      <div className="mb-4 p-4 bg-gray-100 rounded-md">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="text-sm font-medium text-gray-500">Tracking Enabled:</div>
-          <div className={`text-sm font-medium ${isTrackingEnabled ? 'text-green-600' : 'text-red-600'}`}>
-            {isTrackingEnabled ? 'YES' : 'NO'}
-          </div>
-          
-          <div className="text-sm font-medium text-gray-500">Consent Status:</div>
-          <div className="text-sm font-medium text-blue-600">{consentStatus}</div>
-          
-          <div className="text-sm font-medium text-gray-500">Session ID:</div>
-          <div className="text-sm font-mono text-gray-800 truncate">{sessionId || 'None'}</div>
+      <div style={{ marginBottom: '10px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+        <h4 style={{ margin: '0 0 5px 0' }}>Status</h4>
+        <div><strong>Session ID:</strong> {sessionId || 'No session ID'}</div>
+        <div><strong>Consent Status:</strong> {consentStatus}</div>
+        <div><strong>Tracking Enabled:</strong> {isTrackingEnabled ? 'Yes' : 'No'}</div>
+        <button onClick={toggleConsent} style={{ marginTop: '5px' }}>
+          {isTrackingEnabled ? 'Disable Tracking' : 'Enable Tracking'}
+        </button>
+      </div>
+      
+      <div style={{ marginBottom: '10px' }}>
+        <button onClick={generateTestEvent}>Generate Test Event</button>
+        <button onClick={forceFlushEvents} style={{ marginLeft: '5px' }}>Force Flush Events</button>
+        <button onClick={clearEvents} style={{ marginLeft: '5px' }}>Clear List</button>
+      </div>
+      
+      {testResult && (
+        <div style={{ 
+          marginBottom: '10px', 
+          padding: '10px', 
+          backgroundColor: testResult.success ? '#e6ffe6' : '#ffe6e6', 
+          borderRadius: '4px' 
+        }}>
+          <strong>{testResult.success ? 'Success' : 'Error'}:</strong> {testResult.message}
+        </div>
+      )}
+      
+      <div style={{ marginBottom: '10px' }}>
+        <h4 style={{ margin: '0 0 5px 0' }}>Generated Events ({events.length})</h4>
+        <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #eee', padding: '5px' }}>
+          {events.length === 0 ? (
+            <div style={{ fontStyle: 'italic', color: '#999' }}>No events generated</div>
+          ) : (
+            events.map((event, index) => (
+              <div key={index} style={{ marginBottom: '5px', fontSize: '12px', wordBreak: 'break-all' }}>
+                <strong>{event.timestamp}:</strong> {event.eventType} in {event.area}
+                <pre style={{ margin: '2px 0', backgroundColor: '#f9f9f9', padding: '2px' }}>
+                  {JSON.stringify(event.data, null, 2)}
+                </pre>
+              </div>
+            ))
+          )}
         </div>
       </div>
       
-      {/* Action buttons */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <button
-          onClick={testPageViewEvent}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Test Page View Event
-        </button>
-        
-        <button
-          onClick={testFeatureEvent}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          Test Feature Usage Event
-        </button>
-        
-        <button
-          onClick={clearLogs}
-          className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-        >
-          Clear Logs
-        </button>
-      </div>
-      
-      {/* Log display */}
-      <div className="border border-gray-300 rounded-md p-2 h-48 overflow-y-auto font-mono text-sm bg-gray-50">
-        {logMessages.length === 0 ? (
-          <div className="text-gray-500 italic p-2">No log messages yet. Click a test button to start.</div>
-        ) : (
-          logMessages.map((msg, index) => (
-            <div key={index} className="border-b border-gray-200 pb-1 mb-1 whitespace-pre-wrap">
-              {msg}
-            </div>
-          ))
-        )}
-      </div>
-      
-      <div className="mt-3 text-xs text-gray-500">
-        Note: Events are added to a queue and may not be sent immediately. Check console logs for network requests.
+      <div>
+        <h4 style={{ margin: '0 0 5px 0' }}>LocalStorage Queue</h4>
+        <div style={{ maxHeight: '100px', overflowY: 'auto', border: '1px solid #eee', padding: '5px', fontSize: '12px' }}>
+          {!localStorageEvents ? (
+            <div style={{ fontStyle: 'italic', color: '#999' }}>Queue is empty</div>
+          ) : (
+            <pre style={{ margin: 0, wordBreak: 'break-all' }}>{localStorageEvents}</pre>
+          )}
+        </div>
       </div>
     </div>
   );
