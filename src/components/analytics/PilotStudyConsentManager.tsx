@@ -15,15 +15,17 @@ const PilotStudyConsentManager: React.FC = () => {
     const isPilotStudy = process.env.REACT_APP_PILOT_STUDY === 'true';
     const hasSeenConsentPrompt = localStorage.getItem('pilot_study_consent_prompted');
     
+    // Force pilot study mode to true for the pilot study phase
+    const forcePilotMode = true;
+    
     // Only show consent modal if:
     // 1. This is the pilot study environment
     // 2. The user hasn't been asked for consent yet or previously denied
-    // 3. There's a logged in user (avoid prompting anonymous users)
+    // 3. Show for both logged-in and anonymous users during the pilot study
     if (
-      isPilotStudy &&
+      (isPilotStudy || forcePilotMode) &&
       consentStatus === 'not_asked' &&
-      !hasSeenConsentPrompt &&
-      localStorage.getItem('accessToken')
+      !hasSeenConsentPrompt
     ) {
       // Small delay to avoid showing modal immediately on load
       const timer = setTimeout(() => {

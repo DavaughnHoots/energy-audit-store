@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
 // Component for displaying metrics cards
 const MetricCard: React.FC<{
@@ -74,7 +74,7 @@ const AdminDashboardPage: React.FC = () => {
     
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/admin/analytics/metrics`, 
+        `${API_BASE_URL}${API_ENDPOINTS.ADMIN.ANALYTICS_METRICS}`, 
         {
           params: { startDate, endDate },
           withCredentials: true
@@ -104,7 +104,7 @@ const AdminDashboardPage: React.FC = () => {
   const handleLogout = async () => {
     try {
       await axios.post(
-        `${API_BASE_URL}/admin/logout`,
+        `${API_BASE_URL}${API_ENDPOINTS.ADMIN.LOGOUT}`,
         {},
         { withCredentials: true }
       );
