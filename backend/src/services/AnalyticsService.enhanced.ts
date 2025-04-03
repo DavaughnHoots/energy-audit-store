@@ -903,4 +903,5 @@ export class AnalyticsService {
             const defaultDate = new Date();
             defaultDate.setDate(defaultDate.getDate() - 30);
             dateStart = defaultDate;
-            appLogger.warn('Invalid start date provided, using default',
+            appLogger.warn('Invalid start date provided, using default', createLogMetadata(undefined, {
+              providedStartDate: startDate
