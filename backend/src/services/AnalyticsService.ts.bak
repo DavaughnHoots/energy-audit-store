@@ -1,5 +1,5 @@
 /**
- * Enhanced Analytics Service with improved error handling
+ * Analytics Service to handle storage and processing of pilot study analytics data
  */
 
 import pkg from 'pg';
@@ -7,17 +7,22 @@ const { Pool } = pkg;
 import { v4 as uuidv4 } from 'uuid';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
 
-// Function to initialize the pilot token table
-export async function initPilotTokenTable(pool) {
-  try {
-    if (!pool || typeof pool.query !== 'function') {
-      appLogger.error('Invalid pool object passed to initPilotTokenTable', createLogMetadata(undefined, {
-        poolType: typeof pool,
-        hasQueryMethod: pool && typeof pool.query === 'function'
-      }));
-      return { success: false, message: 'Invalid database pool object' };
-    }
+// Interface imports
+import {
+  AnalyticsConsentModel,
+  AnalyticsEventModel,
+  AnalyticsSessionModel,
+  GetMetricsRequest,
+  GetMetricsResponse,
+  SaveEventsRequest,
+  SaveEventsResponse,
+  ValidateTokenResponse,
+  PilotRegistrationResponse
+} from '../types/analytics.js';
 
+// Function to initialize the pilot token table
+export async function initPilotTokenTable(pool: any): Promise<{success: boolean, message: string}> {
+  try {
     // Create the pilot tokens table if it doesn't exist
     await pool.query(`
       CREATE TABLE IF NOT EXISTS pilot_tokens (
@@ -39,98 +44,55 @@ export async function initPilotTokenTable(pool) {
     ];
     
     for (const tokenData of defaultTokens) {
-      try {
-        // Check if token already exists
-        const existingToken = await pool.query(
-          'SELECT token FROM pilot_tokens WHERE token = $1',
-          [tokenData.token]
+      // Check if token already exists
+      const existingToken = await pool.query(
+        'SELECT token FROM pilot_tokens WHERE token = $1',
+        [tokenData.token]
+      );
+      
+      // Insert token if it doesn't exist
+      if (existingToken.rowCount === 0) {
+        await pool.query(
+          'INSERT INTO pilot_tokens (token, participant_type) VALUES ($1, $2)',
+          [tokenData.token, tokenData.participantType]
         );
-        
-        // Insert token if it doesn't exist
-        if (existingToken.rowCount === 0) {
-          await pool.query(
-            'INSERT INTO pilot_tokens (token, participant_type) VALUES ($1, $2)',
-            [tokenData.token, tokenData.participantType]
-          );
-          appLogger.info('Inserted default pilot token', createLogMetadata(undefined, {
-            token: tokenData.token,
-            participantType: tokenData.participantType
-          }));
-        }
-      } catch (tokenError) {
-        appLogger.error('Error processing token', createLogMetadata(undefined, {
+        appLogger.info('Inserted default pilot token', createLogMetadata(undefined, {
           token: tokenData.token,
-          error: tokenError.message || 'Unknown error'
+          participantType: tokenData.participantType
         }));
       }
     }
     
     return { success: true, message: 'Pilot token table initialized' };
   } catch (error) {
-    appLogger.error('Error initializing pilot token table', createLogMetadata(undefined, { 
-      error: error.message || 'Unknown error',
-      stack: error.stack
-    }));
-    return { success: false, message: `Error initializing pilot token table: ${error.message || 'Unknown error'}` };
+    appLogger.error('Error initializing pilot token table', createLogMetadata(undefined, { error }));
+    return { success: false, message: `Error initializing pilot token table: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
 }
 
 export class AnalyticsService {
-  constructor(pool) {
-    // Validate the pool object
-    if (!pool || typeof pool.query !== 'function') {
-      const errorMsg = 'Invalid database pool provided to AnalyticsService constructor';
-      appLogger.error(errorMsg, createLogMetadata(undefined, { 
-        poolType: typeof pool,
-        hasQueryMethod: pool && typeof pool.query === 'function'
-      }));
-      throw new Error(errorMsg);
-    }
-    
+  private pool: any;
+
+  constructor(pool: any) {
     this.pool = pool;
-    appLogger.info('AnalyticsService initialized with database pool', createLogMetadata(undefined, {
-      poolStatus: 'valid'
-    }));
   }
 
   /**
-   * Save analytics events to database with enhanced error handling
+   * Save analytics events to database
    */
-  async saveEvents(userId, sessionId, events) {
+  async saveEvents(
+    userId: string | null,
+    sessionId: string,
+    events: SaveEventsRequest['events']
+  ): Promise<SaveEventsResponse> {
     try {
-      // Validate input parameters to prevent difficult-to-debug errors
-      if (!sessionId) {
-        appLogger.error('Missing sessionId in saveEvents', createLogMetadata(undefined, {
-          userId: userId || 'anonymous'
-        }));
-        return { success: false, eventsProcessed: 0, error: 'Missing sessionId' };
-      }
-      
-      if (!Array.isArray(events)) {
-        appLogger.error('Events must be an array', createLogMetadata(undefined, {
-          sessionId,
-          userId: userId || 'anonymous',
-          eventsType: typeof events
-        }));
-        return { success: false, eventsProcessed: 0, error: 'Events must be an array' };
-      }
-      
-      if (events.length === 0) {
-        appLogger.info('No events to save, returning early', createLogMetadata(undefined, {
-          sessionId,
-          userId: userId || 'anonymous'
-        }));
-        return { success: true, eventsProcessed: 0 };
-      }
-
       // Log the event details for debugging
       appLogger.info('Analytics events received', createLogMetadata(undefined, {
         sessionId,
         userId: userId || 'anonymous',
         eventCount: events.length,
         eventTypes: events.map(e => e.eventType).join(', '),
-        areas: [...new Set(events.map(e => e.area))].join(', '),
-        sampleEvent: JSON.stringify(events[0])
+        areas: [...new Set(events.map(e => e.area))].join(', ')
       }));
       
       // During pilot study, accept all events to maximize data collection
@@ -147,40 +109,21 @@ export class AnalyticsService {
       } 
       // For logged-in users, still check consent
       else {
-        try {
-          const consentStatus = await this.getConsentStatus(userId);
-          if (consentStatus !== 'granted') {
-            appLogger.warn('Analytics events for user without explicit consent', createLogMetadata(undefined, {
-              userId,
-              sessionId,
-              consentStatus,
-              eventCount: events.length
-            }));
-            // For pilot study, we'll still save the data but log that there was no consent
-            // This maximizes our ability to gather data for the study
-          }
-        } catch (consentError) {
-          appLogger.error('Error checking consent status', createLogMetadata(undefined, {
+        const consentStatus = await this.getConsentStatus(userId);
+        if (consentStatus !== 'granted') {
+          appLogger.warn('Analytics events rejected - no consent', createLogMetadata(undefined, {
             userId,
             sessionId,
-            error: consentError.message || 'Unknown error'
+            eventCount: events.length
           }));
-          // Continue anyway for pilot study
+          // For pilot study, we'll still save the data but log that there was no consent
+          // This maximizes our ability to gather data for the study
+          // return { success: false, eventsProcessed: 0 };
         }
       }
 
-      // Try to update or create the session record
-      try {
-        await this.updateSession(sessionId, userId);
-      } catch (sessionError) {
-        appLogger.error('Error updating session record', createLogMetadata(undefined, {
-          sessionId,
-          userId: userId || 'anonymous',
-          error: sessionError.message || 'Unknown error',
-          stack: sessionError.stack
-        }));
-        // Continue anyway - we should still attempt to save events
-      }
+      // Update the session record or create if it doesn't exist
+      await this.updateSession(sessionId, userId);
 
       // Process the events for insertion
       appLogger.debug('Processing events for DB insertion', createLogMetadata(undefined, {
@@ -190,137 +133,88 @@ export class AnalyticsService {
       
       // Batch insert the events
       const values = events.map(event => {
-        try {
-          // Ensure data field is properly handled
-          const data = event.data || {};
-          return {
-            id: uuidv4(),
-            sessionId: sessionId,
-            userId: userId || null,
-            eventType: event.eventType || 'unknown',
-            area: event.area || 'unknown',
-            timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
-            data: JSON.stringify(data)
-          };
-        } catch (eventParsingError) {
-          appLogger.error('Error parsing event data', createLogMetadata(undefined, {
-            sessionId,
-            error: eventParsingError.message || 'Unknown error',
-            eventData: JSON.stringify(event)
-          }));
-          // Return null for events that can't be processed
-          return null;
-        }
-      }).filter(Boolean); // Remove null entries
-
-      // If no valid events, return early
-      if (values.length === 0) {
-        appLogger.info('No valid events to process after filtering', createLogMetadata(undefined, {
+        // Ensure data field is properly handled
+        const data = event.data || {};
+        return {
+          id: uuidv4(),
           sessionId,
-          originalCount: events.length
+          userId: userId || null,
+          eventType: event.eventType,
+          area: event.area,
+          timestamp: new Date(event.timestamp),
+          data: JSON.stringify(data)
+        };
+      });
+
+      // If no events, return early
+      if (values.length === 0) {
+        appLogger.info('No events to process', createLogMetadata(undefined, {
+          sessionId
         }));
         return { success: true, eventsProcessed: 0 };
       }
 
       // Build parameterized query for batch insert
-      try {
-        const placeholders = values.map((_, i) => {
-          const base = i * 7;
-          return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
-        }).join(', ');
+      const placeholders = values.map((_, i) => {
+        const base = i * 6;
+        return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
+      }).join(', ');
 
-        const flatParams = values.flatMap(v => [
-          v.id,
-          v.sessionId,
-          v.userId,
-          v.eventType,
-          v.area,
-          v.timestamp,
-          v.data
-        ]);
+      const flatParams = values.flatMap(v => [
+        v.id,
+        v.sessionId,
+        v.userId,
+        v.eventType,
+        v.area,
+        v.timestamp,
+        v.data
+      ]);
 
-        const query = `
-          INSERT INTO analytics_events (id, session_id, user_id, event_type, area, timestamp, data)
-          VALUES ${placeholders}
-          RETURNING id
-        `;
+      const query = `
+        INSERT INTO analytics_events (id, session_id, user_id, event_type, area, timestamp, data)
+        VALUES ${placeholders}
+        RETURNING id
+      `;
 
-        appLogger.debug('Executing insert query', createLogMetadata(undefined, {
-          eventsCount: values.length,
-          paramCount: flatParams.length
-        }));
-        
-        const result = await this.pool.query(query, flatParams);
-        const insertedCount = result.rowCount || 0;
+      const result = await this.pool.query(query, flatParams);
+      const insertedCount = result.rowCount || 0;
 
-        // Update the session with the new event count
-        try {
-          const updateSessionQuery = `
-            UPDATE analytics_sessions
-            SET events_count = events_count + $1, 
-                updated_at = NOW()
-            WHERE id = $2
-          `;
-          await this.pool.query(updateSessionQuery, [insertedCount, sessionId]);
-        } catch (updateSessionError) {
-          appLogger.error('Error updating session event count', createLogMetadata(undefined, {
-            sessionId,
-            error: updateSessionError.message || 'Unknown error',
-            stack: updateSessionError.stack
-          }));
-          // Continue anyway - this doesn't affect the success of event insertion
-        }
+      // Update the session with the new event count
+      const updateSessionQuery = `
+        UPDATE analytics_sessions
+        SET events_count = events_count + $1, 
+            updated_at = NOW()
+        WHERE id = $2
+      `;
+      await this.pool.query(updateSessionQuery, [insertedCount, sessionId]);
 
-        appLogger.info('Analytics events saved successfully', createLogMetadata(undefined, {
-          userId: userId || 'anonymous',
-          sessionId,
-          eventCount: insertedCount,
-          eventTypes: events.map(e => e.eventType).join(', ')
-        }));
-
-        return { success: true, eventsProcessed: insertedCount };
-      } catch (insertError) {
-        appLogger.error('Error executing insert query', createLogMetadata(undefined, {
-          sessionId,
-          userId: userId || 'anonymous',
-          error: insertError.message || 'Unknown error',
-          code: insertError.code,
-          detail: insertError.detail,
-          stack: insertError.stack
-        }));
-        
-        return { 
-          success: false, 
-          eventsProcessed: 0, 
-          error: `Database error: ${insertError.message || 'Unknown error'}` 
-        };
-      }
-    } catch (error) {
-      appLogger.error('Unhandled error in saveEvents', createLogMetadata(undefined, {
-        userId: userId || 'anonymous',
-        sessionId: sessionId || 'unknown',
-        eventCount: events ? events.length : 0,
-        error: error.message || 'Unknown error',
-        stack: error.stack
+      appLogger.info('Analytics events saved successfully', createLogMetadata(undefined, {
+        userId,
+        sessionId,
+        eventCount: insertedCount,
+        eventTypes: events.map(e => e.eventType).join(', ')
       }));
-      
-      return { 
-        success: false, 
-        eventsProcessed: 0, 
-        error: `Unhandled error: ${error.message || 'Unknown error'}`
-      };
+
+      return { success: true, eventsProcessed: insertedCount };
+    } catch (error) {
+      appLogger.error('Error saving analytics events', createLogMetadata(undefined, {
+        userId,
+        sessionId,
+        eventCount: events.length,
+        error
+      }));
+      return { success: false, eventsProcessed: 0 };
     }
   }
 
   /**
-   * Update or create a session record with enhanced error handling
+   * Update or create a session record
    */
-  async updateSession(sessionId, userId) {
+  private async updateSession(
+    sessionId: string,
+    userId?: string | null
+  ): Promise<void> {
     try {
-      if (!sessionId) {
-        throw new Error('Missing sessionId parameter');
-      }
-      
       // Check if session exists
       const existingSession = await this.pool.query(
         'SELECT id FROM analytics_sessions WHERE id = $1',
@@ -333,11 +227,6 @@ export class AnalyticsService {
           'UPDATE analytics_sessions SET updated_at = NOW() WHERE id = $1',
           [sessionId]
         );
-        
-        appLogger.debug('Updated existing session', createLogMetadata(undefined, {
-          sessionId,
-          userId: userId || 'anonymous'
-        }));
       } else {
         // Create new session
         await this.pool.query(
@@ -346,36 +235,22 @@ export class AnalyticsService {
           ) VALUES ($1, $2, NOW(), TRUE, 0, NOW(), NOW())`,
           [sessionId, userId || null]
         );
-        
-        appLogger.info('Created new analytics session', createLogMetadata(undefined, {
-          sessionId,
-          userId: userId || 'anonymous'
-        }));
       }
-      
-      return true;
     } catch (error) {
-      appLogger.error('Error in updateSession', createLogMetadata(undefined, {
+      appLogger.error('Error updating session record', createLogMetadata(undefined, {
         sessionId,
-        userId: userId || 'anonymous',
-        error: error.message || 'Unknown error',
-        stack: error.stack
+        userId,
+        error
       }));
-      
-      throw error; // Re-throw to allow the caller to handle
+      // Don't rethrow - we want to continue even if session update fails
     }
   }
 
   /**
-   * End a session with enhanced error handling
+   * End a session
    */
-  async endSession(sessionId, duration) {
+  async endSession(sessionId: string, duration?: number): Promise<boolean> {
     try {
-      if (!sessionId) {
-        appLogger.error('Missing sessionId in endSession', createLogMetadata(undefined, {}));
-        return false;
-      }
-      
       const query = `
         UPDATE analytics_sessions
         SET 
@@ -386,41 +261,22 @@ export class AnalyticsService {
         WHERE id = $2
       `;
       
-      const result = await this.pool.query(query, [duration || 0, sessionId]);
-      
-      const rowsAffected = result.rowCount || 0;
-      if (rowsAffected === 0) {
-        appLogger.warn('No session found to end', createLogMetadata(undefined, {
-          sessionId
-        }));
-      } else {
-        appLogger.info('Successfully ended session', createLogMetadata(undefined, {
-          sessionId,
-          duration: duration || 0
-        }));
-      }
-      
-      return rowsAffected > 0;
+      await this.pool.query(query, [duration || 0, sessionId]);
+      return true;
     } catch (error) {
       appLogger.error('Error ending session', createLogMetadata(undefined, {
         sessionId,
-        error: error.message || 'Unknown error',
-        stack: error.stack
+        error
       }));
       return false;
     }
   }
 
   /**
-   * Get current consent status for a user with enhanced error handling
+   * Get current consent status for a user
    */
-  async getConsentStatus(userId) {
+  async getConsentStatus(userId: string): Promise<string> {
     try {
-      if (!userId) {
-        appLogger.error('Missing userId in getConsentStatus', createLogMetadata(undefined, {}));
-        return 'not_asked';
-      }
-      
       const query = `
         SELECT status 
         FROM analytics_consent 
@@ -439,33 +295,20 @@ export class AnalyticsService {
     } catch (error) {
       appLogger.error('Error getting consent status', createLogMetadata(undefined, {
         userId,
-        error: error.message || 'Unknown error',
-        stack: error.stack
+        error
       }));
       return 'not_asked';
     }
   }
 
   /**
-   * Update consent status for a user with enhanced error handling
+   * Update consent status for a user
    */
-  async updateConsent(userId, status) {
+  async updateConsent(
+    userId: string,
+    status: 'granted' | 'denied' | 'withdrawn'
+  ): Promise<boolean> {
     try {
-      if (!userId) {
-        appLogger.error('Missing userId in updateConsent', createLogMetadata(undefined, {
-          status
-        }));
-        return false;
-      }
-      
-      if (!['granted', 'denied', 'withdrawn'].includes(status)) {
-        appLogger.error('Invalid consent status', createLogMetadata(undefined, {
-          userId,
-          status
-        }));
-        return false;
-      }
-      
       const consentId = uuidv4();
       const consentVersion = '1.0'; // Update this when consent text changes
       
@@ -485,37 +328,22 @@ export class AnalyticsService {
         status === 'granted'
       ]);
       
-      appLogger.info('Updated consent status', createLogMetadata(undefined, {
-        userId,
-        status,
-        consentVersion
-      }));
-      
       return true;
     } catch (error) {
       appLogger.error('Error updating consent status', createLogMetadata(undefined, {
         userId,
         status,
-        error: error.message || 'Unknown error',
-        stack: error.stack
+        error
       }));
       return false;
     }
   }
 
   /**
-   * Validate a pilot study invitation token with enhanced error handling
+   * Validate a pilot study invitation token
    */
-  async validatePilotToken(token) {
+  async validatePilotToken(token: string): Promise<ValidateTokenResponse> {
     try {
-      if (!token) {
-        appLogger.error('Missing token in validatePilotToken', createLogMetadata(undefined, {}));
-        return {
-          valid: false,
-          message: 'Token is required'
-        };
-      }
-      
       // Query the pilot_tokens table
       const result = await this.pool.query(
         'SELECT token, participant_type, used_at FROM pilot_tokens WHERE token = $1',
@@ -547,8 +375,7 @@ export class AnalyticsService {
     } catch (error) {
       appLogger.error('Error validating pilot token', createLogMetadata(undefined, {
         token,
-        error: error.message || 'Unknown error',
-        stack: error.stack
+        error
       }));
       
       return {
@@ -559,25 +386,15 @@ export class AnalyticsService {
   }
 
   /**
-   * Register a pilot study participant with enhanced error handling
+   * Register a pilot study participant
    */
-  async registerPilotParticipant(email, password, token, participantType) {
+  async registerPilotParticipant(
+    email: string,
+    password: string,
+    token: string,
+    participantType: string
+  ): Promise<PilotRegistrationResponse> {
     try {
-      // Validate input parameters
-      if (!email || !password || !token || !participantType) {
-        appLogger.error('Missing required fields in registerPilotParticipant', createLogMetadata(undefined, {
-          hasEmail: !!email,
-          hasPassword: !!password,
-          hasToken: !!token,
-          hasParticipantType: !!participantType
-        }));
-        
-        return {
-          success: false,
-          message: 'Missing required fields'
-        };
-      }
-      
       // In a real implementation, we would:
       // 1. Register the user in the auth system
       // 2. Set a pilot study flag in their profile
@@ -588,16 +405,8 @@ export class AnalyticsService {
       const userId = uuidv4();
       const authToken = uuidv4(); // In real impl, this would be a JWT
       
-      try {
-        // Automatically set analytics consent for pilot participants
-        await this.updateConsent(userId, 'granted');
-      } catch (consentError) {
-        appLogger.error('Error setting initial consent for pilot participant', createLogMetadata(undefined, {
-          userId,
-          error: consentError.message || 'Unknown error'
-        }));
-        // Continue anyway - this is not critical
-      }
+      // Automatically set analytics consent for pilot participants
+      await this.updateConsent(userId, 'granted');
       
       // Log the registration event
       appLogger.info('Pilot participant registered', createLogMetadata(undefined, {
@@ -616,8 +425,7 @@ export class AnalyticsService {
         email,
         token,
         participantType,
-        error: error.message || 'Unknown error',
-        stack: error.stack
+        error
       }));
       
       return {
@@ -628,19 +436,15 @@ export class AnalyticsService {
   }
 
   /**
-   * Get analytics metrics for pilot study dashboard with enhanced error handling
+   * Get analytics metrics for pilot study dashboard
    */
-  async getMetrics(request) {
+  async getMetrics(request: GetMetricsRequest): Promise<GetMetricsResponse> {
     // Log the raw request for debugging
     appLogger.info('Getting analytics metrics raw request', createLogMetadata(undefined, {
       rawRequest: request
     }));
 
     try {
-      if (!request) {
-        throw new Error('Missing request object');
-      }
-      
       const { startDate, endDate, filters } = request;
       
       // Ensure we have valid dates - additional safety checks
@@ -688,7 +492,7 @@ export class AnalyticsService {
       } catch (dateError) {
         // If any date parsing error occurs, use defaults
         appLogger.error('Error parsing dates, using defaults', createLogMetadata(undefined, {
-          error: dateError.message || 'Unknown error',
+          error: dateError,
           startDate,
           endDate
         }));
@@ -731,8 +535,8 @@ export class AnalyticsService {
         }));
       } catch (sessionsError) {
         appLogger.error('Error in sessions query', createLogMetadata(undefined, {
-          error: sessionsError.message || 'Unknown error',
-          stack: sessionsError.stack
+          error: sessionsError instanceof Error ? sessionsError.message : 'Unknown error',
+          stack: sessionsError instanceof Error ? sessionsError.stack : ''
         }));
       }
       
@@ -755,8 +559,8 @@ export class AnalyticsService {
         }));
       } catch (formError) {
         appLogger.error('Error in form completions query', createLogMetadata(undefined, {
-          error: formError.message || 'Unknown error',
-          stack: formError.stack
+          error: formError instanceof Error ? formError.message : 'Unknown error',
+          stack: formError instanceof Error ? formError.stack : ''
         }));
       }
       
@@ -773,7 +577,7 @@ export class AnalyticsService {
         `;
         
         const pageViewsResult = await this.pool.query(pageViewsQuery, [dateStart, dateEnd]);
-        pageViewsByArea = pageViewsResult.rows.map((row) => ({
+        pageViewsByArea = pageViewsResult.rows.map((row: any) => ({
           area: row.area,
           count: parseInt(row.count)
         }));
@@ -784,8 +588,8 @@ export class AnalyticsService {
         }));
       } catch (pageViewsError) {
         appLogger.error('Error in page views query', createLogMetadata(undefined, {
-          error: pageViewsError.message || 'Unknown error',
-          stack: pageViewsError.stack
+          error: pageViewsError instanceof Error ? pageViewsError.message : 'Unknown error',
+          stack: pageViewsError instanceof Error ? pageViewsError.stack : ''
         }));
       }
       
@@ -802,7 +606,7 @@ export class AnalyticsService {
         `;
         
         const featureUsageResult = await this.pool.query(featureUsageQuery, [dateStart, dateEnd]);
-        featureUsage = featureUsageResult.rows.map((row) => ({
+        featureUsage = featureUsageResult.rows.map((row: any) => ({
           feature: row.feature,
           count: parseInt(row.count)
         }));
@@ -813,8 +617,8 @@ export class AnalyticsService {
         }));
       } catch (featureUsageError) {
         appLogger.error('Error in feature usage query', createLogMetadata(undefined, {
-          error: featureUsageError.message || 'Unknown error',
-          stack: featureUsageError.stack
+          error: featureUsageError instanceof Error ? featureUsageError.message : 'Unknown error',
+          stack: featureUsageError instanceof Error ? featureUsageError.stack : ''
         }));
       }
       
@@ -843,12 +647,12 @@ export class AnalyticsService {
     } catch (error) {
       // Catch any other unexpected errors
       appLogger.error('Unexpected error getting analytics metrics', createLogMetadata(undefined, {
-        error: error.message || 'Unknown error',
-        stack: error.stack,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : '',
         requestData: {
-          startDate: request?.startDate,
-          endDate: request?.endDate,
-          filters: request?.filters ? 'present' : 'none'
+          startDate: request.startDate,
+          endDate: request.endDate,
+          filters: request.filters || 'none'
         }
       }));
       
