@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
+import { usePageTracking } from './hooks/analytics';
+import { AnalyticsArea } from './types/analytics';
 import ErrorBoundary from './components/ErrorBoundary';
 import AnalyticsErrorBoundary from './components/analytics/AnalyticsErrorBoundary';
 import PilotStudyConsentManager from './components/analytics/PilotStudyConsentManager';
@@ -123,6 +125,17 @@ const Home: React.FC = () => {
 // Check for feature flag - can be set in .env file
 const isAnalyticsEnabled = process.env.REACT_APP_ANALYTICS_ENABLED !== 'false';
 
+// Route tracking component to handle analytics
+const RouteTracker: React.FC = () => {
+  // Add global page tracking for all page navigations
+  usePageTracking({
+    area: AnalyticsArea.GLOBAL,
+    excludePaths: ['/admin'] // Exclude admin paths from tracking to avoid double-counting
+  });
+  
+  return null; // This component doesn't render anything
+};
+
 // Main App component with routing
 const App: React.FC = () => {
   return (
@@ -133,6 +146,9 @@ const App: React.FC = () => {
             <AnalyticsProvider>
               {/* Analytics consent management */}
               <PilotStudyConsentManager />
+              
+              {/* Global route tracker for analytics */}
+              <RouteTracker />
               
               <div className="min-h-screen flex flex-col bg-gray-50">
                 {/* Pilot study banner */}

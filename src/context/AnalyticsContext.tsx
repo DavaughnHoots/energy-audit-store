@@ -199,11 +199,15 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * Add an event to the queue
    */
   const addToQueue = useCallback((event: any) => {
+    // Add debugging to track events being added to queue
+    console.log(`[Analytics] Adding event to queue: ${event.eventType} in area: ${event.area}`, event);
+    
     setEventQueue(prevQueue => {
       const newQueue = [...prevQueue, event];
       
       // If queue is too large, flush it
       if (newQueue.length >= MAX_BATCH_SIZE) {
+        console.log(`[Analytics] Queue reached MAX_BATCH_SIZE (${MAX_BATCH_SIZE}), flushing events`);
         flushEvents();
         return [];
       }
@@ -216,13 +220,20 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * Flush events to the server
    */
   const flushEvents = useCallback(async () => {
-    if (!sessionId || eventQueue.length === 0) return;
+    if (!sessionId || eventQueue.length === 0) {
+      console.log(`[Analytics] Skipping flush: ${!sessionId ? 'No sessionId' : 'Empty queue'}`);
+      return;
+    }
+    
+    console.log(`[Analytics] Flushing ${eventQueue.length} events to server for session ${sessionId}`);
     
     try {
       await apiClient.post('/api/analytics/events', {
         events: eventQueue,
         sessionId
       });
+      
+      console.log('[Analytics] Successfully sent events to server');
       
       // Clear the queue after successful send
       setEventQueue([]);
@@ -241,13 +252,17 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     area: string,
     data: Record<string, any> = {}
   ) => {
-    if (!isTrackingEnabled || !sessionId) return;
+    if (!isTrackingEnabled || !sessionId) {
+      console.log(`[Analytics] Event tracking skipped: ${!isTrackingEnabled ? 'Tracking disabled' : 'No sessionId'}`, 
+        { eventType, area });
+      return;
+    }
     
     const event = {
       eventType,
       area,
       timestamp: new Date().toISOString(),
-      ...data
+      data: Object.keys(data).length > 0 ? data : undefined
     };
     
     addToQueue(event);
