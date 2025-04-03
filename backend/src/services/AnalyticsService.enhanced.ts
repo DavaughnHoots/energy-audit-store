@@ -1,118 +1,44 @@
 /**
- * Enhanced Analytics Service with improved error handling and data validation
+ * Enhanced Analytics Service with improved error handling and diagnostics
+ * 
+ * This version extends the base AnalyticsService with additional diagnostics
+ * and more detailed error handling to help troubleshoot problems.
  */
 
 import pkg from 'pg';
 const { Pool } = pkg;
 import { v4 as uuidv4 } from 'uuid';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
+import util from 'util';
 
-// Function to initialize the pilot token table
-export async function initPilotTokenTable(pool) {
-  try {
-    if (!pool || typeof pool.query !== 'function') {
-      appLogger.error('Invalid pool object passed to initPilotTokenTable', createLogMetadata(undefined, {
-        poolType: typeof pool,
-        hasQueryMethod: pool && typeof pool.query === 'function'
-      }));
-      return { success: false, message: 'Invalid database pool object' };
-    }
-
-    // Create the pilot tokens table if it doesn't exist
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS pilot_tokens (
-        id SERIAL PRIMARY KEY,
-        token VARCHAR(50) NOT NULL UNIQUE,
-        participant_type VARCHAR(50) NOT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        used_at TIMESTAMP,
-        used_by VARCHAR(50)
-      )
-    `);
-    
-    // Insert the default tokens if they don't exist
-    const defaultTokens = [
-      { token: 'ENERGY-PILOT-HC-001', participantType: 'homeowner-energy-conscious' },
-      { token: 'ENERGY-PILOT-HL-001', participantType: 'homeowner-limited-knowledge' },
-      { token: 'ENERGY-PILOT-HT-001', participantType: 'homeowner-technical' },
-      { token: 'ENERGY-PILOT-HN-001', participantType: 'homeowner-non-technical' }
-    ];
-    
-    for (const tokenData of defaultTokens) {
-      try {
-        // Check if token already exists
-        const existingToken = await pool.query(
-          'SELECT token FROM pilot_tokens WHERE token = $1',
-          [tokenData.token]
-        );
-        
-        // Insert token if it doesn't exist
-        if (existingToken.rowCount === 0) {
-          await pool.query(
-            'INSERT INTO pilot_tokens (token, participant_type) VALUES ($1, $2)',
-            [tokenData.token, tokenData.participantType]
-          );
-          appLogger.info('Inserted default pilot token', createLogMetadata(undefined, {
-            token: tokenData.token,
-            participantType: tokenData.participantType
-          }));
-        }
-      } catch (tokenError) {
-        const errorMessage = tokenError?.message || 'Unknown error';
-        appLogger.error('Error processing token', createLogMetadata(undefined, {
-          token: tokenData.token,
-          error: errorMessage
-        }));
-      }
-    }
-    
-    return { success: true, message: 'Pilot token table initialized' };
-  } catch (error) {
-    const errorMessage = error?.message || 'Unknown error';
-    const errorStack = error?.stack || 'No stack trace';
-    
-    appLogger.error('Error initializing pilot token table', createLogMetadata(undefined, { 
-      error: errorMessage,
-      stack: errorStack
-    }));
-    return { success: false, message: `Error initializing pilot token table: ${errorMessage}` };
-  }
-}
-
-/**
- * Validates if a string is a valid UUID
- */
-function isValidUUID(str) {
-  // Simple regex to check UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  
-  if (!str || typeof str !== 'string') {
-    return false;
-  }
-  
-  return uuidRegex.test(str);
-}
-
-/**
- * Safely stringify data to JSON
- * @returns {string} JSON string or "{}" if failed
- */
-function safeJSONStringify(data) {
-  if (!data) return '{}';
-  
-  try {
-    return JSON.stringify(data);
-  } catch (err) {
-    appLogger.warn('Failed to stringify data to JSON', createLogMetadata(undefined, {
-      error: err?.message || 'Unknown error',
-      dataType: typeof data
-    }));
-    return '{}';
-  }
+interface DiagnosticsResult {
+  databaseConnection: boolean;
+  tablesExist: {
+    [key: string]: boolean;
+  };
+  counts: {
+    [key: string]: number;
+  };
+  writeTest?: {
+    success: boolean;
+    message?: string;
+    error?: string;
+    code?: string;
+    detail?: string;
+  };
+  errorDetails: Record<string, any> | null;
+  overallError?: {
+    message: string;
+    stack?: string;
+  };
+  startTime: string;
+  duration: number;
 }
 
 export class AnalyticsService {
-  constructor(pool) {
+  private pool: pkg.Pool;
+
+  constructor(pool: pkg.Pool) {
     // Validate the pool object
     if (!pool || typeof pool.query !== 'function') {
       const errorMsg = 'Invalid database pool provided to AnalyticsService constructor';
@@ -130,34 +56,205 @@ export class AnalyticsService {
   }
 
   /**
-   * Save analytics events to database with enhanced error handling and input validation
+   * Test database connection - useful for diagnostics
    */
-  async saveEvents(userId, sessionId, events) {
+  async testDatabaseConnection(): Promise<boolean> {
     try {
-      // Validate input parameters to prevent difficult-to-debug errors
+      const startTime = Date.now();
+      const result = await this.pool.query('SELECT 1 AS connection_test');
+      const duration = Date.now() - startTime;
+      
+      appLogger.info('Database connection test successful', createLogMetadata(undefined, {
+        duration,
+        result: result?.rows?.[0]?.connection_test === 1 ? 'success' : 'unexpected response'
+      }));
+      
+      return true;
+    } catch (error: any) {
+      appLogger.error('Database connection test failed', createLogMetadata(undefined, {
+        error: error.message || 'Unknown error',
+        errorCode: error.code,
+        errorDetail: error.detail,
+        stack: error.stack
+      }));
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Run diagnostics on analytics storage
+   * This is useful for admin dashboard to verify table status
+   */
+  async runDiagnostics(): Promise<DiagnosticsResult> {
+    const diagnostics: DiagnosticsResult = {
+      databaseConnection: false,
+      tablesExist: {
+        analytics_events: false,
+        analytics_sessions: false,
+        analytics_consent: false,
+        pilot_tokens: false
+      },
+      counts: {
+        events: 0,
+        sessions: 0,
+        consents: 0,
+        tokens: 0
+      },
+      errorDetails: null,
+      startTime: new Date().toISOString(),
+      duration: 0
+    };
+    
+    const startTime = Date.now();
+    
+    try {
+      // Test database connection
+      try {
+        await this.testDatabaseConnection();
+        diagnostics.databaseConnection = true;
+      } catch (error: any) {
+        diagnostics.errorDetails = {
+          connection: {
+            message: error.message,
+            code: error.code,
+            detail: error.detail
+          }
+        };
+        // Return early if can't connect to database
+        diagnostics.duration = Date.now() - startTime;
+        return diagnostics;
+      }
+      
+      // Check if tables exist and get counts
+      try {
+        const tableQueries = [
+          { name: 'analytics_events', countColumn: 'id' },
+          { name: 'analytics_sessions', countColumn: 'id' },
+          { name: 'analytics_consent', countColumn: 'id' },
+          { name: 'pilot_tokens', countColumn: 'id' }
+        ];
+        
+        for (const table of tableQueries) {
+          try {
+            // Check if table exists
+            const tableExistsQuery = `
+              SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = $1
+              ) as exists
+            `;
+            
+            const tableExists = await this.pool.query(tableExistsQuery, [table.name]);
+            diagnostics.tablesExist[table.name] = tableExists.rows[0].exists;
+            
+            if (tableExists.rows[0].exists) {
+              // Get count if table exists
+              const countQuery = `SELECT COUNT(${table.countColumn}) as count FROM ${table.name}`;
+              const countResult = await this.pool.query(countQuery);
+              
+              const countKey = table.name.replace('analytics_', '');
+              diagnostics.counts[countKey] = parseInt(countResult.rows[0].count || '0');
+            }
+          } catch (tableError: any) {
+            appLogger.error(`Error checking table ${table.name}`, createLogMetadata(undefined, {
+              error: tableError.message,
+              code: tableError.code
+            }));
+            
+            if (!diagnostics.errorDetails) {
+              diagnostics.errorDetails = {};
+            }
+            
+            diagnostics.errorDetails[table.name] = {
+              message: tableError.message,
+              code: tableError.code
+            };
+          }
+        }
+      } catch (tablesError: any) {
+        appLogger.error('Error checking database tables', createLogMetadata(undefined, {
+          error: tablesError.message,
+          code: tablesError.code
+        }));
+        
+        if (!diagnostics.errorDetails) {
+          diagnostics.errorDetails = {};
+        }
+        
+        diagnostics.errorDetails.tables = {
+          message: tablesError.message,
+          code: tablesError.code,
+          detail: tablesError.detail
+        };
+      }
+      
+      // Add basic query execution test
+      try {
+        const testSessionId = 'test-session-' + Date.now();
+        const testUserId = 'test-user-' + Date.now();
+        
+        // Test session creation
+        await this.pool.query(
+          `INSERT INTO analytics_sessions (
+            id, user_id, start_time, is_active, events_count, created_at, updated_at
+          ) VALUES ($1, $2, NOW(), TRUE, 0, NOW(), NOW())
+          ON CONFLICT (id) DO NOTHING`,
+          [testSessionId, testUserId]
+        );
+        
+        // Delete the test data
+        await this.pool.query('DELETE FROM analytics_sessions WHERE id = $1', [testSessionId]);
+        
+        diagnostics.writeTest = {
+          success: true,
+          message: 'Successfully inserted and deleted test data'
+        };
+      } catch (writeError: any) {
+        appLogger.error('Error in write test', createLogMetadata(undefined, {
+          error: writeError.message,
+          code: writeError.code,
+          detail: writeError.detail
+        }));
+        
+        diagnostics.writeTest = {
+          success: false,
+          error: writeError.message,
+          code: writeError.code,
+          detail: writeError.detail
+        };
+      }
+    } catch (error: any) {
+      appLogger.error('Unexpected error in diagnostics', createLogMetadata(undefined, {
+        error: error.message,
+        stack: error.stack
+      }));
+      
+      diagnostics.overallError = {
+        message: error.message,
+        stack: error.stack
+      };
+    }
+    
+    // Calculate duration
+    diagnostics.duration = Date.now() - startTime;
+    
+    return diagnostics;
+  }
+
+  /**
+   * Save analytics events to database with enhanced error handling and detailed diagnostics
+   */
+  async saveEvents(userId: string | null, sessionId: string, events: any[]): Promise<any> {
+    const startTime = Date.now();
+    try {
+      // Validate input parameters with enhanced logging
       if (!sessionId) {
         appLogger.error('Missing sessionId in saveEvents', createLogMetadata(undefined, {
           userId: userId || 'anonymous'
         }));
         return { success: false, eventsProcessed: 0, error: 'Missing sessionId' };
-      }
-      
-      // Validate UUID format for sessionId
-      if (!isValidUUID(sessionId)) {
-        appLogger.error('Invalid sessionId format in saveEvents', createLogMetadata(undefined, {
-          userId: userId || 'anonymous',
-          sessionId
-        }));
-        return { success: false, eventsProcessed: 0, error: 'Invalid sessionId format' };
-      }
-      
-      // Validate userId format if provided
-      if (userId && !isValidUUID(userId)) {
-        appLogger.warn('Invalid userId format in saveEvents, will use null instead', createLogMetadata(undefined, {
-          userId,
-          sessionId
-        }));
-        userId = null; // Use null for invalid userId to prevent database errors
       }
       
       if (!Array.isArray(events)) {
@@ -177,288 +274,297 @@ export class AnalyticsService {
         return { success: true, eventsProcessed: 0 };
       }
 
-      // Log the event details for debugging
+      // Log the event details with enhanced details for debugging
+      appLogger.info('Processing analytics events', createLogMetadata(undefined, {
+        sessionId,
+        userId: userId || 'anonymous',
+        eventCount: events.length,
+        eventTypes: events.map(e => e.eventType).join(', '),
+        areas: [...new Set(events.map(e => e.area))].join(', '),
+        sampleEvent: JSON.stringify(events[0])
+      }));
+      
+      // Verify database connectivity before proceeding
       try {
-        const sampleEvent = events[0] ? { 
-          eventType: events[0].eventType || 'unknown',
-          area: events[0].area || 'unknown',
-          hasData: !!events[0].data
-        } : 'No events';
-        
-        appLogger.info('Analytics events received', createLogMetadata(undefined, {
+        await this.testDatabaseConnection();
+      } catch (dbError: any) {
+        appLogger.error('Database connection test failed before saving events', createLogMetadata(undefined, {
           sessionId,
           userId: userId || 'anonymous',
-          eventCount: events.length,
-          eventTypes: events.filter(e => e && e.eventType).map(e => e.eventType).join(', '),
-          areas: [...new Set(events.filter(e => e && e.area).map(e => e.area))].join(', '),
-          sampleEvent
+          error: dbError.message,
+          errorDetails: util.inspect(dbError, { depth: 3 })
         }));
-      } catch (loggingError) {
-        // Don't let logging errors stop the process
-        appLogger.warn('Error logging event details', createLogMetadata(undefined, {
-          error: loggingError?.message || 'Unknown error'
-        }));
+        return { 
+          success: false, 
+          eventsProcessed: 0, 
+          error: 'Database connection error: ' + dbError.message 
+        };
       }
       
-      // During pilot study, accept all events to maximize data collection
-      // In a production environment, we'd check for consent from the user
-      // For anonymous users (no userId), we still accept their events
-      // if they've explicitly sent them (implied consent through the AnalyticsContext)
-      
-      // Log but don't reject anonymous events - pilot study specific behavior
-      if (!userId) {
-        appLogger.info('Anonymous analytics events received', createLogMetadata(undefined, {
-          sessionId,
-          eventCount: events.length
-        }));
-      } 
-      // For logged-in users, still check consent
-      else {
-        try {
-          const consentStatus = await this.getConsentStatus(userId);
-          if (consentStatus !== 'granted') {
-            appLogger.warn('Analytics events for user without explicit consent', createLogMetadata(undefined, {
-              userId,
-              sessionId,
-              consentStatus,
-              eventCount: events.length
-            }));
-            // For pilot study, we'll still save the data but log that there was no consent
-            // This maximizes our ability to gather data for the study
-          }
-        } catch (consentError) {
-          appLogger.error('Error checking consent status', createLogMetadata(undefined, {
-            userId,
-            sessionId,
-            error: consentError?.message || 'Unknown error'
-          }));
-          // Continue anyway for pilot study
-        }
-      }
-
       // Try to update or create the session record
-      let sessionUpdated = false;
       try {
         await this.updateSession(sessionId, userId);
-        sessionUpdated = true;
-      } catch (sessionError) {
+        appLogger.debug('Session record updated successfully', createLogMetadata(undefined, {
+          sessionId,
+          userId: userId || 'anonymous'
+        }));
+      } catch (sessionError: any) {
         appLogger.error('Error updating session record', createLogMetadata(undefined, {
           sessionId,
           userId: userId || 'anonymous',
-          error: sessionError?.message || 'Unknown error',
-          stack: sessionError?.stack || 'No stack trace'
+          error: sessionError.message || 'Unknown error',
+          errorDetails: util.inspect(sessionError, { depth: 3 }),
+          stack: sessionError.stack
         }));
         // Continue anyway - we should still attempt to save events
       }
 
-      // Process the events for insertion
+      // Process the events for insertion with enhanced error details
       appLogger.debug('Processing events for DB insertion', createLogMetadata(undefined, {
         sessionId,
-        eventCount: events.length,
-        sessionUpdated
+        eventCount: events.length
       }));
       
-      // Batch insert the events
-      const values = events.map(event => {
+      // Process events with more detailed validation
+      const values = [];
+      const invalidEvents = [];
+      
+      for (let i = 0; i < events.length; i++) {
+        const event = events[i];
         try {
-          if (!event) {
-            appLogger.warn('Null or undefined event in batch', createLogMetadata(undefined, { sessionId }));
-            return null;
+          // Enhanced validation
+          if (!event.eventType) {
+            invalidEvents.push({ event, reason: 'Missing eventType' });
+            continue;
           }
           
-          // Generate a valid UUID for the event
-          const eventId = uuidv4();
+          if (!event.area) {
+            invalidEvents.push({ event, reason: 'Missing area' });
+            continue;
+          }
           
-          // Ensure eventType and area are valid strings
-          const eventType = (event.eventType && typeof event.eventType === 'string') 
-            ? event.eventType.substring(0, 50) // Limit to field size
-            : 'unknown';
-            
-          const area = (event.area && typeof event.area === 'string')
-            ? event.area.substring(0, 50) // Limit to field size
-            : 'unknown';
+          if (!event.timestamp) {
+            invalidEvents.push({ event, reason: 'Missing timestamp' });
+            continue;
+          }
           
-          // Parse timestamp or use current time
+          // Try to parse timestamp
           let timestamp;
           try {
-            timestamp = event.timestamp ? new Date(event.timestamp) : new Date();
-            // Validate the timestamp
+            timestamp = new Date(event.timestamp);
             if (isNaN(timestamp.getTime())) {
-              timestamp = new Date(); // Fallback to current time
-              appLogger.warn('Invalid timestamp in event, using current time', createLogMetadata(undefined, {
-                sessionId,
-                providedTimestamp: event.timestamp
-              }));
+              invalidEvents.push({ event, reason: 'Invalid timestamp format' });
+              continue;
             }
-          } catch (timeError) {
-            timestamp = new Date(); // Fallback to current time
-            appLogger.warn('Error parsing timestamp, using current time', createLogMetadata(undefined, {
-              sessionId,
-              error: timeError?.message || 'Unknown error'
-            }));
+          } catch (timeError: any) {
+            invalidEvents.push({ event, reason: 'Could not parse timestamp: ' + timeError.message });
+            continue;
           }
           
-          // Safely stringify the data
-          const dataJson = safeJSONStringify(event.data || {});
+          // Ensure data field is properly handled
+          let data = {};
+          if (event.data) {
+            if (typeof event.data === 'object') {
+              data = event.data;
+            } else {
+              try {
+                data = JSON.parse(event.data);
+              } catch (parseError) {
+                // If we can't parse, use as string
+                data = { rawData: String(event.data) };
+              }
+            }
+          }
           
-          return {
-            id: eventId,
+          values.push({
+            id: uuidv4(),
             sessionId: sessionId,
             userId: userId || null,
-            eventType: eventType,
-            area: area,
+            eventType: event.eventType,
+            area: event.area,
             timestamp: timestamp,
-            data: dataJson
-          };
-        } catch (eventParsingError) {
+            data: data
+          });
+        } catch (eventParsingError: any) {
           appLogger.error('Error parsing event data', createLogMetadata(undefined, {
             sessionId,
-            error: eventParsingError?.message || 'Unknown error',
-            eventData: typeof event === 'object' ? 'object' : typeof event
+            error: eventParsingError.message || 'Unknown error',
+            eventIndex: i,
+            eventData: JSON.stringify(event)
           }));
-          // Return null for events that can't be processed
-          return null;
+          invalidEvents.push({ event, reason: 'Parse error: ' + eventParsingError.message });
         }
-      }).filter(Boolean); // Remove null entries
+      }
+      
+      // Log invalid events for debugging
+      if (invalidEvents.length > 0) {
+        appLogger.warn('Some events were invalid and will be skipped', createLogMetadata(undefined, {
+          sessionId,
+          invalidCount: invalidEvents.length,
+          totalCount: events.length,
+          sampleInvalid: invalidEvents.slice(0, 3)
+        }));
+      }
 
       // If no valid events, return early
       if (values.length === 0) {
         appLogger.info('No valid events to process after filtering', createLogMetadata(undefined, {
           sessionId,
-          originalCount: events.length
+          originalCount: events.length,
+          invalidCount: invalidEvents.length
         }));
-        return { success: true, eventsProcessed: 0 };
+        return { 
+          success: true, 
+          eventsProcessed: 0,
+          invalidEvents: invalidEvents.length
+        };
       }
 
-      // Build parameterized query for batch insert
+      // Build parameterized query for batch insert with detailed logging
       try {
-        const placeholders = values.map((_, i) => {
-          const base = i * 7;
-          return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
-        }).join(', ');
-
-        const flatParams = values.flatMap(v => [
-          v.id,
-          v.sessionId,
-          v.userId,
-          v.eventType,
-          v.area,
-          v.timestamp,
-          v.data
-        ]);
-
-        const query = `
-          INSERT INTO analytics_events (id, session_id, user_id, event_type, area, timestamp, data)
-          VALUES ${placeholders}
-          RETURNING id
-        `;
-
-        appLogger.debug('Executing insert query', createLogMetadata(undefined, {
-          eventsCount: values.length,
-          paramCount: flatParams.length
+        // Log the detailed query structure but not full SQL (could be too large)
+        appLogger.debug('Building insert query', createLogMetadata(undefined, {
+          sessionId,
+          eventCount: values.length
         }));
         
-        let result;
-        try {
-          // Execute the query with additional error handling
-          result = await this.pool.query(query, flatParams);
-        } catch (dbError) {
-          // Handle common database errors
-          if (dbError.code === '23505') {
-            appLogger.error('Duplicate key violation in insert', createLogMetadata(undefined, {
-              code: dbError.code,
-              detail: dbError.detail || 'No detail',
-              sessionId
+        // Split inserts into batches of 100 max to prevent large query issues
+        const batchSize = 100;
+        let totalInserted = 0;
+        
+        // Perform inserts in batches
+        for (let i = 0; i < values.length; i += batchSize) {
+          const batch = values.slice(i, i + batchSize);
+          
+          const placeholders = batch.map((_, j) => {
+            const base = j * 7;
+            return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
+          }).join(', ');
+
+          const flatParams = batch.flatMap(v => [
+            v.id,
+            v.sessionId,
+            v.userId,
+            v.eventType,
+            v.area,
+            v.timestamp,
+            JSON.stringify(v.data)
+          ]);
+
+          const query = `
+            INSERT INTO analytics_events (id, session_id, user_id, event_type, area, timestamp, data)
+            VALUES ${placeholders}
+            RETURNING id
+          `;
+
+          appLogger.debug('Executing batch insert query', createLogMetadata(undefined, {
+            sessionId,
+            batchNumber: Math.floor(i / batchSize) + 1,
+            batchSize: batch.length,
+            totalBatches: Math.ceil(values.length / batchSize)
+          }));
+          
+          const batchStart = Date.now();
+          try {
+            const result = await this.pool.query(query, flatParams);
+            const batchInserted = result.rowCount || 0;
+            totalInserted += batchInserted;
+            
+            appLogger.debug('Batch insert completed successfully', createLogMetadata(undefined, {
+              sessionId,
+              batchNumber: Math.floor(i / batchSize) + 1,
+              batchInserted: batchInserted,
+              batchDuration: Date.now() - batchStart
             }));
-            return { 
-              success: false, 
-              eventsProcessed: 0, 
-              error: 'Duplicate event IDs detected' 
-            };
-          } else if (dbError.code === '42P01') {
-            appLogger.error('Table does not exist', createLogMetadata(undefined, {
-              code: dbError.code,
-              detail: dbError.detail || 'No detail',
-              sessionId
+          } catch (batchError: any) {
+            appLogger.error('Error in batch insert', createLogMetadata(undefined, {
+              sessionId,
+              batchNumber: Math.floor(i / batchSize) + 1,
+              error: batchError.message,
+              code: batchError.code,
+              detail: batchError.detail,
+              eventTypes: batch.map(v => v.eventType).join(',')
             }));
-            return { 
-              success: false, 
-              eventsProcessed: 0, 
-              error: 'Analytics tables not found. Please run database migrations.' 
-            };
-          } else {
-            // Re-throw for general handler
-            throw dbError;
+            
+            // Continue with next batch instead of failing completely
           }
         }
         
-        const insertedCount = result.rowCount || 0;
-
-        // Update the session with the new event count if we successfully created/updated it
-        if (sessionUpdated) {
-          try {
-            const updateSessionQuery = `
-              UPDATE analytics_sessions
-              SET events_count = events_count + $1, 
-                  updated_at = NOW()
-              WHERE id = $2
-            `;
-            await this.pool.query(updateSessionQuery, [insertedCount, sessionId]);
-          } catch (updateSessionError) {
-            appLogger.error('Error updating session event count', createLogMetadata(undefined, {
-              sessionId,
-              error: updateSessionError?.message || 'Unknown error',
-              stack: updateSessionError?.stack || 'No stack trace'
-            }));
-            // Continue anyway - this doesn't affect the success of event insertion
-          }
+        // Update the session with the new event count
+        try {
+          const updateSessionQuery = `
+            UPDATE analytics_sessions
+            SET events_count = events_count + $1, 
+                updated_at = NOW()
+            WHERE id = $2
+          `;
+          await this.pool.query(updateSessionQuery, [totalInserted, sessionId]);
+          
+          appLogger.debug('Updated session event count', createLogMetadata(undefined, {
+            sessionId,
+            addedCount: totalInserted
+          }));
+        } catch (updateSessionError: any) {
+          appLogger.error('Error updating session event count', createLogMetadata(undefined, {
+            sessionId,
+            error: updateSessionError.message || 'Unknown error',
+            stack: updateSessionError.stack
+          }));
+          // Continue anyway - this doesn't affect the success of event insertion
         }
 
+        const totalDuration = Date.now() - startTime;
         appLogger.info('Analytics events saved successfully', createLogMetadata(undefined, {
           userId: userId || 'anonymous',
           sessionId,
-          eventCount: insertedCount,
-          eventTypes: events.filter(e => e && e.eventType).map(e => e.eventType).join(', ')
+          eventCount: values.length,
+          insertedCount: totalInserted,
+          invalidCount: invalidEvents.length,
+          durationMs: totalDuration,
+          eventsPerSecond: Math.round((totalInserted / totalDuration) * 1000)
         }));
 
-        return { success: true, eventsProcessed: insertedCount };
-      } catch (insertError) {
-        const errorMessage = insertError?.message || 'Unknown error';
-        const errorCode = insertError?.code || 'No code';
-        const errorDetail = insertError?.detail || 'No detail';
-        const errorStack = insertError?.stack || 'No stack trace';
-        
+        return { 
+          success: true, 
+          eventsProcessed: totalInserted,
+          invalidEvents: invalidEvents.length,
+          durationMs: totalDuration
+        };
+      } catch (insertError: any) {
         appLogger.error('Error executing insert query', createLogMetadata(undefined, {
           sessionId,
           userId: userId || 'anonymous',
-          error: errorMessage,
-          code: errorCode,
-          detail: errorDetail,
-          stack: errorStack
+          error: insertError.message || 'Unknown error',
+          code: insertError.code,
+          detail: insertError.detail,
+          stack: insertError.stack
         }));
         
         return { 
           success: false, 
           eventsProcessed: 0, 
-          error: `Database error (${errorCode}): ${errorMessage}` 
+          error: `Database error: ${insertError.message || 'Unknown error'}`,
+          errorCode: insertError.code,
+          detail: insertError.detail
         };
       }
-    } catch (error) {
-      const errorMessage = error?.message || 'Unknown error';
-      const errorStack = error?.stack || 'No stack trace';
-      
+    } catch (error: any) {
+      const totalDuration = Date.now() - startTime;
       appLogger.error('Unhandled error in saveEvents', createLogMetadata(undefined, {
         userId: userId || 'anonymous',
         sessionId: sessionId || 'unknown',
         eventCount: events ? events.length : 0,
-        error: errorMessage,
-        stack: errorStack
+        error: error.message || 'Unknown error',
+        stack: error.stack,
+        durationMs: totalDuration,
+        errorDetail: util.inspect(error, { depth: 3 })
       }));
       
       return { 
         success: false, 
         eventsProcessed: 0, 
-        error: `Unhandled error: ${errorMessage}`
+        error: `Unhandled error: ${error.message || 'Unknown error'}`,
+        errorDetail: error.name
       };
     }
   }
@@ -466,14 +572,10 @@ export class AnalyticsService {
   /**
    * Update or create a session record with enhanced error handling
    */
-  async updateSession(sessionId, userId) {
+  async updateSession(sessionId: string, userId: string | null): Promise<boolean> {
     try {
       if (!sessionId) {
         throw new Error('Missing sessionId parameter');
-      }
-      
-      if (!isValidUUID(sessionId)) {
-        throw new Error('Invalid UUID format for sessionId');
       }
       
       // Check if session exists
@@ -509,15 +611,13 @@ export class AnalyticsService {
       }
       
       return true;
-    } catch (error) {
-      const errorMessage = error?.message || 'Unknown error';
-      const errorStack = error?.stack || 'No stack trace';
-      
+    } catch (error: any) {
       appLogger.error('Error in updateSession', createLogMetadata(undefined, {
         sessionId,
         userId: userId || 'anonymous',
-        error: errorMessage,
-        stack: errorStack
+        error: error.message || 'Unknown error',
+        errorDetail: util.inspect(error, { depth: 3 }),
+        stack: error.stack
       }));
       
       throw error; // Re-throw to allow the caller to handle
@@ -527,47 +627,11 @@ export class AnalyticsService {
   /**
    * End a session with enhanced error handling
    */
-  async endSession(sessionId, duration) {
+  async endSession(sessionId: string, duration: number): Promise<boolean> {
     try {
       if (!sessionId) {
         appLogger.error('Missing sessionId in endSession', createLogMetadata(undefined, {}));
         return false;
-      }
-      
-      if (!isValidUUID(sessionId)) {
-        appLogger.error('Invalid UUID format for sessionId in endSession', createLogMetadata(undefined, {
-          sessionId
-        }));
-        return false;
-      }
-      
-      // Validate duration
-      let validDuration = 0;
-      if (duration) {
-        // Parse duration to a number if it's not already
-        if (typeof duration !== 'number') {
-          try {
-            validDuration = parseInt(duration, 10) || 0;
-          } catch (parseError) {
-            appLogger.warn('Invalid duration provided, using 0', createLogMetadata(undefined, {
-              sessionId, 
-              providedDuration: duration,
-              error: parseError?.message || 'Unknown error'
-            }));
-            validDuration = 0;
-          }
-        } else {
-          validDuration = duration;
-        }
-        
-        // Make sure duration is positive
-        if (validDuration < 0) {
-          appLogger.warn('Negative duration provided, using 0', createLogMetadata(undefined, {
-            sessionId, 
-            providedDuration: duration
-          }));
-          validDuration = 0;
-        }
       }
       
       const query = `
@@ -580,7 +644,7 @@ export class AnalyticsService {
         WHERE id = $2
       `;
       
-      const result = await this.pool.query(query, [validDuration, sessionId]);
+      const result = await this.pool.query(query, [duration || 0, sessionId]);
       
       const rowsAffected = result.rowCount || 0;
       if (rowsAffected === 0) {
@@ -590,19 +654,17 @@ export class AnalyticsService {
       } else {
         appLogger.info('Successfully ended session', createLogMetadata(undefined, {
           sessionId,
-          duration: validDuration
+          duration: duration || 0
         }));
       }
       
       return rowsAffected > 0;
-    } catch (error) {
-      const errorMessage = error?.message || 'Unknown error';
-      const errorStack = error?.stack || 'No stack trace';
-      
+    } catch (error: any) {
       appLogger.error('Error ending session', createLogMetadata(undefined, {
         sessionId,
-        error: errorMessage,
-        stack: errorStack
+        error: error.message || 'Unknown error',
+        errorDetail: util.inspect(error, { depth: 3 }),
+        stack: error.stack
       }));
       return false;
     }
@@ -611,17 +673,10 @@ export class AnalyticsService {
   /**
    * Get current consent status for a user with enhanced error handling
    */
-  async getConsentStatus(userId) {
+  async getConsentStatus(userId: string): Promise<string> {
     try {
       if (!userId) {
         appLogger.error('Missing userId in getConsentStatus', createLogMetadata(undefined, {}));
-        return 'not_asked';
-      }
-      
-      if (!isValidUUID(userId)) {
-        appLogger.error('Invalid UUID format for userId in getConsentStatus', createLogMetadata(undefined, {
-          userId
-        }));
         return 'not_asked';
       }
       
@@ -640,14 +695,12 @@ export class AnalyticsService {
       }
       
       return result.rows[0].status;
-    } catch (error) {
-      const errorMessage = error?.message || 'Unknown error';
-      const errorStack = error?.stack || 'No stack trace';
-      
+    } catch (error: any) {
       appLogger.error('Error getting consent status', createLogMetadata(undefined, {
         userId,
-        error: errorMessage,
-        stack: errorStack
+        error: error.message || 'Unknown error',
+        errorDetail: util.inspect(error, { depth: 3 }),
+        stack: error.stack
       }));
       return 'not_asked';
     }
@@ -656,18 +709,10 @@ export class AnalyticsService {
   /**
    * Update consent status for a user with enhanced error handling
    */
-  async updateConsent(userId, status) {
+  async updateConsent(userId: string, status: string): Promise<boolean> {
     try {
       if (!userId) {
         appLogger.error('Missing userId in updateConsent', createLogMetadata(undefined, {
-          status
-        }));
-        return false;
-      }
-      
-      if (!isValidUUID(userId)) {
-        appLogger.error('Invalid UUID format for userId in updateConsent', createLogMetadata(undefined, {
-          userId,
           status
         }));
         return false;
@@ -707,15 +752,13 @@ export class AnalyticsService {
       }));
       
       return true;
-    } catch (error) {
-      const errorMessage = error?.message || 'Unknown error';
-      const errorStack = error?.stack || 'No stack trace';
-      
+    } catch (error: any) {
       appLogger.error('Error updating consent status', createLogMetadata(undefined, {
         userId,
         status,
-        error: errorMessage,
-        stack: errorStack
+        error: error.message || 'Unknown error',
+        errorDetail: util.inspect(error, { depth: 3 }),
+        stack: error.stack
       }));
       return false;
     }
@@ -724,7 +767,7 @@ export class AnalyticsService {
   /**
    * Validate a pilot study invitation token with enhanced error handling
    */
-  async validatePilotToken(token) {
+  async validatePilotToken(token: string): Promise<any> {
     try {
       if (!token) {
         appLogger.error('Missing token in validatePilotToken', createLogMetadata(undefined, {}));
@@ -734,15 +777,10 @@ export class AnalyticsService {
         };
       }
       
-      // Sanitize the token
-      const sanitizedToken = typeof token === 'string' 
-        ? token.trim().substring(0, 50) // Limit to field size
-        : String(token).trim().substring(0, 50);
-      
       // Query the pilot_tokens table
       const result = await this.pool.query(
         'SELECT token, participant_type, used_at FROM pilot_tokens WHERE token = $1',
-        [sanitizedToken]
+        [token]
       );
       
       // If token doesn't exist
@@ -767,14 +805,12 @@ export class AnalyticsService {
         valid: true,
         participantType
       };
-    } catch (error) {
-      const errorMessage = error?.message || 'Unknown error';
-      const errorStack = error?.stack || 'No stack trace';
-      
+    } catch (error: any) {
       appLogger.error('Error validating pilot token', createLogMetadata(undefined, {
         token,
-        error: errorMessage,
-        stack: errorStack
+        error: error.message || 'Unknown error',
+        errorDetail: util.inspect(error, { depth: 3 }),
+        stack: error.stack
       }));
       
       return {
@@ -787,7 +823,7 @@ export class AnalyticsService {
   /**
    * Register a pilot study participant with enhanced error handling
    */
-  async registerPilotParticipant(email, password, token, participantType) {
+  async registerPilotParticipant(email: string, password: string, token: string, participantType: string): Promise<any> {
     try {
       // Validate input parameters
       if (!email || !password || !token || !participantType) {
@@ -804,11 +840,6 @@ export class AnalyticsService {
         };
       }
       
-      // Sanitize inputs
-      const sanitizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : String(email).trim().toLowerCase();
-      const sanitizedToken = typeof token === 'string' ? token.trim() : String(token).trim();
-      const sanitizedType = typeof participantType === 'string' ? participantType.trim() : String(participantType).trim();
-      
       // In a real implementation, we would:
       // 1. Register the user in the auth system
       // 2. Set a pilot study flag in their profile
@@ -822,12 +853,11 @@ export class AnalyticsService {
       try {
         // Automatically set analytics consent for pilot participants
         await this.updateConsent(userId, 'granted');
-      } catch (consentError) {
-        const errorMessage = consentError?.message || 'Unknown error';
-        
+      } catch (consentError: any) {
         appLogger.error('Error setting initial consent for pilot participant', createLogMetadata(undefined, {
           userId,
-          error: errorMessage
+          error: consentError.message || 'Unknown error',
+          errorDetail: util.inspect(consentError, { depth: 3 })
         }));
         // Continue anyway - this is not critical
       }
@@ -835,8 +865,8 @@ export class AnalyticsService {
       // Log the registration event
       appLogger.info('Pilot participant registered', createLogMetadata(undefined, {
         userId,
-        participantType: sanitizedType,
-        email: sanitizedEmail
+        participantType,
+        email
       }));
       
       return {
@@ -844,16 +874,14 @@ export class AnalyticsService {
         userId,
         token: authToken
       };
-    } catch (error) {
-      const errorMessage = error?.message || 'Unknown error';
-      const errorStack = error?.stack || 'No stack trace';
-      
+    } catch (error: any) {
       appLogger.error('Error registering pilot participant', createLogMetadata(undefined, {
         email,
         token,
         participantType,
-        error: errorMessage,
-        stack: errorStack
+        error: error.message || 'Unknown error',
+        errorDetail: util.inspect(error, { depth: 3 }),
+        stack: error.stack
       }));
       
       return {
@@ -866,17 +894,11 @@ export class AnalyticsService {
   /**
    * Get analytics metrics for pilot study dashboard with enhanced error handling
    */
-  async getMetrics(request) {
+  async getMetrics(request: any): Promise<any> {
     // Log the raw request for debugging
-    try {
-      appLogger.info('Getting analytics metrics raw request', createLogMetadata(undefined, {
-        rawRequest: request ? JSON.stringify(request) : 'undefined'
-      }));
-    } catch (logError) {
-      appLogger.warn('Error logging request', createLogMetadata(undefined, {
-        error: logError?.message || 'Unknown error'
-      }));
-    }
+    appLogger.info('Getting analytics metrics raw request', createLogMetadata(undefined, {
+      rawRequest: request
+    }));
 
     try {
       if (!request) {
@@ -889,7 +911,7 @@ export class AnalyticsService {
       let dateStart, dateEnd;
       try {
         // Use a default if no startDate or if it's invalid
-        if (!startDate || typeof startDate !== 'string' || startDate.trim() === '') {
+        if (!startDate || startDate.trim() === '') {
           const defaultDate = new Date();
           defaultDate.setDate(defaultDate.getDate() - 30); // Default to last 30 days
           dateStart = defaultDate;
@@ -904,4 +926,5 @@ export class AnalyticsService {
             defaultDate.setDate(defaultDate.getDate() - 30);
             dateStart = defaultDate;
             appLogger.warn('Invalid start date provided, using default', createLogMetadata(undefined, {
-              providedStartDate: startDate
+              providedStartDate: startDate,
+              defaultDate
