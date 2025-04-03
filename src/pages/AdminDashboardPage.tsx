@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import AnalyticsDiagnosticTool from '../components/analytics/AnalyticsDiagnosticTool';
 
 // Component for displaying metrics cards
 const MetricCard: React.FC<{
@@ -50,18 +51,34 @@ const AdminDashboardPage: React.FC = () => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   
-  // Set default dates once component mounts
+  // Set default dates or load from localStorage once component mounts
   useEffect(() => {
     try {
-      // Default to 14 days ago for start date
-      const twoWeeksAgo = new Date();
-      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-      const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0] || '';
-      setStartDate(twoWeeksAgoStr);
+      // Try to load dates from localStorage first
+      const storedStartDate = localStorage.getItem('admin_dashboard_start_date');
+      const storedEndDate = localStorage.getItem('admin_dashboard_end_date');
       
-      // Default to today for end date
-      const todayStr = new Date().toISOString().split('T')[0] || '';
-      setEndDate(todayStr);
+      if (storedStartDate && storedEndDate) {
+        // Use stored dates if available
+        setStartDate(storedStartDate);
+        setEndDate(storedEndDate);
+        console.log('Loaded date range from localStorage:', storedStartDate, 'to', storedEndDate);
+      } else {
+        // Default to 14 days ago for start date
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0] || '';
+        
+        // Default to today for end date
+        const todayStr = new Date().toISOString().split('T')[0] || '';
+        
+        setStartDate(twoWeeksAgoStr);
+        setEndDate(todayStr);
+        
+        // Save default dates to localStorage
+        localStorage.setItem('admin_dashboard_start_date', twoWeeksAgoStr);
+        localStorage.setItem('admin_dashboard_end_date', todayStr);
+      }
     } catch (e) {
       console.error('Error setting default dates:', e);
     }
@@ -73,7 +90,17 @@ const AdminDashboardPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     
+    // Save selected date range to localStorage
+    localStorage.setItem('admin_dashboard_start_date', startDate);
+    localStorage.setItem('admin_dashboard_end_date', endDate);
+    console.log('Saving date range to localStorage:', startDate, 'to', endDate);
+    
     try {
+      // Add debug logging to track API calls
+      console.log('Fetching metrics from API:', 
+        `${API_BASE_URL}${API_ENDPOINTS.ADMIN.ANALYTICS_METRICS}`, 
+        { startDate, endDate });
+      
       const response = await axios.get(
         `${API_BASE_URL}${API_ENDPOINTS.ADMIN.ANALYTICS_METRICS}`, 
         {
@@ -81,6 +108,8 @@ const AdminDashboardPage: React.FC = () => {
           withCredentials: true
         }
       );
+      
+      console.log('API response data:', response.data);
       // Check if the metrics return empty results
       const hasData = response.data.metrics && (
         response.data.metrics.totalSessions > 0 ||
@@ -249,6 +278,11 @@ const AdminDashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <BarChart title="Most Visited Pages" data={pageViewsData} />
               <BarChart title="Most Used Features" data={featureUsageData} />
+            </div>
+            {/* Debug section */}
+            <div className="mt-8 border-t pt-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Debugging Tools</h2>
+              <AnalyticsDiagnosticTool />
             </div>
           </>
         )}
