@@ -17,6 +17,7 @@ export default function usePageTracking(options: {
   const { trackEvent, isTrackingEnabled } = useAnalytics();
   const pageEnterTimeRef = useRef<number>(Date.now());
   const lastPathRef = useRef<string>(location.pathname);
+  const hasTrackedInitialPageView = useRef<boolean>(false);
   
   const {
     area = AnalyticsArea.GENERAL,
@@ -25,7 +26,7 @@ export default function usePageTracking(options: {
   } = options;
 
   useEffect(() => {
-    // Skip tracking for excluded paths
+    // Skip tracking for excluded paths or if tracking is disabled
     if (
       !isTrackingEnabled ||
       excludePaths.some(path => location.pathname.startsWith(path))
@@ -33,29 +34,34 @@ export default function usePageTracking(options: {
       return;
     }
 
-    const currentTime = Date.now();
-    const timeOnPage = currentTime - pageEnterTimeRef.current;
-    const title = pageTitle || document.title;
-    
-    // Track the page leave event for the previous page if it's not the first page load
-    if (lastPathRef.current !== location.pathname) {
-      trackEvent(AnalyticsEventType.PAGE_LEAVE, area, {
-        path: lastPathRef.current,
+    // Only track page views when the path actually changes
+    if (lastPathRef.current !== location.pathname || !hasTrackedInitialPageView.current) {
+      const currentTime = Date.now();
+      const timeOnPage = currentTime - pageEnterTimeRef.current;
+      const title = pageTitle || document.title;
+      
+      // Track the page leave event for the previous page if it's not the first page load
+      if (lastPathRef.current !== location.pathname && hasTrackedInitialPageView.current) {
+        trackEvent(AnalyticsEventType.PAGE_LEAVE, area, {
+          path: lastPathRef.current,
+          title: title,
+          timeOnPage: Math.round(timeOnPage / 1000) // Convert to seconds
+        });
+      }
+      
+      // Track the new page view
+      console.log(`[Analytics] Tracking page view: ${location.pathname}`);
+      trackEvent(AnalyticsEventType.PAGE_VIEW, area, {
+        path: location.pathname,
         title: title,
-        timeOnPage: Math.round(timeOnPage / 1000) // Convert to seconds
+        referrer: document.referrer || lastPathRef.current
       });
+      
+      // Update refs for the new page
+      pageEnterTimeRef.current = currentTime;
+      lastPathRef.current = location.pathname;
+      hasTrackedInitialPageView.current = true;
     }
-    
-    // Track the new page view
-    trackEvent(AnalyticsEventType.PAGE_VIEW, area, {
-      path: location.pathname,
-      title: title,
-      referrer: document.referrer || lastPathRef.current
-    });
-    
-    // Update refs for the new page
-    pageEnterTimeRef.current = currentTime;
-    lastPathRef.current = location.pathname;
     
     // Track page leave event when the user leaves the site
     const handleBeforeUnload = () => {
@@ -63,7 +69,7 @@ export default function usePageTracking(options: {
       
       trackEvent(AnalyticsEventType.PAGE_LEAVE, area, {
         path: location.pathname,
-        title: title,
+        title: pageTitle || document.title,
         timeOnPage: Math.round(finalTimeOnPage / 1000) // Convert to seconds
       });
     };
@@ -73,5 +79,5 @@ export default function usePageTracking(options: {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [location, trackEvent, area, isTrackingEnabled, pageTitle, excludePaths]);
+  }, [location.pathname, trackEvent, area, isTrackingEnabled, pageTitle, excludePaths]);
 }
