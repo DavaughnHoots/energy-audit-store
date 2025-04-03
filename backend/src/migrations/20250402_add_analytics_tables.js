@@ -1,8 +1,10 @@
 // backend/src/migrations/20250402_add_analytics_tables.js
 
-import pkg from 'pg';
-const { Pool } = pkg;
-import 'dotenv/config';
+// Change from using ESM imports to CommonJS require
+// This is more compatible with Heroku environment
+const { Pool } = require('pg');
+require('dotenv').config();
+
 // Using console.log instead of appLogger since it might not be available
 const logger = {
   info: (msg, data) => console.log(`[INFO] ${msg}`, data || ''),
@@ -12,7 +14,7 @@ const logger = {
 /**
  * Migration to create analytics tables for the pilot study
  */
-export async function runAnalyticsMigration() {
+async function runAnalyticsMigration() {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -21,6 +23,33 @@ export async function runAnalyticsMigration() {
   try {
     // Start transaction
     await pool.query('BEGIN');
+
+    // Create admin_config table if it doesn't exist yet
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin_config (
+        key VARCHAR(50) PRIMARY KEY,
+        value TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Add admin password if it doesn't exist
+      INSERT INTO admin_config (key, value)
+      VALUES ('admin_password', 'PilotStudy2025!')
+      ON CONFLICT (key) DO NOTHING;
+    `);
+
+    // Create pilot_tokens table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pilot_tokens (
+        id SERIAL PRIMARY KEY,
+        token VARCHAR(100) UNIQUE NOT NULL,
+        email VARCHAR(255),
+        used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        used_at TIMESTAMP
+      );
+    `);
 
     // Create analytics_events table
     await pool.query(`
@@ -114,7 +143,7 @@ export async function runAnalyticsMigration() {
 }
 
 // If this file is run directly, execute the migration
-if (process.argv[1].endsWith('20250402_add_analytics_tables.js')) {
+if (require.main === module) {
   runAnalyticsMigration()
     .then(result => {
       console.log('Migration completed with result:', result);
@@ -125,3 +154,6 @@ if (process.argv[1].endsWith('20250402_add_analytics_tables.js')) {
       process.exit(1);
     });
 }
+
+// Export the function for use in other files
+module.exports = { runAnalyticsMigration };

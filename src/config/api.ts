@@ -35,6 +35,14 @@ export const API_ENDPOINTS = {
     PROFILE: '/api/auth/profile',
     REFRESH: '/api/auth/refresh'
   },
+  ADMIN: {
+    LOGIN: '/api/admin/login',
+    LOGOUT: '/api/admin/logout',
+    STATUS: '/api/admin/status',
+    ANALYTICS_METRICS: '/api/admin/analytics/metrics',
+    ANALYTICS_SESSIONS: '/api/admin/analytics/sessions',
+    SESSION_EVENTS: (sessionId: string) => `/api/admin/analytics/sessions/${sessionId}/events`
+  },
   EMAIL: {
     VERIFY: '/api/email/verify',
     SEND_VERIFICATION: '/api/email/send-verification'

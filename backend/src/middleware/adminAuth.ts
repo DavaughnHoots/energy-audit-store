@@ -1,10 +1,12 @@
 // backend/src/middleware/adminAuth.ts
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { pool } from '../config/database.js';
 
-// Secret hardcoded for the pilot study
-// In a production environment, this would come from environment variables
-const ADMIN_PASSWORD = 'Energy-Audit-Admin-Password-2025!';
+// Get the admin password from environment variable or fallback to database
+// For the pilot study, we have set this in the admin_config table
+// This will be fetched from the database in the adminLogin function
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'PilotStudy2025!';
 const COOKIE_NAME = 'admin_session';
 const SESSION_SECRET = 'energy-audit-admin-session-secret';
 
@@ -29,24 +31,40 @@ export function generateSessionToken(password: string): string {
 /**
  * Validate admin credentials and set session cookie
  */
-export function adminLogin(req: Request, res: Response) {
-  const { password } = req.body;
-  
-  if (!password || password !== ADMIN_PASSWORD) {
-    // Add slight delay to prevent timing attacks
-    setTimeout(() => {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
-    }, 500);
-    return;
-  }
+export async function adminLogin(req: Request, res: Response) {
+  try {
+    const { password } = req.body;
+    
+    // Get password from database
+    const passwordQuery = await pool.query(
+      'SELECT value FROM admin_config WHERE key = $1',
+      ['admin_password']
+    );
+    
+    // If no password found in database, use default
+    const adminPassword = passwordQuery.rows.length > 0 
+      ? passwordQuery.rows[0].value 
+      : DEFAULT_ADMIN_PASSWORD;
+    
+    if (!password || password !== adminPassword) {
+      // Add slight delay to prevent timing attacks
+      setTimeout(() => {
+        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      }, 500);
+      return;
+    }
 
-  // Create session token
-  const sessionToken = generateSessionToken(password);
-  
-  // Set cookie
-  res.cookie(COOKIE_NAME, sessionToken, COOKIE_CONFIG);
-  
-  return res.json({ success: true });
+    // Create session token
+    const sessionToken = generateSessionToken(password);
+    
+    // Set cookie
+    res.cookie(COOKIE_NAME, sessionToken, COOKIE_CONFIG);
+    
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    return res.status(500).json({ success: false, message: 'Authentication error' });
+  }
 }
 
 /**
