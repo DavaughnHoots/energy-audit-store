@@ -1,36 +1,69 @@
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFileSync } from 'fs';
-import pg from 'pg';
-const { Pool } = pg;
+#!/usr/bin/env node
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Script to run the analytics tables migration directly
+// Usage: node run_migration.js
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
+const { Sequelize } = require('sequelize');
+const migrationScript = require('../migrations/20250404_add_analytics_tables');
+
+async function runMigration() {
+  // Use the DATABASE_URL environment variable provided by Heroku
+  const databaseUrl = process.env.DATABASE_URL;
+  
+  if (!databaseUrl) {
+    console.error('DATABASE_URL environment variable not found');
+    process.exit(1);
   }
-});
-
-async function runMigration(migrationFile) {
+  
+  console.log('Connecting to database...');
+  
+  // Create a Sequelize instance with the database URL
+  const sequelize = new Sequelize(databaseUrl, {
+    dialect: 'postgres',
+    logging: console.log,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    }
+  });
+  
   try {
-    const migrationPath = migrationFile || join(__dirname, '../migrations/add_property_details.sql');
-    // Enable UUID extension first
-    await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
+    await sequelize.authenticate();
+    console.log('Connection to database established successfully');
     
-    const migrationSQL = readFileSync(migrationPath, 'utf8');
-    await pool.query(migrationSQL);
-    console.log('Migration completed successfully');
+    console.log('Running migration...');
+    await migrationScript.up(sequelize.getQueryInterface(), Sequelize);
+    console.log('Migration executed successfully');
+    
+    // Check if tables were created
+    const tables = await sequelize.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'analytics%'",
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+    
+    console.log('\nVerifying tables:');
+    if (tables.length > 0) {
+      tables.forEach(table => {
+        console.log(`- ${table.table_name} has been created`);
+      });
+    } else {
+      console.log('No analytics tables found. Something went wrong!');
+    }
+    
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.error('Error running migration:', error);
     process.exit(1);
   } finally {
-    await pool.end();
+    await sequelize.close();
   }
 }
 
-// Get migration file from command line argument
-const migrationFile = process.argv[2];
-runMigration(migrationFile);
+runMigration().then(() => {
+  console.log('Done');
+  process.exit(0);
+}).catch(err => {
+  console.error('Failed to run migration:', err);
+  process.exit(1);
+});
