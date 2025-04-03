@@ -7,7 +7,8 @@
  * heroku run "node backend/scripts/heroku_check_analytics.js" --app energy-audit-store
  */
 
-const { Pool } = require('pg');
+import pg from 'pg';
+const { Pool } = pg;
 
 async function checkAnalyticsTables() {
   // Connect to database using DATABASE_URL from environment
