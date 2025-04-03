@@ -46,6 +46,7 @@ const AdminDashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<any>(null);
+  const [noDataForRange, setNoDataForRange] = useState(false);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   
@@ -80,8 +81,22 @@ const AdminDashboardPage: React.FC = () => {
           withCredentials: true
         }
       );
-      
-      setMetrics(response.data.metrics);
+      // Check if the metrics return empty results
+      const hasData = response.data.metrics && (
+        response.data.metrics.totalSessions > 0 ||
+        response.data.metrics.formCompletions > 0 ||
+        (response.data.metrics.pageViewsByArea && response.data.metrics.pageViewsByArea.length > 0) ||
+        (response.data.metrics.featureUsage && response.data.metrics.featureUsage.length > 0)
+      );
+
+      if (hasData) {
+        setMetrics(response.data.metrics);
+        setNoDataForRange(false);
+      } else {
+        // If no data found for the selected range, show "no data" message but keep previous metrics
+        setNoDataForRange(true);
+        // Don't update metrics if no data found - this keeps the previous data visible
+      }
     } catch (error: any) {
       console.error('Error fetching metrics:', error);
       
@@ -189,6 +204,18 @@ const AdminDashboardPage: React.FC = () => {
         {error && (
           <div className="mb-8 p-4 bg-red-100 text-red-700 rounded-lg">
             {error}
+          </div>
+        )}
+        
+        {/* No data notification */}
+        {noDataForRange && !isLoading && (
+          <div className="mb-8 p-4 bg-yellow-100 text-yellow-800 rounded-lg">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span><strong>No data available</strong> for the selected date range. Showing previous data instead. Try a different date range or ensure analytics events are being collected.</span>
+            </div>
           </div>
         )}
 
