@@ -56,8 +56,9 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   /**
    * Initialize the analytics context
    */
+  // Initialize sessionId outside of the effect to ensure it's available immediately
   useEffect(() => {
-    // Load or create session ID
+    // Immediately ensure we have a sessionId in localStorage and state
     const storedSessionId = localStorage.getItem(LOCAL_STORAGE_KEYS.SESSION_ID);
     const newSessionId = storedSessionId || uuidv4();
     
@@ -65,6 +66,8 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       localStorage.setItem(LOCAL_STORAGE_KEYS.SESSION_ID, newSessionId);
     }
     
+    // Guarantee sessionId is set before anything else happens
+    console.log(`[Analytics] Setting sessionId: ${newSessionId}`);
     setSessionId(newSessionId);
     
     // Load consent status
@@ -114,10 +117,13 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     window.addEventListener('beforeunload', handleBeforeUnload);
     
-    // If tracking is enabled, track session start
-    if (isTrackingEnabled && sessionId) {
-      trackSessionStart();
-    }
+    // Track session start only after sessionId and tracking state are confirmed
+    setTimeout(() => {
+      if (isTrackingEnabled && newSessionId) {
+        console.log(`[Analytics] Starting session tracking with ID: ${newSessionId}`);
+        trackSessionStart();
+      }
+    }, 0);
     
     // Set up auto-flush timer
     const timer = setInterval(() => {
@@ -220,17 +226,20 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * Flush events to the server
    */
   const flushEvents = useCallback(async () => {
-    if (!sessionId || eventQueue.length === 0) {
-      console.log(`[Analytics] Skipping flush: ${!sessionId ? 'No sessionId' : 'Empty queue'}`);
+    // Get the most up-to-date sessionId from localStorage as a fallback
+    const currentSessionId = sessionId || localStorage.getItem(LOCAL_STORAGE_KEYS.SESSION_ID);
+    
+    if (!currentSessionId || eventQueue.length === 0) {
+      console.log(`[Analytics] Skipping flush: ${!currentSessionId ? 'No sessionId' : 'Empty queue'}`);
       return;
     }
     
-    console.log(`[Analytics] Flushing ${eventQueue.length} events to server for session ${sessionId}`);
+    console.log(`[Analytics] Flushing ${eventQueue.length} events to server for session ${currentSessionId}`);
     
     try {
       await apiClient.post('/api/analytics/events', {
         events: eventQueue,
-        sessionId
+        sessionId: currentSessionId
       });
       
       console.log('[Analytics] Successfully sent events to server');
@@ -252,7 +261,10 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     area: string,
     data: Record<string, any> = {}
   ) => {
-    if (!isTrackingEnabled || !sessionId) {
+    // Get the most up-to-date sessionId from localStorage as a fallback
+    const currentSessionId = sessionId || localStorage.getItem(LOCAL_STORAGE_KEYS.SESSION_ID);
+    
+    if (!isTrackingEnabled || !currentSessionId) {
       console.log(`[Analytics] Event tracking skipped: ${!isTrackingEnabled ? 'Tracking disabled' : 'No sessionId'}`, 
         { eventType, area });
       return;

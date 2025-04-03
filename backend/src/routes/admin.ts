@@ -4,7 +4,7 @@
 
 import express from 'express';
 import { adminLogin, adminLogout, requireAdmin } from '../middleware/adminAuth.js';
-import AnalyticsService from '../services/analyticsService.js';
+import { AnalyticsService } from '../services/analyticsService.js';
 
 const router = express.Router();
 
@@ -39,18 +39,40 @@ router.get('/analytics/metrics', requireAdmin, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     
+    // Add logging to check the input parameters
+    console.log('Admin metrics request:', {
+      startDate,
+      endDate,
+      query: req.query
+    });
+    
+    // Handle empty string date params which can cause date parsing issues
+    const sanitizedStartDate = startDate && (startDate as string).trim() ? startDate as string : null;
+    const sanitizedEndDate = endDate && (endDate as string).trim() ? endDate as string : null;
+    
+    // Handle date validation with explicit defaults
+    const defaultStartDate = new Date();
+    defaultStartDate.setDate(defaultStartDate.getDate() - 30); // Default to 30 days ago
+    
     const result = await analyticsService.getMetrics({
-      startDate: startDate as string,
-      endDate: endDate as string,
+      startDate: sanitizedStartDate || defaultStartDate.toISOString(),
+      endDate: sanitizedEndDate || new Date().toISOString(),
       filters: undefined
     });
     
     return res.json(result);
   } catch (error) {
     console.error('Error getting admin analytics metrics', error);
+    
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error details:', error.message, error.stack);
+    }
+    
     return res.status(500).json({ 
       success: false, 
-      message: 'Error retrieving analytics metrics' 
+      message: 'Error retrieving analytics metrics',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

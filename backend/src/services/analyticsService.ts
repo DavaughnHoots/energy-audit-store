@@ -70,7 +70,7 @@ export async function initPilotTokenTable(pool: any): Promise<{success: boolean,
   }
 }
 
-class AnalyticsService {
+export class AnalyticsService {
   private pool: any;
 
   constructor(pool: any) {
