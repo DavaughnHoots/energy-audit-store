@@ -64,20 +64,25 @@ const AdminDashboardPage: React.FC = () => {
         setEndDate(storedEndDate);
         console.log('Loaded date range from localStorage:', storedStartDate, 'to', storedEndDate);
       } else {
-        // Default to 14 days ago for start date
-        const twoWeeksAgo = new Date();
-        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-        const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0] || '';
+        // Default to 30 days in the future to capture all test data for the pilot study
+        // This is a temporary approach for development/testing to ensure we see all events
+        const oneMonthFuture = new Date();
+        oneMonthFuture.setDate(oneMonthFuture.getDate() + 30);
+        const oneMonthFutureStr = oneMonthFuture.toISOString().split('T')[0] || '';
         
-        // Default to today for end date
-        const todayStr = new Date().toISOString().split('T')[0] || '';
+        // Default to two weeks ago for start date to capture a wider range
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+        const oneMonthAgoStr = oneMonthAgo.toISOString().split('T')[0] || '';
         
-        setStartDate(twoWeeksAgoStr);
-        setEndDate(todayStr);
+        setStartDate(oneMonthAgoStr);
+        setEndDate(oneMonthFutureStr);
         
         // Save default dates to localStorage
-        localStorage.setItem('admin_dashboard_start_date', twoWeeksAgoStr);
-        localStorage.setItem('admin_dashboard_end_date', todayStr);
+        localStorage.setItem('admin_dashboard_start_date', oneMonthAgoStr);
+        localStorage.setItem('admin_dashboard_end_date', oneMonthFutureStr);
+        
+        console.log('Set extended date range for pilot study:', oneMonthAgoStr, 'to', oneMonthFutureStr);
       }
     } catch (e) {
       console.error('Error setting default dates:', e);
@@ -110,6 +115,20 @@ const AdminDashboardPage: React.FC = () => {
       );
       
       console.log('API response data:', response.data);
+      
+      // Log detailed metrics data for debugging
+      console.log('Metrics details:', {
+        totalSessions: response.data.metrics?.totalSessions,
+        avgSessionDuration: response.data.metrics?.avgSessionDuration,
+        formCompletions: response.data.metrics?.formCompletions,
+        pageViewsCount: response.data.metrics?.pageViewsByArea?.length,
+        featureUsageCount: response.data.metrics?.featureUsage?.length,
+        dateRange: response.data.dateRange
+      });
+      
+      // Always update metrics even if empty to ensure latest data is displayed
+      setMetrics(response.data.metrics);
+      
       // Check if the metrics return empty results
       const hasData = response.data.metrics && (
         response.data.metrics.totalSessions > 0 ||
@@ -118,14 +137,7 @@ const AdminDashboardPage: React.FC = () => {
         (response.data.metrics.featureUsage && response.data.metrics.featureUsage.length > 0)
       );
 
-      if (hasData) {
-        setMetrics(response.data.metrics);
-        setNoDataForRange(false);
-      } else {
-        // If no data found for the selected range, show "no data" message but keep previous metrics
-        setNoDataForRange(true);
-        // Don't update metrics if no data found - this keeps the previous data visible
-      }
+      setNoDataForRange(!hasData);
     } catch (error: any) {
       console.error('Error fetching metrics:', error);
       
@@ -193,7 +205,7 @@ const AdminDashboardPage: React.FC = () => {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Date range selection */}
+{/* Date range selection */}
         <div className="bg-white p-4 rounded-lg shadow-md mb-8">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex-1">
@@ -218,12 +230,23 @@ const AdminDashboardPage: React.FC = () => {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-            <div className="flex-0 pt-6">
+            <div className="flex-0 pt-6 flex gap-2">
               <button
                 onClick={fetchMetrics}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 Apply
+              </button>
+              <button
+                onClick={() => {
+                  // Force refresh with current date range
+                  console.log('Forcing data refresh...');
+                  setIsLoading(true);
+                  setTimeout(fetchMetrics, 100);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Refresh
               </button>
             </div>
           </div>
@@ -243,7 +266,15 @@ const AdminDashboardPage: React.FC = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span><strong>No data available</strong> for the selected date range. Showing previous data instead. Try a different date range or ensure analytics events are being collected.</span>
+              <span>
+                <strong>No data available</strong> for the selected date range ({startDate} to {endDate}).
+                <ul className="list-disc ml-8 mt-2">
+                  <li>Try widening your date range</li>
+                  <li>Check that analytics events are being collected from the website</li>
+                  <li>Verify database tables are correctly set up</li>
+                  <li>Ensure events are properly flushing to the server</li>
+                </ul>
+              </span>
             </div>
           </div>
         )}
