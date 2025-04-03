@@ -237,19 +237,26 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     console.log(`[Analytics] Flushing ${eventQueue.length} events to server for session ${currentSessionId}`);
     
     try {
-      await apiClient.post('/api/analytics/events', {
+      const response = await apiClient.post('/api/analytics/events', {
         events: eventQueue,
         sessionId: currentSessionId
       });
       
-      console.log('[Analytics] Successfully sent events to server');
+      console.log('[Analytics] Successfully sent events to server', response.data);
       
       // Clear the queue after successful send
       setEventQueue([]);
       localStorage.removeItem(LOCAL_STORAGE_KEYS.EVENT_QUEUE);
     } catch (error) {
       // Keep events in queue if send fails
-      console.error('Failed to send analytics events:', error);
+      console.error('[Analytics] Failed to send analytics events:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('[Analytics] Error details:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data
+        });
+      }
     }
   }, [sessionId, eventQueue]);
   
