@@ -211,6 +211,9 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setEventQueue(prevQueue => {
       const newQueue = [...prevQueue, event];
       
+      // Immediately save to localStorage
+      localStorage.setItem(LOCAL_STORAGE_KEYS.EVENT_QUEUE, JSON.stringify(newQueue));
+      
       // If queue is too large, flush it
       if (newQueue.length >= MAX_BATCH_SIZE) {
         console.log(`[Analytics] Queue reached MAX_BATCH_SIZE (${MAX_BATCH_SIZE}), flushing events`);

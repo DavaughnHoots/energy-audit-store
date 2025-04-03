@@ -53,28 +53,49 @@ const AnalyticsDiagnosticTool: React.FC = () => {
     setTestResult(null);
     
     try {
-      // Force flush by calling the API directly
-      const storedEvents = localStorage.getItem('energy_audit_event_queue');
-      const storedSessionId = localStorage.getItem('energy_audit_session_id');
+      // First check our locally tracked events from the component state
+      if (events.length > 0) {
+        // Use our events array if we have any
+        const response = await axios.post(`${API_BASE_URL}/api/analytics/events`, {
+          events,
+          sessionId
+        });
+        
+        setTestResult({
+          success: true,
+          message: `Successfully flushed ${events.length} events. Response: ${response.status} ${response.statusText}`
+        });
+        
+        // Clear component state
+        setEvents([]);
+        
+        // Also clear localStorage
+        localStorage.removeItem('energy_audit_event_queue');
+        setLocalStorageEvents('');
+        return;
+      }
       
-      if (!storedEvents || !storedSessionId) {
+      // Fall back to localStorage if no local events
+      const storedEvents = localStorage.getItem('energy_audit_event_queue');
+      
+      if (!storedEvents || !sessionId) {
         setTestResult({
           success: false,
-          message: `No events to flush. Events: ${!!storedEvents}, SessionId: ${!!storedSessionId}`
+          message: `No events to flush. Events: ${!!storedEvents}, SessionId: ${!!sessionId}`
         });
         return;
       }
       
-      const events = JSON.parse(storedEvents);
+      const parsedEvents = JSON.parse(storedEvents);
       
       const response = await axios.post(`${API_BASE_URL}/api/analytics/events`, {
-        events,
-        sessionId: storedSessionId
+        events: parsedEvents,
+        sessionId
       });
       
       setTestResult({
         success: true,
-        message: `Successfully flushed ${events.length} events. Response: ${response.status} ${response.statusText}`
+        message: `Successfully flushed ${parsedEvents.length} events. Response: ${response.status} ${response.statusText}`
       });
       
       // Clear localStorage
