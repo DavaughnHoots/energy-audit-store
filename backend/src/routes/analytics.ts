@@ -36,10 +36,24 @@ router.post('/event',
       // Get user ID if authenticated
       const userId = req.user?.id;
 
-      // Track the event with direct database write
-      await analyticsService.trackEvent(sessionId, eventType, area, data || {});
-
-      res.status(200).json({ success: true });
+      try {
+        // Direct database write - don't rely on session updating
+        await analyticsService.trackEvent(sessionId, eventType, area, data || {});
+        
+        // Return success response immediately
+        return res.status(200).json({ success: true });
+      } catch (dbError) {
+        // Log database error but don't expose details to client
+        appLogger.error('Database error in analytics event tracking:', createLogMetadata(req, {
+          error: dbError instanceof Error ? dbError.message : 'Unknown database error',
+          stack: dbError instanceof Error ? dbError.stack : undefined,
+          eventType,
+          area
+        }));
+        
+        // Return a generic error to the client
+        return res.status(500).json({ error: 'Could not process analytics event', success: false });
+      }
     } catch (error) {
       console.error('Error tracking analytics event:', error);
       appLogger.error('Failed to track analytics event:', createLogMetadata(req, { 
