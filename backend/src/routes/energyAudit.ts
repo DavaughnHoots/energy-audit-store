@@ -35,6 +35,22 @@ router.get('/', validateToken, async (req: AuthenticatedRequest, res: Response) 
   }
 });
 
+// Add a dedicated route for /user to fix the routing conflict
+router.get('/user', validateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const audits = await energyAuditService.getAuditHistory(userId);
+    res.json(audits);
+  } catch (error) {
+    appLogger.error('Error fetching user audits:', createLogMetadata(req, { error }));
+    res.status(500).json({ error: 'Failed to fetch user audits' });
+  }
+});
+
 // Get audits by client ID (for anonymous users)
 router.get('/client/:clientId', async (req: Request, res: Response) => {
   try {
@@ -52,6 +68,12 @@ router.get('/:id', optionalTokenValidation, async (req: AuthenticatedRequest, re
   try {
     const userId = req.user?.id;
     const auditId = req.params.id;
+
+    // Validate that auditId is a UUID to prevent invalid database queries
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(auditId)) {
+      return res.status(400).json({ error: 'Invalid audit ID format' });
+    }
 
     const audit = await energyAuditService.getAuditById(auditId);
 
