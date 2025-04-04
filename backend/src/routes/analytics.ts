@@ -227,3 +227,4 @@ router.get('/product-engagement/:productId',
 );
 
 export default router;
+// Force rebuild for analytics fix
