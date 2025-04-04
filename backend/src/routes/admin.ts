@@ -41,3 +41,4 @@ router.get('/dashboard', authenticate, requireRole(['admin']), async (req, res) 
 });
 
 export default router;
+// Force rebuild for admin dashboard fix
