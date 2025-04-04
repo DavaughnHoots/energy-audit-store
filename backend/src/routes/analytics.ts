@@ -37,12 +37,43 @@ router.post('/events', optionalTokenValidation, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Events must be an array' });
     }
     
-    const result = await analyticsService.saveEvents(userId, `${sessionId}::uuid`, events);
+    const result = await analyticsService.saveEvents(userId, sessionId, events);
     
     return res.json(result);
   } catch (error) {
     appLogger.error('Error saving analytics events', createLogMetadata(req, { error }));
     return res.status(500).json({ success: false, message: 'Error processing analytics events' });
+  }
+});
+
+/**
+ * Save a single analytics event directly
+ * This bypasses the queueing mechanism for immediate persistence
+ */
+router.post('/event', optionalTokenValidation, async (req, res) => {
+  try {
+    const { sessionId, event } = req.body;
+    const userId = req.user?.id || null;
+    
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'Session ID is required' });
+    }
+    
+    if (!event || typeof event !== 'object') {
+      return res.status(400).json({ success: false, message: 'Valid event object is required' });
+    }
+    
+    // Create a single-item array to reuse existing saveEvents method
+    const result = await analyticsService.saveEvents(userId, sessionId, [event]);
+    
+    return res.json({
+      success: result.success,
+      eventProcessed: result.success ? 1 : 0,
+      message: result.success ? 'Event saved successfully' : 'Failed to save event'
+    });
+  } catch (error) {
+    appLogger.error('Error saving single analytics event', createLogMetadata(req, { error }));
+    return res.status(500).json({ success: false, message: 'Error processing analytics event' });
   }
 });
 
@@ -54,7 +85,7 @@ router.post('/session/:sessionId/end', optionalTokenValidation, async (req, res)
     const { sessionId } = req.params;
     const { duration } = req.body;
     
-    const result = await analyticsService.endSession(`${sessionId}::uuid`, duration);
+    const result = await analyticsService.endSession(sessionId, duration);
     
     return res.json({ success: result });
   } catch (error) {

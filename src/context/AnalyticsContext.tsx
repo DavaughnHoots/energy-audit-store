@@ -264,6 +264,37 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [sessionId, eventQueue]);
   
   /**
+   * Send an event directly to the server, bypassing the queue
+   */
+  const sendEventDirectly = useCallback(async (event: any, currentSessionId: string) => {
+    console.log(`[Analytics] Sending event directly to server: ${event.eventType} in area: ${event.area}`, event);
+    
+    try {
+      const response = await apiClient.post('/api/analytics/event', {
+        event,
+        sessionId: currentSessionId
+      });
+      
+      console.log('[Analytics] Successfully sent event directly to server', response.data);
+      return true;
+    } catch (error) {
+      console.error('[Analytics] Failed to send direct event to server:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('[Analytics] Error details:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data
+        });
+      }
+      
+      // Fall back to queue if direct send fails
+      console.log('[Analytics] Falling back to queue for event');
+      addToQueue(event);
+      return false;
+    }
+  }, []);
+
+  /**
    * Track an event
    */
   const trackEvent = useCallback((
@@ -287,8 +318,12 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       data: Object.keys(data).length > 0 ? data : undefined
     };
     
-    addToQueue(event);
-  }, [isTrackingEnabled, sessionId, addToQueue]);
+    // Send directly to the server instead of queueing
+    sendEventDirectly(event, currentSessionId).catch(() => {
+      // If direct send fails with an exception, ensure it gets queued as a fallback
+      addToQueue(event);
+    });
+  }, [isTrackingEnabled, sessionId, sendEventDirectly, addToQueue]);
   
   /**
    * Update user consent status

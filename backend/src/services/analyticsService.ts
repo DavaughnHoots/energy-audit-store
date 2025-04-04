@@ -259,7 +259,7 @@ export class AnalyticsService {
             UPDATE analytics_sessions
             SET events_count = events_count + $1, 
                 updated_at = NOW()
-            WHERE id = $2
+            WHERE id = $2::uuid
           `;
           await this.pool.query(updateSessionQuery, [insertedCount, sessionId]);
         } catch (updateSessionError) {
@@ -323,14 +323,14 @@ export class AnalyticsService {
       
       // Check if session exists
       const existingSession = await this.pool.query(
-        'SELECT id FROM analytics_sessions WHERE id = $1',
+        'SELECT id FROM analytics_sessions WHERE id = $1::uuid',
         [sessionId]
       );
 
       if (existingSession.rowCount && existingSession.rowCount > 0) {
         // Update existing session
         await this.pool.query(
-          'UPDATE analytics_sessions SET updated_at = NOW() WHERE id = $1',
+          'UPDATE analytics_sessions SET updated_at = NOW() WHERE id = $1::uuid',
           [sessionId]
         );
         
@@ -383,7 +383,7 @@ export class AnalyticsService {
           end_time = NOW(), 
           duration = $1,
           updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $2::uuid
       `;
       
       const result = await this.pool.query(query, [duration || 0, sessionId]);
