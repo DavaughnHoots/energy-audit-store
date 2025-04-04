@@ -33,6 +33,12 @@ router.post('/events', optionalTokenValidation, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Session ID is required' });
     }
     
+    // Validate UUID format
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId)) {
+      appLogger.warn('Invalid UUID format in events endpoint', createLogMetadata(req, { sessionId }));
+      return res.status(400).json({ success: false, message: 'Invalid session ID format' });
+    }
+    
     if (!Array.isArray(events)) {
       return res.status(400).json({ success: false, message: 'Events must be an array' });
     }
@@ -57,6 +63,12 @@ router.post('/event', optionalTokenValidation, async (req, res) => {
     
     if (!sessionId) {
       return res.status(400).json({ success: false, message: 'Session ID is required' });
+    }
+    
+    // Validate UUID format
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId)) {
+      appLogger.warn('Invalid UUID format in event endpoint', createLogMetadata(req, { sessionId }));
+      return res.status(400).json({ success: false, message: 'Invalid session ID format' });
     }
     
     if (!event || typeof event !== 'object') {
