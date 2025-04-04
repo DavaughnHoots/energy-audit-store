@@ -1,17 +1,8 @@
-// backend/src/services/AnalyticsService.enhanced.ts
 // Fixed version to match actual database schema
-
 import pkg from 'pg';
 const { Pool } = pkg;
 
-
-
->;
-}
-
 export class AnalyticsService {
-  private pool; // Using any to bypass TypeScript errors with pg pool
-
   constructor(pool) {
     this.pool = pool;
   }
@@ -19,7 +10,7 @@ export class AnalyticsService {
   /**
    * Create or update an analytics session
    */
-  async createOrUpdateSession(sessionId, userId?) {
+  async createOrUpdateSession(sessionId, userId) {
     try {
       const existingSession = await this.pool.query(
         'SELECT * FROM analytics_sessions WHERE id = $1',
@@ -59,7 +50,7 @@ export class AnalyticsService {
         [sessionId]
       );
       
-      const userId = session.rows.length > 0 ? session.rows[0].user_id ;
+      const userId = session.rows.length > 0 ? session.rows[0].user_id : null;
       
       // Write event directly to the database
       await this.pool.query(
@@ -85,20 +76,20 @@ export class AnalyticsService {
         ...auditStats,
         ...productStats,
         // Default values for savings since the table doesn't exist
-        estimatedSavings,
-        actualSavings
+        estimatedSavings: 0,
+        actualSavings: 0
       };
     } catch (error) {
       console.error('Error in getUserMetrics:', error);
       // Return default metrics if there's an error
       return {
-        totalAudits,
-        completedAudits,
-        productViews,
-        recommendationsViewed,
-        recommendationsActioned,
-        estimatedSavings,
-        actualSavings
+        totalAudits: 0,
+        completedAudits: 0,
+        productViews: 0,
+        recommendationsViewed: 0,
+        recommendationsActioned: 0,
+        estimatedSavings: 0,
+        actualSavings: 0
       };
     }
   }
@@ -118,113 +109,113 @@ export class AnalyticsService {
         ...auditStats,
         ...productStats,
         // Default value for averageSavings since we don't have user_savings table
-        averageSavings
+        averageSavings: 0
       };
     } catch (error) {
       console.error('Error in getPlatformMetrics:', error);
       // Return default metrics if there's an error
       return {
-        activeUsers,
-        newUsers,
-        totalAudits,
+        activeUsers: 0,
+        newUsers: 0,
+        totalAudits: 0,
         productEngagement: {},
-        averageSavings,
+        averageSavings: 0,
         topProducts: []
       };
     }
   }
 
-  private async getAuditStats(userId, timeframeClause) {
+  async getAuditStats(userId, timeframeClause) {
     try {
       const result = await this.pool.query(
         `SELECT 
-          COUNT(*),
-          COUNT(CASE WHEN status = 'completed' THEN 1 END)
+          COUNT(*) as total_audits,
+          COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_audits
          FROM energy_audits
          WHERE user_id = $1 AND created_at ${timeframeClause}`,
         [userId]
       );
 
       return {
-        totalAudits(result.rows[0]?.total_audits || '0'),
-        completedAudits(result.rows[0]?.completed_audits || '0')
+        totalAudits: parseInt(result.rows[0]?.total_audits || '0'),
+        completedAudits: parseInt(result.rows[0]?.completed_audits || '0')
       };
     } catch (error) {
       console.error('Error in getAuditStats:', error);
-      return { totalAudits, completedAudits };
+      return { totalAudits: 0, completedAudits: 0 };
     }
   }
 
-  private async getProductEngagementStats(userId, timeframeClause) {
+  async getProductEngagementStats(userId, timeframeClause) {
     try {
       // Using analytics_events instead of user_actions
       const result = await this.pool.query(
         `SELECT 
-          COUNT(DISTINCT CASE WHEN event_type = 'product_view' THEN id END),
-          COUNT(DISTINCT CASE WHEN event_type = 'recommendation_view' THEN id END),
-          COUNT(DISTINCT CASE WHEN event_type = 'recommendation_action' THEN id END)
+          COUNT(DISTINCT CASE WHEN event_type = 'product_view' THEN id END) as product_views,
+          COUNT(DISTINCT CASE WHEN event_type = 'recommendation_view' THEN id END) as recommendations_viewed,
+          COUNT(DISTINCT CASE WHEN event_type = 'recommendation_action' THEN id END) as recommendations_actioned
          FROM analytics_events
          WHERE user_id = $1 AND created_at ${timeframeClause}`,
         [userId]
       );
 
       return {
-        productViews(result.rows[0]?.product_views || '0'),
-        recommendationsViewed(result.rows[0]?.recommendations_viewed || '0'),
-        recommendationsActioned(result.rows[0]?.recommendations_actioned || '0')
+        productViews: parseInt(result.rows[0]?.product_views || '0'),
+        recommendationsViewed: parseInt(result.rows[0]?.recommendations_viewed || '0'),
+        recommendationsActioned: parseInt(result.rows[0]?.recommendations_actioned || '0')
       };
     } catch (error) {
       console.error('Error in getProductEngagementStats:', error);
-      return { productViews, recommendationsViewed, recommendationsActioned };
+      return { productViews: 0, recommendationsViewed: 0, recommendationsActioned: 0 };
     }
   }
 
-  private async getUserStats(timeframeClause) {
+  async getUserStats(timeframeClause) {
     try {
       // Fixed to use 'id' column instead of 'user_id'
       const result = await this.pool.query(
         `SELECT 
-          COUNT(DISTINCT id),
+          COUNT(DISTINCT id) as active_users,
           COUNT(DISTINCT CASE 
             WHEN created_at ${timeframeClause} THEN id 
-          END)
+          END) as new_users
          FROM users`
       );
 
       return {
-        activeUsers(result.rows[0]?.active_users || '0'),
-        newUsers(result.rows[0]?.new_users || '0')
+        activeUsers: parseInt(result.rows[0]?.active_users || '0'),
+        newUsers: parseInt(result.rows[0]?.new_users || '0')
       };
     } catch (error) {
       console.error('Error in getUserStats:', error);
-      return { activeUsers, newUsers };
+      return { activeUsers: 0, newUsers: 0 };
     }
   }
 
-  private async getAggregateAuditStats(timeframeClause) {
+  async getAggregateAuditStats(timeframeClause) {
     try {
       const result = await this.pool.query(
-        `SELECT COUNT(*)
+        `SELECT COUNT(*) as total_audits
          FROM energy_audits
          WHERE created_at ${timeframeClause}`
       );
 
       return {
-        totalAudits(result.rows[0]?.total_audits || '0')
+        totalAudits: parseInt(result.rows[0]?.total_audits || '0')
       };
     } catch (error) {
       console.error('Error in getAggregateAuditStats:', error);
-      return { totalAudits };
+      return { totalAudits: 0 };
     }
   }
 
-  private async getAggregateProductStats(timeframeClause) {
+  async getAggregateProductStats(timeframeClause) {
     try {
       // Using analytics_events instead of user_actions
       const result = await this.pool.query(
         `SELECT 
-          (data->>'productId'),
-          COUNT(*)
+          (data->>'productId') as product_id,
+          COUNT(*) as view_count
          FROM analytics_events
          WHERE event_type = 'product_view'
          AND created_at ${timeframeClause}
@@ -234,14 +225,14 @@ export class AnalyticsService {
       );
 
       const productEngagement = {};
-      const topProducts<{id, views}> = [];
+      const topProducts = [];
       
       for (const row of result.rows) {
         if (row.product_id) {
           productEngagement[row.product_id] = parseInt(row.view_count);
           topProducts.push({
-            id.product_id,
-            views(row.view_count)
+            id: row.product_id,
+            views: parseInt(row.view_count)
           });
         }
       }
@@ -256,18 +247,23 @@ export class AnalyticsService {
     }
   }
 
-  private getTimeframeClause(timeframe) {
+  getTimeframeClause(timeframe) {
     switch (timeframe) {
-      case 'day' '>= CURRENT_DATE';
-      case 'week' '>= CURRENT_DATE - INTERVAL \'7 days\'';
-      case 'month' '>= CURRENT_DATE - INTERVAL \'30 days\'';
-      case 'year' '>= CURRENT_DATE - INTERVAL \'1 year\'';
-      default '>= CURRENT_DATE - INTERVAL \'30 days\'';
+      case 'day':
+        return '>= CURRENT_DATE';
+      case 'week':
+        return '>= CURRENT_DATE - INTERVAL \'7 days\'';
+      case 'month':
+        return '>= CURRENT_DATE - INTERVAL \'30 days\'';
+      case 'year':
+        return '>= CURRENT_DATE - INTERVAL \'1 year\'';
+      default:
+        return '>= CURRENT_DATE - INTERVAL \'30 days\'';
     }
   }
 
   // Helper method to generate a UUID (replacement for crypto.randomUUID())
-  private generateUUID() {
+  generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       const r = Math.random() * 16 | 0, 
         v = c === 'x' ? r : (r & 0x3 | 0x8);

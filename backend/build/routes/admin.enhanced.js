@@ -18,24 +18,24 @@ router.get('/dashboard', authenticate, requireRole(['admin']), async (req, res) 
 
     appLogger.info('Admin dashboard accessed', createLogMetadata(req, {
       timeframe,
-      userId.user?.id
+      userId: req.user?.id
     }));
 
     const metrics = await analyticsService.getPlatformMetrics(timeframe);
 
     res.json({
       ...metrics,
-      lastUpdated Date().toISOString()
+      lastUpdated: new Date().toISOString()
     });
   } catch (error) {
     appLogger.error('Admin dashboard error:', createLogMetadata(req, {
-      error instanceof Error ? error.message : 'Unknown error',
-      stack instanceof Error ? error.stack 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }));
 
     res.status(500).json({
       error: 'Failed to retrieve admin dashboard data',
-      message instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
