@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAnalytics } from '../../context/AnalyticsContext';
 import { AnalyticsEventType } from '../../types/analytics';
-import * as axiosModule from 'axios';
-const axios = axiosModule.default || axiosModule;
-import { API_BASE_URL } from '../../config/api';
 
 /**
- * A diagnostic tool to help troubleshoot analytics issues
+ * A diagnostic tool for analytics monitoring integrated with the admin dashboard
  */
 const AnalyticsDiagnosticTool: React.FC = () => {
   const { trackEvent, consentStatus, updateConsent, isTrackingEnabled, sessionId } = useAnalytics();
   const [events, setEvents] = useState<any[]>([]);
   const [localStorageEvents, setLocalStorageEvents] = useState<string>('');
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     // Check localStorage for events
@@ -21,11 +17,21 @@ const AnalyticsDiagnosticTool: React.FC = () => {
     if (storedEvents) {
       setLocalStorageEvents(storedEvents);
     }
-  }, [isOpen]);
+  }, []);
+
+  // Refresh the localStorage events display
+  const refreshLocalStorageEvents = () => {
+    const storedEvents = localStorage.getItem('energy_audit_event_queue');
+    if (storedEvents) {
+      setLocalStorageEvents(storedEvents);
+    } else {
+      setLocalStorageEvents('');
+    }
+  };
 
   const generateTestEvent = () => {
     const eventType = AnalyticsEventType.FEATURE_USAGE;
-    const area = 'diagnostics';
+    const area = 'admin_dashboard';
     const data = {
       featureId: 'analytics_test',
       testTime: new Date().toISOString(),
@@ -47,74 +53,23 @@ const AnalyticsDiagnosticTool: React.FC = () => {
     };
     
     setEvents(prev => [...prev, newEvent]);
+    
+    // Refresh localStorage display
+    setTimeout(refreshLocalStorageEvents, 100);
+    
+    setTestResult({
+      success: true,
+      message: 'Test event generated and queued'
+    });
   };
 
-  const forceFlushEvents = async () => {
-    setTestResult(null);
-    
-    try {
-      // First check our locally tracked events from the component state
-      if (events.length > 0) {
-        // Use our events array if we have any
-        const response = await axios.post(`${API_BASE_URL}/api/analytics/events`, {
-          events,
-          sessionId
-        });
-        
-        setTestResult({
-          success: true,
-          message: `Successfully flushed ${events.length} events. Response: ${response.status} ${response.statusText}`
-        });
-        
-        // Clear component state
-        setEvents([]);
-        
-        // Also clear localStorage
-        localStorage.removeItem('energy_audit_event_queue');
-        setLocalStorageEvents('');
-        return;
-      }
-      
-      // Fall back to localStorage if no local events
-      const storedEvents = localStorage.getItem('energy_audit_event_queue');
-      
-      if (!storedEvents || !sessionId) {
-        setTestResult({
-          success: false,
-          message: `No events to flush. Events: ${!!storedEvents}, SessionId: ${!!sessionId}`
-        });
-        return;
-      }
-      
-      const parsedEvents = JSON.parse(storedEvents);
-      
-      const response = await axios.post(`${API_BASE_URL}/api/analytics/events`, {
-        events: parsedEvents,
-        sessionId
-      });
-      
-      setTestResult({
-        success: true,
-        message: `Successfully flushed ${parsedEvents.length} events. Response: ${response.status} ${response.statusText}`
-      });
-      
-      // Clear localStorage
-      localStorage.removeItem('energy_audit_event_queue');
-      setLocalStorageEvents('');
-      
-    } catch (error) {
-      let errorMessage = 'Unknown error';
-      if (axios.isAxiosError(error)) {
-        errorMessage = `${error.message} - Status: ${error.response?.status} ${error.response?.statusText}`;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      setTestResult({
-        success: false,
-        message: `Error flushing events: ${errorMessage}`
-      });
-    }
+  const clearLocalStorageQueue = () => {
+    localStorage.removeItem('energy_audit_event_queue');
+    setLocalStorageEvents('');
+    setTestResult({
+      success: true,
+      message: 'LocalStorage event queue cleared'
+    });
   };
 
   const clearEvents = () => {
@@ -125,84 +80,73 @@ const AnalyticsDiagnosticTool: React.FC = () => {
     await updateConsent(!isTrackingEnabled);
   };
 
-  if (!isOpen) {
-    return (
-      <button 
-        onClick={() => setIsOpen(true)}
-        style={{
-          position: 'fixed',
-          bottom: '10px',
-          right: '10px',
-          zIndex: 9999,
-          padding: '5px 10px',
-          backgroundColor: '#f0f0f0',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          opacity: 0.7
-        }}
-      >
-        Analytics Debug
-      </button>
-    );
-  }
-
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '10px',
-      right: '10px',
-      width: '400px',
-      maxHeight: '80vh',
-      overflowY: 'auto',
-      backgroundColor: 'white',
-      border: '1px solid #ccc',
-      borderRadius: '4px',
-      padding: '10px',
-      zIndex: 9999,
-      boxShadow: '0 0 10px rgba(0,0,0,0.2)'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <h3 style={{ margin: 0 }}>Analytics Diagnostic Tool</h3>
-        <button onClick={() => setIsOpen(false)}>Close</button>
-      </div>
-      
-      <div style={{ marginBottom: '10px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-        <h4 style={{ margin: '0 0 5px 0' }}>Status</h4>
-        <div><strong>Session ID:</strong> {sessionId || 'No session ID'}</div>
-        <div><strong>Consent Status:</strong> {consentStatus}</div>
-        <div><strong>Tracking Enabled:</strong> {isTrackingEnabled ? 'Yes' : 'No'}</div>
-        <button onClick={toggleConsent} style={{ marginTop: '5px' }}>
-          {isTrackingEnabled ? 'Disable Tracking' : 'Enable Tracking'}
-        </button>
-      </div>
-      
-      <div style={{ marginBottom: '10px' }}>
-        <button onClick={generateTestEvent}>Generate Test Event</button>
-        <button onClick={forceFlushEvents} style={{ marginLeft: '5px' }}>Force Flush Events</button>
-        <button onClick={clearEvents} style={{ marginLeft: '5px' }}>Clear List</button>
-      </div>
-      
-      {testResult && (
-        <div style={{ 
-          marginBottom: '10px', 
-          padding: '10px', 
-          backgroundColor: testResult.success ? '#e6ffe6' : '#ffe6e6', 
-          borderRadius: '4px' 
-        }}>
-          <strong>{testResult.success ? 'Success' : 'Error'}:</strong> {testResult.message}
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="mb-6">
+        <h3 className="text-lg font-medium text-gray-800 mb-4">Analytics Diagnostics</h3>
+        
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <h4 className="font-medium mb-2">Analytics Status</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div><strong>Session ID:</strong></div>
+            <div className="overflow-hidden text-ellipsis">{sessionId || 'No session ID'}</div>
+            <div><strong>Consent Status:</strong></div>
+            <div>{consentStatus}</div>
+            <div><strong>Tracking Enabled:</strong></div>
+            <div>{isTrackingEnabled ? 'Yes' : 'No'}</div>
+          </div>
+          <button 
+            onClick={toggleConsent} 
+            className="mt-3 px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+          >
+            {isTrackingEnabled ? 'Disable Tracking' : 'Enable Tracking'}
+          </button>
         </div>
-      )}
+        
+        <div className="flex space-x-2 mb-4">
+          <button 
+            onClick={generateTestEvent} 
+            className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+          >
+            Generate Test Event
+          </button>
+          <button 
+            onClick={clearLocalStorageQueue} 
+            className="px-3 py-1 bg-yellow-600 text-white text-sm rounded-md hover:bg-yellow-700"
+          >
+            Clear Event Queue
+          </button>
+          <button 
+            onClick={clearEvents} 
+            className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700"
+          >
+            Clear Display
+          </button>
+          <button 
+            onClick={refreshLocalStorageEvents} 
+            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+          >
+            Refresh
+          </button>
+        </div>
+        
+        {testResult && (
+          <div className={`mb-4 p-3 rounded-md text-sm ${testResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <strong>{testResult.success ? 'Success' : 'Error'}:</strong> {testResult.message}
+          </div>
+        )}
+      </div>
       
-      <div style={{ marginBottom: '10px' }}>
-        <h4 style={{ margin: '0 0 5px 0' }}>Generated Events ({events.length})</h4>
-        <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #eee', padding: '5px' }}>
+      <div className="mb-4">
+        <h4 className="font-medium mb-2">Generated Events ({events.length})</h4>
+        <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50">
           {events.length === 0 ? (
-            <div style={{ fontStyle: 'italic', color: '#999' }}>No events generated</div>
+            <div className="italic text-gray-500 text-sm">No events generated</div>
           ) : (
             events.map((event, index) => (
-              <div key={index} style={{ marginBottom: '5px', fontSize: '12px', wordBreak: 'break-all' }}>
+              <div key={index} className="mb-2 text-xs border-b border-gray-100 pb-2 break-all">
                 <strong>{event.timestamp}:</strong> {event.eventType} in {event.area}
-                <pre style={{ margin: '2px 0', backgroundColor: '#f9f9f9', padding: '2px' }}>
+                <pre className="mt-1 bg-gray-100 p-1 rounded-sm overflow-x-auto">
                   {JSON.stringify(event.data, null, 2)}
                 </pre>
               </div>
@@ -212,12 +156,12 @@ const AnalyticsDiagnosticTool: React.FC = () => {
       </div>
       
       <div>
-        <h4 style={{ margin: '0 0 5px 0' }}>LocalStorage Queue</h4>
-        <div style={{ maxHeight: '100px', overflowY: 'auto', border: '1px solid #eee', padding: '5px', fontSize: '12px' }}>
+        <h4 className="font-medium mb-2">LocalStorage Queue</h4>
+        <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50 text-xs">
           {!localStorageEvents ? (
-            <div style={{ fontStyle: 'italic', color: '#999' }}>Queue is empty</div>
+            <div className="italic text-gray-500">Queue is empty</div>
           ) : (
-            <pre style={{ margin: 0, wordBreak: 'break-all' }}>{localStorageEvents}</pre>
+            <pre className="break-all whitespace-pre-wrap overflow-x-auto">{localStorageEvents}</pre>
           )}
         </div>
       </div>
