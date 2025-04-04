@@ -37,7 +37,7 @@ router.post('/events', optionalTokenValidation, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Events must be an array' });
     }
     
-    const result = await analyticsService.saveEvents(userId, sessionId, events);
+    const result = await analyticsService.saveEvents(userId, `${sessionId}::uuid`, events);
     
     return res.json(result);
   } catch (error) {
@@ -54,7 +54,7 @@ router.post('/session/:sessionId/end', optionalTokenValidation, async (req, res)
     const { sessionId } = req.params;
     const { duration } = req.body;
     
-    const result = await analyticsService.endSession(sessionId, duration);
+    const result = await analyticsService.endSession(`${sessionId}::uuid`, duration);
     
     return res.json({ success: result });
   } catch (error) {
