@@ -14,14 +14,14 @@ router.get('/profile', authenticate, async (req, res) => {
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    
+
     // Fetch user settings
     const userSettings = await userSettingsService.getUserSettings(userId);
-    
+
     // Fetch property settings
     const windowMaintenance = await propertySettingsService.getWindowMaintenance(userId);
     const weatherization = await propertySettingsService.getWeatherizationMonitoring(userId);
-    
+
     // Combine data
     const profileData = {
       fullName: userSettings.full_name,
@@ -37,7 +37,7 @@ router.get('/profile', authenticate, async (req, res) => {
         condensationIssues: (weatherization as any).condensation_issues
       }
     };
-    
+
     res.json(profileData);
   } catch (error) {
     console.error('Error fetching profile data:', error);
@@ -52,9 +52,9 @@ router.post('/update-from-audit', authenticate, async (req, res) => {
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    
+
     const { auditData, fieldsToUpdate } = req.body;
-    
+
     // Update user settings if needed
     if (fieldsToUpdate.includes('basicInfo')) {
       await userSettingsService.updateUserSettings(userId, {
@@ -63,17 +63,17 @@ router.post('/update-from-audit', authenticate, async (req, res) => {
         address: auditData.basicInfo.address
       });
     }
-    
+
     // Update window maintenance if needed
-    if (fieldsToUpdate.includes('windowMaintenance') && 
+    if (fieldsToUpdate.includes('windowMaintenance') &&
         auditData.currentConditions.numWindows) {
       await propertySettingsService.updateWindowMaintenance(userId, {
         windowCount: auditData.currentConditions.numWindows
       });
     }
-    
+
     // Update weatherization if needed
-    if (fieldsToUpdate.includes('weatherization') && 
+    if (fieldsToUpdate.includes('weatherization') &&
         auditData.currentConditions.airLeaks) {
       await propertySettingsService.updateWeatherizationMonitoring(userId, {
         draftLocations: {
@@ -82,7 +82,7 @@ router.post('/update-from-audit', authenticate, async (req, res) => {
         }
       });
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error updating profile from audit:', error);

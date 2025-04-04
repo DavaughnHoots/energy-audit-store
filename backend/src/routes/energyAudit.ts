@@ -54,8 +54,8 @@ router.get('/:id', optionalTokenValidation, async (req: AuthenticatedRequest, re
     const auditId = req.params.id;
 
     const audit = await energyAuditService.getAuditById(auditId);
-    
-    // If audit belongs to a user, verify ownership
+
+    // If audit belongs to a user verify ownership
     if (audit.userId && audit.userId !== userId) {
       return res.status(403).json({ error: 'Not authorized to access this audit' });
     }
@@ -63,22 +63,22 @@ router.get('/:id', optionalTokenValidation, async (req: AuthenticatedRequest, re
     // Add product recommendations if product preferences exist
     if (audit.product_preferences) {
       try {
-        const productPreferences = typeof audit.product_preferences === 'string' 
-          ? JSON.parse(audit.product_preferences) 
+        const productPreferences = typeof audit.product_preferences === 'string'
+          ? JSON.parse(audit.product_preferences)
           : audit.product_preferences;
-        
+
         const recommendations = await productRecommendationService.recommendProducts(productPreferences);
-        
+
         // Add recommendations to the response
         audit.product_recommendations = recommendations;
-        
+
         // Calculate potential savings for each category
         const savingsByCategory: Record<string, number> = {};
-        
+
         for (const [category, products] of Object.entries(recommendations)) {
           savingsByCategory[category] = productRecommendationService.calculateProductSavings(products);
         }
-        
+
         audit.product_savings = {
           byCategory: savingsByCategory,
           total: Object.values(savingsByCategory).reduce((sum, val) => sum + val, 0)
@@ -102,7 +102,7 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
     const userId = req.user?.id;
     // Only generate a client ID for anonymous users
     const clientId = userId ? null : (req.body.clientId || `anonymous-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`);
-    
+
     appLogger.info('Processing energy audit submission:', createLogMetadata(req, {
       hasUserId: !!userId,
       userId: userId || 'none',
@@ -120,7 +120,7 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
       return res.status(400).json({ error: 'Audit data is required' });
     }
 
-    const { auditData } = req.body as { 
+    const { auditData } = req.body as {
       auditData: EnergyAuditData;
     };
 
@@ -139,9 +139,9 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
       // Test database connection before creating audit
       await pool.query('SELECT NOW()');
       appLogger.info('Database connection verified before audit creation');
-      
+
       const audit = await energyAuditService.createAudit(auditData, userId, clientId);
-      appLogger.info('Energy audit created successfully:', createLogMetadata(req, { 
+      appLogger.info('Energy audit created successfully:', createLogMetadata(req, {
         auditId: audit,
         userId: userId || 'anonymous',
         clientId
@@ -160,28 +160,28 @@ router.post('/', optionalTokenValidation, async (req: AuthenticatedRequest, res:
         clientId,
         userId: userId || 'anonymous'
       }));
-      
+
       // Check if it's a validation error
       if (serviceError instanceof Error && serviceError.message.includes('Invalid audit data')) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Validation failed',
           details: serviceError.message
         });
       }
-      
+
       throw serviceError; // Re-throw for general error handling
     }
   } catch (error) {
     const clientId = req.body?.clientId || 'unknown';
     const userId = req.user?.id;
-    
+
     appLogger.error('Unhandled error in energy audit creation:', createLogMetadata(req, {
       error,
       clientId,
       userId: userId || 'anonymous'
     }));
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Failed to create energy audit',
       message: error instanceof Error ? error.message : 'Unknown error occurred'
     });
@@ -286,7 +286,7 @@ router.get('/:id/report-data', optionalTokenValidation, async (req: Authenticate
     if (!audit) {
       return res.status(404).json({ error: 'Audit not found' });
     }
-    
+
     // Only check ownership if the user is authenticated and the audit belongs to a user
     if (userId && audit.userId && audit.userId !== userId) {
       appLogger.warn('Unauthorized access attempt to audit report data:', createLogMetadata(req, {
@@ -298,7 +298,7 @@ router.get('/:id/report-data', optionalTokenValidation, async (req: Authenticate
     }
 
     recommendations = await energyAuditService.getRecommendations(auditId);
-    
+
     // Transform the audit data to match the expected format for ReportGenerationService
     const transformedAudit = {
       basicInfo: typeof audit.basic_info === 'string' ? JSON.parse(audit.basic_info) : audit.basic_info,
@@ -308,12 +308,12 @@ router.get('/:id/report-data', optionalTokenValidation, async (req: Authenticate
       energyConsumption: typeof audit.energy_consumption === 'string' ? JSON.parse(audit.energy_consumption) : audit.energy_consumption,
       productPreferences: typeof audit.product_preferences === 'string' ? JSON.parse(audit.product_preferences) : audit.product_preferences
     };
-    
+
     appLogger.debug('Transformed audit data for report data generation:', createLogMetadata(req, {
       originalKeys: Object.keys(audit),
       transformedKeys: Object.keys(transformedAudit)
     }));
-    
+
     const reportData: ReportData = await reportGenerationService.prepareReportData(transformedAudit, recommendations);
 
     res.json(reportData);
@@ -321,7 +321,7 @@ router.get('/:id/report-data', optionalTokenValidation, async (req: Authenticate
     appLogger.info('Report data generated successfully:', createLogMetadata(req, { auditId }));
   } catch (error) {
     // Enhanced error logging for report data generation
-    appLogger.error('Error generating report data:', createLogMetadata(req, { 
+    appLogger.error('Error generating report data:', createLogMetadata(req, {
       error: error instanceof Error ? {
         name: error.name,
         message: error.message,
@@ -332,12 +332,12 @@ router.get('/:id/report-data', optionalTokenValidation, async (req: Authenticate
       recommendationsCount: recommendations ? recommendations.length : 0,
       auditDataKeys: audit ? Object.keys(audit) : []
     }));
-    
+
     // Return detailed error message in development
-    const errorMessage = process.env.NODE_ENV === 'production' 
-      ? 'Failed to generate report data' 
+    const errorMessage = process.env.NODE_ENV === 'production'
+      ? 'Failed to generate report data'
       : `Failed to generate report data: ${error instanceof Error ? error.message : String(error)}`;
-    
+
     res.status(500).json({ error: errorMessage });
   }
 });
@@ -363,7 +363,7 @@ router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter],
     if (!audit) {
       return res.status(404).json({ error: 'Audit not found' });
     }
-    
+
     // Only check ownership if the user is authenticated and the audit belongs to a user
     if (userId && audit.userId && audit.userId !== userId) {
       appLogger.warn('Unauthorized access attempt to audit report:', createLogMetadata(req, {
@@ -375,7 +375,7 @@ router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter],
     }
 
     recommendations = await energyAuditService.getRecommendations(auditId);
-    
+
     // Transform the audit data to match the expected format for ReportGenerationService
     const transformedAudit = {
       basicInfo: typeof audit.basic_info === 'string' ? JSON.parse(audit.basic_info) : audit.basic_info,
@@ -385,12 +385,12 @@ router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter],
       energyConsumption: typeof audit.energy_consumption === 'string' ? JSON.parse(audit.energy_consumption) : audit.energy_consumption,
       productPreferences: typeof audit.product_preferences === 'string' ? JSON.parse(audit.product_preferences) : audit.product_preferences
     };
-    
+
     appLogger.debug('Transformed audit data for report generation:', createLogMetadata(req, {
       originalKeys: Object.keys(audit),
       transformedKeys: Object.keys(transformedAudit)
     }));
-    
+
     const report = await reportGenerationService.generateReport(transformedAudit, recommendations);
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -400,7 +400,7 @@ router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter],
     appLogger.info('Report generated successfully:', createLogMetadata(req, { auditId }));
   } catch (error) {
     // Enhanced error logging for PDF generation
-    appLogger.error('Error generating report:', createLogMetadata(req, { 
+    appLogger.error('Error generating report:', createLogMetadata(req, {
       error: error instanceof Error ? {
         name: error.name,
         message: error.message,
@@ -411,12 +411,12 @@ router.get('/:id/report', [optionalTokenValidation, ...reportGenerationLimiter],
       recommendationsCount: recommendations ? recommendations.length : 0,
       auditDataKeys: audit ? Object.keys(audit) : []
     }));
-    
+
     // Return detailed error message in development
-    const errorMessage = process.env.NODE_ENV === 'production' 
-      ? 'Failed to generate report' 
+    const errorMessage = process.env.NODE_ENV === 'production'
+      ? 'Failed to generate report'
       : `Failed to generate report: ${error instanceof Error ? error.message : String(error)}`;
-    
+
     res.status(500).json({ error: errorMessage });
   }
 });
