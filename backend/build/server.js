@@ -139,6 +139,10 @@ app.use('/api/energy-consumption', energyConsumptionRoutes);
 // Use the enhanced admin routes - THIS IS THE KEY CHANGE
 app.use('/api/admin', adminRoutes);
 
+// Import and use the direct admin route (bypassing analyticsService)
+import directAdminRoutes from './routes/directAdmin.js';
+app.use('/api/direct-admin', directAdminRoutes);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
