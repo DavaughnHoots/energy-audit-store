@@ -1,4 +1,3 @@
-// backend/src/routes/admin.ts
 import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { pool } from '../config/database.js';
@@ -16,14 +15,14 @@ const analyticsService = new AnalyticsService(pool);
 router.get('/dashboard', authenticate, requireRole(['admin']), async (req, res) => {
   try {
     const timeframe = req.query.timeframe as string || 'month';
-    
+
     appLogger.info('Admin dashboard accessed', createLogMetadata(req, {
       timeframe,
       userId: req.user?.id
     }));
-    
+
     const metrics = await analyticsService.getPlatformMetrics(timeframe);
-    
+
     res.json({
       ...metrics,
       lastUpdated: new Date().toISOString()
@@ -33,7 +32,7 @@ router.get('/dashboard', authenticate, requireRole(['admin']), async (req, res) 
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     }));
-    
+
     res.status(500).json({
       error: 'Failed to retrieve admin dashboard data',
       message: error instanceof Error ? error.message : 'Unknown error'
