@@ -3,11 +3,57 @@
 import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/security.js';
+import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
 import { AnalyticsService } from '../services/analyticsService.js';
 import { pool } from '../config/database.js';
+import { appLogger, createLogMetadata } from '../utils/logger.js';
 
 const router = express.Router();
 const analyticsService = new AnalyticsService(pool);
+
+/**
+ * @route POST /api/analytics/event
+ * @desc Track an analytics event
+ * @access Public (handles both authenticated and anonymous users)
+ */
+router.post('/event',
+  optionalTokenValidation,
+  async (req, res) => {
+    try {
+      const { eventType, area, data, sessionId } = req.body;
+      
+      // Log the event tracking request
+      appLogger.debug('Analytics event tracking request:', createLogMetadata(req, {
+        eventType,
+        area,
+        hasSessionId: !!sessionId
+      }));
+
+      if (!eventType || !area || !sessionId) {
+        return res.status(400).json({ error: 'Missing required fields: eventType, area, sessionId' });
+      }
+
+      // Get user ID if authenticated
+      const userId = req.user?.id;
+
+      // Track the event with direct database write
+      await analyticsService.trackEvent(sessionId, eventType, area, data || {});
+
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error tracking analytics event:', error);
+      appLogger.error('Failed to track analytics event:', createLogMetadata(req, { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      }));
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  }
+);
 
 /**
  * @route GET /api/analytics/dashboard
