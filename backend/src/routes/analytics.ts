@@ -75,17 +75,83 @@ router.post('/event', optionalTokenValidation, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Valid event object is required' });
     }
     
-    // Create a single-item array to reuse existing saveEvents method
-    const result = await analyticsService.saveEvents(userId, sessionId, [event]);
+    try {
+      // Ensure event has proper structure
+      const formattedEvent = {
+        eventType: event.eventType || 'unknown',
+        area: event.area || 'unknown',
+        timestamp: event.timestamp || new Date().toISOString(),
+        data: event.data || {}
+      };
+      
+      // Validate the event structure
+      if (!formattedEvent.eventType) {
+        return res.status(400).json({ success: false, message: 'Event must have an eventType' });
+      }
+      
+      // Pre-process event data
+      if (typeof formattedEvent.data !== 'object') {
+        formattedEvent.data = {};
+        appLogger.warn('Event data was not an object, replaced with empty object', createLogMetadata(req, { sessionId }));
+      }
+      
+      // Important: First ensure the session exists to prevent foreign key constraint errors
+      await analyticsService.updateSession(sessionId, userId).catch((sessionError: Error | unknown) => {
+        // Handle error with proper type checking
+        const errorMessage = sessionError instanceof Error ? sessionError.message : 'Unknown error';
+        const errorStack = sessionError instanceof Error ? sessionError.stack : undefined;
+        
+        appLogger.error('Error creating/updating session before event save', createLogMetadata(req, { 
+          sessionId, 
+          error: errorMessage,
+          stack: errorStack
+        }));
+        // Continue anyway - we'll still try to save the event
+      });
+      
+      // Create a single-item array to reuse existing saveEvents method
+      const result = await analyticsService.saveEvents(userId, sessionId, [formattedEvent]);
+      
+      return res.json({
+        success: result.success,
+        eventProcessed: result.success ? 1 : 0,
+        message: result.success ? 'Event saved successfully' : (result.error || 'Failed to save event')
+      });
+    } catch (innerError: Error | unknown) {
+      // Type-safe error handling
+      const errorMessage = innerError instanceof Error ? innerError.message : 'Unknown error';
+      const errorStack = innerError instanceof Error ? innerError.stack : undefined;
+      
+      appLogger.error('Error processing event data', createLogMetadata(req, { 
+        sessionId,
+        eventType: event?.eventType,
+        error: errorMessage,
+        stack: errorStack
+      }));
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Error processing event data', 
+        details: errorMessage
+      });
+    }
+  } catch (error: Error | unknown) {
+    // Enhanced error logging for the outer catch block with proper type checking
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     
-    return res.json({
-      success: result.success,
-      eventProcessed: result.success ? 1 : 0,
-      message: result.success ? 'Event saved successfully' : 'Failed to save event'
+    appLogger.error('Error saving single analytics event', createLogMetadata(req, { 
+      error: errorMessage,
+      stack: errorStack,
+      sessionId: req.body?.sessionId,
+      eventType: req.body?.event?.eventType
+    }));
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error processing analytics event',
+      details: errorMessage
     });
-  } catch (error) {
-    appLogger.error('Error saving single analytics event', createLogMetadata(req, { error }));
-    return res.status(500).json({ success: false, message: 'Error processing analytics event' });
   }
 });
 
