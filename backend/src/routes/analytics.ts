@@ -149,6 +149,23 @@ router.post('/event',
         
         // Attempt database operations in the background
         try {
+          // Check if client provided an eventId (for deduplication)
+          const clientProvidedId = data?.eventId;
+          
+          // If client provided an eventId, check if it already exists in database
+          if (clientProvidedId) {
+            const existingEvent = await pool.query(
+              'SELECT id FROM analytics_events WHERE data->>\'eventId\' = $1 AND session_id = $2 LIMIT 1',
+              [clientProvidedId, sessionId]
+            );
+            
+            // If event already exists, skip insertion
+            if (existingEvent.rows.length > 0) {
+              console.log('Ignoring duplicate event with ID:', clientProvidedId);
+              return; // Skip insertion of duplicate event
+            }
+          }
+          
           // Generate a UUID for the event
           const eventId = uuidv4();
           
@@ -159,7 +176,8 @@ router.post('/event',
             eventId, 
             sessionId,
             eventType,
-            area
+            area,
+            clientProvidedId: clientProvidedId || 'none'
           });
           
           // Write event directly to the database

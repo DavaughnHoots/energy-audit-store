@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useAuth from './AuthContext';
 import { getApiUrl } from '../config/api';
@@ -27,6 +27,17 @@ interface AnalyticsEvent {
   eventType: AnalyticsEventType;
   area: AnalyticsArea;
   data: Record<string, any>;
+  timestamp: string; // ISO string timestamp for when the event was created
+  eventId?: string;  // Optional unique ID for the event (for deduplication)
+}
+
+// Interface for the deduplication cache entry
+interface DeduplicationCacheEntry {
+  timestamp: number;
+  eventType: AnalyticsEventType;
+  area: AnalyticsArea;
+  path?: string;
+  eventId?: string;
 }
 
 interface AnalyticsContextType {
@@ -42,15 +53,20 @@ const AnalyticsContext = createContext<AnalyticsContextType>({
 
 export const useAnalytics = () => useContext(AnalyticsContext);
 
-// Buffer to store events before sending to reduce network requests
-const EVENT_BUFFER_SIZE = 10;
-const EVENT_BUFFER_TIMEOUT = 5000; // ms
+// Configuration constants
+const EVENT_BUFFER_SIZE = 10;         // Number of events to buffer before sending
+const EVENT_BUFFER_TIMEOUT = 5000;    // ms before flushing buffer
+const DEDUPLICATION_WINDOW = 2000;    // ms to ignore duplicate events
+const DEDUPLICATION_CACHE_SIZE = 50;  // Number of recent events to keep in deduplication cache
 
 export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sessionId, setSessionId] = useState<string>('');
   const [eventBuffer, setEventBuffer] = useState<AnalyticsEvent[]>([]);
   const [bufferTimeout, setBufferTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   const { user } = useAuth();
+  
+  // Use a ref for the deduplication cache to avoid re-renders when it changes
+  const deduplicationCacheRef = useRef<DeduplicationCacheEntry[]>([]);
 
   // Initialize session ID
   useEffect(() => {
@@ -143,21 +159,102 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [eventBuffer]);
 
-  // Track an event
+  /**
+   * Check if an event is a duplicate of a recently tracked event
+   * Uses multiple criteria for deduplication including time window, event type, area, and path
+   */
+  const isDuplicateEvent = (
+    eventType: AnalyticsEventType, 
+    area: AnalyticsArea, 
+    data: Record<string, any>
+  ): boolean => {
+    const now = Date.now();
+    const cache = deduplicationCacheRef.current;
+    
+    // Special handling for page_view events which are more prone to duplication
+    if (eventType === 'page_view') {
+      // Look for events of the same type, area, and path within the deduplication window
+      const similarEvent = cache.find(entry => 
+        entry.eventType === eventType &&
+        entry.area === area &&
+        entry.path === data.path &&
+        now - entry.timestamp < DEDUPLICATION_WINDOW
+      );
+      
+      return !!similarEvent;
+    }
+    
+    // For events with an eventId, use that for deduplication
+    if (data.eventId) {
+      const duplicateById = cache.find(entry => 
+        entry.eventId === data.eventId &&
+        now - entry.timestamp < DEDUPLICATION_WINDOW
+      );
+      
+      return !!duplicateById;
+    }
+    
+    // For other events, just use type and area with a shorter window
+    const similarEvent = cache.find(entry => 
+      entry.eventType === eventType &&
+      entry.area === area &&
+      now - entry.timestamp < (DEDUPLICATION_WINDOW / 2)
+    );
+    
+    return !!similarEvent;
+  };
+  
+  /**
+   * Add an event to the deduplication cache
+   */
+  const addToDeduplicationCache = (
+    eventType: AnalyticsEventType, 
+    area: AnalyticsArea, 
+    data: Record<string, any>
+  ) => {
+    const cache = deduplicationCacheRef.current;
+    
+    // Add the new event to the cache
+    cache.push({
+      timestamp: Date.now(),
+      eventType,
+      area,
+      path: data.path,
+      eventId: data.eventId
+    });
+    
+    // Limit cache size by removing oldest entries
+    if (cache.length > DEDUPLICATION_CACHE_SIZE) {
+      deduplicationCacheRef.current = cache.slice(-DEDUPLICATION_CACHE_SIZE);
+    }
+  };
+
+  /**
+   * Track an analytics event with deduplication
+   */
   const trackEvent = (eventType: AnalyticsEventType, area: AnalyticsArea, data: Record<string, any>) => {
     if (!sessionId) return;
     
-    // Add event to buffer
+    // Check for duplicate events (prevent tracking the same event multiple times)
+    if (isDuplicateEvent(eventType, area, data)) {
+      console.log(`Duplicate event detected and skipped: ${eventType} in ${area}`);
+      return;
+    }
+    
+    // Add to deduplication cache for future checks
+    addToDeduplicationCache(eventType, area, data);
+    
+    // Create the event object
     const newEvent: AnalyticsEvent = {
       sessionId,
       eventType,
       area,
-      data: {
-        ...data,
-        timestamp: new Date().toISOString(),
-      }
+      data,
+      timestamp: new Date().toISOString(),
+      eventId: data.eventId || `${eventType}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     };
     
+    // Add event to buffer
     const newBuffer = [...eventBuffer, newEvent];
     setEventBuffer(newBuffer);
     
