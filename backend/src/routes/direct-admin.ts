@@ -1,6 +1,7 @@
-// backend/src/routes/direct-admin.ts
+// backend/src/routes/direct-admin.fixed.ts
 // Direct admin route implementation that bypasses service layer
 // for improved reliability and performance
+// Enhanced to properly extract page and feature names from analytics events
 
 import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
@@ -57,51 +58,84 @@ router.get('/dashboard',
          WHERE ${dateRangeClause}`
       );
       
-      // Get page visits with path and title from the data JSON field
+      // Get page visits with improved name extraction
+      // Now checking for pageName and displayName fields added by our enhanced hooks
       const pageVisitsResult = await pool.query(
         `SELECT 
+          COALESCE(
+            data->>'pageName', 
+            data->>'displayName', 
+            data->>'title', 
+            'Unknown Page'
+          ) as page_name,
           COALESCE(data->>'path', '/unknown') as path,
-          COALESCE(data->>'title', 'Untitled Page') as title,
           area,
           COUNT(*) as visits
          FROM analytics_events
          WHERE event_type = 'page_view'
          AND area != 'dashboard'
          AND ${dateRangeClause}
-         GROUP BY data->>'path', data->>'title', area
+         GROUP BY 
+          COALESCE(data->>'pageName', data->>'displayName', data->>'title', 'Unknown Page'),
+          data->>'path', 
+          area
          ORDER BY visits DESC
          LIMIT 10`
       );
       
-      // Get feature usage (component_interaction events)
+      // Get feature usage with improved name extraction
+      // Now checking for featureName and displayName fields from our enhanced hooks
       const featureUsageResult = await pool.query(
         `SELECT 
-          COALESCE(data->>'component', 'unknown') as feature,
+          COALESCE(
+            data->>'featureName',
+            data->>'displayName',
+            data->>'componentName',
+            data->>'component',
+            CONCAT(data->>'componentName', ' ', data->>'action'),
+            'unknown'
+          ) as feature_name,
           COUNT(*) as usage_count
          FROM analytics_events
          WHERE event_type = 'component_interaction'
          AND ${dateRangeClause}
-         GROUP BY data->>'component'
+         GROUP BY 
+          COALESCE(
+            data->>'featureName',
+            data->>'displayName',
+            data->>'componentName',
+            data->>'component',
+            CONCAT(data->>'componentName', ' ', data->>'action'),
+            'unknown'
+          )
          ORDER BY usage_count DESC
          LIMIT 10`
       );
       
+      // Define types for query results
+      interface PageVisitRow {
+        path: string;
+        page_name: string;
+        area: string;
+        visits: string;
+      }
+
+      interface FeatureUsageRow {
+        feature_name: string;
+        usage_count: string;
+      }
+      
       // Format the response with enhanced page information
-      const pageVisits = pageVisitsResult.rows.map(row => ({
+      const pageVisits = pageVisitsResult.rows.map((row: PageVisitRow) => ({
         path: row.path,
-        title: row.title,
+        name: row.page_name,
         area: row.area,
         visits: parseInt(row.visits),
-        // Create a display name that uses title if available, otherwise format the path
-        displayName: row.title !== 'Untitled Page' 
-          ? row.title 
-          : row.path === '/unknown' 
-            ? `${row.area} (unknown page)` 
-            : row.path
+        displayName: row.page_name // Use the already extracted name
       }));
       
-      const featureUsage = featureUsageResult.rows.map(row => ({
-        feature: row.feature,
+      const featureUsage = featureUsageResult.rows.map((row: FeatureUsageRow) => ({
+        feature: row.feature_name,
         usageCount: parseInt(row.usage_count)
       }));
       
