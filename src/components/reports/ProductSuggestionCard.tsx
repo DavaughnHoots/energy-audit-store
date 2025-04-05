@@ -69,36 +69,21 @@ const getEnergyStarUrl = (product: Product): string => {
 
 /**
  * Helper function to generate Amazon product search URLs
+ * Using specific product names for more targeted results
  */
 const getAmazonUrl = (product: Product): string => {
-  // Extract more specific terms from product name and category
-  const productName = product.name.toLowerCase();
-  const category = product.category?.toLowerCase() || 'general';
-  let searchTerm = '';
+  // Use the full product name as the primary search term
+  const productName = product.name;
   
-  if (category === 'light bulbs') {
-    searchTerm = 'energy saving light bulbs';
-  } else if (category === 'light fixtures' || (category === 'lighting' && productName.includes('fixture'))) {
-    searchTerm = 'energy saving light fixtures';
-  } else if (category === 'lighting') {
-    // General lighting but not specifically fixtures or bulbs
-    searchTerm = productName.includes('bulb') ? 'energy saving light bulbs' : 'energy saving lighting';
-  } else if (category.includes('hvac') || category.includes('heating') || category.includes('cooling')) {
-    // HVAC-related search
-    if (productName.includes('thermostat')) {
-      searchTerm = 'smart thermostat energy star';
-    } else if (productName.includes('heat pump')) {
-      searchTerm = 'energy efficient heat pump';
-    } else {
-      searchTerm = `energy efficient ${category}`;
-    }
-  } else {
-    // For other categories, use the category itself plus energy efficient
-    searchTerm = `energy efficient ${category}`;
+  // Add energy efficiency prefix to ensure relevant results
+  let searchTerm = `energy efficient ${productName}`;
+  
+  // Include category as an additional search term for better relevance
+  if (product.category && !searchTerm.toLowerCase().includes(product.category.toLowerCase())) {
+    return `https://www.amazon.com/s?k=${encodeURIComponent(searchTerm)}+${encodeURIComponent(product.category)}`;
   }
   
-  // Include the product name in the search for more specific results
-  return `https://www.amazon.com/s?k=energy+star+${encodeURIComponent(searchTerm)}`;
+  return `https://www.amazon.com/s?k=${encodeURIComponent(searchTerm)}`;
 };
 
 /**

@@ -68,6 +68,13 @@ interface DashboardStats {
     categories: string[];
     budgetConstraint?: number;
   };
+  
+  // Data source information
+  dataSummary?: {
+    hasDetailedData: boolean;
+    isUsingDefaultData: boolean;
+    dataSource: 'detailed' | 'generated' | 'empty';
+  };
 }
 
 interface SavingsUpdate {
@@ -117,6 +124,16 @@ class EnhancedDashboardService {
   /**
    * Generates sample recommendations when a user has recommendations count
    * but is missing detailed recommendation data
+   * 
+   * Includes default recommendations for all 8 product categories:
+   * - HVAC Systems
+   * - Lighting
+   * - Insulation
+   * - Windows & Doors
+   * - Energy-Efficient Appliances
+   * - Water Heating
+   * - Smart Home Devices
+   * - Renewable Energy
    */
   private generateDefaultRecommendations(): Array<{
     id: string;
@@ -133,12 +150,16 @@ class EnhancedDashboardService {
     paybackPeriod: number;
     lastUpdate: string;
   }> {
-    // Sample recommendation data
+    // Current timestamp for lastUpdate field
+    const currentTimestamp = new Date().toISOString();
+    
+    // Comprehensive recommendation data covering all product categories
     return [
+      // HVAC Systems - 2 recommendations
       {
-        id: 'sample-rec-1',
-        title: 'Sample HVAC System Upgrade',
-        description: 'Replace aging HVAC system with energy-efficient model to reduce energy consumption.',
+        id: 'default-rec-hvac-1',
+        title: 'HVAC System Upgrade',
+        description: 'Replace aging HVAC system with an energy-efficient model to reduce energy consumption by up to 20%.',
         type: 'hvac',
         priority: 'high',
         status: 'active',
@@ -148,12 +169,29 @@ class EnhancedDashboardService {
         implementationCost: null,
         estimatedCost: 3850,
         paybackPeriod: 7.4,
-        lastUpdate: new Date().toISOString()
+        lastUpdate: currentTimestamp
       },
       {
-        id: 'sample-rec-2',
-        title: 'Sample Energy-Efficient Lighting',
-        description: 'Replace standard bulbs with LED lighting throughout the property.',
+        id: 'default-rec-hvac-2',
+        title: 'Smart Thermostat Installation',
+        description: 'Install a programmable smart thermostat to optimize your heating and cooling schedule based on your lifestyle patterns.',
+        type: 'hvac',
+        priority: 'medium',
+        status: 'active',
+        estimatedSavings: 120,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null,
+        estimatedCost: 250,
+        paybackPeriod: 2.1,
+        lastUpdate: currentTimestamp
+      },
+      
+      // Lighting - 1 recommendation
+      {
+        id: 'default-rec-lighting',
+        title: 'Energy-Efficient LED Lighting',
+        description: 'Replace standard bulbs with LED lighting throughout your property to reduce lighting energy use by up to 75%.',
         type: 'lighting',
         priority: 'medium',
         status: 'active',
@@ -163,22 +201,109 @@ class EnhancedDashboardService {
         implementationCost: null,
         estimatedCost: 450,
         paybackPeriod: 2.5,
-        lastUpdate: new Date().toISOString()
+        lastUpdate: currentTimestamp
       },
+      
+      // Insulation - 1 recommendation
       {
-        id: 'sample-rec-3',
-        title: 'Sample Smart Thermostat Installation',
-        description: 'Install programmable smart thermostat to optimize heating and cooling schedule.',
-        type: 'hvac',
+        id: 'default-rec-insulation',
+        title: 'Attic Insulation Upgrade',
+        description: 'Add additional insulation to your attic to prevent heat loss during winter and keep cool air in during summer.',
+        type: 'insulation',
+        priority: 'high',
+        status: 'active',
+        estimatedSavings: 250,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null,
+        estimatedCost: 1200,
+        paybackPeriod: 4.8,
+        lastUpdate: currentTimestamp
+      },
+      
+      // Windows & Doors - 1 recommendation
+      {
+        id: 'default-rec-windows',
+        title: 'Energy-Efficient Windows',
+        description: 'Replace old windows with energy-efficient models to reduce drafts and heat transfer through your windows.',
+        type: 'windows',
+        priority: 'medium',
+        status: 'active',
+        estimatedSavings: 180,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null,
+        estimatedCost: 3500,
+        paybackPeriod: 19.4,
+        lastUpdate: currentTimestamp
+      },
+      
+      // Energy-Efficient Appliances - 1 recommendation
+      {
+        id: 'default-rec-appliances',
+        title: 'Energy Star Appliance Upgrade',
+        description: 'Replace older appliances with Energy Star certified models to reduce electricity consumption throughout your home.',
+        type: 'appliances',
         priority: 'medium',
         status: 'active',
         estimatedSavings: 120,
         actualSavings: null,
         implementationDate: null,
-        implementationCost: null, 
-        estimatedCost: 250,
-        paybackPeriod: 2.1,
-        lastUpdate: new Date().toISOString()
+        implementationCost: null,
+        estimatedCost: 1200,
+        paybackPeriod: 10.0,
+        lastUpdate: currentTimestamp
+      },
+      
+      // Water Heating - 1 recommendation
+      {
+        id: 'default-rec-water-heating',
+        title: 'Tankless Water Heater Installation',
+        description: 'Replace your conventional water heater with an energy-efficient tankless model that heats water on demand.',
+        type: 'water_heating',
+        priority: 'medium',
+        status: 'active',
+        estimatedSavings: 110,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null,
+        estimatedCost: 1800,
+        paybackPeriod: 16.4,
+        lastUpdate: currentTimestamp
+      },
+      
+      // Smart Home Devices - 1 recommendation
+      {
+        id: 'default-rec-smart-home',
+        title: 'Smart Home Energy Management System',
+        description: 'Install a comprehensive smart home system to automate and optimize energy usage throughout your home.',
+        type: 'smart_home',
+        priority: 'low',
+        status: 'active',
+        estimatedSavings: 150,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null,
+        estimatedCost: 600,
+        paybackPeriod: 4.0,
+        lastUpdate: currentTimestamp
+      },
+      
+      // Renewable Energy - 1 recommendation
+      {
+        id: 'default-rec-renewable',
+        title: 'Solar Panel Installation',
+        description: 'Install solar panels to generate clean, renewable electricity and significantly reduce your utility bills.',
+        type: 'renewable',
+        priority: 'high',
+        status: 'active',
+        estimatedSavings: 850,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null,
+        estimatedCost: 12000,
+        paybackPeriod: 14.1,
+        lastUpdate: currentTimestamp
       }
     ];
   }
@@ -439,9 +564,9 @@ class EnhancedDashboardService {
         userId: userId,
         
         // Enhanced data - Always provide arrays, use generated data when stats exist but detailed data doesn't
-        energyAnalysis: hasEnergyData ? energyAnalysisData : 
-                         hasStats ? this.generateDefaultEnergyAnalysis() : 
-                         { energyBreakdown: [], consumption: [], savingsAnalysis: [] },
+        energyAnalysis: (hasEnergyData && energyAnalysisData) ? energyAnalysisData : 
+                        hasStats ? this.generateDefaultEnergyAnalysis() : 
+                        { energyBreakdown: [], consumption: [], savingsAnalysis: [] },
                          
         enhancedRecommendations: hasRecommendationsData ? enhancedRecommendations :
                                   hasStats ? this.generateDefaultRecommendations() : 
