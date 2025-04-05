@@ -1,5 +1,5 @@
 // backend/src/routes/analytics.ts
-// Simplified to focus only on essential functionality
+// Super simplified with extensive error handling and logging
 
 import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
@@ -10,6 +10,13 @@ import { appLogger, createLogMetadata } from '../utils/logger.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
+
+// Debug log the pool connection info
+console.log('Analytics routes initialized with database pool:', {
+  poolTotalCount: pool._totalCount,
+  poolIdleCount: pool._idleCount,
+  poolWaitingCount: pool._waitingCount
+});
 
 // Directly implement the core analytics functions without depending on a service
 // This avoids potential import and compatibility issues
@@ -38,28 +45,54 @@ router.post('/session',
       const userId = req.user?.id;
 
       try {
-        // Simple database operation - create or update session
-        const existingSession = await pool.query(
-          'SELECT * FROM analytics_sessions WHERE id = $1',
-          [sessionId]
-        );
+        // Log the session info
+        console.log('Creating/updating session:', { sessionId, userId });
+        
+        // Return success immediately - decouple database operations from response
+        res.status(200).json({ success: true });
+        
+        // Attempt database operations in the background
+        try {
+          // First try to check if the session exists
+          console.log('Checking if session exists:', sessionId);
+          const existingSession = await pool.query(
+            'SELECT * FROM analytics_sessions WHERE id = $1',
+            [sessionId]
+          );
+          
+          console.log('Session check result:', { 
+            found: existingSession.rows.length > 0,
+            rowCount: existingSession.rowCount
+          });
 
-        if (existingSession.rows.length === 0) {
-          // Create new session
-          await pool.query(
-            'INSERT INTO analytics_sessions (id, user_id, created_at, updated_at) VALUES ($1, $2, NOW(), NOW())',
-            [sessionId, userId || null]
-          );
-        } else {
-          // Update existing session
-          await pool.query(
-            'UPDATE analytics_sessions SET updated_at = NOW(), user_id = COALESCE($1, user_id) WHERE id = $2',
-            [userId || null, sessionId]
-          );
+          // Then attempt to create or update session
+          if (existingSession.rows.length === 0) {
+            console.log('Creating new session:', sessionId);
+            await pool.query(
+              'INSERT INTO analytics_sessions (id, user_id, start_time, created_at, updated_at, is_active) VALUES ($1, $2, NOW(), NOW(), NOW(), TRUE)',
+              [sessionId, userId || null]
+            );
+          } else {
+            console.log('Updating existing session:', sessionId);
+            await pool.query(
+              'UPDATE analytics_sessions SET updated_at = NOW(), user_id = COALESCE($1, user_id) WHERE id = $2',
+              [userId || null, sessionId]
+            );
+          }
+          console.log('Session operation completed successfully');
+        } catch (dbInnerError) {
+          // Log detailed error but don't affect the response
+          console.error('Detailed database error in session tracking:', {
+            message: dbInnerError.message,
+            code: dbInnerError.code,
+            detail: dbInnerError.detail,
+            hint: dbInnerError.hint,
+            position: dbInnerError.position,
+            stack: dbInnerError.stack
+          });
         }
         
-        // Return success response immediately
-        return res.status(200).json({ success: true });
+        // Response already sent, no need to return
       } catch (dbError) {
         // Log database error but don't expose details to client
         appLogger.error('Database error in analytics session tracking:', createLogMetadata(req, {
@@ -108,25 +141,47 @@ router.post('/event',
       }
 
       try {
-        // Get the user_id from the session
-        const session = await pool.query(
-          'SELECT user_id FROM analytics_sessions WHERE id = $1',
-          [sessionId]
-        );
+        // Log the event info
+        console.log('Tracking event:', { sessionId, eventType, area });
         
-        const userId = session.rows.length > 0 ? session.rows[0].user_id : null;
+        // Return success immediately - decouple database operations from response
+        res.status(200).json({ success: true });
         
-        // Generate a UUID for the event
-        const eventId = uuidv4();
+        // Attempt database operations in the background
+        try {
+          // Generate a UUID for the event
+          const eventId = uuidv4();
+          
+          // Get userId directly from the request if available
+          const userId = req.user?.id;
+          
+          console.log('Inserting event into database:', { 
+            eventId, 
+            sessionId,
+            eventType,
+            area
+          });
+          
+          // Write event directly to the database
+          await pool.query(
+            'INSERT INTO analytics_events (id, session_id, user_id, event_type, area, data, created_at, timestamp) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())',
+            [eventId, sessionId, userId, eventType, area, JSON.stringify(data || {})]
+          );
+          
+          console.log('Event tracked successfully');
+        } catch (dbInnerError) {
+          // Log detailed error but don't affect the response
+          console.error('Detailed database error in event tracking:', {
+            message: dbInnerError.message,
+            code: dbInnerError.code,
+            detail: dbInnerError.detail,
+            hint: dbInnerError.hint,
+            position: dbInnerError.position,
+            stack: dbInnerError.stack
+          });
+        }
         
-        // Write event directly to the database
-        await pool.query(
-          'INSERT INTO analytics_events (id, session_id, user_id, event_type, area, data, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
-          [eventId, sessionId, userId, eventType, area, JSON.stringify(data || {})]
-        );
-        
-        // Return success response immediately
-        return res.status(200).json({ success: true });
+        // Response already sent, no need to return
       } catch (dbError) {
         // Log database error but don't expose details to client
         appLogger.error('Database error in analytics event tracking:', createLogMetadata(req, {
