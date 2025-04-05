@@ -6,7 +6,7 @@
     "dev": "tsx watch src/server.ts",
     "fix-imports": "node src/scripts/fix-imports.js",
     "build": "rimraf build && tsc && xcopy /E /I src\\migrations build\\migrations && xcopy /E /I src\\config build\\config && xcopy /E /I src\\scripts build\\scripts && node build/scripts/fix-service-files.js",
-    "build:heroku": "rimraf build && tsc && mkdir -p build/migrations build/config build/scripts && cp -r src/migrations/* build/migrations/ && cp -r src/config/* build/config/ && cp -r src/scripts/* build/scripts/ && node build/scripts/fix-service-files.js", 
+    "build:heroku": "rimraf build && tsc && mkdir -p build/migrations build/config build/scripts && cp -r src/migrations/* build/migrations/ && cp -r src/config/* build/config/ && cp -r src/scripts/* build/scripts/ && node build/scripts/fix-service-files.js",
     "start": "node build/server.js",
     "test": "jest --config jest.config.js --detectOpenHandles",
     "test:watch": "jest --watch --config jest.config.js",
@@ -33,8 +33,8 @@
     "canvas": "^2.11.2",
     "chart.js": "^4.4.0",
     "cookie-parser": "^1.4.7",
-    "csv-parse": "^5.5.5",
     "cors": "^2.8.5",
+    "csv-parse": "^5.5.5",
     "dotenv": "^16.4.7",
     "express": "^4.18.2",
     "express-rate-limit": "^7.5.0",
@@ -56,7 +56,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^20.3.1",
+    "@types/node": "^20.17.30",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.19.3"
   },
