@@ -955,7 +955,14 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
     
     setShowSubmissionModal(false);
     clearStoredAuditData();
-    navigate('/');
+    
+    if (!isAuthenticated && submittedAuditId) {
+      // For guest users, redirect to the reports page with the audit ID
+      window.location.href = `https://energy-audit-store-e66479ed4f2b.herokuapp.com/reports/${submittedAuditId}`;
+    } else {
+      // For authenticated users, navigate to home
+      navigate('/');
+    }
   };
 
   const renderStep = () => {
