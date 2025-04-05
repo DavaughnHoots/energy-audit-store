@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import RecommendationCard from '@/components/audit/RecommendationCard';
 import DashboardEnergyAnalysis from './DashboardEnergyAnalysis';
 import EnhancedDashboardRecommendations from './EnhancedDashboardRecommendations';
+import DataExplanationNote from './DataExplanationNote';
 import { ChartDataPoint, SavingsChartDataPoint } from '../../types/report';
 import { AuditRecommendation } from '../../types/energyAudit';
 
@@ -35,6 +36,13 @@ interface DashboardStats {
     budgetConstraint?: number;
   };
   latestAuditId?: string | null;
+  
+  // Data source metadata added in Phase 3
+  dataSummary?: {
+    hasDetailedData: boolean;
+    isUsingDefaultData: boolean;
+    dataSource: 'detailed' | 'generated' | 'empty';
+  };
 }
 
 interface DashboardOverviewProps {
@@ -102,6 +110,16 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
   return (
     <div>
+      {/* Data Explanation Note */}
+      {stats.dataSummary && (
+        <DataExplanationNote
+          aggregateCount={stats.completedAudits}
+          hasDetailedData={stats.dataSummary.hasDetailedData}
+          isUsingDefaultData={stats.dataSummary.isUsingDefaultData}
+          dataSource={stats.dataSummary.dataSource}
+        />
+      )}
+      
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 mx-0 px-0">
         <StatCard
@@ -141,7 +159,10 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           consumption: [],
           savingsAnalysis: []
         }} 
-        isLoading={isLoading} 
+        isLoading={isLoading}
+        isDefaultData={stats.dataSummary?.isUsingDefaultData}
+        statsCount={stats.completedAudits}
+        dataSource={stats.dataSummary?.dataSource}
       />
 
       {/* Enhanced Recommendations Section - Always show enhanced component */}
@@ -152,6 +173,8 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         auditId={stats.latestAuditId}
         onRefresh={onRefresh}
         isLoading={isLoading}
+        isDefaultData={stats.dataSummary?.isUsingDefaultData}
+        dataSource={stats.dataSummary?.dataSource}
       />
     </div>
   );

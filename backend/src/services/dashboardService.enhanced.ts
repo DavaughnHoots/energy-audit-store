@@ -79,6 +79,109 @@ interface SavingsUpdate {
 class EnhancedDashboardService {
   private readonly CACHE_TTL = 300; // 5 minutes
   private readonly REFRESH_INTERVAL = 60000; // 1 minute
+  
+  /**
+   * Generates default energy analysis data for users who have audits
+   * but are missing detailed visualization data
+   */
+  private generateDefaultEnergyAnalysis(): {
+    energyBreakdown: Array<{ name: string; value: number }>;
+    consumption: Array<{ name: string; value: number }>;
+    savingsAnalysis: Array<{ name: string; estimatedSavings: number; actualSavings: number }>;
+  } {
+    // Sample data based on common energy usage patterns
+    return {
+      energyBreakdown: [
+        { name: 'HVAC', value: 42 },
+        { name: 'Lighting', value: 18 },
+        { name: 'Appliances', value: 15 },
+        { name: 'Electronics', value: 14 },
+        { name: 'Other', value: 11 }
+      ],
+      consumption: [
+        { name: 'Living Room', value: 28 },
+        { name: 'Kitchen', value: 24 },
+        { name: 'Bedrooms', value: 18 },
+        { name: 'Bathroom', value: 10 },
+        { name: 'Outdoor', value: 20 }
+      ],
+      savingsAnalysis: [
+        { name: 'HVAC Improvements', estimatedSavings: 350, actualSavings: 320 },
+        { name: 'Lighting Efficiency', estimatedSavings: 180, actualSavings: 165 },
+        { name: 'Appliance Upgrades', estimatedSavings: 220, actualSavings: 190 },
+        { name: 'Insulation', estimatedSavings: 150, actualSavings: 130 }
+      ]
+    };
+  }
+  
+  /**
+   * Generates sample recommendations when a user has recommendations count
+   * but is missing detailed recommendation data
+   */
+  private generateDefaultRecommendations(): Array<{
+    id: string;
+    title: string;
+    description: string;
+    type: string;
+    priority: 'high' | 'medium' | 'low';
+    status: 'active' | 'implemented';
+    estimatedSavings: number;
+    actualSavings: number | null;
+    implementationDate: string | null;
+    implementationCost: number | null;
+    estimatedCost: number;
+    paybackPeriod: number;
+    lastUpdate: string;
+  }> {
+    // Sample recommendation data
+    return [
+      {
+        id: 'sample-rec-1',
+        title: 'Sample HVAC System Upgrade',
+        description: 'Replace aging HVAC system with energy-efficient model to reduce energy consumption.',
+        type: 'hvac',
+        priority: 'high',
+        status: 'active',
+        estimatedSavings: 520,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null,
+        estimatedCost: 3850,
+        paybackPeriod: 7.4,
+        lastUpdate: new Date().toISOString()
+      },
+      {
+        id: 'sample-rec-2',
+        title: 'Sample Energy-Efficient Lighting',
+        description: 'Replace standard bulbs with LED lighting throughout the property.',
+        type: 'lighting',
+        priority: 'medium',
+        status: 'active',
+        estimatedSavings: 180,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null,
+        estimatedCost: 450,
+        paybackPeriod: 2.5,
+        lastUpdate: new Date().toISOString()
+      },
+      {
+        id: 'sample-rec-3',
+        title: 'Sample Smart Thermostat Installation',
+        description: 'Install programmable smart thermostat to optimize heating and cooling schedule.',
+        type: 'hvac',
+        priority: 'medium',
+        status: 'active',
+        estimatedSavings: 120,
+        actualSavings: null,
+        implementationDate: null,
+        implementationCost: null, 
+        estimatedCost: 250,
+        paybackPeriod: 2.1,
+        lastUpdate: new Date().toISOString()
+      }
+    ];
+  }
 
   async invalidateUserCache(userId: string): Promise<void> {
     await cache.del(`dashboard_stats:${userId}`);
@@ -291,6 +394,17 @@ class EnhancedDashboardService {
         };
       }
 
+      // Determine if we should use generated data based on stats
+      const hasStats = statsQuery.rows[0]?.completed_audits > 0;
+      const hasEnergyData = energyAnalysisData !== null && 
+        ((energyAnalysisData.energyBreakdown && energyAnalysisData.energyBreakdown.length > 0) || 
+         (energyAnalysisData.consumption && energyAnalysisData.consumption.length > 0) || 
+         (energyAnalysisData.savingsAnalysis && energyAnalysisData.savingsAnalysis.length > 0));
+      const hasRecommendationsData = enhancedRecommendations && enhancedRecommendations.length > 0;
+      
+      // Flag to indicate if we're using default data
+      const isUsingDefaultData = hasStats && (!hasEnergyData || !hasRecommendationsData);
+      
       // Create the full enhanced dashboard stats object
       const stats: DashboardStats = {
         totalSavings: {
@@ -324,10 +438,24 @@ class EnhancedDashboardService {
         refreshInterval: this.REFRESH_INTERVAL,
         userId: userId,
         
-        // Enhanced data - convert null to undefined to satisfy TypeScript
-        energyAnalysis: energyAnalysisData || undefined,
-        enhancedRecommendations: enhancedRecommendations || undefined,
-        productPreferences: productPreferences || undefined
+        // Enhanced data - Always provide arrays, use generated data when stats exist but detailed data doesn't
+        energyAnalysis: hasEnergyData ? energyAnalysisData : 
+                         hasStats ? this.generateDefaultEnergyAnalysis() : 
+                         { energyBreakdown: [], consumption: [], savingsAnalysis: [] },
+                         
+        enhancedRecommendations: hasRecommendationsData ? enhancedRecommendations :
+                                  hasStats ? this.generateDefaultRecommendations() : 
+                                  [],
+                                  
+        productPreferences: productPreferences || { categories: [] },
+        
+        // Add data source metadata
+        dataSummary: {
+          hasDetailedData: hasEnergyData && hasRecommendationsData,
+          isUsingDefaultData: isUsingDefaultData,
+          dataSource: hasEnergyData && hasRecommendationsData ? 'detailed' : 
+                      isUsingDefaultData ? 'generated' : 'empty'
+        }
       };
 
       await cache.set(cacheKey, JSON.stringify(stats), this.CACHE_TTL);

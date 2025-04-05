@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
+import { InfoIcon } from 'lucide-react';
 import { ChartDataPoint, SavingsChartDataPoint } from '../../types/report';
 import { formatCurrency } from '../../utils/financialCalculations';
 
@@ -13,6 +14,9 @@ interface EnergyAnalysisProps {
     consumption: ChartDataPoint[];
   };
   isLoading?: boolean;
+  isDefaultData?: boolean;
+  statsCount?: number;
+  dataSource?: 'detailed' | 'generated' | 'empty';
 }
 
 /**
@@ -23,7 +27,13 @@ interface EnergyAnalysisProps {
  * - Energy Consumption (Bar Chart): Shows energy consumption by category or time
  * - Savings Analysis (Bar Chart): Compares estimated vs actual savings
  */
-const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoading = false }) => {
+const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ 
+  data, 
+  isLoading = false,
+  isDefaultData = false,
+  statsCount = 0,
+  dataSource = 'detailed'
+}) => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
   const [isMobile, setIsMobile] = useState(false);
   
@@ -87,7 +97,15 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoadin
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         {/* Energy Breakdown Pie Chart */}
         <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
-          <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Energy Breakdown</h3>
+          <div className="flex justify-between items-center mb-2 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-medium">Energy Breakdown</h3>
+            {dataSource === 'generated' && (
+              <div className="flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded">
+                <InfoIcon className="h-3 w-3 mr-1" />
+                <span>Sample Data</span>
+              </div>
+            )}
+          </div>
           <div className="h-60 sm:h-64 overflow-hidden">
             {hasEnergyBreakdown ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -131,7 +149,15 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoadin
         
         {/* Energy Consumption Factors Bar Chart */}
         <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
-          <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Energy Consumption Factors</h3>
+          <div className="flex justify-between items-center mb-2 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-medium">Energy Consumption Factors</h3>
+            {dataSource === 'generated' && (
+              <div className="flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded">
+                <InfoIcon className="h-3 w-3 mr-1" />
+                <span>Sample Data</span>
+              </div>
+            )}
+          </div>
           <div className="h-60 sm:h-64 overflow-hidden">
             {hasConsumption ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -173,7 +199,15 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoadin
       
       {/* Savings Analysis Bar Chart */}
       <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
-        <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Savings Analysis</h3>
+        <div className="flex justify-between items-center mb-2 sm:mb-4">
+          <h3 className="text-base sm:text-lg font-medium">Savings Analysis</h3>
+          {dataSource === 'generated' && (
+            <div className="flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded">
+              <InfoIcon className="h-3 w-3 mr-1" />
+              <span>Sample Data</span>
+            </div>
+          )}
+        </div>
         <div className="h-60 sm:h-64 overflow-hidden">
           {hasSavingsAnalysis ? (
             <ResponsiveContainer width="100%" height="100%">

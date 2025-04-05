@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuditRecommendation } from '../../types/energyAudit';
-import { Calendar, DollarSign, Clock, Tag, Filter, ArrowUpCircle, ArrowDownCircle, MinusCircle, ExternalLink } from 'lucide-react';
+import { Calendar, DollarSign, Clock, Tag, Filter, ArrowUpCircle, ArrowDownCircle, MinusCircle, ExternalLink, InfoIcon } from 'lucide-react';
 import { formatCurrency } from '../../utils/financialCalculations';
 
 interface EnhancedDashboardRecommendationsProps {
@@ -11,6 +11,8 @@ interface EnhancedDashboardRecommendationsProps {
   auditId?: string | null;
   isLoading?: boolean;
   onRefresh?: () => void;
+  isDefaultData?: boolean;
+  dataSource?: 'detailed' | 'generated' | 'empty';
 }
 
 /**
@@ -25,7 +27,9 @@ const EnhancedDashboardRecommendations: React.FC<EnhancedDashboardRecommendation
   budgetConstraint,
   auditId,
   isLoading = false,
-  onRefresh
+  onRefresh,
+  isDefaultData = false,
+  dataSource = 'detailed'
 }) => {
   const navigate = useNavigate();
   const [showAllRecommendations, setShowAllRecommendations] = useState(userCategories.length === 0);
@@ -95,6 +99,13 @@ const EnhancedDashboardRecommendations: React.FC<EnhancedDashboardRecommendation
     <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mx-0">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Recommendations</h2>
+        
+        {dataSource === 'generated' && (
+          <div className="flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded mr-2">
+            <InfoIcon className="h-3 w-3 mr-1" />
+            <span>Sample Data</span>
+          </div>
+        )}
         
         {userCategories.length > 0 && recommendations.length > 0 && (
           <div className="flex items-center">
