@@ -8,6 +8,9 @@ export type AnalyticsEventType =
   | 'page_view' 
   | 'component_interaction' 
   | 'form_interaction'
+  | 'form_start'
+  | 'form_step'
+  | 'form_complete'
   | 'product_view'
   | 'recommendation_view'
   | 'recommendation_action';
