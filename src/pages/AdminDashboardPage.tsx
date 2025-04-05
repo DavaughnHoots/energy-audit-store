@@ -1,67 +1,92 @@
 import React, { useEffect, useState } from 'react';
 import useAuth from '../context/AuthContext';
-import { usePageTracking } from '../hooks/analytics';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { getApiUrl } from '../config/api';
 
 // Types for the metrics returned from the API
-interface AdminDashboardMetrics {
-  activeUsers: number;
-  newUsers: number;
-  totalAudits: number;
-  productEngagement: Record<string, number>;
-  averageSavings: number;
-  topProducts: Array<{
-    id: string;
-    views: number;
+interface AnalyticsDashboardData {
+  sessions: {
+    total: number;
+    avgDurationMinutes: number;
+  };
+  formCompletions: number;
+  pageVisits: Array<{
+    page: string;
+    visits: number;
+  }>;
+  featureUsage: Array<{
+    feature: string;
+    usageCount: number;
   }>;
   lastUpdated: string;
 }
 
 const AdminDashboardPage: React.FC = () => {
-  // Track this page view for analytics
-  usePageTracking('dashboard');
+  // Removed analytics tracking for dashboard to prevent excessive events
   
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [metrics, setMetrics] = useState<AdminDashboardMetrics | null>(null);
-  const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month' | 'year'>('month');
+  const [metrics, setMetrics] = useState<AnalyticsDashboardData | null>(null);
+  
+  // Date range filter state
+  const [startDate, setStartDate] = useState<string>(
+    (() => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return thirtyDaysAgo.toISOString().split('T')[0] || ''; // Format as YYYY-MM-DD with fallback
+    })()
+  );
+  const [endDate, setEndDate] = useState<string>(
+    (() => {
+      return new Date().toISOString().split('T')[0] || ''; // Format as YYYY-MM-DD with fallback
+    })()
+  );
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      setError(null);
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        // Use direct-admin endpoint since it bypasses problematic service
-        const response = await fetch(
-          getApiUrl(`/api/direct-admin/dashboard?timeframe=${timeframe}`),
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch admin dashboard data: ${response.statusText}`);
+    try {
+      // Use direct-admin endpoint with date range parameters
+      const response = await fetch(
+        getApiUrl(`/api/direct-admin/dashboard?startDate=${startDate}&endDate=${endDate}`),
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
         }
+      );
 
-        const data = await response.json();
-        setMetrics(data);
-      } catch (err) {
-        console.error('Error fetching admin dashboard data:', err);
-        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch analytics dashboard data: ${response.statusText}`);
       }
-    };
 
+      const data = await response.json();
+      setMetrics(data);
+    } catch (err) {
+      console.error('Error fetching analytics dashboard data:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
     fetchDashboardData();
-  }, [timeframe]);
+  }, []);
+  
+  // Handle date changes and refresh
+  const handleApply = () => {
+    fetchDashboardData();
+  };
+  
+  const handleRefresh = () => {
+    fetchDashboardData();
+  };
 
   if (!user || user.role !== 'admin') {
     return (
@@ -77,60 +102,73 @@ const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
-      
-      {/* Timeframe selector */}
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setTimeframe('day')}
-            className={`px-4 py-2 rounded-md ${
-              timeframe === 'day'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-            }`}
-          >
-            Today
-          </button>
-          <button
-            onClick={() => setTimeframe('week')}
-            className={`px-4 py-2 rounded-md ${
-              timeframe === 'week'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-            }`}
-          >
-            This Week
-          </button>
-          <button
-            onClick={() => setTimeframe('month')}
-            className={`px-4 py-2 rounded-md ${
-              timeframe === 'month'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-            }`}
-          >
-            This Month
-          </button>
-          <button
-            onClick={() => setTimeframe('year')}
-            className={`px-4 py-2 rounded-md ${
-              timeframe === 'year'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-            }`}
-          >
-            This Year
-          </button>
-        </div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Pilot Study Analytics Dashboard</h1>
+        <button
+          onClick={() => window.location.href = '/logout'}
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+        >
+          Log Out
+        </button>
       </div>
+      
+      {/* Date Range Filter */}
+      <Card className="mb-8">
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+            <div>
+              <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
+                Start Date
+              </label>
+              <input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">
+                End Date
+              </label>
+              <input
+                id="end-date"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+            
+            <div>
+              <button
+                onClick={handleApply}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                Apply
+              </button>
+            </div>
+            
+            <div>
+              <button
+                onClick={handleRefresh}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
             <Card key={i}>
               <CardContent className="pt-6">
-                <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-24 bg-gray-200 animate-pulse rounded"></div>
               </CardContent>
             </Card>
           ))}
@@ -143,74 +181,108 @@ const AdminDashboardPage: React.FC = () => {
         </Card>
       ) : metrics ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Analytics Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Active Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{metrics.activeUsers}</p>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-medium mb-2">Total Sessions</h3>
+                <p className="text-4xl font-bold text-green-600 mb-2">{metrics.sessions.total}</p>
+                <p className="text-sm text-gray-500">During selected period</p>
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">New Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{metrics.newUsers}</p>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-medium mb-2">Avg. Session Duration</h3>
+                <p className="text-4xl font-bold text-green-600 mb-2">{metrics.sessions.avgDurationMinutes} min</p>
+                <p className="text-sm text-gray-500">Time spent per session</p>
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Audits</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{metrics.totalAudits}</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Average Savings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">${metrics.averageSavings}</p>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-medium mb-2">Form Completions</h3>
+                <p className="text-4xl font-bold text-green-600 mb-2">{metrics.formCompletions}</p>
+                <p className="text-sm text-gray-500">Successfully completed forms</p>
               </CardContent>
             </Card>
           </div>
           
-          {metrics.topProducts.length > 0 && (
-            <Card className="mb-8">
+          {/* Data Visualization Sections */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Card>
               <CardHeader>
-                <CardTitle>Top Viewed Products</CardTitle>
+                <CardTitle>Most Visited Pages</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="pb-2 font-medium">Product ID</th>
-                        <th className="pb-2 font-medium">Views</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.topProducts.map((product) => (
-                        <tr key={product.id} className="border-b">
-                          <td className="py-3">{product.id}</td>
-                          <td className="py-3">{product.views}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                {metrics.pageVisits.length > 0 ? (
+                  <div>
+                    {metrics.pageVisits.map((page, index) => (
+                      <div key={index} className="mb-2">
+                        <div className="flex justify-between mb-1">
+                          <span>{page.page}</span>
+                          <span>{page.visits}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div 
+                            className="bg-green-600 h-2.5 rounded-full" 
+                            style={{ width: `${Math.min(100, (page.visits / Math.max(...metrics.pageVisits.map(p => p.visits))) * 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No page visit data available for this period.</p>
+                )}
               </CardContent>
             </Card>
-          )}
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Most Used Features</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {metrics.featureUsage.length > 0 ? (
+                  <div>
+                    {metrics.featureUsage.map((feature, index) => (
+                      <div key={index} className="mb-2">
+                        <div className="flex justify-between mb-1">
+                          <span>{feature.feature}</span>
+                          <span>{feature.usageCount}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div 
+                            className="bg-blue-600 h-2.5 rounded-full" 
+                            style={{ width: `${Math.min(100, (feature.usageCount / Math.max(...metrics.featureUsage.map(f => f.usageCount))) * 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No feature usage data available for this period.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
           
-          <div className="text-sm text-gray-500 mt-4">
+          {/* Last Updated */}
+          <div className="text-sm text-gray-500 mb-8">
             Last updated: {new Date(metrics.lastUpdated).toLocaleString()}
+          </div>
+          
+          {/* Debugging Tools */}
+          <div className="border-t pt-6">
+            <h2 className="text-xl font-bold mb-4">Debugging Tools</h2>
+            <div className="flex justify-end">
+              <button 
+                className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900"
+                onClick={() => window.location.href = '/admin/analytics/debug'}
+              >
+                Analytics Debug
+              </button>
+            </div>
           </div>
         </>
       ) : (

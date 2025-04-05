@@ -59,6 +59,9 @@ const EVENT_BUFFER_TIMEOUT = 5000;    // ms before flushing buffer
 const DEDUPLICATION_WINDOW = 2000;    // ms to ignore duplicate events
 const DEDUPLICATION_CACHE_SIZE = 50;  // Number of recent events to keep in deduplication cache
 
+// Areas that should not be tracked
+const BLOCKED_ANALYTICS_AREAS: AnalyticsArea[] = ['dashboard'];
+
 export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sessionId, setSessionId] = useState<string>('');
   const [eventBuffer, setEventBuffer] = useState<AnalyticsEvent[]>([]);
@@ -234,6 +237,12 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    */
   const trackEvent = (eventType: AnalyticsEventType, area: AnalyticsArea, data: Record<string, any>) => {
     if (!sessionId) return;
+    
+    // Skip tracking for blocked areas
+    if (BLOCKED_ANALYTICS_AREAS.includes(area)) {
+      console.log(`Skipping analytics tracking for blocked area: ${area}`);
+      return;
+    }
     
     // Check for duplicate events (prevent tracking the same event multiple times)
     if (isDuplicateEvent(eventType, area, data)) {

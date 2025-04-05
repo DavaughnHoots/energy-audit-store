@@ -149,6 +149,12 @@ router.post('/event',
         
         // Attempt database operations in the background
         try {
+          // Block events from dashboard area
+          if (area === 'dashboard') {
+            console.log('Blocking event from dashboard area');
+            return; // Skip recording dashboard events completely
+          }
+          
           // Check if client provided an eventId (for deduplication)
           const clientProvidedId = data?.eventId;
           
