@@ -53,7 +53,45 @@ export const usePageTracking = (
     // Set a debounce timer to track the page view after delay
     debounceTimerRef.current = setTimeout(() => {
       // Log the tracked event to help with debugging
-      console.log(`Tracking page view: ${location.pathname}${location.search}`);
+      console.log(`Tracking page view: ${location.pathname}${location.search} in ${area}`);
+      
+      // Create a friendly page name for dashboard display
+      // Map the area to a human-readable name
+      const areaDisplayNames: Record<string, string> = {
+        'dashboard': 'User Dashboard',
+        'energy_audit': 'Energy Audit Form',
+        'reports': 'Interactive Report',
+        'settings': 'User Settings',
+        'auth': 'Authentication',
+        'products': 'Product Catalog',
+        'community': 'Community',
+        'education': 'Education Resources',
+        'admin': 'Admin Dashboard',
+        'debug': 'Debug Page'
+      };
+      
+      // Generate a friendly page name based on the path and area
+      let pageName = areaDisplayNames[area as string] || String(area);
+      
+      // If there's a specific path, add it to create a more specific page name
+      if (location.pathname !== '/' && location.pathname !== `/${area}`) {
+        const pathSegments = location.pathname.split('/').filter(Boolean);
+        if (pathSegments.length > 1) {
+          // Safe access to last segment with fallback
+          const lastSegmentIndex = pathSegments.length - 1;
+          if (lastSegmentIndex >= 0 && pathSegments[lastSegmentIndex]) {
+            const lastSegment = pathSegments[lastSegmentIndex]
+              .replace(/-/g, ' ')
+              .replace(/\b\w/g, c => c.toUpperCase()); // Convert to title case
+            pageName += `: ${lastSegment}`;
+          }
+        }
+      }
+      
+      // If we have a document title, use it as a fallback
+      if (!pageName && document.title) {
+        pageName = document.title;
+      }
       
       // Track the page view
       trackEvent('page_view', area, {
@@ -62,6 +100,8 @@ export const usePageTracking = (
         title: document.title,
         referrer: document.referrer,
         eventId: eventIdRef.current, // Add unique event ID for deduplication
+        pageName, // Add explicit page name for dashboard display
+        displayName: pageName, // Alternative name for dashboard display
         ...additionalData,
       });
       

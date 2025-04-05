@@ -21,9 +21,19 @@ export const useComponentTracking = (
    */
   const trackComponentEvent = useCallback(
     (actionName: string, eventData: Record<string, any> = {}) => {
+      // Log the component interaction for debugging, similar to page view logging
+      console.log(`Tracking component interaction: ${componentName} - ${actionName} in ${area}`);
+      
+      // Include a better display name for the dashboard
+      const featureName = componentName.includes('/') 
+        ? componentName.split('/').pop() 
+        : componentName;
+        
       trackEvent('component_interaction', area, {
         componentName,
+        featureName, // Add explicit feature name for dashboard display
         action: actionName,
+        displayName: `${featureName} ${actionName}`, // Friendly display name
         ...additionalData,
         ...eventData,
       });

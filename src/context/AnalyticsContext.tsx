@@ -20,7 +20,9 @@ export type AnalyticsArea =
   | 'settings'
   | 'education'
   | 'community'
-  | 'auth';
+  | 'auth'
+  | 'admin'     // Add support for admin dashboard area
+  | 'debug';    // Add support for debug/diagnostics area
 
 interface AnalyticsEvent {
   sessionId: string;
@@ -39,6 +41,9 @@ interface DeduplicationCacheEntry {
   path?: string;
   eventId?: string;
 }
+
+// Debug mode flag to control verbose logging
+const ANALYTICS_DEBUG_MODE = true;
 
 interface AnalyticsContextType {
   trackEvent: (eventType: AnalyticsEventType, area: AnalyticsArea, data: Record<string, any>) => void;
@@ -132,6 +137,12 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Send each event individually to match backend API
       for (const event of eventsToSend) {
+        console.log('%c [ANALYTICS DEBUG] Sending event to server:', 'background: #333; color: #1e90ff', {
+          eventId: event.eventId,
+          eventType: event.eventType,
+          area: event.area,
+          timestamp: event.timestamp
+        });
         await fetch(getApiUrl('/api/analytics/event'), {
           method: 'POST',
           headers: {
@@ -236,9 +247,20 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * Track an analytics event with deduplication
    */
   const trackEvent = (eventType: AnalyticsEventType, area: AnalyticsArea, data: Record<string, any>) => {
+    // DEBUG: Always log tracking events in detail
+    console.log('%c [ANALYTICS DEBUG] Track Event:', 'background: #333; color: #32cd32', {
+      eventType,
+      area,
+      data,
+      timestamp: new Date().toISOString(),
+      sessionId,
+      deduplicateCache: deduplicationCacheRef.current.length
+    });
     if (!sessionId) return;
     
     // Skip tracking for blocked areas
+    // DEBUG: Mark when an event is being blocked
+    if (ANALYTICS_DEBUG_MODE && BLOCKED_ANALYTICS_AREAS.includes(area)) {
     if (BLOCKED_ANALYTICS_AREAS.includes(area)) {
       console.log(`Skipping analytics tracking for blocked area: ${area}`);
       return;
@@ -246,6 +268,11 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     // Check for duplicate events (prevent tracking the same event multiple times)
     if (isDuplicateEvent(eventType, area, data)) {
+      console.log('%c [ANALYTICS DEBUG] Duplicate event detected:', 'background: #333; color: #ff6347', {
+        eventType,
+        area,
+        data: data.path || data.eventId || 'No key data'
+      });
       console.log(`Duplicate event detected and skipped: ${eventType} in ${area}`);
       return;
     }
