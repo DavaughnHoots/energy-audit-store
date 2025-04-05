@@ -1,15 +1,18 @@
 // backend/src/routes/analytics.ts
+// Simplified to focus only on essential functionality
 
 import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/security.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
-import { AnalyticsService } from '../services/AnalyticsService.enhanced.js';
 import { pool } from '../config/database.js';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
-const analyticsService = new AnalyticsService(pool);
+
+// Directly implement the core analytics functions without depending on a service
+// This avoids potential import and compatibility issues
 
 /**
  * @route POST /api/analytics/session
@@ -35,8 +38,25 @@ router.post('/session',
       const userId = req.user?.id;
 
       try {
-        // Create or update the session
-        await analyticsService.createOrUpdateSession(sessionId, userId);
+        // Simple database operation - create or update session
+        const existingSession = await pool.query(
+          'SELECT * FROM analytics_sessions WHERE id = $1',
+          [sessionId]
+        );
+
+        if (existingSession.rows.length === 0) {
+          // Create new session
+          await pool.query(
+            'INSERT INTO analytics_sessions (id, user_id, created_at, updated_at) VALUES ($1, $2, NOW(), NOW())',
+            [sessionId, userId || null]
+          );
+        } else {
+          // Update existing session
+          await pool.query(
+            'UPDATE analytics_sessions SET updated_at = NOW(), user_id = COALESCE($1, user_id) WHERE id = $2',
+            [userId || null, sessionId]
+          );
+        }
         
         // Return success response immediately
         return res.status(200).json({ success: true });
@@ -87,12 +107,23 @@ router.post('/event',
         return res.status(400).json({ error: 'Missing required fields: eventType, area, sessionId' });
       }
 
-      // Get user ID if authenticated
-      const userId = req.user?.id;
-
       try {
-        // Direct database write - don't rely on session updating
-        await analyticsService.trackEvent(sessionId, eventType, area, data || {});
+        // Get the user_id from the session
+        const session = await pool.query(
+          'SELECT user_id FROM analytics_sessions WHERE id = $1',
+          [sessionId]
+        );
+        
+        const userId = session.rows.length > 0 ? session.rows[0].user_id : null;
+        
+        // Generate a UUID for the event
+        const eventId = uuidv4();
+        
+        // Write event directly to the database
+        await pool.query(
+          'INSERT INTO analytics_events (id, session_id, user_id, event_type, area, data, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
+          [eventId, sessionId, userId, eventType, area, JSON.stringify(data || {})]
+        );
         
         // Return success response immediately
         return res.status(200).json({ success: true });
@@ -134,148 +165,87 @@ router.get('/dashboard',
   rateLimiter,
   async (req, res) => {
     try {
-      const timeframe = req.query.timeframe as string || 'month';
-      const metrics = await analyticsService.getPlatformMetrics(timeframe);
-      res.json(metrics);
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/user/:userId
- * @desc Get user-specific analytics
- * @access Private (Admin or User's own data)
- */
-router.get('/user/:userId',
-  authenticate,
-  async (req, res) => {
-    try {
-      // Check if user is requesting their own data or is an admin
-      if (req.user!.userId !== req.params.userId && req.user!.role !== 'admin') {
-        return res.status(403).json({ error: 'Unauthorized access' });
+      const timeframe = req.query.timeframe || 'month';
+      let timeframeClause;
+      
+      switch (timeframe) {
+        case 'day':
+          timeframeClause = 'created_at >= CURRENT_DATE';
+          break;
+        case 'week':
+          timeframeClause = 'created_at >= CURRENT_DATE - INTERVAL \'7 days\'';
+          break;
+        case 'year':
+          timeframeClause = 'created_at >= CURRENT_DATE - INTERVAL \'1 year\'';
+          break;
+        case 'month':
+        default:
+          timeframeClause = 'created_at >= CURRENT_DATE - INTERVAL \'30 days\'';
       }
 
-      const timeframe = req.query.timeframe as string || 'month';
-      const metrics = await analyticsService.getUserMetrics(req.params.userId, timeframe);
-      res.json(metrics);
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route POST /api/analytics/track
- * @desc Track user action
- * @access Private
- */
-router.post('/track',
-  authenticate,
-  rateLimiter,
-  async (req, res) => {
-    try {
-      const { action, metadata } = req.body;
-      await analyticsService.trackUserAction(req.user!.userId, action, metadata);
-      res.status(200).end();
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/reports
- * @desc Get analytics reports
- * @access Private (Admin)
- */
-router.get('/reports',
-  authenticate,
-  requireRole(['admin']),
-  async (req, res) => {
-    try {
-      const timeframe = req.query.timeframe as string || 'month';
-      const reportId = await analyticsService.generateAnalyticsReport(timeframe);
-      res.json({ reportId });
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/reports/:reportId
- * @desc Get specific analytics report
- * @access Private (Admin)
- */
-router.get('/reports/:reportId',
-  authenticate,
-  requireRole(['admin']),
-  async (req, res) => {
-    try {
-      const report = await analyticsService.getAnalyticsReport(req.params.reportId);
-      res.json(report);
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/energy-savings
- * @desc Get platform-wide energy savings metrics
- * @access Public
- */
-router.get('/energy-savings',
-  rateLimiter,
-  async (req, res) => {
-    try {
-      const timeframe = req.query.timeframe as string || 'all';
-      const result = await pool.query(
-        `SELECT 
-          COUNT(DISTINCT user_id) as total_users,
-          SUM(energy_savings) as total_savings,
-          AVG(energy_savings) as average_savings
-         FROM user_progress
-         WHERE ${timeframe === 'all' ? '1=1' : `created_at >= NOW() - INTERVAL '1 ${timeframe}'`}`
+      // Get active users count (users with recent sessions)
+      const activeUsersResult = await pool.query(
+        `SELECT COUNT(DISTINCT user_id) as active_users
+         FROM analytics_sessions
+         WHERE ${timeframeClause} AND user_id IS NOT NULL`
       );
-
+      
+      // Get new users count
+      const newUsersResult = await pool.query(
+        `SELECT 
+          COUNT(DISTINCT id) as new_users
+         FROM users
+         WHERE ${timeframeClause}`
+      );
+      
+      // Get total audits
+      const auditsResult = await pool.query(
+        `SELECT COUNT(*) as total_audits
+         FROM energy_audits
+         WHERE ${timeframeClause}`
+      );
+      
+      // Get product views
+      const productResult = await pool.query(
+        `SELECT 
+          (data->>'productId') as product_id,
+          COUNT(*) as view_count
+         FROM analytics_events
+         WHERE event_type = 'product_view'
+         AND ${timeframeClause}
+         GROUP BY data->>'productId'
+         ORDER BY view_count DESC
+         LIMIT 10`
+      );
+      
+      const productEngagement = {};
+      const topProducts = [];
+      
+      for (const row of productResult.rows) {
+        if (row.product_id) {
+          productEngagement[row.product_id] = parseInt(row.view_count);
+          topProducts.push({
+            id: row.product_id,
+            views: parseInt(row.view_count)
+          });
+        }
+      }
+      
       res.json({
-        totalUsers: result.rows[0].total_users,
-        totalSavings: result.rows[0].total_savings,
-        averageSavings: result.rows[0].average_savings
+        activeUsers: parseInt(activeUsersResult.rows[0]?.active_users || '0'),
+        newUsers: parseInt(newUsersResult.rows[0]?.new_users || '0'),
+        totalAudits: parseInt(auditsResult.rows[0]?.total_audits || '0'),
+        productEngagement,
+        topProducts,
+        averageSavings: 0, // Default value until we implement savings calculations
+        lastUpdated: new Date().toISOString()
       });
     } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  }
-);
-
-/**
- * @route GET /api/analytics/product-engagement/:productId
- * @desc Get product engagement metrics
- * @access Private (Admin)
- */
-router.get('/product-engagement/:productId',
-  authenticate,
-  requireRole(['admin']),
-  async (req, res) => {
-    try {
-      const result = await pool.query(
-        `SELECT 
-          COUNT(*) as view_count,
-          COUNT(DISTINCT user_id) as unique_viewers,
-          COUNT(CASE WHEN action_type = 'purchase' THEN 1 END) as purchase_count
-         FROM user_actions
-         WHERE metadata->>'productId' = $1
-         AND created_at >= NOW() - INTERVAL '30 days'`,
-        [req.params.productId]
-      );
-
-      res.json(result.rows[0]);
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
+      console.error('Error fetching dashboard metrics:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        success: false
+      });
     }
   }
 );
