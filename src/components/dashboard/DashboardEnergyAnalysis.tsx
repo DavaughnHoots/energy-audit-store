@@ -51,20 +51,30 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoadin
     );
   }
 
-  // Handle missing data with placeholder message
-  if (!data || !data.energyBreakdown || !data.savingsAnalysis || !data.consumption) {
+  // Handle missing or empty data with improved placeholder message
+  const hasEnergyBreakdown = data?.energyBreakdown?.length > 0;
+  const hasSavingsAnalysis = data?.savingsAnalysis?.length > 0;
+  const hasConsumption = data?.consumption?.length > 0;
+  
+  if (!hasEnergyBreakdown && !hasSavingsAnalysis && !hasConsumption) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 mx-0">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Energy Analysis</h2>
-        <div className="h-60 flex items-center justify-center">
-          <p className="text-gray-500">No energy analysis data available.</p>
+        <div className="h-60 flex flex-col items-center justify-center">
+          <p className="text-gray-500 mb-4">No energy analysis data available yet.</p>
+          <a 
+            href="/energy-audit" 
+            className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+          >
+            Complete an Energy Audit
+          </a>
         </div>
       </div>
     );
   }
 
   // Add percentage calculation for pie chart display
-  const energyBreakdownData = [...data.energyBreakdown];
+  const energyBreakdownData = hasEnergyBreakdown ? [...data.energyBreakdown] : [];
   const totalEnergy = energyBreakdownData.reduce((sum, item) => sum + item.value, 0);
   energyBreakdownData.forEach(item => {
     item['percentage'] = ((item.value / totalEnergy) * 100).toFixed(1);
@@ -79,37 +89,43 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoadin
         <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
           <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Energy Breakdown</h3>
           <div className="h-60 sm:h-64 overflow-hidden">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={energyBreakdownData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={!isMobile && (({ name, percentage }) => `${percentage}%`)}
-                  outerRadius={isMobile ? 65 : 80}
-                  innerRadius={isMobile ? 30 : 40}
-                  fill="#8884d8"
-                  dataKey="value"
-                  paddingAngle={2}
-                >
-                  {energyBreakdownData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => `${value.toLocaleString()} kWh`}
-                  wrapperStyle={{ fontSize: '12px' }}
-                />
-                <Legend 
-                  layout="horizontal"
-                  align="center"
-                  verticalAlign="bottom"
-                  wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
-                  formatter={(value) => value}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            {hasEnergyBreakdown ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={energyBreakdownData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={!isMobile && (({ name, percentage }) => `${percentage}%`)}
+                    outerRadius={isMobile ? 65 : 80}
+                    innerRadius={isMobile ? 30 : 40}
+                    fill="#8884d8"
+                    dataKey="value"
+                    paddingAngle={2}
+                  >
+                    {energyBreakdownData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => `${value.toLocaleString()} kWh`}
+                    wrapperStyle={{ fontSize: '12px' }}
+                  />
+                  <Legend 
+                    layout="horizontal"
+                    align="center"
+                    verticalAlign="bottom"
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                    formatter={(value) => value}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-400 text-sm">No energy breakdown data available</p>
+              </div>
+            )}
           </div>
         </div>
         
@@ -117,10 +133,54 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoadin
         <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
           <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Energy Consumption Factors</h3>
           <div className="h-60 sm:h-64 overflow-hidden">
+            {hasConsumption ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={data.consumption}
+                  margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    tickMargin={5}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    width={isMobile ? 30 : 35}
+                  />
+                  <Tooltip 
+                    formatter={(value) => `${value.toLocaleString()} kWh`}
+                    wrapperStyle={{ fontSize: '12px' }}
+                  />
+                  <Legend 
+                    layout="horizontal"
+                    align="center"
+                    verticalAlign="bottom"
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }}
+                  />
+                  <Bar dataKey="value" name="Energy (kWh)" fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-400 text-sm">No consumption data available</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Savings Analysis Bar Chart */}
+      <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
+        <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Savings Analysis</h3>
+        <div className="h-60 sm:h-64 overflow-hidden">
+          {hasSavingsAnalysis ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={data.consumption}
+                data={data.savingsAnalysis}
                 margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
+                barSize={isMobile ? 30 : 40}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -131,9 +191,10 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoadin
                 <YAxis 
                   tick={{ fontSize: isMobile ? 10 : 12 }}
                   width={isMobile ? 30 : 35}
+                  domain={[0, 'dataMax + 1']}
                 />
                 <Tooltip 
-                  formatter={(value) => `${value.toLocaleString()} kWh`}
+                  formatter={(value) => formatCurrency(Number(value))}
                   wrapperStyle={{ fontSize: '12px' }}
                 />
                 <Legend 
@@ -142,48 +203,15 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({ data, isLoadin
                   verticalAlign="bottom"
                   wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }}
                 />
-                <Bar dataKey="value" name="Energy (kWh)" fill="#3B82F6" />
+                <Bar dataKey="estimatedSavings" name="Estimated Savings" fill="#3B82F6" />
+                <Bar dataKey="actualSavings" name="Actual Savings" fill="#10B981" />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-      
-      {/* Savings Analysis Bar Chart */}
-      <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
-        <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Savings Analysis</h3>
-        <div className="h-60 sm:h-64 overflow-hidden">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data.savingsAnalysis}
-              margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
-              barSize={isMobile ? 30 : 40}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="name" 
-                tick={{ fontSize: isMobile ? 10 : 12 }}
-                tickMargin={5}
-              />
-              <YAxis 
-                tick={{ fontSize: isMobile ? 10 : 12 }}
-                width={isMobile ? 30 : 35}
-                domain={[0, 'dataMax + 1']}
-              />
-              <Tooltip 
-                formatter={(value) => formatCurrency(Number(value))}
-                wrapperStyle={{ fontSize: '12px' }}
-              />
-              <Legend 
-                layout="horizontal"
-                align="center"
-                verticalAlign="bottom"
-                wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }}
-              />
-              <Bar dataKey="estimatedSavings" name="Estimated Savings" fill="#3B82F6" />
-              <Bar dataKey="actualSavings" name="Actual Savings" fill="#10B981" />
-            </BarChart>
-          </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-400 text-sm">No savings analysis data available</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

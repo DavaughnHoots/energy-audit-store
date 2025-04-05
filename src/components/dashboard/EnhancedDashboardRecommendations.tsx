@@ -96,7 +96,7 @@ const EnhancedDashboardRecommendations: React.FC<EnhancedDashboardRecommendation
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Recommendations</h2>
         
-        {userCategories.length > 0 && (
+        {userCategories.length > 0 && recommendations.length > 0 && (
           <div className="flex items-center">
             <button
               onClick={() => setShowAllRecommendations(!showAllRecommendations)}
@@ -114,91 +114,109 @@ const EnhancedDashboardRecommendations: React.FC<EnhancedDashboardRecommendation
       </div>
       
       {/* Show number of filtered recommendations */}
-      <p className="text-sm text-gray-500 mb-4">
-        Showing {Math.min(sortedRecommendations.length, 3)} of {filteredRecommendations.length} recommendations
-        {!showAllRecommendations && userCategories.length > 0 && (
-          <span> relevant to your selected preferences: {userCategories.join(', ')}</span>
-        )}
-      </p>
+      {recommendations.length > 0 ? (
+        <p className="text-sm text-gray-500 mb-4">
+          Showing {Math.min(sortedRecommendations.length, 3)} of {filteredRecommendations.length} recommendations
+          {!showAllRecommendations && userCategories.length > 0 && (
+            <span> relevant to your selected preferences: {userCategories.join(', ')}</span>
+          )}
+        </p>
+      ) : (
+        <p className="text-sm text-gray-500 mb-4">
+          No recommendations available yet. Complete an energy audit to get personalized recommendations.
+        </p>
+      )}
       
       <div className="space-y-6">
-        {sortedRecommendations.slice(0, 3).map((recommendation) => (
-          <div 
-            key={recommendation.id} 
-            className={`p-5 border-l-4 ${getPriorityColor(recommendation.priority)} bg-white shadow-md hover:shadow-lg transition-shadow duration-200 rounded-lg relative`}
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                  {recommendation.title}
-                </h3>
-                
-                <div className="flex items-center text-sm mt-1 space-x-4">
-                  {/* Priority indicator */}
-                  <div className="flex items-center">
-                    <span className="text-gray-500 mr-1">Priority:</span>
-                    <span className="flex items-center font-medium capitalize">
-                      {getPriorityIcon(recommendation.priority)}
-                      {recommendation.priority}
-                    </span>
-                  </div>
+        {sortedRecommendations.length > 0 ? (
+          sortedRecommendations.slice(0, 3).map((recommendation) => (
+            <div 
+              key={recommendation.id} 
+              className={`p-5 border-l-4 ${getPriorityColor(recommendation.priority)} bg-white shadow-md hover:shadow-lg transition-shadow duration-200 rounded-lg relative`}
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                    {recommendation.title}
+                  </h3>
                   
-                  {/* Category tag */}
-                  <div className="flex items-center">
-                    <Tag className="h-3 w-3 mr-1 text-blue-500" />
-                    <span className="text-gray-600 capitalize">{recommendation.type}</span>
+                  <div className="flex items-center text-sm mt-1 space-x-4">
+                    {/* Priority indicator */}
+                    <div className="flex items-center">
+                      <span className="text-gray-500 mr-1">Priority:</span>
+                      <span className="flex items-center font-medium capitalize">
+                        {getPriorityIcon(recommendation.priority)}
+                        {recommendation.priority}
+                      </span>
+                    </div>
+                    
+                    {/* Category tag */}
+                    <div className="flex items-center">
+                      <Tag className="h-3 w-3 mr-1 text-blue-500" />
+                      <span className="text-gray-600 capitalize">{recommendation.type}</span>
+                    </div>
+                    
+                    {/* Status indicator */}
+                    <div className="flex items-center">
+                      <span className="text-gray-500 mr-1">Status:</span>
+                      <span className={`font-medium capitalize ${recommendation.status === 'implemented' ? 'text-green-600' : 'text-blue-600'}`}>
+                        {recommendation.status}
+                      </span>
+                    </div>
                   </div>
-                  
-                  {/* Status indicator */}
-                  <div className="flex items-center">
-                    <span className="text-gray-500 mr-1">Status:</span>
-                    <span className={`font-medium capitalize ${recommendation.status === 'implemented' ? 'text-green-600' : 'text-blue-600'}`}>
-                      {recommendation.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <p className="mt-3 text-gray-600">{recommendation.description}</p>
-            
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="text-sm text-gray-500 flex items-center">
-                  <DollarSign className="h-4 w-4 mr-1 text-green-500" />
-                  Estimated Savings:
-                </span>
-                <div className="flex items-center">
-                  <span className="font-medium text-green-600">{formatCurrency(recommendation.estimatedSavings)}/year</span>
                 </div>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="text-sm text-gray-500 flex items-center">
-                  <DollarSign className="h-4 w-4 mr-1 text-gray-500" />
-                  Implementation Cost:
-                </span>
-                <div className="flex items-center">
+              <p className="mt-3 text-gray-600">{recommendation.description}</p>
+              
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <span className="text-sm text-gray-500 flex items-center">
+                    <DollarSign className="h-4 w-4 mr-1 text-green-500" />
+                    Estimated Savings:
+                  </span>
+                  <div className="flex items-center">
+                    <span className="font-medium text-green-600">{formatCurrency(recommendation.estimatedSavings)}/year</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <span className="text-sm text-gray-500 flex items-center">
+                    <DollarSign className="h-4 w-4 mr-1 text-gray-500" />
+                    Implementation Cost:
+                  </span>
+                  <div className="flex items-center">
+                    <span className="font-medium">
+                      {formatCurrency(recommendation.implementationCost || recommendation.estimatedCost)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <span className="text-sm text-gray-500 flex items-center">
+                    <Clock className="h-4 w-4 mr-1 text-blue-500" />
+                    Payback Period:
+                  </span>
                   <span className="font-medium">
-                    {formatCurrency(recommendation.implementationCost || recommendation.estimatedCost)}
+                    {recommendation.paybackPeriod && !isNaN(recommendation.paybackPeriod)
+                      ? `${recommendation.paybackPeriod.toFixed(1)} years` 
+                      : 'N/A'}
                   </span>
                 </div>
               </div>
-              
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <span className="text-sm text-gray-500 flex items-center">
-                  <Clock className="h-4 w-4 mr-1 text-blue-500" />
-                  Payback Period:
-                </span>
-                <span className="font-medium">
-                  {recommendation.paybackPeriod && !isNaN(recommendation.paybackPeriod)
-                    ? `${recommendation.paybackPeriod.toFixed(1)} years` 
-                    : 'N/A'}
-                </span>
-              </div>
             </div>
+          ))
+        ) : (
+          <div className="p-6 bg-gray-50 shadow-sm rounded-lg text-center">
+            <p className="text-gray-500 mb-4">No recommendations available yet.</p>
+            <a
+              href="/energy-audit"
+              className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 inline-block"
+            >
+              Complete an Energy Audit
+            </a>
           </div>
-        ))}
+        )}
 
         {/* Note about showing limited recommendations */}
         {sortedRecommendations.length > 3 && (
@@ -210,22 +228,24 @@ const EnhancedDashboardRecommendations: React.FC<EnhancedDashboardRecommendation
         )}
 
         {/* View all button that links to interactive report */}
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={handleViewFullDetails}
-            disabled={!auditId}
-            className={`px-4 py-2 rounded-md flex items-center space-x-2 ${
-              auditId ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            <ExternalLink className="h-4 w-4 mr-1" />
-            <span>View All Recommendations & Details</span>
-          </button>
-        </div>
+        {recommendations.length > 0 && (
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={handleViewFullDetails}
+              disabled={!auditId}
+              className={`px-4 py-2 rounded-md flex items-center space-x-2 ${
+                auditId ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              <span>View All Recommendations & Details</span>
+            </button>
+          </div>
+        )}
         
-        {sortedRecommendations.length === 0 && (
+        {sortedRecommendations.length === 0 && recommendations.length > 0 && (
           <div className="p-4 bg-white shadow rounded-lg">
-            <p className="text-gray-500">No recommendations available.</p>
+            <p className="text-gray-500">No recommendations match your current filters.</p>
             {!showAllRecommendations && userCategories.length > 0 && (
               <div className="mt-2">
                 <button
