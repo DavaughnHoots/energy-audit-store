@@ -20,7 +20,8 @@ import { standardLimiter, authLimiter, apiLimiter, productsLimiter, productDetai
 import { authenticate } from './middleware/auth.js';
 import { optionalTokenValidation } from './middleware/optionalTokenValidation.js';
 import authRoutes from './routes/auth.js';
-import dashboardRoutes from './routes/dashboard.js';
+// Import enhanced dashboard routes
+import dashboardRoutes from './routes/dashboard.enhanced.js';
 import educationRoutes from './routes/education.js';
 import energyAuditRoutes from './routes/energyAudit.js';
 // Import enhanced routes (with better error handling)
@@ -206,6 +207,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+// Use ENHANCED dashboard routes
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/education', educationRoutes);
 // Register specialized routes BEFORE the main energy audit route to prevent route conflicts
@@ -233,13 +235,14 @@ app.get('/health', (req: Request, res: Response) => {
 // Debug endpoint to verify enhanced services are being used
 app.get('/api/debug/config', (req: Request, res: Response) => {
   res.json({ 
-    message: 'Using enhanced configuration',
+    message: 'Using enhanced configuration with dashboard redesign',
     timestamp: new Date().toISOString(),
     routes: {
       admin: 'Enhanced',
       analytics: 'Standard with enhanced service',
       auditHistory: 'Enhanced',
-      reportData: 'Enhanced'
+      reportData: 'Enhanced',
+      dashboard: 'Enhanced with redesigned UI'
     }
   });
 });
@@ -371,10 +374,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION WITH DASHBOARD REDESIGN)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-analytics'
+    version: 'enhanced-analytics-dashboard-redesign'
   }));
 });
 

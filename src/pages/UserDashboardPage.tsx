@@ -6,8 +6,7 @@ import { useLocalStorage } from '@/utils/authUtils';
 import { AlertCircle, Download, Loader2, Settings, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
-import RecommendationsTab from '@/components/dashboard/RecommendationsTab';
-import ProductComparisons from '@/components/dashboard/ProductComparisons';
+// Removed redundant tabs imports
 import ReportsTab from '@/components/dashboard/ReportsTab';
 import { fetchAuditHistory } from '@/services/reportService';
 
@@ -30,7 +29,34 @@ interface DashboardStats {
   latestAuditId?: string | null;
   recommendations?: any[];
   userId?: string;
+  
+  // New fields for enhanced features
+  energyAnalysis?: {
+    energyBreakdown: ChartDataPoint[];
+    consumption: ChartDataPoint[];
+    savingsAnalysis: SavingsChartDataPoint[];
+  };
+  enhancedRecommendations?: AuditRecommendation[];
+  productPreferences?: {
+    categories: string[];
+    budgetConstraint?: number;
+  };
 }
+
+// Chart data point interfaces
+interface ChartDataPoint {
+  name: string;
+  value: number;
+}
+
+interface SavingsChartDataPoint {
+  name: string;
+  estimatedSavings: number;
+  actualSavings: number;
+}
+
+// Import AuditRecommendation type from energyAudit
+import { AuditRecommendation } from '@/types/energyAudit';
 
 const UserDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,7 +74,9 @@ const UserDashboardPage: React.FC = () => {
   });
   
   const [stats, setStats] = useState<DashboardStats>(persistedStats);
-  const [activeTab, setActiveTab] = useState('overview');
+  // Using a fixed set of valid tabs to prevent selection of removed tabs
+  const validTabs = ['overview', 'reports'];
+  const [activeTab, setActiveTab] = useState(validTabs[0]);
   const [refreshKey, setRefreshKey] = useState(0); // Used to force refresh
   const [effectiveAuditId, setEffectiveAuditId] = useState<string | null>(null);
   const [usingFallbackAudit, setUsingFallbackAudit] = useState(false);
@@ -280,7 +308,7 @@ const UserDashboardPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Tab Navigation */}
+        {/* Tab Navigation - Streamlined */}
         <div className="mb-6 border-b border-gray-200 -mx-4 sm:mx-0">
           <div className="overflow-x-auto">
             <nav className="-mb-px flex whitespace-nowrap px-4 sm:px-0">
@@ -293,26 +321,6 @@ const UserDashboardPage: React.FC = () => {
               } py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200`}
             >
               Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('recommendations')}
-              className={`${
-                activeTab === 'recommendations'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } py-3 px-4 border-b-2 font-medium text-sm`}
-            >
-              Recommendations
-            </button>
-            <button
-              onClick={() => setActiveTab('products')}
-              className={`${
-                activeTab === 'products'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } py-3 px-4 border-b-2 font-medium text-sm`}
-            >
-              Product Comparisons
             </button>
             <button
               onClick={() => setActiveTab('reports')}
@@ -344,27 +352,13 @@ const UserDashboardPage: React.FC = () => {
           </div>
         )}
         
-        {/* Tab Content */}
+        {/* Tab Content - Streamlined */}
         {activeTab === 'overview' && (
           <DashboardOverview 
             stats={stats} 
             isLoading={isLoading} 
             error={error} 
             onRefresh={() => setRefreshKey(prev => prev + 1)} 
-          />
-        )}
-        
-        {activeTab === 'recommendations' && (
-          <RecommendationsTab 
-            recommendations={stats.recommendations || []} 
-            onUpdate={() => setRefreshKey(prev => prev + 1)} 
-          />
-        )}
-        
-        {activeTab === 'products' && (
-          <ProductComparisons 
-            userId={stats.userId || ''} 
-            audits={stats.completedAudits} 
           />
         )}
         

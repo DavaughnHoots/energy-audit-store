@@ -2,6 +2,10 @@ import React from 'react';
 import { DollarSign, Battery, Leaf, Calendar, Loader2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import RecommendationCard from '@/components/audit/RecommendationCard';
+import DashboardEnergyAnalysis from './DashboardEnergyAnalysis';
+import EnhancedDashboardRecommendations from './EnhancedDashboardRecommendations';
+import { ChartDataPoint, SavingsChartDataPoint } from '../../types/report';
+import { AuditRecommendation } from '../../types/energyAudit';
 
 interface DashboardStats {
   totalSavings: {
@@ -18,6 +22,19 @@ interface DashboardStats {
     actual: number;
   }[];
   recommendations?: any[];
+  
+  // New fields for enhanced features
+  energyAnalysis?: {
+    energyBreakdown: ChartDataPoint[];
+    consumption: ChartDataPoint[];
+    savingsAnalysis: SavingsChartDataPoint[];
+  };
+  enhancedRecommendations?: AuditRecommendation[];
+  productPreferences?: {
+    categories: string[];
+    budgetConstraint?: number;
+  };
+  latestAuditId?: string | null;
 }
 
 interface DashboardOverviewProps {
@@ -117,81 +134,101 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         />
       </div>
 
-      {/* Savings Chart */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 mx-0">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Savings Trend</h2>
-        <div className="h-80 sm:h-96 w-full overflow-hidden">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={stats.monthlySavings}
-              margin={{
-                top: 5,
-                right: 10,
-                left: 0,
-                bottom: 20,
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip
-                formatter={(value: number) => [`$${value}`, 'Savings']}
-                labelFormatter={(label: string) => `Month: ${label}`}
-              />
-              <Legend 
-                layout="horizontal" 
-                verticalAlign="bottom" 
-                align="center"
-                wrapperStyle={{ paddingTop: "15px" }}
-              />
-              <Line
-                type="monotone"
-                name="Estimated Savings"
-                dataKey="estimated"
-                stroke="#3B82F6"
-                strokeWidth={2}
-                dot={{ fill: '#3B82F6' }}
-                activeDot={{ r: 8 }}
-              />
-              <Line
-                type="monotone"
-                name="Actual Savings"
-                dataKey="actual"
-                stroke="#22C55E"
-                strokeWidth={2}
-                dot={{ fill: '#22C55E' }}
-                activeDot={{ r: 8 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Energy Analysis Section - New Component */}
+      {stats.energyAnalysis ? (
+        <DashboardEnergyAnalysis 
+          data={stats.energyAnalysis} 
+          isLoading={isLoading} 
+        />
+      ) : (
+        // Fallback to Monthly Savings Trend if energyAnalysis data not available
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 mx-0">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Savings Trend</h2>
+          <div className="h-80 sm:h-96 w-full overflow-hidden">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={stats.monthlySavings}
+                margin={{
+                  top: 5,
+                  right: 10,
+                  left: 0,
+                  bottom: 20,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip
+                  formatter={(value: number) => [`$${value}`, 'Savings']}
+                  labelFormatter={(label: string) => `Month: ${label}`}
+                />
+                <Legend 
+                  layout="horizontal" 
+                  verticalAlign="bottom" 
+                  align="center"
+                  wrapperStyle={{ paddingTop: "15px" }}
+                />
+                <Line
+                  type="monotone"
+                  name="Estimated Savings"
+                  dataKey="estimated"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  dot={{ fill: '#3B82F6' }}
+                  activeDot={{ r: 8 }}
+                />
+                <Line
+                  type="monotone"
+                  name="Actual Savings"
+                  dataKey="actual"
+                  stroke="#22C55E"
+                  strokeWidth={2}
+                  dot={{ fill: '#22C55E' }}
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Recommendations Section */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mx-0">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
-        {stats.recommendations && stats.recommendations.length > 0 ? (
-          <div className="space-y-4">
-            {stats.recommendations.map((recommendation) => (
-              <RecommendationCard
-                key={recommendation.id}
-                recommendation={recommendation}
-                onUpdate={onRefresh}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center text-gray-500 py-6">
-            <p>No recommendations available.</p>
-            <button
-              onClick={() => window.location.href = '/energy-audit'}
-              className="mt-4 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 w-full sm:w-auto"
-            >
-              Start New Energy Audit
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Enhanced Recommendations Section */}
+      {stats.enhancedRecommendations && stats.enhancedRecommendations.length > 0 ? (
+        <EnhancedDashboardRecommendations
+          recommendations={stats.enhancedRecommendations}
+          userCategories={stats.productPreferences?.categories || []}
+          budgetConstraint={stats.productPreferences?.budgetConstraint}
+          auditId={stats.latestAuditId}
+          onRefresh={onRefresh}
+          isLoading={isLoading}
+        />
+      ) : (
+        // Fallback to old recommendations if enhanced data not available
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mx-0">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
+          {stats.recommendations && stats.recommendations.length > 0 ? (
+            <div className="space-y-4">
+              {stats.recommendations.map((recommendation) => (
+                <RecommendationCard
+                  key={recommendation.id}
+                  recommendation={recommendation}
+                  onUpdate={onRefresh}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-6">
+              <p>No recommendations available.</p>
+              <button
+                onClick={() => window.location.href = '/energy-audit'}
+                className="mt-4 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 w-full sm:w-auto"
+              >
+                Start New Energy Audit
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
