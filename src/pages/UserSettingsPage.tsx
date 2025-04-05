@@ -6,12 +6,20 @@ import WeatherizationMonitoringSection from '../components/user-settings/Weather
 import { API_ENDPOINTS, getApiUrl } from '../config/api';
 import { fetchWithAuth, getAuthHeaders } from '../utils/authUtils';
 import { WindowMaintenance, WeatherizationMonitoring, UpdateWindowMaintenanceDto, UpdateWeatherizationDto } from '../types/propertySettings';
+import { usePageTracking } from '../hooks/analytics/usePageTracking';
+import { useComponentTracking } from '../hooks/analytics/useComponentTracking';
 
 interface Props {
   initialSection?: 'property' | 'general';
 }
 
 const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
+  // Add analytics page tracking
+  usePageTracking('settings');
+  
+  // Add component tracking for interactive elements
+  const trackComponentEvent = useComponentTracking('settings', 'UserSettingsPage');
+  
   const [activeSection, setActiveSection] = useState(initialSection);
   const [settings, setSettings] = useState({
     fullName: '',
@@ -38,7 +46,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   useEffect(() => {
     setActiveSection(initialSection);
-  }, [initialSection]);
+    // Track which section is being viewed
+    trackComponentEvent('view_section', { section: initialSection });
+  }, [initialSection, trackComponentEvent]);
 
   const fetchWindowData = async () => {
     try {
@@ -70,6 +80,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleSaveWindowData = async (data: UpdateWindowMaintenanceDto) => {
     try {
+      // Track the attempt to save window data
+      trackComponentEvent('save_window_data', { dataSize: Object.keys(data).length });
+      
       const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WINDOWS, {
         method: 'PUT',
         headers: {
@@ -83,6 +96,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       const updatedData = await response.json();
       setWindowData(updatedData);
       setSuccess('Window maintenance data saved successfully');
+      
+      // Track successful save
+      trackComponentEvent('save_window_data_success');
     } catch (err) {
       console.error('Window data save error:', err);
       setError('Failed to save window maintenance data');
@@ -91,6 +107,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleSaveWeatherizationData = async (data: UpdateWeatherizationDto) => {
     try {
+      // Track attempt to save weatherization data
+      trackComponentEvent('save_weatherization_data', { dataSize: Object.keys(data).length });
+      
       const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WEATHERIZATION, {
         method: 'PUT',
         headers: {
@@ -104,6 +123,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       const updatedData = await response.json();
       setWeatherizationData(updatedData);
       setSuccess('Weatherization data saved successfully');
+      
+      // Track successful save
+      trackComponentEvent('save_weatherization_data_success');
     } catch (err) {
       console.error('Weatherization data save error:', err);
       setError('Failed to save weatherization data');
@@ -112,6 +134,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleSaveHomeConditions = async (data: any) => {
     try {
+      // Track attempt to save home conditions
+      trackComponentEvent('save_home_conditions', { dataSize: Object.keys(data).length });
+      
       const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.PROPERTY, {
         method: 'PUT',
         headers: {
@@ -123,6 +148,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       if (!response.ok) throw new Error('Failed to save property details');
 
       setSuccess('Property details saved successfully');
+      
+      // Track successful save
+      trackComponentEvent('save_home_conditions_success');
       return response.json();
     } catch (err) {
       console.error('Property details save error:', err);
@@ -170,6 +198,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
     setIsLoading(true);
 
     try {
+      // Track attempt to update general settings
+      trackComponentEvent('update_general_settings');
+      
       const response = await fetchWithAuth(`${API_ENDPOINTS.AUTH.PROFILE}`, {
         method: 'PUT',
         headers: {
@@ -181,10 +212,20 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Settings update failed:', response.status, errorData);
+        
+        // Track failure
+        trackComponentEvent('update_general_settings_error', { 
+          status: response.status,
+          error: errorData.message || 'Unknown error'
+        });
+        
         throw new Error(errorData.message || 'Failed to update settings');
       }
 
       setSuccess('Settings updated successfully');
+      
+      // Track success
+      trackComponentEvent('update_general_settings_success');
     } catch (err) {
       console.error('Settings update error:', err);
       setError(err instanceof Error ? err.message : 'Failed to update settings');
@@ -195,6 +236,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleExportData = async () => {
     try {
+      // Track data export attempt
+      trackComponentEvent('export_data');
+      
       const response = await fetchWithAuth(`${API_ENDPOINTS.AUTH.PROFILE}/export`);
 
       if (!response.ok) throw new Error('Failed to export data');
@@ -206,6 +250,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       a.href = url;
       a.download = 'user-data.json';
       a.click();
+      
+      // Track successful export
+      trackComponentEvent('export_data_success', { dataSize: JSON.stringify(data).length });
     } catch (err) {
       console.error('Export data error:', err);
       setError('Failed to export data');
@@ -214,6 +261,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
 
   const handleDeleteAccount = async () => {
     try {
+      // Track account deletion attempt
+      trackComponentEvent('delete_account_attempt');
+      
       const response = await fetchWithAuth(`${API_ENDPOINTS.AUTH.PROFILE}`, {
         method: 'DELETE',
         headers: {
@@ -225,9 +275,19 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Delete account failed:', response.status, errorData);
+        
+        // Track failure
+        trackComponentEvent('delete_account_error', { 
+          status: response.status,
+          error: errorData.message || 'Unknown error'
+        });
+        
         throw new Error(errorData.message || 'Failed to delete account');
       }
 
+      // Track successful deletion before clearing localStorage
+      trackComponentEvent('delete_account_success');
+      
       localStorage.clear();
       window.location.href = '/';
     } catch (err) {
@@ -243,7 +303,10 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setActiveSection('general')}
+              onClick={() => {
+                setActiveSection('general');
+                trackComponentEvent('switch_tab', { tab: 'general' });
+              }}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeSection === 'general'
                   ? 'border-green-500 text-green-600'
@@ -253,7 +316,10 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
               General Settings
             </button>
             <button
-              onClick={() => setActiveSection('property')}
+              onClick={() => {
+                setActiveSection('property');
+                trackComponentEvent('switch_tab', { tab: 'property' });
+              }}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeSection === 'property'
                   ? 'border-green-500 text-green-600'

@@ -12,8 +12,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useAuth from '@/context/AuthContext';
+import { usePageTracking } from '@/hooks/analytics/usePageTracking';
+import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
 
 const EducationPage: React.FC = () => {
+  // Add analytics page tracking
+  usePageTracking('education');
+  
+  // Add component tracking for interactive elements
+  const trackComponentEvent = useComponentTracking('education', 'EducationPage');
+  
   // State for resources and collections
   const [featuredResources, setFeaturedResources] = useState<EducationalResource[]>([]);
   const [collections, setCollections] = useState<ResourceCollection[]>([]);
@@ -43,6 +51,7 @@ const EducationPage: React.FC = () => {
       try {
         const resources = await educationService.getFeaturedResources();
         setFeaturedResources(resources);
+        trackComponentEvent('load_featured_resources', { count: resources.length });
       } catch (err) {
         console.error('Error loading featured resources:', err);
         setError('Failed to load featured resources. Please try again later.');
@@ -60,6 +69,7 @@ const EducationPage: React.FC = () => {
       try {
         const allCollections = await educationService.getCollections();
         setCollections(allCollections);
+        trackComponentEvent('load_collections', { count: allCollections.length });
         
         // Load resources for each collection
         const resourcesByCollection: Record<string, EducationalResource[]> = {};
@@ -91,6 +101,10 @@ const EducationPage: React.FC = () => {
       try {
         const resources = await educationService.getResources(filters);
         setFilteredResources(resources);
+        trackComponentEvent('filter_resources', { 
+          filterCriteria: JSON.stringify(filters),
+          resultCount: resources.length 
+        });
       } catch (err) {
         console.error('Error applying filters:', err);
         setError('Failed to apply filters. Please try again later.');
@@ -104,6 +118,17 @@ const EducationPage: React.FC = () => {
 
   // Handle filter changes
   const handleFilterChange = (newFilters: Partial<ResourceFilters>) => {
+    // Track which filter was changed
+    const changedFilters = Object.keys(newFilters)
+      .filter(key => newFilters[key as keyof ResourceFilters] !== filters[key as keyof ResourceFilters]);
+    
+    if (changedFilters.length > 0) {
+      trackComponentEvent('change_filter', {
+        changedFilters: changedFilters.join(','),
+        newValues: JSON.stringify(newFilters)
+      });
+    }
+    
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 

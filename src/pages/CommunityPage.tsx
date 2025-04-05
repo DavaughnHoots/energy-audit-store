@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { MessageSquare, Users, Trophy, Search, ThumbsUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { usePageTracking } from '@/hooks/analytics/usePageTracking';
+import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
 
 type TopicType = 'discussion' | 'success-story' | 'tip';
 type Category = 'energy-savings' | 'home-improvement' | 'product-reviews' | 'general';
@@ -22,6 +24,12 @@ interface CommunityPost {
 }
 
 const CommunityPage = () => {
+  // Add analytics page tracking
+  usePageTracking('community');
+  
+  // Add component tracking for interactive elements
+  const trackComponentEvent = useComponentTracking('community', 'CommunityPage');
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<TopicType | 'all'>('all');
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
@@ -96,7 +104,10 @@ const CommunityPage = () => {
                 placeholder="Search discussions..."
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                trackComponentEvent('search', { query: e.target.value.length });
+              }}
               />
             </div>
 
@@ -104,7 +115,10 @@ const CommunityPage = () => {
             <select
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as TopicType | 'all')}
+              onChange={(e) => {
+                setSelectedType(e.target.value as TopicType | 'all');
+                trackComponentEvent('filter_type', { type: e.target.value });
+              }}
             >
               <option value="all">All Types</option>
               <option value="discussion">Discussions</option>
@@ -116,7 +130,10 @@ const CommunityPage = () => {
             <select
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value as Category | 'all')}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value as Category | 'all');
+                trackComponentEvent('filter_category', { category: e.target.value });
+              }}
             >
               <option value="all">All Categories</option>
               <option value="energy-savings">Energy Savings</option>
@@ -129,7 +146,10 @@ const CommunityPage = () => {
 
         {/* Create Post Button */}
         <div className="mb-8">
-          <button className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors duration-200">
+          <button 
+            className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors duration-200"
+            onClick={() => trackComponentEvent('start_discussion_click')}
+          >
             Start a Discussion
           </button>
         </div>
@@ -162,11 +182,17 @@ const CommunityPage = () => {
                       {post.content}
                     </p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <button className="flex items-center gap-1 hover:text-green-600">
+                      <button 
+                        className="flex items-center gap-1 hover:text-green-600"
+                        onClick={() => trackComponentEvent('like_post', { postId: post.id })}
+                      >
                         <ThumbsUp className="h-4 w-4" />
                         {post.likes}
                       </button>
-                      <button className="flex items-center gap-1 hover:text-green-600">
+                      <button 
+                        className="flex items-center gap-1 hover:text-green-600"
+                        onClick={() => trackComponentEvent('view_comments', { postId: post.id })}
+                      >
                         <MessageSquare className="h-4 w-4" />
                         {post.comments}
                       </button>
