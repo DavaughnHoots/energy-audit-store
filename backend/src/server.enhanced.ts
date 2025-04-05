@@ -32,7 +32,8 @@ import adminRoutes from './routes/admin.enhanced.js';
 // Original imports kept but disabled: ./routes/auditHistory.js
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
 import recommendationsRoutes from './routes/recommendations.js';
-import userProfileRoutes from './routes/userProfile.js';
+// Use enhanced user profile routes for better error handling
+import userProfileRoutes from './routes/userProfile.enhanced.js';
 import productsRoutes from './routes/products.js';
 import visualizationRoutes from './routes/visualization.js';
 import productRecommendationsRoutes from './routes/productRecommendations.js';
@@ -242,7 +243,8 @@ app.get('/api/debug/config', (req: Request, res: Response) => {
       analytics: 'Standard with enhanced service',
       auditHistory: 'Enhanced',
       reportData: 'Enhanced',
-      dashboard: 'Enhanced with redesigned UI'
+      dashboard: 'Enhanced with redesigned UI',
+      userProfile: 'Enhanced with improved error handling'
     }
   });
 });
