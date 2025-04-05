@@ -261,6 +261,9 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Skip tracking for blocked areas
     // DEBUG: Mark when an event is being blocked
     if (ANALYTICS_DEBUG_MODE && BLOCKED_ANALYTICS_AREAS.includes(area)) {
+      console.log(`[DEBUG] Skipping analytics tracking for blocked area: ${area}`);
+    }
+    
     if (BLOCKED_ANALYTICS_AREAS.includes(area)) {
       console.log(`Skipping analytics tracking for blocked area: ${area}`);
       return;
