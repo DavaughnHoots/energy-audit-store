@@ -36,6 +36,7 @@ import productRecommendationsRoutes from './routes/productRecommendations.js';
 import comparisonsRoutes from './routes/comparisons.js';
 import energyConsumptionRoutes from './routes/energyConsumption.js';
 import adminRoutes from './routes/admin.js';
+import analyticsRoutes from './routes/analytics.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -218,6 +219,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/visualization', visualizationRoutes);
 app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

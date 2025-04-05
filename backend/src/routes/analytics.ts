@@ -4,12 +4,66 @@ import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/security.js';
 import { optionalTokenValidation } from '../middleware/optionalTokenValidation.js';
-import { AnalyticsService } from '../services/analyticsService.js';
+import { AnalyticsService } from '../services/AnalyticsService.enhanced.js';
 import { pool } from '../config/database.js';
 import { appLogger, createLogMetadata } from '../utils/logger.js';
 
 const router = express.Router();
 const analyticsService = new AnalyticsService(pool);
+
+/**
+ * @route POST /api/analytics/session
+ * @desc Create or update an analytics session
+ * @access Public (handles both authenticated and anonymous users)
+ */
+router.post('/session',
+  optionalTokenValidation,
+  async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      // Log the session tracking request
+      appLogger.debug('Analytics session tracking request:', createLogMetadata(req, {
+        hasSessionId: !!sessionId
+      }));
+
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Missing required field: sessionId' });
+      }
+
+      // Get user ID if authenticated
+      const userId = req.user?.id;
+
+      try {
+        // Create or update the session
+        await analyticsService.createOrUpdateSession(sessionId, userId);
+        
+        // Return success response immediately
+        return res.status(200).json({ success: true });
+      } catch (dbError) {
+        // Log database error but don't expose details to client
+        appLogger.error('Database error in analytics session tracking:', createLogMetadata(req, {
+          error: dbError instanceof Error ? dbError.message : 'Unknown database error',
+          stack: dbError instanceof Error ? dbError.stack : undefined,
+        }));
+        
+        // Return a generic error to the client
+        return res.status(500).json({ error: 'Could not process analytics session', success: false });
+      }
+    } catch (error) {
+      console.error('Error tracking analytics session:', error);
+      appLogger.error('Failed to track analytics session:', createLogMetadata(req, { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      }));
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      });
+    }
+  }
+);
 
 /**
  * @route POST /api/analytics/event
@@ -227,4 +281,3 @@ router.get('/product-engagement/:productId',
 );
 
 export default router;
-// Force rebuild for analytics fix

@@ -1,68 +1,70 @@
-/**
- * Deployment script for analytics fix
- * Adds direct analytics event tracking functionality
- */
+// scripts/heroku_deploy_analytics_fix.js
+// Deploy the analytics route fix to Heroku
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// Configuration
-const APP_NAME = 'energy-audit-store';
-const SOURCE_DIR = path.join(__dirname, '..');
-const TEMP_DIR = path.join(__dirname, '../temp_deploy');
-
-// Create temp directory if it doesn't exist
-if (!fs.existsSync(TEMP_DIR)) {
-  fs.mkdirSync(TEMP_DIR, { recursive: true });
+// Function to execute shell commands
+function executeCommand(command) {
+  console.log(`Executing: ${command}`);
+  try {
+    const output = execSync(command, { encoding: 'utf8' });
+    console.log(output);
+    return output;
+  } catch (error) {
+    console.error(`Error executing command: ${error.message}`);
+    throw error;
+  }
 }
 
-// Files to update
-const filesToUpdate = [
-  {
-    source: path.join(SOURCE_DIR, 'backend/src/services/AnalyticsService.ts'),
-    target: path.join(TEMP_DIR, 'AnalyticsService.ts'),
-    remotePath: 'backend/src/services/analyticsService.js'
-  },
-  {
-    source: path.join(SOURCE_DIR, 'backend/src/routes/analytics.ts'),
-    target: path.join(TEMP_DIR, 'analytics.ts'),
-    remotePath: 'backend/src/routes/analytics.js'
-  }
-];
-
-// Copy files to temp directory
-filesToUpdate.forEach(file => {
-  console.log(`Copying ${file.source} to ${file.target}`);
-  fs.copyFileSync(file.source, file.target);
-});
-
-// Process each file
-filesToUpdate.forEach(file => {
-  console.log(`\nProcessing ${file.source}`);
-  
-  // Deploy each file to Heroku
+// Main function
+async function deployAnalyticsFix() {
   try {
-    // Use cat to deploy file content directly to Heroku
-    const command = `heroku run "cat > ${file.remotePath}" --app ${APP_NAME} < "${file.target}"`;
-    console.log(`Executing: ${command}`);
-    execSync(command, { stdio: 'inherit' });
-    console.log(`Successfully deployed ${file.remotePath}`);
+    console.log('Starting analytics fix deployment to Heroku...');
+
+    // Ensure we're on the main branch
+    executeCommand('git checkout main');
+
+    // Create a backup of the original files
+    console.log('Creating backup of original files...');
+    
+    const analyticsRoutePath = path.join(process.cwd(), 'backend/src/routes/analytics.ts');
+    const serverPath = path.join(process.cwd(), 'backend/src/server.ts');
+    
+    if (fs.existsSync(analyticsRoutePath)) {
+      fs.copyFileSync(
+        analyticsRoutePath,
+        path.join(process.cwd(), 'backend/src/routes/analytics.original.ts')
+      );
+    }
+    
+    // Check that all necessary files exist
+    if (!fs.existsSync(path.join(process.cwd(), 'backend/src/services/AnalyticsService.enhanced.ts'))) {
+      throw new Error('AnalyticsService.enhanced.ts file not found. Aborting deployment.');
+    }
+
+    console.log('Verifying analytics routes exist...');
+    if (!fs.existsSync(analyticsRoutePath)) {
+      throw new Error('analytics.ts route file not found. Aborting deployment.');
+    }
+
+    // Git operations
+    console.log('Committing changes...');
+    executeCommand('git add backend/src/routes/analytics.ts backend/src/server.ts');
+    executeCommand('git commit -m "Fix analytics routes for frontend event tracking"');
+
+    // Deploy to Heroku
+    console.log('Deploying to Heroku...');
+    executeCommand('git push heroku HEAD:main');
+
+    console.log('Analytics fix successfully deployed to Heroku!');
+    console.log('Please verify the routes are now working with the frontend.');
   } catch (error) {
-    console.error(`Error deploying ${file.remotePath}:`, error.message);
+    console.error(`Deployment failed: ${error.message}`);
     process.exit(1);
   }
-});
-
-// Restart the application
-try {
-  console.log('\nRestarting the application...');
-  execSync(`heroku restart --app ${APP_NAME}`, { stdio: 'inherit' });
-  console.log('Application restarted successfully.');
-} catch (error) {
-  console.error('Error restarting application:', error.message);
-  process.exit(1);
 }
 
-console.log('\nAnalytics fix deployment completed successfully!');
-console.log('Direct analytics event tracking should now be operational.');
+// Run the deployment
+deployAnalyticsFix();
