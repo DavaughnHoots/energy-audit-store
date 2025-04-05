@@ -16,7 +16,8 @@ node_modules/*
 dist
 dist-ssr
 *.local
-backend/build/
+# Temporarily comment out build exclusion to allow our server.js file
+# backend/build/
 build/
 
 # Test coverage
@@ -76,15 +77,11 @@ backend/src/scripts/test_*.js
 backend/src/scripts/run_*_tests.*
 
 # Documentation files
-*.md
+# *.md Temporarily commenting out to allow our documentation files
 *.txt
 !README.md
-*.md
-*.ps1
-*.sh
-*.bat
+# *.bat Temporarily commenting out to allow our bat files
 *.psm1
-
 
 # Development scripts and utilities
 backend/src/scripts/
@@ -117,6 +114,3 @@ deploy-financial-data-improvements.bat
 deploy-financial-data-improvements.bat
 53ab1c8a-5b4e-4962-bcce-7152cebcf8dd.png
 f372cc6d-4cb5-449d-acfa-f4b16597a9e3.png
-energy-audit-vault/data_flows/report_data_flow.md
-energy-audit-vault/frontend/components/reports/enhanced_report_recommendations.md
-energy-audit-vault/frontend/components/reports/product_suggestion_card.md
