@@ -57,16 +57,18 @@ router.get('/dashboard',
          WHERE ${dateRangeClause}`
       );
       
-      // Get page visits by area
+      // Get page visits with path and title from the data JSON field
       const pageVisitsResult = await pool.query(
         `SELECT 
-          area as page,
+          COALESCE(data->>'path', '/unknown') as path,
+          COALESCE(data->>'title', 'Untitled Page') as title,
+          area,
           COUNT(*) as visits
          FROM analytics_events
          WHERE event_type = 'page_view'
          AND area != 'dashboard'
          AND ${dateRangeClause}
-         GROUP BY area
+         GROUP BY data->>'path', data->>'title', area
          ORDER BY visits DESC
          LIMIT 10`
       );
@@ -84,10 +86,18 @@ router.get('/dashboard',
          LIMIT 10`
       );
       
-      // Format the response
+      // Format the response with enhanced page information
       const pageVisits = pageVisitsResult.rows.map(row => ({
-        page: row.page,
-        visits: parseInt(row.visits)
+        path: row.path,
+        title: row.title,
+        area: row.area,
+        visits: parseInt(row.visits),
+        // Create a display name that uses title if available, otherwise format the path
+        displayName: row.title !== 'Untitled Page' 
+          ? row.title 
+          : row.path === '/unknown' 
+            ? `${row.area} (unknown page)` 
+            : row.path
       }));
       
       const featureUsage = featureUsageResult.rows.map(row => ({

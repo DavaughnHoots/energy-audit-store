@@ -11,8 +11,11 @@ interface AnalyticsDashboardData {
   };
   formCompletions: number;
   pageVisits: Array<{
-    page: string;
+    path: string;
+    title: string;
+    area: string;
     visits: number;
+    displayName: string;
   }>;
   featureUsage: Array<{
     feature: string;
@@ -220,7 +223,9 @@ const AdminDashboardPage: React.FC = () => {
                     {metrics.pageVisits.map((page, index) => (
                       <div key={index} className="mb-2">
                         <div className="flex justify-between mb-1">
-                          <span>{page.page}</span>
+                          <span title={`Path: ${page.path}, Area: ${page.area}`} className="truncate max-w-[70%]">
+                            {page.displayName}
+                          </span>
                           <span>{page.visits}</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
