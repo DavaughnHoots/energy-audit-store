@@ -1,9 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { AnalyticsProvider } from './context/AnalyticsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ProductsPage from './pages/ProductsPage';
@@ -119,6 +121,7 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <Router>
         <AuthProvider>
+          <AnalyticsProvider>
         <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
         <main className="flex-grow">
@@ -157,10 +160,19 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </main>
         <Footer />
         </div>
+          </AnalyticsProvider>
         </AuthProvider>
       </Router>
     </ErrorBoundary>
