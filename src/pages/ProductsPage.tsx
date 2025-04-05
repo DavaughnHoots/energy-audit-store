@@ -15,8 +15,11 @@ const ProductsPage: React.FC = () => {
   // Add page tracking with explicit type cast
   usePageTracking('products' as AnalyticsArea, {});
   
-  // Add component tracking with explicit type cast
-  const trackComponent = useComponentTracking('products' as AnalyticsArea, 'ProductsPage');
+  // Use granular component tracking with feature-specific names
+  const trackSearchComponent = useComponentTracking('products' as AnalyticsArea, 'ProductsPage_Search');
+  const trackCategoryFilter = useComponentTracking('products' as AnalyticsArea, 'ProductsPage_CategoryFilter');
+  const trackSubcategoryFilter = useComponentTracking('products' as AnalyticsArea, 'ProductsPage_SubcategoryFilter');
+  const trackPagination = useComponentTracking('products' as AnalyticsArea, 'ProductsPage_Pagination');
   
   const { isLoading: initialLoading, error, categories, getFilteredProducts } = useProducts();
   const [products, setProducts] = useState<Product[]>([]);
@@ -47,18 +50,19 @@ const ProductsPage: React.FC = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
-    // Track search interactions
-    trackComponent('search_box_input', { query: value });
+    // Track search interactions with granular feature name
+    trackSearchComponent('input', { query: value });
     setSearchInput(value);
     debouncedFilterChange('search', value);
   };
 
   // Handle filter changes with debounce - but handle category changes immediately
   const handleFilterChange = (filterName: string, value: string) => {
-    // Track filter interactions with the filter name and selected value
-    trackComponent(`filter_${filterName}`, { value });
-    // For UI responsiveness, update the select element immediately
+    // Track filter interactions with granular feature names
     if (filterName === 'mainCategory') {
+      // Use category-specific tracking
+      trackCategoryFilter('change', { value });
+      
       // For main category, update immediately without debounce
       console.log(`Setting main category to: ${value}`);
       setFilters(prev => ({ 
@@ -68,8 +72,14 @@ const ProductsPage: React.FC = () => {
         subCategory: '' 
       }));
       setCurrentPage(1); // Reset to first page when main category changes
-    } else {
+    } else if (filterName === 'subCategory') {
+      // Use subcategory-specific tracking
+      trackSubcategoryFilter('change', { value });
+      
       // For other filters, use debounce for better performance
+      debouncedFilterChange(filterName, value);
+    } else {
+      // For any other filters
       debouncedFilterChange(filterName, value);
     }
   };
@@ -114,8 +124,8 @@ const ProductsPage: React.FC = () => {
   const goToPage = (page: number) => {
     if (page < 1 || page > totalPages) return;
     
-    // Track pagination interaction
-    trackComponent('pagination_click', { 
+    // Track pagination interaction with granular feature name
+    trackPagination('click', { 
       fromPage: currentPage, 
       toPage: page 
     });

@@ -1,20 +1,24 @@
 // scripts/heroku_check_analytics_events.js
-// This script serves as a wrapper to execute check_analytics_events.js on Heroku
+// Run database check on Heroku
 
 const { execSync } = require('child_process');
 
-console.log('Executing analytics events check on Heroku...');
+function executeCommand(command) {
+  console.log(`Executing: ${command}`);
+  try {
+    const output = execSync(command, { encoding: 'utf8' });
+    console.log(output);
+    return output;
+  } catch (error) {
+    console.error(`Error executing command: ${error.message}`);
+    throw error;
+  }
+}
 
+// Run the script remotely on Heroku
 try {
-  // Execute the Heroku command to run the script
-  const output = execSync('heroku run node backend/build/scripts/check_analytics_events.js --app energy-audit-store', { 
-    encoding: 'utf8',
-    stdio: 'inherit'
-  });
-  
-  // Output is already shown via inherit stdio, but we'll log a completion message
-  console.log('Analytics events check completed.');
+  executeCommand('heroku run node scripts/check_analytics_events_db.js');
 } catch (error) {
-  console.error('Error executing the analytics events check on Heroku:', error.message);
+  console.error('Failed to run analytics check on Heroku:', error);
   process.exit(1);
 }

@@ -1,5 +1,5 @@
-// backend/src/services/AnalyticsService.display-fix.ts
-// Fixed version to properly extract page names and feature names for dashboard display
+// backend/src/services/AnalyticsService.enhanced.ts
+// Fixed version to match actual database schema
 
 import pkg from 'pg';
 const { Pool } = pkg;
@@ -21,8 +21,6 @@ interface PlatformMetrics {
   productEngagement: Record<string, number>;
   averageSavings: number;
   topProducts: Array<{id: string, views: number}>;
-  mostVisitedPages: Array<{page: string, count: number}>;
-  mostUsedFeatures: Array<{feature: string, count: number}>;
 }
 
 export class AnalyticsService {
@@ -123,26 +121,16 @@ export class AnalyticsService {
     const timeframeClause = this.getTimeframeClause(timeframe);
 
     try {
-      const [
-        userStats, 
-        auditStats, 
-        productStats, 
-        mostVisitedPages, 
-        mostUsedFeatures
-      ] = await Promise.all([
+      const [userStats, auditStats, productStats] = await Promise.all([
         this.getUserStats(timeframeClause),
         this.getAggregateAuditStats(timeframeClause),
-        this.getAggregateProductStats(timeframeClause),
-        this.getMostVisitedPages(timeframeClause),
-        this.getMostUsedFeatures(timeframeClause)
+        this.getAggregateProductStats(timeframeClause)
       ]);
 
       return {
         ...userStats,
         ...auditStats,
         ...productStats,
-        mostVisitedPages,
-        mostUsedFeatures,
         // Default value for averageSavings since we don't have user_savings table
         averageSavings: 0
       };
@@ -155,77 +143,8 @@ export class AnalyticsService {
         totalAudits: 0,
         productEngagement: {},
         averageSavings: 0,
-        topProducts: [],
-        mostVisitedPages: [],
-        mostUsedFeatures: []
+        topProducts: []
       };
-    }
-  }
-
-  /**
-   * Get most visited pages with proper page names
-   */
-  private async getMostVisitedPages(timeframeClause: string) {
-    try {
-      // First try to get pages with pageName or displayName
-      const result = await this.pool.query(`
-        SELECT 
-          COALESCE(
-            data->>'pageName',
-            data->>'displayName',
-            data->>'title',
-            'Unknown Page'
-          ) as page_name,
-          COUNT(*) as view_count
-        FROM analytics_events
-        WHERE event_type = 'page_view'
-        AND created_at ${timeframeClause}
-        GROUP BY page_name
-        ORDER BY view_count DESC
-        LIMIT 10
-      `);
-
-      return result.rows.map(row => ({
-        page: row.page_name,
-        count: parseInt(row.view_count)
-      }));
-    } catch (error) {
-      console.error('Error in getMostVisitedPages:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get most used features with proper feature names
-   */
-  private async getMostUsedFeatures(timeframeClause: string) {
-    try {
-      // Try to get feature names from component interactions
-      const result = await this.pool.query(`
-        SELECT 
-          COALESCE(
-            data->>'featureName',
-            data->>'displayName',
-            data->>'componentName',
-            CONCAT(data->>'componentName', ' ', data->>'action'),
-            'unknown'
-          ) as feature_name,
-          COUNT(*) as use_count
-        FROM analytics_events
-        WHERE event_type = 'component_interaction'
-        AND created_at ${timeframeClause}
-        GROUP BY feature_name
-        ORDER BY use_count DESC
-        LIMIT 10
-      `);
-
-      return result.rows.map(row => ({
-        feature: row.feature_name,
-        count: parseInt(row.use_count)
-      }));
-    } catch (error) {
-      console.error('Error in getMostUsedFeatures:', error);
-      return [];
     }
   }
 

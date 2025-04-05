@@ -26,8 +26,6 @@ import energyAuditRoutes from './routes/energyAudit.js';
 // Import enhanced routes (with better error handling)
 import auditHistoryRoutes from './routes/auditHistory.enhanced.js';
 import reportDataRoutes from './routes/reportData.enhanced.js';
-// Use enhanced admin routes
-import adminRoutes from './routes/admin.enhanced.js';
 // Original imports kept but disabled: ./routes/auditHistory.js
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
 import recommendationsRoutes from './routes/recommendations.js';
@@ -37,7 +35,7 @@ import visualizationRoutes from './routes/visualization.js';
 import productRecommendationsRoutes from './routes/productRecommendations.js';
 import comparisonsRoutes from './routes/comparisons.js';
 import energyConsumptionRoutes from './routes/energyConsumption.js';
-// Using analytics routes
+import adminRoutes from './routes/admin.js';
 import analyticsRoutes from './routes/analytics.js';
 import directAdminRoutes from './routes/direct-admin.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -230,20 +228,6 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Debug endpoint to verify enhanced services are being used
-app.get('/api/debug/config', (req: Request, res: Response) => {
-  res.json({ 
-    message: 'Using enhanced configuration',
-    timestamp: new Date().toISOString(),
-    routes: {
-      admin: 'Enhanced',
-      analytics: 'Standard with enhanced service',
-      auditHistory: 'Enhanced',
-      reportData: 'Enhanced'
-    }
-  });
-});
-
 // Serve static files from the React app
 // In production, the frontend build is in ./public (relative to build/server.js)
 let staticPath = path.join(__dirname, './public');
@@ -371,10 +355,9 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION)', createLogMetadata(undefined, {
+  appLogger.info('Server started', createLogMetadata(undefined, {
     port: PORT,
-    nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-analytics'
+    nodeEnv: process.env.NODE_ENV
   }));
 });
 

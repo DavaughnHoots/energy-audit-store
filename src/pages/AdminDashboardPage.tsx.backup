@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import useAuth from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { getApiUrl } from '../config/api';
-import GranularAnalytics from '../components/analytics/GranularAnalytics';
 
 // Types for the metrics returned from the API
 interface AnalyticsDashboardData {
@@ -12,11 +11,8 @@ interface AnalyticsDashboardData {
   };
   formCompletions: number;
   pageVisits: Array<{
-    path: string;
-    title: string;
-    area: string;
+    page: string;
     visits: number;
-    displayName: string;
   }>;
   featureUsage: Array<{
     feature: string;
@@ -224,9 +220,7 @@ const AdminDashboardPage: React.FC = () => {
                     {metrics.pageVisits.map((page, index) => (
                       <div key={index} className="mb-2">
                         <div className="flex justify-between mb-1">
-                          <span title={`Path: ${page.path}, Area: ${page.area}`} className="truncate max-w-[70%]">
-                            {page.displayName}
-                          </span>
+                          <span>{page.page}</span>
                           <span>{page.visits}</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -281,8 +275,7 @@ const AdminDashboardPage: React.FC = () => {
           {/* Debugging Tools */}
           <div className="border-t pt-6">
             <h2 className="text-xl font-bold mb-4">Debugging Tools</h2>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Analytics Tools</h3>
+            <div className="flex justify-end">
               <button 
                 className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900"
                 onClick={() => window.location.href = '/admin/analytics/debug'}
@@ -290,9 +283,6 @@ const AdminDashboardPage: React.FC = () => {
                 Analytics Debug
               </button>
             </div>
-
-            {/* Granular Analytics Section */}
-            <GranularAnalytics startDate={startDate} endDate={endDate} />
           </div>
         </>
       ) : (

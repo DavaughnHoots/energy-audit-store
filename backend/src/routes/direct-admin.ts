@@ -2,6 +2,7 @@
 // Direct admin route implementation that bypasses service layer
 // for improved reliability and performance
 // Enhanced to properly extract page and feature names from analytics events
+// Added granular analytics endpoint for debugging visualization
 
 import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
@@ -153,6 +154,98 @@ router.get('/dashboard',
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       appLogger.error('Failed to fetch dashboard data:', createLogMetadata(req, { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      }));
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        success: false
+      });
+    }
+  }
+);
+
+/**
+ * @route GET /api/direct-admin/granular-analytics
+ * @desc Get granular analytics tracking data (specifically feature-specific component names)
+ * @access Private (Admin only)
+ */
+router.get('/granular-analytics',
+  authenticate,
+  requireRole(['admin']),
+  rateLimiter,
+  async (req, res) => {
+    try {
+      // Get date range from query parameters
+      const startDate = req.query.startDate as string || '';
+      const endDate = req.query.endDate as string || '';
+      
+      // Default to last 30 days if no date range provided
+      let dateRangeClause;
+      
+      if (startDate && endDate) {
+        dateRangeClause = `created_at >= '${startDate}' AND created_at <= '${endDate} 23:59:59'`;
+      } else {
+        dateRangeClause = 'created_at >= CURRENT_DATE - INTERVAL \'30 days\'';
+      }
+
+      // Query to get granular feature usage (focusing on component names with underscores)
+      const granularFeatureResult = await pool.query(
+        `SELECT 
+           data->>'featureName' as feature_name,
+           SPLIT_PART(data->>'featureName', '_', 1) as base_component,
+           COUNT(*) as usage_count
+         FROM analytics_events
+         WHERE event_type = 'component_interaction'
+         AND ${dateRangeClause}
+         AND data->>'featureName' LIKE '%\\_%'
+         GROUP BY data->>'featureName', SPLIT_PART(data->>'featureName', '_', 1)
+         ORDER BY base_component, usage_count DESC`
+      );
+      
+      // Process results to create a grouped structure
+      interface FeatureUsageRow {
+        feature_name: string;
+        base_component: string;
+        usage_count: string;
+      }
+
+      // First create map of base components to features
+      const componentGroups: Record<string, Array<{feature: string, usageCount: number}>> = {};
+      
+      granularFeatureResult.rows.forEach((row: FeatureUsageRow) => {
+        const baseComponent = row.base_component;
+        const feature = {
+          feature: row.feature_name,
+          usageCount: parseInt(row.usage_count)
+        };
+        
+        if (!componentGroups[baseComponent]) {
+          componentGroups[baseComponent] = [];
+        }
+        
+        componentGroups[baseComponent].push(feature);
+      });
+      
+      // Convert to array of component groups
+      const groupedFeatures = Object.entries(componentGroups).map(([baseComponent, features]) => ({
+        baseComponent,
+        features: features.sort((a, b) => b.usageCount - a.usageCount),
+        totalUsage: features.reduce((sum, feature) => sum + feature.usageCount, 0)
+      }));
+      
+      // Sort groups by total usage
+      groupedFeatures.sort((a, b) => b.totalUsage - a.totalUsage);
+      
+      // Return the dashboard data
+      res.json({
+        granularFeatures: groupedFeatures,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error fetching granular analytics data:', error);
+      appLogger.error('Failed to fetch granular analytics data:', createLogMetadata(req, { 
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       }));

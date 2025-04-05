@@ -26,12 +26,11 @@ async function deployAnalyticsTrackingImplementation() {
     // Ensure we're on the main branch
     executeCommand('git checkout main');
 
-    // Files we've modified
+    // Files we've modified (exclude md files as they might be ignored by .gitignore)
     const modifiedFiles = [
       'src/pages/CommunityPage.tsx',
       'src/pages/EducationPage.tsx',
-      'src/pages/UserSettingsPage.tsx',
-      'analytics-tracking-implementation-plan.md'
+      'src/pages/UserSettingsPage.tsx'
     ];
 
     // Create backup of the original files
@@ -49,7 +48,12 @@ async function deployAnalyticsTrackingImplementation() {
     
     // Git operations
     console.log('Adding modified files...');
-    executeCommand(`git add ${modifiedFiles.join(' ')}`);
+    try {
+      executeCommand(`git add ${modifiedFiles.join(' ')}`);
+    } catch (error) {
+      console.warn('Warning when adding files:', error.message);
+      console.log('Continuing with deployment anyway...');
+    }
     
     console.log('Committing changes...');
     executeCommand('git commit -m "Implement analytics tracking in key pages"');
