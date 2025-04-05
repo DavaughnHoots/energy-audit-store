@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
 import useAuth from '@/context/AuthContext';
+import { useComponentTracking } from '../../hooks/analytics/useComponentTracking';
+import { useFormTracking } from '../../hooks/analytics/useFormTracking';
+import { AnalyticsArea } from '../../context/AnalyticsContext';
 import FormProgressIndicator from './FormProgressIndicator';
 import FormErrorDisplay from './FormErrorDisplay';
 import BasicInfoForm from './forms/BasicInfoForm';
@@ -54,6 +57,18 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [submittedAuditId, setSubmittedAuditId] = useState<string | null>(null);
+  
+  // Add analytics tracking
+  const trackComponent = useComponentTracking('energy_audit' as AnalyticsArea, 'EnergyAuditForm');
+  const { trackFormStart, trackFormStep, trackFormComplete } = useFormTracking('energy_audit' as AnalyticsArea);
+  
+  // Track form start on initial render
+  useEffect(() => {
+    trackFormStart('energy_audit_form_start', { 
+      isAuthenticated: !!isAuthenticated,
+      initialStep: currentStep 
+    });
+  }, [trackFormStart, isAuthenticated, currentStep]);
   
   // Auto-fill related state
   const [userProfileData, setUserProfileData] = useState<any>(null);
@@ -698,18 +713,52 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
 
   const handleNext = () => {
     if (validateCurrentSection()) {
+      // Track completion of the current step
+      trackFormStep(`step_${currentStep}_complete`, {
+        section: getSectionKey(currentStep),
+        nextStep: currentStep + 1
+      });
+      
+      // Track navigation to next step
+      trackComponent('navigation_next', {
+        fromStep: currentStep,
+        toStep: currentStep + 1,
+        fromSection: getSectionKey(currentStep),
+        toSection: getSectionKey(currentStep + 1)
+      });
+      
       setCurrentStep(step => step + 1);
       setValidationErrors([]);
+    } else {
+      // Track validation errors
+      trackComponent('validation_error', {
+        step: currentStep,
+        section: getSectionKey(currentStep),
+        errors: validationErrors
+      });
     }
   };
 
   const handlePrevious = () => {
+    // Track navigation to previous step
+    trackComponent('navigation_previous', {
+      fromStep: currentStep,
+      toStep: currentStep - 1,
+      fromSection: getSectionKey(currentStep),
+      toSection: getSectionKey(currentStep - 1)
+    });
+    
     setCurrentStep(step => step - 1);
     setValidationErrors([]);
   };
 
   // Function to autofill missing advanced fields with reasonable defaults
   const autofillAdvancedFields = () => {
+    // Track advanced options autofill
+    trackComponent('advanced_options_autofill', {
+      step: currentStep,
+      section: getSectionKey(currentStep)
+    });
     // Create a deep copy of the current form data
     const updatedData = { ...formData };
     
@@ -767,6 +816,9 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Track submission attempt
+    trackComponent('submit_audit_click');
+    
     if (onSubmit) {
       onSubmit(formData);
       return;
@@ -791,6 +843,13 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
     if (allSectionErrors.length > 0) {
       console.error('Validation errors:', allSectionErrors);
       setValidationErrors(allSectionErrors);
+      
+      // Track validation errors on submission
+      trackComponent('submission_validation_error', {
+        errorCount: allSectionErrors.length,
+        errors: allSectionErrors
+      });
+      
       return;
     }
 
@@ -859,6 +918,14 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       console.log('Successfully received audit ID:', result.id);
       setSubmittedAuditId(result.id);
       
+      // Track successful submission
+      trackFormComplete('audit_submission_success', {
+        auditId: result.id,
+        isAuthenticated: !!isAuthenticated,
+        propertyType: formData.basicInfo.propertyType,
+        yearBuilt: formData.basicInfo.yearBuilt
+      });
+      
       if (isAuthenticated) {
         // Show profile update dialog if user modified fields that could be updated in profile
         handleShowUpdateProfileDialog();
@@ -880,6 +947,9 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
   };
 
   const handleModalClose = () => {
+    // Track modal close action
+    trackComponent('submission_modal_close');
+    
     setShowSubmissionModal(false);
     clearStoredAuditData();
     navigate('/');

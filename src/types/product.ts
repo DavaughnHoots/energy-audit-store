@@ -1,11 +1,15 @@
 /**
- * Interface for product information in the frontend.
- * Similar to the backend Product interface but optimized for UI display.
+ * Frontend types for product data.
+ * These match the backend types but include frontend-specific properties.
+ */
+
+/**
+ * Product interface for the frontend.
  */
 export interface Product {
   id: string;
   name: string;
-  category: string; // Main category (replacing mainCategory)
+  category: string;
   subCategory?: string;
   price: number;
   energyEfficiency: string; // e.g. "A++", "A+", "A", etc.
@@ -16,22 +20,25 @@ export interface Product {
   annualSavings: number;
   roi: number;
   paybackPeriod: number;
-  rebateEligible?: boolean;
-  greenCertified?: boolean;
-  userRating?: number;
-  model?: string; // For backward compatibility with existing code
-  audit_id?: string;
-  audit_date?: string;
+  rebateEligible: boolean;
+  greenCertified: boolean;
+  userRating: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  // Frontend-specific properties
+  model?: string;
+  specifications?: Record<string, unknown>;
+  productUrl?: string;
 }
 
 /**
- * Interface for product filters used in the frontend.
+ * Interface for product filters
  */
 export interface ProductFilter {
-  mainCategory?: string; // For backward compatibility (maps to category)
+  mainCategory?: string;
   subCategory?: string;
-  efficiency?: string; // Maps to energyEfficiency
   search?: string;
+  efficiency?: string;
   priceRange?: {
     min?: number;
     max?: number;
@@ -39,56 +46,5 @@ export interface ProductFilter {
   rebateEligible?: boolean;
   greenCertified?: boolean;
   minUserRating?: number;
-}
-
-/**
- * Interface for detailed product information
- */
-export interface DetailedProduct extends Product {
-  auditContext: AuditContext;
-  enhancedMetrics: EnhancedMetrics;
-  isSample: boolean;
-}
-
-/**
- * Interface for audit context
- */
-export interface AuditContext {
-  auditId: string;
-  auditDate: string;
-  propertyInfo: {
-    propertySize?: number;
-    propertyType?: string;
-    buildingAge?: number;
-    location?: string;
-    occupants?: number;
-  };
-  energyInfo: {
-    electricityUsage?: number;
-    electricityCost?: number;
-    gasUsage?: number;
-    gasCost?: number;
-  };
-}
-
-/**
- * Interface for enhanced product metrics
- */
-export interface EnhancedMetrics {
-  fiveYearSavings: number;
-  tenYearSavings: number;
-  monthlySavings: number;
-  percentageReduction: number;
-  co2Reduction: CO2Reduction;
-}
-
-/**
- * Interface for CO2 reduction metrics
- */
-export interface CO2Reduction {
-  annual: number;
-  fiveYear: number;
-  tenYear: number;
-  equivalentTrees: number;
-  equivalentMilesDriven: number;
+  maxPaybackPeriod?: number;
 }

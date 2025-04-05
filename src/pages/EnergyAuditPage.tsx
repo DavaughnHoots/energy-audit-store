@@ -1,9 +1,16 @@
 import React from 'react';
 import EnergyAuditForm from '../components/audit/EnergyAuditForm.tsx';
 import useAuth from '@/context/AuthContext';
+import { usePageTracking } from '../hooks/analytics/usePageTracking';
+import { AnalyticsArea } from '../context/AnalyticsContext';
 
 const EnergyAuditPage = () => {
   const { isAuthenticated } = useAuth();
+  
+  // Add page tracking for the Energy Audit page
+  usePageTracking('energy_audit' as AnalyticsArea, {
+    isAuthenticated: !!isAuthenticated
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">

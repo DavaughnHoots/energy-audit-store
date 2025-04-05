@@ -3,18 +3,28 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Sliders, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
-import { Product, ProductFilters } from '../../backend/src/types/product';
+import { Product, ProductFilter } from '../types/product'; // Corrected import path and type name
 import { Badge } from '../components/ui/badge';
 import { debounce } from '../utils/debounce';
+// Import analytics hooks directly from their source files
+import { usePageTracking } from '../hooks/analytics/usePageTracking';
+import { useComponentTracking } from '../hooks/analytics/useComponentTracking';
+import { AnalyticsArea } from '../context/AnalyticsContext';
 
 const ProductsPage: React.FC = () => {
+  // Add page tracking with explicit type cast
+  usePageTracking('products' as AnalyticsArea, {});
+  
+  // Add component tracking with explicit type cast
+  const trackComponent = useComponentTracking('products' as AnalyticsArea, 'ProductsPage');
+  
   const { isLoading: initialLoading, error, categories, getFilteredProducts } = useProducts();
   const [products, setProducts] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [filters, setFilters] = useState<ProductFilters>({
+  const [filters, setFilters] = useState<ProductFilter>({
     mainCategory: '',
     subCategory: '',
     search: '',
@@ -36,12 +46,17 @@ const ProductsPage: React.FC = () => {
   // Handle search input change with debounce
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    
+    // Track search interactions
+    trackComponent('search_box_input', { query: value });
     setSearchInput(value);
     debouncedFilterChange('search', value);
   };
 
   // Handle filter changes with debounce - but handle category changes immediately
   const handleFilterChange = (filterName: string, value: string) => {
+    // Track filter interactions with the filter name and selected value
+    trackComponent(`filter_${filterName}`, { value });
     // For UI responsiveness, update the select element immediately
     if (filterName === 'mainCategory') {
       // For main category, update immediately without debounce
@@ -98,6 +113,12 @@ const ProductsPage: React.FC = () => {
   // Handle pagination
   const goToPage = (page: number) => {
     if (page < 1 || page > totalPages) return;
+    
+    // Track pagination interaction
+    trackComponent('pagination_click', { 
+      fromPage: currentPage, 
+      toPage: page 
+    });
     setCurrentPage(page);
   };
   
@@ -212,10 +233,10 @@ const ProductsPage: React.FC = () => {
               <p className="text-sm text-gray-500 mb-4">Model: {product.model}</p>
 
               <div className="mb-4">
-                {Object.entries(product.specifications).slice(0, 2).map(([key, value]) => (
+                {product.specifications && Object.entries(product.specifications).slice(0, 2).map(([key, value]) => (
                   <div key={key} className="text-sm">
                     <span className="text-gray-600">{key}:</span>{' '}
-                    <span className="text-gray-900">{value}</span>
+                    <span className="text-gray-900">{String(value)}</span>
                   </div>
                 ))}
               </div>
@@ -228,7 +249,7 @@ const ProductsPage: React.FC = () => {
                   View Details
                 </Link>
                 <a
-                  href={product.productUrl}
+                  href={product.productUrl || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-200 transition-colors duration-200"
