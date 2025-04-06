@@ -1,5 +1,6 @@
 import { pool } from '../config/database.js';
 import { appLogger } from '../config/logger.js';
+import { ReportGenerationService } from './report-generation/ReportGenerationService.js';
 
 /**
  * Helper functions for aggregating data across multiple audits
@@ -41,8 +42,15 @@ interface SavingsChartDataPoint {
  * Returns one recommendation per type, selecting the most recent for each type
  */
 export async function getUniqueRecommendationsByType(userId: string): Promise<AuditRecommendation[]> {
+  const startTime = Date.now();
   try {
-    appLogger.debug('Fetching unique recommendations by type', { userId });
+    appLogger.info('Starting unique recommendations fetch', { 
+      userId, 
+      method: 'getUniqueRecommendationsByType',
+      timestamp: new Date().toISOString()
+    });
+    
+    appLogger.debug('Executing recommendations query for user', { userId });
     
     // Query all recommendations across all audits for this user
     const recommendationsQuery = await pool.query(`
@@ -76,12 +84,33 @@ export async function getUniqueRecommendationsByType(userId: string): Promise<Au
         ar.created_at DESC
     `, [userId]);
     
+    appLogger.debug('Recommendations query completed', { 
+      userId, 
+      rowCount: recommendationsQuery.rows.length,
+      queryTimeMs: Date.now() - startTime
+    });
+    
     if (recommendationsQuery.rows.length === 0) {
-      appLogger.debug('No recommendations found for user', { userId });
+      appLogger.info('No recommendations found for user', { userId });
       return [];
     }
     
+    // Log example recommendation to help with debugging
+    if (recommendationsQuery.rows.length > 0) {
+      appLogger.debug('Example recommendation from database', {
+        userId,
+        sampleRecommendation: {
+          id: recommendationsQuery.rows[0].id,
+          title: recommendationsQuery.rows[0].title,
+          type: recommendationsQuery.rows[0].type || 'general',
+          estimatedSavings: recommendationsQuery.rows[0].estimated_savings,
+          hasActualSavings: recommendationsQuery.rows[0].actual_savings !== null
+        }
+      });
+    }
+    
     // Group recommendations by type
+    appLogger.debug('Grouping recommendations by type', { userId });
     const recommendationsByType: Record<string, AuditRecommendation[]> = {};
     
     for (const row of recommendationsQuery.rows) {
@@ -110,16 +139,37 @@ export async function getUniqueRecommendationsByType(userId: string): Promise<Au
       });
     }
     
+    // Log the types found
+    const recommendationTypes = Object.keys(recommendationsByType);
+    appLogger.debug('Recommendation types found', { 
+      userId, 
+      types: recommendationTypes,
+      typeCounts: recommendationTypes.map(type => ({
+        type,
+        count: recommendationsByType[type].length
+      }))
+    });
+    
     // Select the most recent recommendation for each type
+    appLogger.debug('Selecting most recent recommendation of each type', { userId });
     const uniqueRecommendations: AuditRecommendation[] = [];
     
     for (const type in recommendationsByType) {
       // The recommendations are already sorted by created_at DESC, so the first one is the most recent
       const mostRecent = recommendationsByType[type][0];
       uniqueRecommendations.push(mostRecent);
+      
+      appLogger.debug(`Selected recommendation for type: ${type}`, {
+        userId,
+        recommendationId: mostRecent.id,
+        title: mostRecent.title,
+        priority: mostRecent.priority,
+        estimatedSavings: mostRecent.estimatedSavings
+      });
     }
     
     // Sort by priority (high → medium → low) and then by estimated savings (highest first)
+    appLogger.debug('Sorting recommendations by priority and savings', { userId });
     const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
     
     uniqueRecommendations.sort((a, b) => {
@@ -134,10 +184,23 @@ export async function getUniqueRecommendationsByType(userId: string): Promise<Au
       return b.estimatedSavings - a.estimatedSavings;
     });
     
-    appLogger.debug('Fetched unique recommendations by type', { 
+    appLogger.info('Successfully fetched unique recommendations by type', { 
       userId, 
       uniqueCount: uniqueRecommendations.length,
-      typeCount: Object.keys(recommendationsByType).length 
+      typeCount: Object.keys(recommendationsByType).length,
+      executionTimeMs: Date.now() - startTime
+    });
+    
+    // Log the final sorted list
+    appLogger.debug('Final sorted recommendations', {
+      userId,
+      recommendations: uniqueRecommendations.map(rec => ({
+        id: rec.id,
+        title: rec.title,
+        type: rec.type,
+        priority: rec.priority,
+        estimatedSavings: rec.estimatedSavings
+      }))
     });
     
     return uniqueRecommendations;
@@ -161,20 +224,32 @@ export async function getAggregatedEnergyData(userId: string): Promise<{
   consumption: ChartDataPoint[];
   savingsAnalysis: SavingsChartDataPoint[];
 }> {
+  const startTime = Date.now();
   try {
-    appLogger.debug('Fetching aggregated energy data', { userId });
+    appLogger.info('Starting aggregated energy data fetch using ReportGenerationService', { 
+      userId, 
+      method: 'getAggregatedEnergyData',
+      timestamp: new Date().toISOString()
+    });
     
     // Find the most recent audit for the user
+    appLogger.debug('Finding most recent audit for user', { userId });
     const latestAuditQuery = await pool.query(`
-      SELECT id
+      SELECT id, data
       FROM energy_audits
       WHERE user_id = $1
       ORDER BY created_at DESC
       LIMIT 1
     `, [userId]);
     
+    appLogger.debug('Latest audit query completed', { 
+      userId,
+      found: latestAuditQuery.rows.length > 0,
+      auditId: latestAuditQuery.rows[0]?.id || 'none'
+    });
+    
     if (latestAuditQuery.rows.length === 0) {
-      appLogger.debug('No audits found for user', { userId });
+      appLogger.info('No audits found for user, returning empty energy data', { userId });
       return {
         energyBreakdown: [],
         consumption: [],
@@ -184,7 +259,12 @@ export async function getAggregatedEnergyData(userId: string): Promise<{
     
     const latestAuditId = latestAuditQuery.rows[0].id;
     
-    // Get energy breakdown and consumption data from the most recent audit
+    // First approach: Get energy data from the report_data table
+    appLogger.debug('Querying report_data for pre-generated chart data', { 
+      userId, 
+      auditId: latestAuditId 
+    });
+    
     const energyDataQuery = await pool.query(`
       SELECT 
         rd.charts->>'energyBreakdown' as energy_breakdown,
@@ -193,7 +273,33 @@ export async function getAggregatedEnergyData(userId: string): Promise<{
       WHERE rd.audit_id = $1
     `, [latestAuditId]);
     
+    appLogger.debug('Report data query results', { 
+      userId, 
+      auditId: latestAuditId,
+      hasEnergyBreakdown: !!energyDataQuery.rows[0]?.energy_breakdown,
+      hasConsumption: !!energyDataQuery.rows[0]?.consumption
+    });
+    
+    // Second approach: Generate energy data using ReportGenerationService
+    // Try to parse the audit data JSON
+    let auditData;
+    try {
+      auditData = latestAuditQuery.rows[0].data;
+      appLogger.debug('Successfully extracted audit data', { 
+        userId, 
+        auditId: latestAuditId,
+        dataSize: JSON.stringify(auditData).length
+      });
+    } catch (error) {
+      appLogger.error('Error parsing audit data JSON', {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
+        auditId: latestAuditId
+      });
+    }
+    
     // Get savings analysis data aggregated across all audits with implementations
+    appLogger.debug('Getting aggregated savings analysis data across all audits', { userId });
     const savingsAnalysisQuery = await pool.query(`
       SELECT 
         rt.name as name,
@@ -208,13 +314,43 @@ export async function getAggregatedEnergyData(userId: string): Promise<{
       ORDER BY SUM(ar.estimated_savings) DESC
     `, [userId]);
     
+    appLogger.debug('Savings analysis query results', { 
+      userId,
+      rowCount: savingsAnalysisQuery.rows.length
+    });
+    
     // Parse the JSON data or use empty arrays if null
     let energyBreakdown: ChartDataPoint[] = [];
     let consumption: ChartDataPoint[] = [];
     
-    if (energyDataQuery.rows.length > 0) {
-      energyBreakdown = JSON.parse(energyDataQuery.rows[0].energy_breakdown || '[]');
-      consumption = JSON.parse(energyDataQuery.rows[0].consumption || '[]');
+    if (energyDataQuery.rows.length > 0 && energyDataQuery.rows[0].energy_breakdown) {
+      try {
+        energyBreakdown = JSON.parse(energyDataQuery.rows[0].energy_breakdown);
+        appLogger.debug('Successfully parsed energy breakdown data from report_data', { 
+          userId,
+          dataPointCount: energyBreakdown.length
+        });
+      } catch (error) {
+        appLogger.error('Error parsing energy breakdown JSON', {
+          error: error instanceof Error ? error.message : String(error),
+          userId
+        });
+      }
+    }
+    
+    if (energyDataQuery.rows.length > 0 && energyDataQuery.rows[0].consumption) {
+      try {
+        consumption = JSON.parse(energyDataQuery.rows[0].consumption);
+        appLogger.debug('Successfully parsed consumption data from report_data', { 
+          userId,
+          dataPointCount: consumption.length
+        });
+      } catch (error) {
+        appLogger.error('Error parsing consumption JSON', {
+          error: error instanceof Error ? error.message : String(error),
+          userId
+        });
+      }
     }
     
     // Format the savings analysis data
@@ -228,12 +364,35 @@ export async function getAggregatedEnergyData(userId: string): Promise<{
       actualSavings: parseFloat(row.actual_savings)
     }));
     
-    appLogger.debug('Fetched aggregated energy data', { 
+    appLogger.info('Successfully aggregated energy data', { 
       userId,
       energyBreakdownCount: energyBreakdown.length,
       consumptionCount: consumption.length,
-      savingsAnalysisCount: savingsAnalysis.length
+      savingsAnalysisCount: savingsAnalysis.length,
+      executionTimeMs: Date.now() - startTime
     });
+    
+    // Log a sample of the data for debugging
+    if (energyBreakdown.length > 0) {
+      appLogger.debug('Energy breakdown sample', {
+        userId,
+        sample: energyBreakdown.slice(0, 2)
+      });
+    }
+    
+    if (consumption.length > 0) {
+      appLogger.debug('Consumption sample', {
+        userId,
+        sample: consumption.slice(0, 2)
+      });
+    }
+    
+    if (savingsAnalysis.length > 0) {
+      appLogger.debug('Savings analysis sample', {
+        userId,
+        sample: savingsAnalysis.slice(0, 2)
+      });
+    }
     
     return {
       energyBreakdown,
