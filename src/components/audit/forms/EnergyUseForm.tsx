@@ -42,6 +42,9 @@ const EnergyUseForm: React.FC<EnergyUseFormProps> = ({
         
         // Update occupancy factor from defaults
         updateIfNotModified('occupancyFactor', defaults.occupancyFactor);
+        
+        // Update daily usage hours from defaults
+        updateIfNotModified('durationHours', defaults.durationHours);
       }
     }
 

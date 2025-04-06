@@ -10,7 +10,8 @@ export const occupancyPatternDefaults = {
       weekend: '19-24'
     },
     peakUsageTimes: ['Morning (6am-12pm)', 'Evening (6pm-12am)'],
-    occupancyFactor: 1.0 // Highest occupancy factor for all-day occupancy
+    occupancyFactor: 1.0, // Highest occupancy factor for all-day occupancy
+    durationHours: 20.0    // Nearly full day at home
   },
   'work-hours': {
     electricBill: 600,
@@ -21,7 +22,8 @@ export const occupancyPatternDefaults = {
       weekend: '19-24'
     },
     peakUsageTimes: ['Morning (6am-12pm)', 'Evening (6pm-12am)'],
-    occupancyFactor: 0.8 // Moderate occupancy factor for work-hours pattern
+    occupancyFactor: 0.8, // Moderate occupancy factor for work-hours pattern
+    durationHours: 14.0   // Standard evening + night hours
   },
   'evenings-weekends': {
     electricBill: 400,
@@ -32,7 +34,8 @@ export const occupancyPatternDefaults = {
       weekend: '13-18'
     },
     peakUsageTimes: ['Evening (6pm-12am)'],
-    occupancyFactor: 0.6 // Lower occupancy factor for evenings-weekends pattern
+    occupancyFactor: 0.6, // Lower occupancy factor for evenings-weekends pattern
+    durationHours: 10.0   // Limited evening hours on weekdays + weekend time
   },
   'variable': {
     electricBill: 500,
@@ -43,7 +46,8 @@ export const occupancyPatternDefaults = {
       weekend: '13-18'
     },
     peakUsageTimes: ['Afternoon (12pm-6pm)', 'Evening (6pm-12am)'],
-    occupancyFactor: 0.7 // Moderate-low occupancy factor for variable pattern
+    occupancyFactor: 0.7, // Moderate-low occupancy factor for variable pattern
+    durationHours: 12.0   // Midpoint value for variable schedule
   }
 } as const;
 
