@@ -146,7 +146,21 @@ src/
 - [ ] Refactor any duplicated code
 - [ ] Optimize imports and bundle size
 
-### Phase 8: Deployment (2-3 hours)
+### Phase 8: Bug Fixes - Category Mapping (2-3 hours)
+
+- [ ] Fix category name mapping issue
+  - [ ] Create mapping between user preference keys and recommendation categories
+  - [ ] Update filtering function to use this mapping
+  - [ ] Add fallback logic for when no exact matches are found
+- [ ] Ensure default recommendations for all categories
+  - [ ] Add specific defaults for Renewable Energy
+  - [ ] Add specific defaults for Smart Home Devices
+  - [ ] Add specific defaults for Water Heating
+- [ ] Improve fallback behavior
+  - [ ] Show general recommendations when specific ones aren't available
+  - [ ] Add notification when falling back to general recommendations
+
+### Phase 9: Deployment (2-3 hours)
 
 - [ ] Build and test locally
   - [ ] Verify bundle size impact

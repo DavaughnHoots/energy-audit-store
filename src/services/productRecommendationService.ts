@@ -755,18 +755,36 @@ export const matchProductsToRecommendations = async (
  * This helps bridge the gap between UI preference strings and internal category names
  */
 const userPreferenceToCategory: Record<string, string[]> = {
+  // HVAC Systems
   'hvac': ['Heating & Cooling', 'HVAC Systems', 'Furnaces', 'Air Conditioners', 'Heat Pumps', 'Thermostats'],
   'heating': ['Heating & Cooling', 'HVAC Systems', 'Furnaces', 'Heat Pumps'],
   'cooling': ['Heating & Cooling', 'HVAC Systems', 'Air Conditioners'],
+  // Lighting
   'lighting': ['Lighting & Fans', 'Light Bulbs', 'Light Fixtures', 'Ceiling Fans'],
+  // Insulation
   'insulation': ['Building Products', 'Insulation'],
+  // Windows & Doors
   'windows': ['Building Products', 'Windows'],
   'doors': ['Building Products', 'Doors'],
+  'windows_doors': ['Building Products', 'Windows', 'Doors'],
+  'windows-doors': ['Building Products', 'Windows', 'Doors'],
+  // Appliances
   'appliances': ['Appliances'],
+  'energy-efficient_appliances': ['Appliances'],
+  'energy-efficient-appliances': ['Appliances'],
+  'energy_efficient_appliances': ['Appliances'],
+  // Water Heating - this was in the filtered logs as a key issue
   'water_heating': ['Water Heaters'],
   'water-heating': ['Water Heaters'],
+  // Smart Home - this was in the filtered logs as a key issue
+  'smart_home': ['Electronics', 'Smart Home'],
   'smart-home': ['Electronics', 'Smart Home'],
-  'renewable': ['Electronics', 'Renewable Energy'],
+  'smart_home_devices': ['Electronics', 'Smart Home'],
+  'smart-home-devices': ['Electronics', 'Smart Home'],
+  // Renewable Energy - this was in the filtered logs as a key issue
+  'renewable': ['Electronics', 'Renewable Energy', 'Solar'],
+  'renewable_energy': ['Electronics', 'Renewable Energy', 'Solar'],
+  'renewable-energy': ['Electronics', 'Renewable Energy', 'Solar'],
   'solar': ['Electronics', 'Solar']
 };
 
@@ -777,17 +795,31 @@ const userPreferenceToCategory: Record<string, string[]> = {
  * @returns Whether there's a match
  */
 const isPreferenceMatchingCategory = (preference: string, category: string): boolean => {
+  // Log for debugging purposes
+  console.log(`Checking if preference '${preference}' matches category '${category}'`);
+  
   // Direct match (case-insensitive)
   if (preference.toLowerCase() === category.toLowerCase()) {
+    console.log(`Direct match found for '${preference}' and '${category}'`);
+    return true;
+  }
+  
+  // Check if category contains the preference (e.g., "HVAC Systems" contains "hvac")
+  if (category.toLowerCase().includes(preference.toLowerCase())) {
+    console.log(`Substring match found: '${category}' contains '${preference}'`);
     return true;
   }
   
   // Check if preference is a known key with mapped categories
   const mappedCategories = userPreferenceToCategory[preference.toLowerCase()];
   if (mappedCategories) {
-    return mappedCategories.some(mappedCat => 
+    const hasMatch = mappedCategories.some(mappedCat => 
       mappedCat.toLowerCase() === category.toLowerCase()
     );
+    if (hasMatch) {
+      console.log(`Mapped match found for preference '${preference}' in mapped categories`);
+      return true;
+    }
   }
   
   // Handle special case for underscores vs dashes
@@ -795,12 +827,39 @@ const isPreferenceMatchingCategory = (preference: string, category: string): boo
   if (normalizedPreference !== preference.toLowerCase()) {
     const mappedCategories = userPreferenceToCategory[normalizedPreference];
     if (mappedCategories) {
-      return mappedCategories.some(mappedCat => 
+      const hasMatch = mappedCategories.some(mappedCat => 
         mappedCat.toLowerCase() === category.toLowerCase()
       );
+      if (hasMatch) {
+        console.log(`Normalized match found for '${preference}' using '${normalizedPreference}'`);
+        return true;
+      }
     }
   }
   
+  // Handle special case for dashes vs underscores (inverse of above)
+  const dashedPreference = preference.toLowerCase().replace(/-/g, '_');
+  if (dashedPreference !== preference.toLowerCase()) {
+    const mappedCategories = userPreferenceToCategory[dashedPreference];
+    if (mappedCategories) {
+      const hasMatch = mappedCategories.some(mappedCat => 
+        mappedCat.toLowerCase() === category.toLowerCase()
+      );
+      if (hasMatch) {
+        console.log(`Dashed match found for '${preference}' using '${dashedPreference}'`);
+        return true;
+      }
+    }
+  }
+  
+  // Try to match by word or phrase (e.g., "renewable" with "Renewable Energy")
+  if (category.toLowerCase().split(/\s+/).includes(preference.toLowerCase()) ||
+      preference.toLowerCase().split(/\s+/).some(word => category.toLowerCase().includes(word))) {
+    console.log(`Word match found between '${preference}' and '${category}'`);
+    return true;
+  }
+  
+  console.log(`No match found between '${preference}' and '${category}'`);
   return false;
 };
 
@@ -821,8 +880,8 @@ export const filterRecommendationsByUserPreferences = (
   
   console.log('Filtering recommendations with user preferences:', userCategoryPreferences);
   
-  // Filter recommendations by category match
-  return recommendations.filter(recommendation => {
+  // First try to get exact matches
+  const exactMatches = recommendations.filter(recommendation => {
     const categoryMapping = mapRecommendationTypeToCategory(recommendation.type, recommendation.title);
     console.log(`Checking recommendation ${recommendation.title} with categories:`, categoryMapping);
     
@@ -831,10 +890,64 @@ export const filterRecommendationsByUserPreferences = (
       isPreferenceMatchingCategory(pref, categoryMapping.mainCategory) || 
       isPreferenceMatchingCategory(pref, categoryMapping.subCategory) ||
       // Also check if preference matches the recommendation type directly
-      pref.toLowerCase() === recommendation.type.toLowerCase()
+      isPreferenceMatchingCategory(pref, recommendation.type)
     );
     
     console.log(`Result for ${recommendation.title}: ${match ? 'MATCH' : 'NO MATCH'}`);
     return match;
   });
+  
+  // If we have exact matches, return them
+  if (exactMatches.length > 0) {
+    console.log(`Found ${exactMatches.length} exact preference matches`);
+    return exactMatches;
+  }
+  
+  // If no exact matches, try a more flexible matching (partial matches)
+  console.log("No exact matches found, using flexible matching");
+  const flexibleMatches = recommendations.filter(recommendation => {
+    const categoryMapping = mapRecommendationTypeToCategory(recommendation.type, recommendation.title);
+    
+    // More flexible matching for category keywords
+    return userCategoryPreferences.some(pref => {
+      // Convert preference to keywords
+      const keywords = pref.toLowerCase()
+        .replace(/[_-]/g, ' ')
+        .split(' ')
+        .filter(k => k.length > 2); // Only use keywords with more than 2 chars
+      
+      // Check if any keyword matches in the recommendation title or type
+      const titleMatch = keywords.some(keyword => 
+        recommendation.title.toLowerCase().includes(keyword)
+      );
+      
+      const typeMatch = keywords.some(keyword => 
+        recommendation.type.toLowerCase().includes(keyword)
+      );
+      
+      const categoryMatch = keywords.some(keyword => 
+        categoryMapping.mainCategory.toLowerCase().includes(keyword) || 
+        categoryMapping.subCategory.toLowerCase().includes(keyword)
+      );
+      
+      return titleMatch || typeMatch || categoryMatch;
+    });
+  });
+  
+  // If we have flexible matches, return them
+  if (flexibleMatches.length > 0) {
+    console.log(`Found ${flexibleMatches.length} flexible matches`);
+    return flexibleMatches;
+  }
+  
+  // If still no matches, and we should show at least some recommendations,
+  // return first 2 recommendations from the original list as fallback
+  if (recommendations.length > 0) {
+    console.log("No flexible matches found either, returning first 2 recommendations as fallback");
+    return recommendations.slice(0, 2);
+  }
+  
+  // If all else fails, return an empty array
+  console.log("No recommendations found at all");
+  return [];
 };
