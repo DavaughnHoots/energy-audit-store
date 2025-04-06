@@ -501,7 +501,7 @@ class EnhancedDashboardService {
         }
       }
 
-      // 3. Get user product preferences
+      // 3. Get user product preferences - first from user_preferences, then fallback to audit data
       const preferencesQuery = await pool.query(`
         SELECT 
           up.preferred_categories,
@@ -512,11 +512,64 @@ class EnhancedDashboardService {
       
       let productPreferences = null;
       
+      // First check user preferences table
       if (preferencesQuery.rows.length > 0) {
         productPreferences = {
           categories: preferencesQuery.rows[0].preferred_categories || [],
           budgetConstraint: preferencesQuery.rows[0].budget_constraint || undefined
         };
+        
+        appLogger.debug('Retrieved user preferences from preferences table:', {
+          userId,
+          categoriesCount: productPreferences.categories.length,
+          budgetConstraint: productPreferences.budgetConstraint
+        });
+      }
+      
+      // If no preferences or empty categories array, try to extract from the audit data
+      if (!productPreferences || !productPreferences.categories || productPreferences.categories.length === 0) {
+        // Try to get product preferences from the audit data if we have an audit ID
+        if (auditId) {
+          const auditPreferencesQuery = await pool.query(`
+            SELECT 
+              data->'productPreferences'->'categories' as categories,
+              data->'productPreferences'->'budgetConstraint' as budget_constraint
+            FROM energy_audits
+            WHERE id = $1
+          `, [auditId]);
+          
+          if (auditPreferencesQuery.rows.length > 0 && auditPreferencesQuery.rows[0].categories) {
+            const categories = auditPreferencesQuery.rows[0].categories;
+            const budgetConstraint = auditPreferencesQuery.rows[0].budget_constraint ? 
+              parseFloat(auditPreferencesQuery.rows[0].budget_constraint) : undefined;
+            
+            productPreferences = {
+              categories: Array.isArray(categories) ? categories : [],
+              budgetConstraint
+            };
+            
+            appLogger.debug('Retrieved user preferences from audit data:', {
+              userId,
+              auditId,
+              categoriesCount: productPreferences.categories.length,
+              budgetConstraint: productPreferences.budgetConstraint
+            });
+          }
+        }
+      }
+      
+      // If still no preferences or empty categories, use default categories
+      if (!productPreferences || !productPreferences.categories || productPreferences.categories.length === 0) {
+        productPreferences = {
+          categories: ['hvac', 'lighting', 'insulation', 'windows', 'appliances', 'water_heating', 'renewable', 'smart_home'],
+          budgetConstraint: undefined
+        };
+        
+        appLogger.debug('Using default product preferences categories:', {
+          userId,
+          auditId,
+          categoriesCount: productPreferences.categories.length
+        });
       }
 
       // Determine if we should use generated data based on stats

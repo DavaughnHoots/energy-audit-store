@@ -47,9 +47,54 @@ const EnhancedDashboardRecommendationsAdapter: React.FC<EnhancedDashboardRecomme
   const [dashboardRecommendations, setDashboardRecommendations] = useState<AuditRecommendation[]>(recommendations);
   const [usingFallback, setUsingFallback] = useState(false);
 
+  // IMPROVED DASHBOARD FALLBACK: Extract likely user categories from recommendation types
+  const deriveCategoriesFromRecommendations = (recs: AuditRecommendation[]): string[] => {
+    // Extract unique recommendation types
+    const recommendationTypes = [...new Set(recs.map(rec => rec.type))];
+    
+    // Map common recommendation types to product categories
+    const categoryMapping: Record<string, string> = {
+      'hvac': 'hvac',
+      'lighting': 'lighting',
+      'insulation': 'insulation',
+      'windows': 'windows',
+      'appliances': 'appliances',
+      'water_heating': 'water_heating',
+      'renewable': 'renewable',
+      'smart_home': 'smart_home',
+      // Add more mappings as needed
+    };
+    
+    // Create list of likely categories based on recommendation types
+    const likelyCategories = recommendationTypes
+      .map(type => categoryMapping[type] || type)
+      .filter(Boolean);
+      
+    console.log('DASHBOARD DEBUG: Derived categories from recommendations:', likelyCategories);
+    
+    // If we couldn't derive any categories, return the default full set
+    if (likelyCategories.length === 0) {
+      return ['hvac', 'lighting', 'insulation', 'windows', 'appliances', 'water_heating', 'renewable', 'smart_home'];
+    }
+    
+    return likelyCategories;
+  };
+  
   // Apply special dashboard-specific logic to ensure we always show recommendations
   useEffect(() => {
-    // If no recommendations or user categories are empty, show all recommendations
+    // Log all recommendation types for debugging
+    console.log('DASHBOARD DEBUG: Available recommendation types:', 
+      recommendations.map(rec => ({ type: rec.type, title: rec.title }))
+    );
+    
+    // HANDLE CASE 1: If we have recommendations but no user categories, derive categories from recommendations
+    const effectiveCategories = (userCategories && userCategories.length > 0)
+      ? userCategories
+      : deriveCategoriesFromRecommendations(recommendations);
+      
+    console.log('DASHBOARD DEBUG: Using effective categories:', effectiveCategories);
+    
+    // HANDLE CASE 2: No recommendations received from API
     if (recommendations.length === 0) {
       console.log('DASHBOARD DEBUG: No recommendations available');
       setDashboardRecommendations([]);
@@ -57,16 +102,11 @@ const EnhancedDashboardRecommendationsAdapter: React.FC<EnhancedDashboardRecomme
       return;
     }
 
-    // Log all recommendation types for debugging
-    console.log('DASHBOARD DEBUG: Available recommendation types:', 
-      recommendations.map(rec => ({ type: rec.type, title: rec.title }))
-    );
-
-    // First try using the standard filtering logic
-    if (userCategories && userCategories.length > 0) {
-      console.log('DASHBOARD DEBUG: Filtering with user categories:', userCategories);
+    // HANDLE CASE 3: Try filtering with effective categories
+    if (effectiveCategories.length > 0) {
+      console.log('DASHBOARD DEBUG: Filtering with categories:', effectiveCategories);
       
-      const filtered = filterRecommendationsByUserPreferences(recommendations, userCategories);
+      const filtered = filterRecommendationsByUserPreferences(recommendations, effectiveCategories);
       
       if (filtered.length > 0) {
         console.log('DASHBOARD DEBUG: Found matching recommendations:', filtered.length);
@@ -78,8 +118,7 @@ const EnhancedDashboardRecommendationsAdapter: React.FC<EnhancedDashboardRecomme
       console.log('DASHBOARD DEBUG: No matches found with standard filtering, using fallbacks');
     }
 
-    // We only reach here if no recommendations matched or no categories were provided
-    // DASHBOARD-SPECIFIC FALLBACK: Always show at least 3 recommendations on dashboard
+    // HANDLE CASE 4: Fallback when no matches found or categories couldn't be derived
     console.log('DASHBOARD DEBUG: Using fallback to show default recommendations');
     
     // Sort by priority to show most important recommendations
