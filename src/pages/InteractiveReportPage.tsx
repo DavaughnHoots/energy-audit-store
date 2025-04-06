@@ -152,6 +152,28 @@ const InteractiveReportPage: React.FC = () => {
                   }
                   return rec;
                 });
+                
+                // Calculate and update the total estimated savings for the summary
+                const updatedTotalEstimatedSavings = data.recommendations.reduce(
+                  (sum, rec) => sum + (rec.estimatedSavings || 0),
+                  0
+                );
+                
+                // Update the summary with accurate financial data
+                if (data.summary) {
+                  const originalValue = data.summary.totalEstimatedSavings;
+                  data.summary.totalEstimatedSavings = updatedTotalEstimatedSavings;
+                  
+                  console.log('Updated summary financial data:', {
+                    originalTotalEstimatedSavings: originalValue,
+                    newTotalEstimatedSavings: updatedTotalEstimatedSavings,
+                    change: `${originalValue} → ${updatedTotalEstimatedSavings}`,
+                    calculatedFrom: data.recommendations.map(r => ({
+                      title: r.title,
+                      estimatedSavings: r.estimatedSavings
+                    }))
+                  });
+                }
               }
             } catch (err) {
               console.error('Error enhancing chart data:', err);
