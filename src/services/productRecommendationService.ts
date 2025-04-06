@@ -798,6 +798,12 @@ export const matchProductsToRecommendations = async (
     // Log for debugging purposes
     console.log(`Checking if preference '${preference}' matches category '${category}'`);
     
+    // Guard against empty categories - FIX FOR EMPTY STRING MATCHING ISSUE
+    if (!category || category.trim() === '') {
+      console.log(`Skipping match check with empty category for preference '${preference}'`);
+      return false;
+    }
+    
     // Special case direct matches for problematic categories - MOST IMPORTANT FIX
     // These are the exact combinations that are failing in the logs
     if ((preference === 'renewable' && 
