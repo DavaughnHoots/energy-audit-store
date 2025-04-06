@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  fetchReportData, 
-  updateRecommendationStatus, 
-  updateRecommendationPriority, 
-  updateImplementationDetails 
+  fetchReportData,
+  updateRecommendationStatus,
+  updateRecommendationPriority,
+  updateImplementationDetails
 } from '../services/reportService';
-import { ReportData } from '../types/report';
+import {
+  matchProductsToRecommendations
+} from '../services/productRecommendationService';
+import { ReportData, SavingsChartDataPoint } from '../types/report';
 import { RecommendationStatus, RecommendationPriority } from '../types/energyAudit';
 
 // Import all report section components
@@ -78,6 +81,82 @@ const InteractiveReportPage: React.FC = () => {
               summaryTotal: data.summary?.totalEstimatedSavings,
               match: Math.abs(totalEstimatedSavings - (data.summary?.totalEstimatedSavings || 0)) < 1
             });
+          }
+          
+          // Now that we have the report data, let's enhance the chart with accurate financial data
+          // by calling the product recommendation service directly
+          if (data.recommendations && data.recommendations.length > 0 && data.charts) {
+            console.log('Enhancing chart financial data from product recommendations...');
+            
+            // Get user preferences if available
+            const userCategories = data.productPreferences?.categories || [];
+            const budgetConstraint = data.productPreferences?.budgetConstraint || 0;
+            
+            try {
+              // Call the product recommendation service to get accurate financial data
+              const productMatches = await matchProductsToRecommendations(
+                data.recommendations,
+                userCategories,
+                budgetConstraint
+              );
+              
+              console.log('Product matches retrieved:', {
+                matchCount: productMatches.length,
+                recommendationCount: data.recommendations.length
+              });
+              
+              // Create accurate chart data using the financial data from product matches
+              if (productMatches.length > 0) {
+                // Map the recommendations with their financial data to chart format
+                const updatedSavingsData: SavingsChartDataPoint[] = data.recommendations.map(rec => {
+                  // Find the corresponding product match
+                  const match = productMatches.find(m => m.recommendationId === rec.id);
+                  
+                  // Get the estimated savings, either from match or recommendation
+                  const estimatedSavings = 
+                    match?.financialData?.estimatedSavings || 
+                    rec.estimatedSavings || 
+                    0;
+                  
+                  // Create a savings chart data point
+                  return {
+                    name: rec.title || rec.type,
+                    estimatedSavings: estimatedSavings,
+                    actualSavings: rec.actualSavings || 0
+                  };
+                });
+                
+                // Log the data we're sending to the chart
+                console.log('Updated savings analysis chart data:', {
+                  dataPoints: updatedSavingsData.length,
+                  values: updatedSavingsData.map(d => ({
+                    name: d.name,
+                    estimatedSavings: d.estimatedSavings,
+                    actualSavings: d.actualSavings
+                  }))
+                });
+                
+                // Update the chart data with accurate financial values
+                data.charts.savingsAnalysis = updatedSavingsData;
+                
+                // Also update the recommendation financial data in case it's missing
+                data.recommendations = data.recommendations.map(rec => {
+                  const match = productMatches.find(m => m.recommendationId === rec.id);
+                  if (match?.financialData && (!rec.estimatedSavings || rec.estimatedSavings === 0)) {
+                    return {
+                      ...rec,
+                      estimatedSavings: match.financialData.estimatedSavings,
+                      estimatedCost: match.financialData.implementationCost,
+                      paybackPeriod: match.financialData.paybackPeriod
+                    };
+                  }
+                  return rec;
+                });
+              }
+            } catch (err) {
+              console.error('Error enhancing chart data:', err);
+              // Continue without enhancement if there's an error
+            }
           }
           
           setReportData(data);
