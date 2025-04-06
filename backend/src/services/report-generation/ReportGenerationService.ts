@@ -363,14 +363,43 @@ export class ReportGenerationService {
    * Enhanced to ensure values are properly prepared for chart display
    */
   private prepareSavingsAnalysisData(recommendations: AuditRecommendation[]): any[] {
+    // Deep debug logging to trace financial data
+    const estimatedSavings = recommendations.map(r => r.estimatedSavings);
+    const actualSavings = recommendations.map(r => r.actualSavings);
+    const titles = recommendations.map(r => r.title);
+    
+    appLogger.debug('Detailed recommendation financial data for chart preparation', {
+      recommendations: recommendations.map(r => ({
+        id: r.id?.substring(0, 8),
+        title: r.title,
+        estimatedSavings: r.estimatedSavings,
+        actualSavings: r.actualSavings,
+        type: r.type
+      }))
+    });
+    
     appLogger.debug('Preparing savings analysis data from recommendations', {
       recommendationsCount: recommendations.length,
       hasEstimatedSavings: recommendations.some(r => r.estimatedSavings && r.estimatedSavings > 0),
-      totalEstimatedSavings: recommendations.reduce((sum, r) => sum + (r.estimatedSavings || 0), 0)
+      totalEstimatedSavings: recommendations.reduce((sum, r) => sum + (r.estimatedSavings || 0), 0),
+      estimatedSavingsValues: estimatedSavings,
+      actualSavingsValues: actualSavings,
+      titles: titles
     });
     
+    // Ensure numeric conversion for any string financial values 
+    const processedRecommendations = recommendations.map(rec => ({
+      ...rec,
+      estimatedSavings: typeof rec.estimatedSavings === 'string' 
+        ? parseFloat(rec.estimatedSavings) 
+        : (rec.estimatedSavings || 0),
+      actualSavings: typeof rec.actualSavings === 'string' 
+        ? parseFloat(rec.actualSavings) 
+        : (rec.actualSavings || 0),
+    }));
+    
     // Filter out recommendations with missing or zero financial data
-    const validRecommendations = recommendations.filter(rec => 
+    const validRecommendations = processedRecommendations.filter(rec => 
       rec.estimatedSavings !== undefined && 
       rec.estimatedSavings !== null && 
       rec.estimatedSavings > 0);
@@ -379,7 +408,9 @@ export class ReportGenerationService {
     // to avoid empty chart display
     if (validRecommendations.length === 0) {
       appLogger.warn('No valid recommendations with financial data for savings chart', {
-        originalRecommendationsCount: recommendations.length
+        originalRecommendationsCount: recommendations.length,
+        estimatedSavingsValues: estimatedSavings,
+        typesAvailable: [...new Set(recommendations.map(r => r.type))]
       });
       
       // Return placeholder data based on recommendation types
@@ -391,8 +422,17 @@ export class ReportGenerationService {
       }));
     }
     
+    appLogger.debug('After validation, using these recommendations for chart data', {
+      validCount: validRecommendations.length,
+      validRecommendations: validRecommendations.map(r => ({
+        title: r.title,
+        estimatedSavings: r.estimatedSavings,
+        actualSavings: r.actualSavings
+      }))
+    });
+    
     // Map recommendations to chart format with improved name handling
-    return validRecommendations.map(rec => {
+    const chartData = validRecommendations.map(rec => {
       // Create more readable chart labels from recommendation titles
       let displayName = rec.title || rec.type;
       
@@ -403,10 +443,21 @@ export class ReportGenerationService {
       
       return {
         name: displayName,
-        estimatedSavings: rec.estimatedSavings || 0,
+        estimatedSavings: rec.estimatedSavings,
         actualSavings: rec.actualSavings || 0
       };
     });
+    
+    appLogger.debug('Final chart data generated', {
+      chartDataCount: chartData.length,
+      chartDataSummary: chartData.map(d => ({
+        name: d.name,
+        estimatedSavings: d.estimatedSavings,
+        actualSavings: d.actualSavings
+      }))
+    });
+    
+    return chartData;
   }
 
   /**

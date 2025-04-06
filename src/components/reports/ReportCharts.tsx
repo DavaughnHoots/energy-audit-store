@@ -183,8 +183,8 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
                 <YAxis 
                   tick={{ fontSize: isMobile ? 10 : 12 }}
                   width={isMobile ? 30 : 35}
-                  // Set minimum value to ensure axes are visible even with minimal data
-                  domain={[0, 'dataMax + 1']}
+                  // Auto-calculate domain to handle varying financial values
+                  domain={[0, (dataMax: number) => Math.max(10, dataMax * 1.1)]}
                 />
                 <Tooltip 
                   formatter={(value) => formatCurrency(Number(value))}
