@@ -49,6 +49,46 @@ router.get('/stats', async (req: AuthenticatedRequest, res) => {
     // Get enhanced dashboard stats, passing the newAuditId if provided
     const stats = await enhancedDashboardService.getUserStats(userId, newAuditId);
 
+    // Add detailed debugging for recommendations
+    appLogger.debug('General dashboard response:', {
+      userId,
+      hasEnhancedRecommendations: !!stats.enhancedRecommendations,
+      recommendationsCount: stats.enhancedRecommendations?.length || 0,
+      dataSummary: stats.dataSummary,
+      usingDefaultRecommendations: stats.dataSummary?.isUsingDefaultData
+    });
+
+    // If no recommendations exist, explicitly add default recommendations
+    if (!stats.enhancedRecommendations || stats.enhancedRecommendations.length === 0) {
+      appLogger.warn('No recommendations found for dashboard, adding defaults', {
+        userId,
+        auditId: newAuditId
+      });
+      
+      // Get default recommendations from the service
+      const defaultRecommendations = enhancedDashboardService['generateDefaultRecommendations']();
+      
+      // Update stats with default recommendations
+      stats.enhancedRecommendations = defaultRecommendations;
+      
+      // Update data summary to indicate we're using default data
+      if (stats.dataSummary) {
+        stats.dataSummary.isUsingDefaultData = true;
+        stats.dataSummary.dataSource = 'generated';
+      } else {
+        stats.dataSummary = {
+          hasDetailedData: false,
+          isUsingDefaultData: true,
+          dataSource: 'generated'
+        };
+      }
+      
+      appLogger.info('Added default recommendations for general dashboard', {
+        userId,
+        recommendationsCount: defaultRecommendations.length
+      });
+    }
+
     // Add last updated timestamp
     const response = {
       ...stats,
@@ -56,16 +96,11 @@ router.get('/stats', async (req: AuthenticatedRequest, res) => {
       refreshInterval: 300000 // 5 minutes in milliseconds
     };
 
-    // Log the response for debugging
-    appLogger.debug('Enhanced dashboard response:', {
+    // Final check to ensure recommendations exist
+    appLogger.debug('Final general dashboard response:', {
       userId,
-      hasLatestAuditId: !!response.latestAuditId,
-      completedAudits: response.completedAudits,
-      hasEnhancedData: {
-        energyAnalysis: !!response.energyAnalysis,
-        enhancedRecommendations: !!response.enhancedRecommendations,
-        productPreferences: !!response.productPreferences
-      },
+      hasRecommendations: !!response.enhancedRecommendations && response.enhancedRecommendations.length > 0,
+      recommendationsCount: response.enhancedRecommendations?.length || 0,
       context: 'dashboard.enhanced.stats'
     });
 
@@ -207,6 +242,48 @@ router.get('/audit-stats/:auditId', async (req: AuthenticatedRequest, res) => {
     // Get enhanced dashboard stats for this specific audit
     const stats = await enhancedDashboardService.getUserStats(userId, auditId);
     
+    // Add detailed debugging for recommendations
+    appLogger.debug('Audit-specific dashboard response:', {
+      userId,
+      auditId,
+      hasEnhancedRecommendations: !!stats.enhancedRecommendations,
+      recommendationsCount: stats.enhancedRecommendations?.length || 0,
+      dataSummary: stats.dataSummary,
+      usingDefaultRecommendations: stats.dataSummary?.isUsingDefaultData
+    });
+
+    // If no recommendations exist, explicitly add default recommendations
+    if (!stats.enhancedRecommendations || stats.enhancedRecommendations.length === 0) {
+      appLogger.warn('No recommendations found for audit, adding defaults', {
+        userId,
+        auditId
+      });
+      
+      // Get default recommendations from the service
+      const defaultRecommendations = enhancedDashboardService['generateDefaultRecommendations']();
+      
+      // Update stats with default recommendations
+      stats.enhancedRecommendations = defaultRecommendations;
+      
+      // Update data summary to indicate we're using default data
+      if (stats.dataSummary) {
+        stats.dataSummary.isUsingDefaultData = true;
+        stats.dataSummary.dataSource = 'generated';
+      } else {
+        stats.dataSummary = {
+          hasDetailedData: false,
+          isUsingDefaultData: true,
+          dataSource: 'generated'
+        };
+      }
+      
+      appLogger.info('Added default recommendations for audit-specific dashboard', {
+        userId,
+        auditId,
+        recommendationsCount: defaultRecommendations.length
+      });
+    }
+    
     // Add last updated timestamp
     const response = {
       ...stats,
@@ -214,6 +291,14 @@ router.get('/audit-stats/:auditId', async (req: AuthenticatedRequest, res) => {
       refreshInterval: 300000, // 5 minutes in milliseconds
       specificAuditId: auditId // Include the audit ID for reference
     };
+    
+    // Final check to ensure recommendations exist
+    appLogger.debug('Final audit-specific dashboard response:', {
+      userId,
+      auditId,
+      hasRecommendations: !!response.enhancedRecommendations && response.enhancedRecommendations.length > 0,
+      recommendationsCount: response.enhancedRecommendations?.length || 0
+    });
     
     res.json(response);
     
