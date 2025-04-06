@@ -521,14 +521,30 @@ class EnhancedDashboardService {
 
       // Determine if we should use generated data based on stats
       const hasStats = statsQuery.rows[0]?.completed_audits > 0;
-      const hasEnergyData = energyAnalysisData !== null && 
-        ((energyAnalysisData.energyBreakdown && energyAnalysisData.energyBreakdown.length > 0) || 
-         (energyAnalysisData.consumption && energyAnalysisData.consumption.length > 0) || 
+      const hasEnergyData = energyAnalysisData !== null &&
+        ((energyAnalysisData.energyBreakdown && energyAnalysisData.energyBreakdown.length > 0) ||
+         (energyAnalysisData.consumption && energyAnalysisData.consumption.length > 0) ||
          (energyAnalysisData.savingsAnalysis && energyAnalysisData.savingsAnalysis.length > 0));
       const hasRecommendationsData = enhancedRecommendations && enhancedRecommendations.length > 0;
       
       // Flag to indicate if we're using default data
       const isUsingDefaultData = hasStats && (!hasEnergyData || !hasRecommendationsData);
+      
+      // Enhanced debug logging for recommendations status
+      appLogger.debug('Dashboard recommendations status:', { 
+        userId,
+        auditId: newAuditId || latestAuditQuery.rows[0]?.id || null,
+        hasStats,
+        hasRecommendationsData,
+        hasEnergyData,
+        isUsingDefaultData,
+        recommendationsCount: enhancedRecommendations?.length || 0,
+        wouldUseDefaultRecommendations: hasStats && !hasRecommendationsData,
+        generatedRecsLength: this.generateDefaultRecommendations().length
+      });
+      
+      // Always generate default recommendations for testing
+      const defaultRecommendations = this.generateDefaultRecommendations();
       
       // Create the full enhanced dashboard stats object
       const stats: DashboardStats = {
@@ -568,20 +584,29 @@ class EnhancedDashboardService {
                         hasStats ? this.generateDefaultEnergyAnalysis() : 
                         { energyBreakdown: [], consumption: [], savingsAnalysis: [] },
                          
+        // CRITICAL FIX: ENSURE DASHBOARD ALWAYS HAS RECOMMENDATIONS
+        // Always include recommendations - prioritize real data, fall back to defaults, never return empty array
         enhancedRecommendations: hasRecommendationsData ? enhancedRecommendations :
-                                  hasStats ? this.generateDefaultRecommendations() : 
-                                  [],
+                                 defaultRecommendations, // Always use defaults instead of empty array
                                   
         productPreferences: productPreferences || { categories: [] },
         
         // Add data source metadata
         dataSummary: {
           hasDetailedData: hasEnergyData && hasRecommendationsData,
-          isUsingDefaultData: isUsingDefaultData,
-          dataSource: hasEnergyData && hasRecommendationsData ? 'detailed' : 
-                      isUsingDefaultData ? 'generated' : 'empty'
+          isUsingDefaultData: isUsingDefaultData || !hasRecommendationsData, // Update flag if using default recommendations
+          dataSource: hasEnergyData && hasRecommendationsData ? 'detailed' : 'generated'
         }
       };
+      
+      // Final validation and debug log to ensure recommendations are included
+      appLogger.debug('Final dashboard stats object:', {
+        userId,
+        auditId: stats.latestAuditId,
+        hasRecommendations: (stats.enhancedRecommendations && stats.enhancedRecommendations.length > 0),
+        recommendationsCount: stats.enhancedRecommendations?.length || 0,
+        dataSource: stats.dataSummary?.dataSource || 'unknown'
+      });
 
       await cache.set(cacheKey, JSON.stringify(stats), this.CACHE_TTL);
       return stats;
