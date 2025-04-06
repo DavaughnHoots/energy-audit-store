@@ -1,6 +1,7 @@
 import { pool } from '../config/database.js';
 import { cache } from '../config/cache.js';
 import { appLogger } from '../config/logger.js';
+import { getUniqueRecommendationsByType, getAggregatedEnergyData } from './dashboardService.enhanced.aggregation.js';
 
 interface DashboardStats {
   totalSavings: {

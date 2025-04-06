@@ -1,6 +1,7 @@
 import express from 'express';
 import { AuthenticatedRequest } from '../types/auth.js';
 import { enhancedDashboardService } from '../services/dashboardService.enhanced.js';
+import { getUniqueRecommendationsByType, getAggregatedEnergyData } from '../services/dashboardService.enhanced.aggregation.js';
 import * as productComparisonService from '../services/productComparisonService.js';
 import { pool } from '../config/database.js';
 import { appLogger } from '../config/logger.js';
@@ -47,7 +48,68 @@ router.get('/stats', async (req: AuthenticatedRequest, res) => {
     }
 
     // Get enhanced dashboard stats, passing the newAuditId if provided
-    const stats = await enhancedDashboardService.getUserStats(userId, newAuditId);
+    let stats = await enhancedDashboardService.getUserStats(userId, newAuditId);
+    
+    // Try to get unique recommendations by type across all user audits
+    try {
+      appLogger.info('Fetching unique recommendations by type for user', { userId });
+      const uniqueRecommendations = await getUniqueRecommendationsByType(userId);
+      
+      if (uniqueRecommendations.length > 0) {
+        appLogger.info('Found unique recommendations by type', { 
+          count: uniqueRecommendations.length,
+          userId 
+        });
+        
+        // Replace enhancedRecommendations with unique recommendations if available
+        stats.enhancedRecommendations = uniqueRecommendations;
+        
+        // Update data summary to indicate we have detailed data
+        if (stats.dataSummary) {
+          stats.dataSummary.isUsingDefaultData = false;
+          stats.dataSummary.dataSource = 'detailed';
+        }
+      }
+    } catch (error) {
+      appLogger.error('Error fetching unique recommendations by type:', {
+        error: error instanceof Error ? error.message : String(error),
+        userId
+      });
+      // Continue with existing recommendations if fetch fails
+    }
+    
+    // Try to get aggregated energy data across all user audits
+    try {
+      appLogger.info('Fetching aggregated energy data for user', { userId });
+      const energyData = await getAggregatedEnergyData(userId);
+      
+      if ((energyData.energyBreakdown && energyData.energyBreakdown.length > 0) ||
+          (energyData.consumption && energyData.consumption.length > 0) ||
+          (energyData.savingsAnalysis && energyData.savingsAnalysis.length > 0)) {
+        
+        appLogger.info('Found aggregated energy data', { 
+          userId,
+          hasEnergyBreakdown: energyData.energyBreakdown.length > 0,
+          hasConsumption: energyData.consumption.length > 0,
+          hasSavingsAnalysis: energyData.savingsAnalysis.length > 0
+        });
+        
+        // Replace energyAnalysis with aggregated data
+        stats.energyAnalysis = energyData;
+        
+        // Update data summary to indicate we have detailed data
+        if (stats.dataSummary) {
+          stats.dataSummary.isUsingDefaultData = false;
+          stats.dataSummary.dataSource = 'detailed';
+        }
+      }
+    } catch (error) {
+      appLogger.error('Error fetching aggregated energy data:', {
+        error: error instanceof Error ? error.message : String(error),
+        userId
+      });
+      // Continue with existing energy data if fetch fails
+    }
 
     // Add detailed debugging for recommendations
     appLogger.debug('General dashboard response:', {
