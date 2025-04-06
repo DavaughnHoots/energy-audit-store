@@ -146,34 +146,48 @@ src/
 - [ ] Refactor any duplicated code
 - [ ] Optimize imports and bundle size
 
-### Phase 8: Bug Fixes - Category Mapping (2-3 hours)
+### Phase 8: Initial Bug Fixes - Category Mapping (2-3 hours)
 
-- [ ] Fix category name mapping issue
-  - [ ] Create mapping between user preference keys and recommendation categories
-  - [ ] Update filtering function to use this mapping
-  - [ ] Add fallback logic for when no exact matches are found
-- [ ] Ensure default recommendations for all categories
-  - [ ] Add specific defaults for Renewable Energy
-  - [ ] Add specific defaults for Smart Home Devices
-  - [ ] Add specific defaults for Water Heating
-- [ ] Improve fallback behavior
-  - [ ] Show general recommendations when specific ones aren't available
-  - [ ] Add notification when falling back to general recommendations
+- [x] Fix category name mapping issue
+  - [x] Create mapping between user preference keys and recommendation categories
+  - [x] Update filtering function to use this mapping
+  - [x] Add fallback logic for when no exact matches are found
+- [x] Ensure default recommendations for all categories
+  - [x] Add specific defaults for Renewable Energy
+  - [x] Add specific defaults for Smart Home Devices
+  - [x] Add specific defaults for Water Heating
+- [x] Improve fallback behavior
+  - [x] Show general recommendations when specific ones aren't available
+  - [x] Add notification when falling back to general recommendations
 
-### Phase 9: Deployment (2-3 hours)
+### Phase 9: Advanced Debugging and Fixes (2-3 hours)
 
-- [ ] Build and test locally
-  - [ ] Verify bundle size impact
-  - [ ] Check for any console errors
-- [ ] Create pull request with detailed description
+- [ ] Analyze console logs to identify mapping issues
+  - [ ] Trace the full recommendation filtering lifecycle with detailed logging
+  - [ ] Identify exact format mismatches between preferences and recommendation types
+- [ ] Implement direct type mapping for problematic categories
+  - [ ] Add specific handling for 'water_heating'/'water-heating' types
+  - [ ] Add specific handling for 'smart_home'/'smart-home'/'smart_home_devices'
+  - [ ] Add specific handling for 'renewable'/'renewable-energy'/'renewable_energy'
+- [ ] Fix backend/frontend type inconsistencies
+  - [ ] Match formats used in backend dashboardService.enhanced.ts to frontend filtering
+  - [ ] Add explicit direct matching between preference keys and recommendation types
+- [ ] Add comprehensive debug logs
+  - [ ] Log exact input/output of each filtering stage
+  - [ ] Log matched/unmatched recommendations with exact reasons
+
+### Phase 10: Deployment and Verification (2-3 hours)
+
+- [ ] Build and test locally with new debugging information
+  - [ ] Verify console logs show proper matching
+  - [ ] Check for any remaining mapping errors
 - [ ] Deploy to staging environment
-  - [ ] Verify functionality in staging
-  - [ ] Check for any regressions
-- [ ] Final review and adjustments
+  - [ ] Verify recommendations appear correctly for each category
+  - [ ] Test all combinations of user preferences
 - [ ] Deploy to production
   - [ ] Monitor for errors
-  - [ ] Verify all functionality works in production
-  - [ ] Check both Dashboard and Reports views
+  - [ ] Verify all categories show appropriate recommendations
+  - [ ] Check both Dashboard and Reports views with various user preferences
 
 ## Technical Specifications
 
