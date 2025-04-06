@@ -15,7 +15,7 @@ import ReportPropertyInfo from '../components/reports/ReportPropertyInfo';
 import ReportCurrentConditions from '../components/reports/ReportCurrentConditions';
 import ReportEnergyConsumption from '../components/reports/ReportEnergyConsumption';
 import ReportLighting from '../components/reports/ReportLighting';
-import EnhancedReportRecommendations from '../components/reports/EnhancedReportRecommendations';
+import EnhancedReportRecommendationsAdapter from '../components/reports/EnhancedReportRecommendationsAdapter';
 import ReportCharts from '../components/reports/ReportCharts';
 import ReportSummary from '../components/reports/ReportSummary';
 
@@ -249,7 +249,7 @@ const InteractiveReportPage: React.FC = () => {
         )}
         
         {activeSection === 'recommendations' && (
-          <EnhancedReportRecommendations 
+          <EnhancedReportRecommendationsAdapter 
             recommendations={reportData.recommendations}
             userCategories={reportData.productPreferences?.categories || []}
             budgetConstraint={reportData.productPreferences?.budgetConstraint}

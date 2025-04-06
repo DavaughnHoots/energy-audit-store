@@ -3,7 +3,7 @@ import { DollarSign, Battery, Leaf, Calendar, Loader2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import RecommendationCard from '@/components/audit/RecommendationCard';
 import DashboardEnergyAnalysis from './DashboardEnergyAnalysis';
-import EnhancedDashboardRecommendations from './EnhancedDashboardRecommendations';
+import EnhancedDashboardRecommendationsAdapter from './EnhancedDashboardRecommendationsAdapter';
 import DataExplanationNote from './DataExplanationNote';
 import { ChartDataPoint, SavingsChartDataPoint } from '../../types/report';
 import { AuditRecommendation } from '../../types/energyAudit';
@@ -165,8 +165,8 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         dataSource={stats.dataSummary?.dataSource}
       />
 
-      {/* Enhanced Recommendations Section - Always show enhanced component */}
-      <EnhancedDashboardRecommendations
+      {/* Enhanced Recommendations Section - Using the unified adapter */}
+      <EnhancedDashboardRecommendationsAdapter
         recommendations={stats.enhancedRecommendations || []}
         userCategories={stats.productPreferences?.categories || []}
         budgetConstraint={stats.productPreferences?.budgetConstraint}
