@@ -46,6 +46,40 @@ const InteractiveReportPage: React.FC = () => {
         // TypeScript safety: Make sure we have a valid string before making the API call
         if (typeof auditId === 'string') {
           const data = await fetchReportData(auditId);
+          
+          // Debug logging to verify if report data has recommendations and chart data
+          console.log('Report data loaded:', {
+            hasRecommendations: data.recommendations && data.recommendations.length > 0,
+            recommendationsCount: data.recommendations?.length || 0,
+            hasFinancialData: data.recommendations?.some(r => r.estimatedSavings > 0) || false,
+            hasSavingsAnalysisChart: data.charts?.savingsAnalysis && data.charts.savingsAnalysis.length > 0,
+            savingsAnalysisChartCount: data.charts?.savingsAnalysis?.length || 0
+          });
+          
+          // Validate the financial data for recommendations
+          if (data.recommendations && data.recommendations.length > 0) {
+            // Check if any recommendations are missing financial data
+            const missingFinancialData = data.recommendations.some(
+              r => !r.estimatedSavings || !r.estimatedCost
+            );
+            
+            if (missingFinancialData) {
+              console.warn('Some recommendations are missing financial data');
+            }
+            
+            // Log total estimated savings for verification with summary
+            const totalEstimatedSavings = data.recommendations.reduce(
+              (sum, r) => sum + (r.estimatedSavings || 0), 
+              0
+            );
+            
+            console.log('Total estimated savings calculated from recommendations:', {
+              calculatedTotal: totalEstimatedSavings,
+              summaryTotal: data.summary?.totalEstimatedSavings,
+              match: Math.abs(totalEstimatedSavings - (data.summary?.totalEstimatedSavings || 0)) < 1
+            });
+          }
+          
           setReportData(data);
           setError(null);
         } else {

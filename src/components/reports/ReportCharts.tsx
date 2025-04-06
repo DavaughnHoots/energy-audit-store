@@ -18,6 +18,20 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
   const [isMobile, setIsMobile] = useState(false);
   
+  // Log the incoming chart data for debugging
+  useEffect(() => {
+    console.log('Report Charts: data received', {
+      hasSavingsAnalysis: data.savingsAnalysis && data.savingsAnalysis.length > 0,
+      savingsAnalysisCount: data.savingsAnalysis?.length || 0,
+      savingsAnalysisData: data.savingsAnalysis,
+      totalEstimatedSavings: data.savingsAnalysis?.reduce((sum, item) => sum + (item.estimatedSavings || 0), 0) || 0,
+      hasEnergyBreakdown: data.energyBreakdown && data.energyBreakdown.length > 0,
+      energyBreakdownCount: data.energyBreakdown?.length || 0,
+      hasConsumption: data.consumption && data.consumption.length > 0,
+      consumptionCount: data.consumption?.length || 0
+    });
+  }, [data]);
+  
   // Check if we're on mobile using a media query
   useEffect(() => {
     const checkIfMobile = () => {
@@ -40,6 +54,39 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
   energyBreakdownData.forEach(item => {
     item['percentage'] = ((item.value / totalEnergy) * 100).toFixed(1);
   });
+  
+  // Process savings analysis data to ensure it has non-zero values for chart visibility
+  const processedSavingsData = (() => {
+    if (!data.savingsAnalysis || data.savingsAnalysis.length === 0) {
+      console.warn('Savings analysis data is missing or empty');
+      return [];
+    }
+    
+    // Filter out items with no savings data
+    const validData = data.savingsAnalysis.filter(item => 
+      item.estimatedSavings !== undefined && 
+      item.estimatedSavings !== null
+    );
+    
+    if (validData.length === 0) {
+      console.warn('No valid savings data for chart display');
+      return [];
+    }
+    
+    // Check if all values are zero - in this case, we'll add a small offset for visibility
+    const allZeros = validData.every(item => item.estimatedSavings === 0 && item.actualSavings === 0);
+    
+    if (allZeros) {
+      console.warn('All savings values are zero, adding visual offset');
+      return validData.map(item => ({
+        ...item,
+        estimatedSavings: 1, // Small non-zero value for visual representation
+        actualSavings: 0
+      }));
+    }
+    
+    return validData;
+  })();
 
   return (
     <section className="mb-8">
@@ -120,38 +167,44 @@ const ReportCharts: React.FC<ChartProps> = ({ data }) => {
       <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
         <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-4">Savings Analysis</h3>
         <div className="h-60 sm:h-80 overflow-hidden">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data.savingsAnalysis}
-              margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
-              barSize={isMobile ? 30 : 40}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="name" 
-                tick={{ fontSize: isMobile ? 10 : 12 }}
-                tickMargin={5}
-              />
-              <YAxis 
-                tick={{ fontSize: isMobile ? 10 : 12 }}
-                width={isMobile ? 30 : 35}
-                // Set minimum value to ensure axes are visible even with minimal data
-                domain={[0, 'dataMax + 1']}
-              />
-              <Tooltip 
-                formatter={(value) => formatCurrency(Number(value))}
-                wrapperStyle={{ fontSize: '12px' }}
-              />
-              <Legend 
-                layout="horizontal"
-                align="center"
-                verticalAlign="bottom"
-                wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }}
-              />
-              <Bar dataKey="estimatedSavings" name="Estimated Savings" fill="#3B82F6" />
-              <Bar dataKey="actualSavings" name="Actual Savings" fill="#10B981" />
-            </BarChart>
-          </ResponsiveContainer>
+          {processedSavingsData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={processedSavingsData}
+                margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
+                barSize={isMobile ? 30 : 40}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  tickMargin={5}
+                />
+                <YAxis 
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  width={isMobile ? 30 : 35}
+                  // Set minimum value to ensure axes are visible even with minimal data
+                  domain={[0, 'dataMax + 1']}
+                />
+                <Tooltip 
+                  formatter={(value) => formatCurrency(Number(value))}
+                  wrapperStyle={{ fontSize: '12px' }}
+                />
+                <Legend 
+                  layout="horizontal"
+                  align="center"
+                  verticalAlign="bottom"
+                  wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }}
+                />
+                <Bar dataKey="estimatedSavings" name="Estimated Savings" fill="#3B82F6" />
+                <Bar dataKey="actualSavings" name="Actual Savings" fill="#10B981" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-400 text-sm">No savings analysis data available</p>
+            </div>
+          )}
         </div>
       </div>
     </section>
