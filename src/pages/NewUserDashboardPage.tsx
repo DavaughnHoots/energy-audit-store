@@ -4,13 +4,15 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   SimpleDashboardLayout,
-  RecommendationsList,
   SummaryStats,
   ChartSection,
 } from "@/components/dashboard2";
+import DashboardRecommendationsAdapter from "@/components/dashboard2/DashboardRecommendationsAdapter";
 import { fetchAuditHistory, fetchReportData } from "@/services/reportService";
+import { matchProductsToRecommendations } from "@/services/productRecommendationService";
 import { AuditRecommendation } from "@/types/energyAudit";
 import { useLocalStorage } from "@/utils/authUtils";
+import { enhanceEnergyBreakdown } from "@/utils/energyBreakdownCalculations";
 
 interface DashboardStats {
   totalSavings: {
@@ -44,6 +46,7 @@ interface DashboardStats {
     energyEfficiency: number;
     potentialSavings: number;
   };
+  budgetConstraint?: number;
 }
 
 /**
@@ -117,7 +120,7 @@ const NewUserDashboardPage: React.FC = () => {
       const reportData = await fetchReportData(auditId);
       console.log("📊 Report data:", reportData);
 
-      // Count active vs. implemented recommendations
+      // Get recommendations and count active vs. implemented
       const recommendations = reportData.recommendations || [];
       const activeCount = recommendations.filter(
         (r) => r.status === "active",
@@ -126,35 +129,89 @@ const NewUserDashboardPage: React.FC = () => {
         (r) => r.status === "implemented",
       ).length;
 
-      // Calculate total estimated savings
-      const totalEstimated =
-        reportData.recommendations?.reduce((sum, rec) => {
-          let savings = 0;
-          if (typeof rec.estimatedSavings === "number") {
-            savings = rec.estimatedSavings;
-          } else if (rec.estimatedSavings) {
-            const parsed = parseFloat(
-              String(rec.estimatedSavings).replace(/[^0-9.-]+/g, "") || "0",
-            );
-            savings = isNaN(parsed) ? 0 : parsed;
+      // Enhance the data using product recommendation service
+      // This is the same enhancement process used in the interactive report
+      try {
+        console.log('Enhancing chart financial data from product recommendations...');
+        
+        // Get user preferences if available
+        const userCategories = reportData.productPreferences?.categories || [];
+        const budgetConstraint = reportData.productPreferences?.budgetConstraint || 0;
+        
+        // Call the product recommendation service to get accurate financial data
+        const productMatches = await matchProductsToRecommendations(
+          recommendations,
+          userCategories,
+          budgetConstraint
+        );
+        
+        console.log('Product matches retrieved:', {
+          matchCount: productMatches.length,
+          recommendationCount: recommendations.length
+        });
+        
+        // Update recommendations with enhanced financial data
+        if (productMatches.length > 0) {
+          // Update the recommendations with accurate financial values
+          const enhancedRecommendations = recommendations.map(rec => {
+            const match = productMatches.find(m => m.recommendationId === rec.id);
+            if (match?.financialData && (!rec.estimatedSavings || rec.estimatedSavings === 0)) {
+              return {
+                ...rec,
+                estimatedSavings: match.financialData.estimatedSavings,
+                estimatedCost: match.financialData.implementationCost,
+                paybackPeriod: match.financialData.paybackPeriod
+              };
+            }
+            return rec;
+          });
+          
+          // Update the chart data with enhanced values
+          if (reportData.charts?.savingsAnalysis) {
+            reportData.charts.savingsAnalysis = enhancedRecommendations.map(rec => ({
+              name: rec.title || rec.type,
+              estimatedSavings: rec.estimatedSavings || 0,
+              actualSavings: rec.actualSavings || 0
+            }));
           }
-          return sum + savings;
-        }, 0) || 0;
+          
+          // Replace the original recommendations with enhanced ones
+          reportData.recommendations = enhancedRecommendations;
+        }
+      } catch (err) {
+        console.error('Error enhancing chart data:', err);
+        // Continue without enhancement if there's an error
+      }
 
-      // Calculate total actual savings
-      const totalActual =
-        reportData.recommendations?.reduce((sum, rec) => {
-          let savings = 0;
-          if (typeof rec.actualSavings === "number") {
-            savings = rec.actualSavings;
-          } else if (rec.actualSavings) {
-            const parsed = parseFloat(
-              String(rec.actualSavings).replace(/[^0-9.-]+/g, "") || "0",
-            );
-            savings = isNaN(parsed) ? 0 : parsed;
-          }
-          return sum + savings;
-        }, 0) || 0;
+      // Now calculate totals with the enhanced data
+      
+      // Calculate total estimated savings with enhanced data
+      const totalEstimated = recommendations.reduce((sum, rec) => {
+        let savings = 0;
+        if (typeof rec.estimatedSavings === "number") {
+          savings = rec.estimatedSavings;
+        } else if (rec.estimatedSavings) {
+          const parsed = parseFloat(
+            String(rec.estimatedSavings).replace(/[^0-9.-]+/g, "") || "0",
+          );
+          savings = isNaN(parsed) ? 0 : parsed;
+        }
+        return sum + savings;
+      }, 0) || 0;
+
+      // Calculate total actual savings with enhanced data
+      const totalActual = recommendations.reduce((sum, rec) => {
+        let savings = 0;
+        if (typeof rec.actualSavings === "number") {
+          savings = rec.actualSavings;
+        } else if (rec.actualSavings) {
+          const parsed = parseFloat(
+            String(rec.actualSavings).replace(/[^0-9.-]+/g, "") || "0",
+          );
+          savings = isNaN(parsed) ? 0 : parsed;
+        }
+        return sum + savings;
+      }, 0) || 0;
 
       // Get the potential savings value
       const potentialSavings =
@@ -180,7 +237,12 @@ const NewUserDashboardPage: React.FC = () => {
         lastUpdated: new Date().toISOString(),
         enhancedRecommendations: reportData.recommendations || [],
         energyAnalysis: {
-          energyBreakdown: reportData.charts?.energyBreakdown || [],
+          // Enhance the energy breakdown data to show detailed categories
+          energyBreakdown: enhanceEnergyBreakdown(
+            reportData.charts?.energyBreakdown || [], 
+            // Pass the reportData as audit data - it may contain the relevant fields
+            reportData as any
+          ),
           consumption: reportData.charts?.consumption || [],
           savingsAnalysis: reportData.charts?.savingsAnalysis || []
         },
@@ -192,6 +254,7 @@ const NewUserDashboardPage: React.FC = () => {
           energyEfficiency: 0,
           potentialSavings: 0,
         },
+        budgetConstraint: reportData.productPreferences?.budgetConstraint || 0,
       });
 
       setError(null);
@@ -254,6 +317,20 @@ const NewUserDashboardPage: React.FC = () => {
         consumption={stats.energyAnalysis?.consumption}
         savingsAnalysis={stats.energyAnalysis?.savingsAnalysis}
         isLoading={isLoading}
+      />
+
+      {/* Spacer */}
+      <div className="my-6"></div>
+
+      {/* Recommendations Section */}
+      <DashboardRecommendationsAdapter
+        recommendations={stats.enhancedRecommendations || []}
+        userCategories={stats.userCategories || []}
+        budgetConstraint={stats.budgetConstraint}
+        auditId={stats.auditId}
+        isLoading={isLoading}
+        onRefresh={handleRefresh}
+        dataSource="detailed"
       />
 
     </SimpleDashboardLayout>

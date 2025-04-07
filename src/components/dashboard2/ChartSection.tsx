@@ -16,6 +16,18 @@ interface SavingsChartDataPoint {
   actualSavings: number;
 }
 
+// Define energy colors interface with index signature
+interface EnergyColors {
+  hvac: string;
+  lighting: string;
+  appliances: string;
+  electronics: string;
+  other: string;
+  electricity: string;
+  gas: string;
+  [key: string]: string;  // Index signature for dynamic access
+}
+
 interface ChartSectionProps {
   energyBreakdown?: ChartDataPoint[];
   consumption?: ChartDataPoint[];
@@ -33,16 +45,21 @@ const ChartSection: React.FC<ChartSectionProps> = ({
   savingsAnalysis = [],
   isLoading = false
 }) => {
-// Update colors to match your theme
-const colors = {
-  estimated: '#2563eb', // primary blue
-  actual: '#10b981',    // teal green
-  energy: {
-    electricity: '#2563eb', // electric blue
-    gas: '#10b981'          // natural gas teal
-  },
-  consumption: '#2563eb'    // blue for consumption bars
-};
+  // Update colors to support multiple categories
+  const colors = {
+    estimated: '#2563eb', // primary blue
+    actual: '#10b981',    // teal green
+    energy: {
+      hvac: '#0088FE',       // Blue
+      lighting: '#00C49F',   // Teal
+      appliances: '#FFBB28', // Yellow
+      electronics: '#FF8042', // Orange
+      other: '#8884D8',      // Purple
+      electricity: '#2563eb', // Keep original colors for backward compatibility
+      gas: '#10b981'          // Keep original colors for backward compatibility
+    } as EnergyColors,
+    consumption: '#2563eb'    // blue for consumption bars
+  };
 
   if (isLoading) {
     return (
@@ -68,9 +85,10 @@ const colors = {
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-lg font-semibold mb-4">Energy Analysis</h2>
 
-      {/* Energy Breakdown Chart */}
-      {energyBreakdown && energyBreakdown.length > 0 && (
-          <div className="mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Energy Breakdown Chart */}
+        {energyBreakdown && energyBreakdown.length > 0 && (
+          <div className="mb-0">
             <h3 className="text-lg font-medium mb-4">Energy Breakdown</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -81,52 +99,58 @@ const colors = {
                     cy="50%"
                     innerRadius={60}
                     outerRadius={100}
-                    paddingAngle={0}
+                    paddingAngle={2}
                     dataKey="value"
                     nameKey="name"
                     label={({name, percent}) => `${(percent * 100).toFixed(1)}%`}
                   >
-                    {energyBreakdown.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={index === 0 ? colors.energy.electricity : colors.energy.gas}
-                      />
-                    ))}
+                    {energyBreakdown.map((entry, index) => {
+                      // Convert entry name to lowercase for color mapping and handle spaces
+                      const colorKey = entry.name.toLowerCase().replace(/\s+/g, '');
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={colors.energy[colorKey] || `#${Math.floor(Math.random()*16777215).toString(16)}`}
+                        />
+                      );
+                    })}
                   </Pie>
                   <Legend />
-                  <Tooltip formatter={(value) => `${value}%`} />
+                  <Tooltip formatter={(value) => `${value} kWh`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
         )}
 
-      {/* Energy Consumption Chart */}
-      {consumption && consumption.length > 0 && (
-        <div className="mt-8 pt-8 border-t border-gray-200">
-          <h3 className="text-lg font-medium mb-4">Energy Consumption Factors</h3>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={consumption}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis
-                  label={{ value: 'Energy (kWh)', angle: -90, position: 'insideLeft' }}
-                  tickFormatter={(value) => `${value}`}
-                />
-                <Tooltip formatter={(value) => `${value} kWh`} />
-                <Legend />
-                <Bar dataKey="value" name="Energy (kWh)" fill="#2563eb" />
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Energy Consumption Chart */}
+        {consumption && consumption.length > 0 && (
+          <div className="mt-0">
+            <h3 className="text-lg font-medium mb-4">Energy Consumption Factors</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={consumption}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis
+                    label={{ value: 'Energy (kWh)', angle: -90, position: 'outside', dx: -35 }}
+                    tickFormatter={(value) => `${value}`}
+                    width={60} // Increase width to give more space for labels
+                  />
+                  <Tooltip formatter={(value) => `${value} kWh`} />
+                  <Legend />
+                  <Bar dataKey="value" name="Energy (kWh)" fill="#2563eb" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      <div className="space-y-8">
+      <div className="space-y-8 mt-8 pt-8 border-t border-gray-200">
         {/* Savings Analysis Chart */}
         {savingsAnalysis && savingsAnalysis.length > 0 && (
           <div>
@@ -165,7 +189,6 @@ const colors = {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
