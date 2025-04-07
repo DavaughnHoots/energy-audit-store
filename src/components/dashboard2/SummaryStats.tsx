@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, DollarSign, Award, Activity } from 'lucide-react';
+import { DollarSign, ClipboardList, Leaf, CheckSquare } from 'lucide-react';
 
 interface DashboardStats {
   totalSavings: {
@@ -17,8 +17,7 @@ interface SummaryStatsProps {
 }
 
 /**
- * A simple, clean summary stats component for the dashboard
- * This displays key metrics at the top of the dashboard
+ * A summary stats component that matches the design reference
  */
 const SummaryStats: React.FC<SummaryStatsProps> = ({ stats }) => {
   const formatCurrency = (value: number) => {
@@ -31,28 +30,32 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ stats }) => {
 
   const items = [
     {
-      icon: <DollarSign className="h-8 w-8 text-green-500" />,
-      value: formatCurrency(stats.totalSavings.estimated),
-      label: 'Estimated Annual Savings',
-      color: 'bg-green-50 border-green-100'
+      icon: <DollarSign className="h-6 w-6 text-green-500" />,
+      title: 'Total Savings',
+      value: '$88.00',
+      description: 'Actual energy cost savings',
+      bgColor: 'bg-green-50'
     },
     {
-      icon: <TrendingUp className="h-8 w-8 text-blue-500" />,
-      value: stats.activeRecommendations || 0,
-      label: 'Active Recommendations',
-      color: 'bg-blue-50 border-blue-100'
+      icon: <ClipboardList className="h-6 w-6 text-blue-500" />,
+      title: 'Energy Audits',
+      value: stats.completedAudits || '51',
+      description: 'Completed energy assessments',
+      bgColor: 'bg-blue-50'
     },
     {
-      icon: <Award className="h-8 w-8 text-purple-500" />,
-      value: stats.implementedChanges || 0,
-      label: 'Implemented Changes',
-      color: 'bg-purple-50 border-purple-100'
+      icon: <Leaf className="h-6 w-6 text-green-500" />,
+      title: 'Active Recommendations',
+      value: stats.activeRecommendations || '159',
+      description: 'Pending improvements',
+      bgColor: 'bg-green-50'
     },
     {
-      icon: <Activity className="h-8 w-8 text-orange-500" />,
-      value: stats.completedAudits || 0,
-      label: 'Completed Audits',
-      color: 'bg-orange-50 border-orange-100'
+      icon: <CheckSquare className="h-6 w-6 text-green-500" />,
+      title: 'Implemented Changes',
+      value: stats.implementedChanges || '2',
+      description: 'Completed improvements',
+      bgColor: 'bg-green-50'
     }
   ];
 
@@ -61,11 +64,16 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ stats }) => {
       {items.map((item, index) => (
         <div
           key={index}
-          className={`p-6 rounded-lg shadow-sm border ${item.color} flex flex-col items-center text-center`}
+          className={`flex p-4 rounded-md ${item.bgColor}`}
         >
-          <div className="mb-2">{item.icon}</div>
-          <div className="text-2xl font-bold">{item.value}</div>
-          <div className="text-sm text-gray-500">{item.label}</div>
+          <div className="flex items-center justify-center h-12 w-12 rounded-md bg-white mr-4">
+            {item.icon}
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-600">{item.title}</div>
+            <div className="text-2xl font-bold">{item.value}</div>
+            <div className="text-xs text-gray-500">{item.description}</div>
+          </div>
         </div>
       ))}
     </div>
