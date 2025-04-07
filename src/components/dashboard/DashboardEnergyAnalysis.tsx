@@ -147,9 +147,9 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
     item['percentage'] = ((item.value / totalEnergy) * 100).toFixed(1);
   });
   
-  // Process savings analysis data to ensure it has non-zero values for chart visibility (from ReportCharts)
+  // Process savings analysis data using exact same logic as ReportCharts
   const processedSavingsData = (() => {
-    if (savingsAnalysisData.length === 0) {
+    if (!savingsAnalysisData || savingsAnalysisData.length === 0) {
       console.warn('Savings analysis data is missing or empty');
       return [];
     }
