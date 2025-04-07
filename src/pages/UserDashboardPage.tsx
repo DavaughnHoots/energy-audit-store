@@ -6,9 +6,9 @@ import { useLocalStorage } from '@/utils/authUtils';
 import { AlertCircle, Download, Loader2, Settings, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
-// Removed redundant tabs imports
 import ReportsTab from '@/components/dashboard/ReportsTab';
 import { fetchAuditHistory, fetchReportData } from '@/services/reportService';
+import { AuditRecommendation } from '@/types/energyAudit';
 
 interface DashboardStats {
   totalSavings: {
@@ -55,9 +55,6 @@ interface SavingsChartDataPoint {
   actualSavings: number;
 }
 
-// Import AuditRecommendation type from energyAudit
-import { AuditRecommendation } from '@/types/energyAudit';
-
 const UserDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
@@ -80,6 +77,11 @@ const UserDashboardPage: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0); // Used to force refresh
   const [effectiveAuditId, setEffectiveAuditId] = useState<string | null>(null);
   const [usingFallbackAudit, setUsingFallbackAudit] = useState(false);
+
+  /**
+   * Reference to track if we're already fetching data to prevent duplicate requests
+   */
+  const isLoadingRef = useRef(false);
 
   const fetchDashboardData = useCallback(async (): Promise<number | undefined> => {
     try {
@@ -162,31 +164,6 @@ const UserDashboardPage: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    let refreshTimeout: NodeJS.Timeout;
-
-    const refresh = () => {
-      fetchDashboardData().then(interval => {
-        if (interval) {
-          refreshTimeout = setTimeout(refresh, interval);
-        }
-      });
-    };
-
-    refresh();
-
-    return () => {
-      if (refreshTimeout) {
-        clearTimeout(refreshTimeout);
-      }
-    };
-  }, [fetchDashboardData, refreshKey]);
-
-  /**
-   * Reference to track if we're already fetching data to prevent duplicate requests
-   */
-  const isLoadingRef = useRef(false);
 
   /**
    * Function to fetch dashboard data for a specific audit ID using the report API
@@ -277,6 +254,26 @@ const UserDashboardPage: React.FC = () => {
       isLoadingRef.current = false;
     }
   }, []);  // Note: Removed stats from dependency array to prevent infinite loop
+
+  useEffect(() => {
+    let refreshTimeout: NodeJS.Timeout;
+
+    const refresh = () => {
+      fetchDashboardData().then(interval => {
+        if (interval) {
+          refreshTimeout = setTimeout(refresh, interval);
+        }
+      });
+    };
+
+    refresh();
+
+    return () => {
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+    };
+  }, [fetchDashboardData, refreshKey]);
 
   // Fetch first audit from history if no latestAuditId is available
   useEffect(() => {
@@ -432,3 +429,5 @@ const UserDashboardPage: React.FC = () => {
     </div>
   );
 };
+
+export default UserDashboardPage;

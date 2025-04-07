@@ -149,7 +149,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
   
   // Process savings analysis data using exact same logic as ReportCharts
   const processedSavingsData = (() => {
-    if (!savingsAnalysisData || savingsAnalysisData.length === 0) {
+    if (savingsAnalysisData.length === 0) {
       console.warn('Savings analysis data is missing or empty');
       return [];
     }
