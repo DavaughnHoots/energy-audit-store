@@ -125,7 +125,7 @@ const NewUserDashboardPage: React.FC = () => {
           actual: totalActual, 
           accuracy: totalActual ? Math.round((totalActual / totalEstimated) * 100) : 0 
         },
-        completedAudits: historyData.audits.length || 1,
+        completedAudits: historyData.pagination.totalRecords || 0,
         activeRecommendations: activeCount,
         implementedChanges: implementedCount,
         lastUpdated: new Date().toISOString(),
