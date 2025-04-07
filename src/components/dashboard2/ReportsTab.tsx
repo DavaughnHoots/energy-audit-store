@@ -46,7 +46,7 @@ const ReportsTab: React.FC = () => {
   };
 
   const handleViewInteractiveReport = (auditId: string) => {
-    navigate(`/reports/interactive/${auditId}`);
+    navigate(`/reports/${auditId}`);
   };
 
   return (
