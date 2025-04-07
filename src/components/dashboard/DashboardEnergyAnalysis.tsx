@@ -7,6 +7,30 @@ import { InfoIcon } from 'lucide-react';
 import { ChartDataPoint, SavingsChartDataPoint } from '../../types/report';
 import { formatCurrency } from '../../utils/financialCalculations';
 
+// Default data to use when no data is provided
+const DEFAULT_ENERGY_BREAKDOWN: ChartDataPoint[] = [
+  { name: 'HVAC', value: 42 },
+  { name: 'Lighting', value: 18 },
+  { name: 'Appliances', value: 15 },
+  { name: 'Electronics', value: 14 },
+  { name: 'Other', value: 11 }
+];
+
+const DEFAULT_CONSUMPTION: ChartDataPoint[] = [
+  { name: 'Living Room', value: 28 },
+  { name: 'Kitchen', value: 24 },
+  { name: 'Bedrooms', value: 18 },
+  { name: 'Bathroom', value: 10 },
+  { name: 'Outdoor', value: 20 }
+];
+
+const DEFAULT_SAVINGS: SavingsChartDataPoint[] = [
+  { name: 'HVAC Improvements', estimatedSavings: 350, actualSavings: 320 },
+  { name: 'Lighting Efficiency', estimatedSavings: 180, actualSavings: 165 },
+  { name: 'Appliance Upgrades', estimatedSavings: 220, actualSavings: 190 },
+  { name: 'Insulation', estimatedSavings: 150, actualSavings: 130 }
+];
+
 interface EnergyAnalysisProps {
   data: {
     energyBreakdown: ChartDataPoint[];
@@ -79,20 +103,32 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
     );
   }
 
-  // Safely extract data with fallbacks to empty arrays
-  const energyBreakdownData = data?.energyBreakdown || [];
-  const consumptionData = data?.consumption || [];
-  const savingsAnalysisData = data?.savingsAnalysis || [];
+  // Safely extract data with fallbacks to default data instead of empty arrays
+  const energyBreakdownData = (data?.energyBreakdown && data.energyBreakdown.length > 0) 
+    ? data.energyBreakdown 
+    : DEFAULT_ENERGY_BREAKDOWN;
+    
+  const consumptionData = (data?.consumption && data.consumption.length > 0)
+    ? data.consumption
+    : DEFAULT_CONSUMPTION;
+    
+  const savingsAnalysisData = (data?.savingsAnalysis && data.savingsAnalysis.length > 0)
+    ? data.savingsAnalysis
+    : DEFAULT_SAVINGS;
   
-  // If we have no data at all, show the placeholder message
-  // This should rarely happen as the backend should provide default data
+  // Track whether we're using default data for each chart
+  const isUsingDefaultEnergyBreakdown = data?.energyBreakdown?.length === 0 || !data?.energyBreakdown;
+  const isUsingDefaultConsumption = data?.consumption?.length === 0 || !data?.consumption;
+  const isUsingDefaultSavings = data?.savingsAnalysis?.length === 0 || !data?.savingsAnalysis;
+  
+  // Only show placeholder in truly catastrophic scenario (should never happen)
   if (energyBreakdownData.length === 0 && consumptionData.length === 0 && savingsAnalysisData.length === 0) {
-    console.warn('No energy data available, showing placeholder');
+    console.error('Critical error: Both incoming data and default data are missing');
     return (
       <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 mx-0">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Energy Analysis</h2>
         <div className="h-60 flex flex-col items-center justify-center">
-          <p className="text-gray-500 mb-4">No energy analysis data available yet.</p>
+          <p className="text-gray-500 mb-4">Error loading energy analysis data.</p>
           <a 
             href="/energy-audit" 
             className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
@@ -153,7 +189,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
         <div className="bg-white p-3 sm:p-4 shadow rounded-lg mb-4 sm:mb-6">
           <div className="flex justify-between items-center mb-2 sm:mb-4">
             <h3 className="text-base sm:text-lg font-medium">Energy Breakdown</h3>
-            {dataSource === 'generated' && (
+            {(dataSource === 'generated' || isUsingDefaultEnergyBreakdown) && (
               <div className="flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded">
                 <InfoIcon className="h-3 w-3 mr-1" />
                 <span>Sample Data</span>
@@ -206,7 +242,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
         <div className="bg-white p-3 sm:p-4 shadow rounded-lg mb-4 sm:mb-6">
           <div className="flex justify-between items-center mb-2 sm:mb-4">
             <h3 className="text-base sm:text-lg font-medium">Energy Consumption Factors</h3>
-            {dataSource === 'generated' && (
+            {(dataSource === 'generated' || isUsingDefaultConsumption) && (
               <div className="flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded">
                 <InfoIcon className="h-3 w-3 mr-1" />
                 <span>Sample Data</span>
@@ -256,7 +292,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
       <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
         <div className="flex justify-between items-center mb-2 sm:mb-4">
           <h3 className="text-base sm:text-lg font-medium">Savings Analysis</h3>
-          {dataSource === 'generated' && (
+          {(dataSource === 'generated' || isUsingDefaultSavings) && (
             <div className="flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded">
               <InfoIcon className="h-3 w-3 mr-1" />
               <span>Sample Data</span>
