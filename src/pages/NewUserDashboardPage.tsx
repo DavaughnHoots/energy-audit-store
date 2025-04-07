@@ -336,6 +336,21 @@ const NewUserDashboardPage: React.FC = () => {
         dataSource="detailed"
       />
 
+      {/* Spacer */}
+      <div className="my-8"></div>
+
+      {/* View Full Report Button */}
+      {stats.auditId && (
+        <div className="flex justify-center">
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-6 text-lg rounded-lg shadow-md transition-colors duration-200"
+            onClick={() => navigate(`/reports/${stats.auditId}`)}
+          >
+            View Full Energy Report
+          </Button>
+        </div>
+      )}
+
     </SimpleDashboardLayout>
   );
 };
