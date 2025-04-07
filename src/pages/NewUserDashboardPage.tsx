@@ -30,6 +30,12 @@ interface DashboardStats {
   };
   userCategories?: string[];
   auditId?: string | null;
+  executiveSummary?: {
+    totalEnergy: number;
+    efficiencyScore: number;
+    energyEfficiency: number;
+    potentialSavings: number;
+  };
 }
 
 /**
@@ -53,6 +59,12 @@ const NewUserDashboardPage: React.FC = () => {
       energyBreakdown: [],
       consumption: [],
       savingsAnalysis: []
+    },
+    executiveSummary: {
+      totalEnergy: 0,
+      efficiencyScore: 0,
+      energyEfficiency: 0,
+      potentialSavings: 0
     }
   });
 
@@ -125,7 +137,7 @@ const NewUserDashboardPage: React.FC = () => {
           actual: totalActual, 
           accuracy: totalActual ? Math.round((totalActual / totalEstimated) * 100) : 0 
         },
-        completedAudits: historyData.pagination.totalRecords || 0,
+        completedAudits: historyData.pagination.totalRecords || 0,  // Using total records as we discussed earlier
         activeRecommendations: activeCount,
         implementedChanges: implementedCount,
         lastUpdated: new Date().toISOString(),
@@ -136,7 +148,13 @@ const NewUserDashboardPage: React.FC = () => {
           savingsAnalysis: reportData.charts?.savingsAnalysis || []
         },
         userCategories: (reportData as any).userPreferences?.categories || [],
-        auditId
+        auditId,
+        executiveSummary: reportData.executiveSummary || {
+          totalEnergy: 0,
+          efficiencyScore: 0,
+          energyEfficiency: 0,
+          potentialSavings: 0
+        }
       });
       
       setError(null);

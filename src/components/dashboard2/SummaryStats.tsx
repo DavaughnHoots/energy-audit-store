@@ -10,6 +10,12 @@ interface DashboardStats {
   completedAudits?: number;
   activeRecommendations?: number;
   implementedChanges?: number;
+  executiveSummary?: {
+    totalEnergy: number;
+    efficiencyScore: number;
+    energyEfficiency: number;
+    potentialSavings: number;
+  };
 }
 
 interface SummaryStatsProps {
@@ -32,8 +38,8 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ stats }) => {
     {
       icon: <DollarSign className="h-6 w-6 text-green-500" />,
       title: 'Total Savings',
-      value: formatCurrency(stats.totalSavings.estimated || 0),
-      description: 'Estimated energy cost savings',
+      value: formatCurrency(stats.executiveSummary?.potentialSavings || 0),
+      description: 'Potential annual savings',
       bgColor: 'bg-green-50'
     },
     {
