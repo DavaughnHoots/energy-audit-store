@@ -9,6 +9,7 @@ export interface WindowMaintenance {
   id: string;
   userId: string;
   windowCount: number;
+  windowType?: string;  // Type of windows (single, double, triple pane)
   lastReplacementDate: string | null;  // ISO date string
   nextMaintenanceDate: string | null;  // ISO date string
   maintenanceNotes: string | null;
@@ -29,6 +30,7 @@ export interface WeatherizationMonitoring {
 
 export interface UpdateWindowMaintenanceDto {
   windowCount?: number;
+  windowType?: string;
   lastReplacementDate?: string | null;
   nextMaintenanceDate?: string | null;
   maintenanceNotes?: string | null;

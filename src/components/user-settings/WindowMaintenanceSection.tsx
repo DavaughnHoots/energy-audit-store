@@ -1,6 +1,14 @@
 import React from 'react';
 import { UpdateWindowMaintenanceDto, WindowMaintenance } from '@/types/propertySettings';
 
+// Constants for window types
+const WINDOW_TYPES = [
+  { value: 'single', label: 'Single Pane' },
+  { value: 'double', label: 'Double Pane' },
+  { value: 'triple', label: 'Triple Pane' },
+  { value: 'not-sure', label: 'Not Sure' }
+];
+
 interface Props {
   data?: WindowMaintenance;
   onSave: (data: UpdateWindowMaintenanceDto) => Promise<void>;
@@ -9,6 +17,7 @@ interface Props {
 const WindowMaintenanceSection: React.FC<Props> = ({ data, onSave }) => {
   const [formData, setFormData] = React.useState<UpdateWindowMaintenanceDto>({
     windowCount: data?.windowCount || 0,
+    windowType: data?.windowType || 'not-sure',
     lastReplacementDate: data?.lastReplacementDate || null,
     nextMaintenanceDate: data?.nextMaintenanceDate || null,
     maintenanceNotes: data?.maintenanceNotes || null
@@ -35,6 +44,22 @@ const WindowMaintenanceSection: React.FC<Props> = ({ data, onSave }) => {
             onChange={(e) => setFormData(prev => ({ ...prev, windowCount: parseInt(e.target.value) }))}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
           />
+        </div>
+
+        <div>
+          <label htmlFor="windowType" className="block text-sm font-medium text-gray-700">
+            Window Type
+          </label>
+          <select
+            id="windowType"
+            value={formData.windowType || 'not-sure'}
+            onChange={(e) => setFormData(prev => ({ ...prev, windowType: e.target.value }))}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+          >
+            {WINDOW_TYPES.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
         </div>
 
         <div>

@@ -57,22 +57,7 @@ const PropertyDetailsForm: React.FC<PropertyDetailsFormProps> = ({ initialData, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate inputs
-    if (!propertyType) {
-      setError('Property type is required');
-      return;
-    }
-    
-    if (!squareFootage || squareFootage <= 0) {
-      setError('Please enter a valid square footage');
-      return;
-    }
-    
-    if (!yearBuilt || yearBuilt < 1800 || yearBuilt > new Date().getFullYear()) {
-      setError('Please enter a valid year built');
-      return;
-    }
-    
+    // No validation - all fields are optional now
     setIsSaving(true);
     setError('');
     setSuccess('');
@@ -147,7 +132,6 @@ const PropertyDetailsForm: React.FC<PropertyDetailsFormProps> = ({ initialData, 
                 value={propertyType}
                 onChange={(e) => setPropertyType(e.target.value)}
                 className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm"
-                required
               >
                 <option value="">Select property type</option>
                 {PROPERTY_TYPES.map(option => (
@@ -183,7 +167,6 @@ const PropertyDetailsForm: React.FC<PropertyDetailsFormProps> = ({ initialData, 
                 value={yearBuilt}
                 onChange={(e) => setYearBuilt(e.target.value ? Number(e.target.value) : '')}
                 className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm"
-                required
               />
             </div>
 
@@ -197,44 +180,12 @@ const PropertyDetailsForm: React.FC<PropertyDetailsFormProps> = ({ initialData, 
                 value={squareFootage}
                 onChange={(e) => setSquareFootage(e.target.value ? Number(e.target.value) : '')}
                 className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm"
-                required
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Windows</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Window Type
-              </label>
-              <select
-                value={windowType}
-                onChange={(e) => setWindowType(e.target.value)}
-                className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm"
-              >
-                {WINDOW_TYPES.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Windows in {isApartment ? 'Apartment' : 'Home'}
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={windowCount}
-                onChange={(e) => setWindowCount(e.target.value ? Number(e.target.value) : '')}
-                className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Windows section moved to WindowMaintenanceSection */}
 
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Water Heating System</h3>
