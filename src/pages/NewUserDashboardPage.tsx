@@ -47,6 +47,7 @@ interface DashboardStats {
     potentialSavings: number;
   };
   budgetConstraint?: number;
+  rawAuditData?: any; // Store the raw audit data for room-based visualizations
 }
 
 /**
@@ -255,6 +256,7 @@ const NewUserDashboardPage: React.FC = () => {
           potentialSavings: 0,
         },
         budgetConstraint: reportData.productPreferences?.budgetConstraint || 0,
+        rawAuditData: reportData, // Store the raw audit data for room-based visualizations
       });
 
       setError(null);
@@ -317,6 +319,7 @@ const NewUserDashboardPage: React.FC = () => {
         consumption={stats.energyAnalysis?.consumption}
         savingsAnalysis={stats.energyAnalysis?.savingsAnalysis}
         isLoading={isLoading}
+        auditData={stats.rawAuditData}
       />
 
       {/* Spacer */}

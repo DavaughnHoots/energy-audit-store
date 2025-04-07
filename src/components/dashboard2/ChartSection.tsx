@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 // Add PieChart and other components to imports
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell, Label
 } from 'recharts';
+import { transformConsumptionToRoomBased } from '@/utils/energyBreakdownCalculations';
 
 interface ChartDataPoint {
   name: string;
@@ -25,6 +26,12 @@ interface EnergyColors {
   other: string;
   electricity: string;
   gas: string;
+  // Room-based categories
+  livingroom: string;
+  kitchen: string;
+  bedrooms: string;
+  bathroom: string;
+  outdoor: string;
   [key: string]: string;  // Index signature for dynamic access
 }
 
@@ -33,6 +40,7 @@ interface ChartSectionProps {
   consumption?: ChartDataPoint[];
   savingsAnalysis?: SavingsChartDataPoint[];
   isLoading?: boolean;
+  auditData?: any; // Add audit data prop for room-based calculations
 }
 
 /**
@@ -43,8 +51,17 @@ const ChartSection: React.FC<ChartSectionProps> = ({
   energyBreakdown = [],
   consumption = [],
   savingsAnalysis = [],
-  isLoading = false
+  isLoading = false,
+  auditData = null
 }) => {
+  // State to toggle between abstract and room-based views
+  const [showRoomBased, setShowRoomBased] = useState(true);
+  
+  // Calculate room-based consumption if we have data
+  const roomBasedConsumption = auditData 
+    ? transformConsumptionToRoomBased(consumption, auditData)
+    : [];
+
   // Update colors to support multiple categories
   const colors = {
     estimated: '#2563eb', // primary blue
@@ -56,9 +73,33 @@ const ChartSection: React.FC<ChartSectionProps> = ({
       electronics: '#FF8042', // Orange
       other: '#8884D8',      // Purple
       electricity: '#2563eb', // Keep original colors for backward compatibility
-      gas: '#10b981'          // Keep original colors for backward compatibility
+      gas: '#10b981',         // Keep original colors for backward compatibility
+      // Room-based colors
+      livingroom: '#4287f5',  // Blue
+      kitchen: '#f5a742',     // Amber
+      bedrooms: '#42c5f5',    // Light blue
+      bathroom: '#8e42f5',    // Purple
+      outdoor: '#42f575'      // Green
     } as EnergyColors,
     consumption: '#2563eb'    // blue for consumption bars
+  };
+
+  // Room tooltips
+  const roomTooltips: Record<string, string> = {
+    'Living Room': 'Includes entertainment devices, main lighting, and HVAC usage in living spaces',
+    'Kitchen': 'Includes refrigerator, oven, dishwasher, and kitchen appliances',
+    'Bedrooms': 'Includes bedroom lighting, electronics, and heating/cooling',
+    'Bathroom': 'Includes water heating, ventilation, and lighting in bathrooms',
+    'Outdoor': 'Includes exterior lighting, garage, lawn equipment, and outdoor appliances'
+  };
+
+  // Custom tooltip formatter that includes room descriptions
+  const roomTooltipFormatter = (value: number, name: string, entry: any) => {
+    const roomDescription = roomTooltips[entry.name];
+    return [
+      `${value} kWh`, 
+      `${entry.name}${roomDescription ? ' - ' + roomDescription : ''}`
+    ];
   };
 
   if (isLoading) {
@@ -72,6 +113,7 @@ const ChartSection: React.FC<ChartSectionProps> = ({
   if (
     (!energyBreakdown || energyBreakdown.length === 0) &&
     (!consumption || consumption.length === 0) &&
+    (!roomBasedConsumption || roomBasedConsumption.length === 0) &&
     (!savingsAnalysis || savingsAnalysis.length === 0)
   ) {
     return (
@@ -123,14 +165,25 @@ const ChartSection: React.FC<ChartSectionProps> = ({
           </div>
         )}
 
-        {/* Energy Consumption Chart */}
-        {consumption && consumption.length > 0 && (
+        {/* Energy Consumption Chart - Room-based or Abstract */}
+        {(showRoomBased ? roomBasedConsumption : consumption) && 
+          (showRoomBased ? roomBasedConsumption.length > 0 : consumption.length > 0) && (
           <div className="mt-0">
-            <h3 className="text-lg font-medium mb-4">Energy Consumption Factors</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Energy Consumption Factors</h3>
+              {roomBasedConsumption && roomBasedConsumption.length > 0 && consumption && consumption.length > 0 && (
+                <button 
+                  className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 py-1 px-2 rounded"
+                  onClick={() => setShowRoomBased(!showRoomBased)}
+                >
+                  Show {showRoomBased ? 'Technical' : 'Room-Based'} View
+                </button>
+              )}
+            </div>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={consumption}
+                  data={showRoomBased ? roomBasedConsumption : consumption}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -140,12 +193,36 @@ const ChartSection: React.FC<ChartSectionProps> = ({
                     tickFormatter={(value) => `${value}`}
                     width={60} // Increase width to give more space for labels
                   />
-                  <Tooltip formatter={(value) => `${value} kWh`} />
+                  <Tooltip 
+                    formatter={showRoomBased ? roomTooltipFormatter : (value) => `${value} kWh`} 
+                  />
                   <Legend />
-                  <Bar dataKey="value" name="Energy (kWh)" fill="#2563eb" />
+                  <Bar 
+                    dataKey="value" 
+                    name="Energy (kWh)" 
+                    fill={colors.consumption}
+                    // Use room-specific colors for the room-based view
+                    {...(showRoomBased && {
+                      fill: undefined,
+                      children: roomBasedConsumption.map((entry, index) => {
+                        const colorKey = entry.name.toLowerCase().replace(/\s+/g, '');
+                        return (
+                          <Cell
+                            key={`consumption-cell-${index}`}
+                            fill={colors.energy[colorKey] || "#2563eb"}
+                          />
+                        );
+                      })
+                    })}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            {showRoomBased && (
+              <div className="mt-4 text-sm text-gray-500 italic">
+                This chart shows estimated energy consumption by room, helping you target the highest-usage areas for efficiency improvements.
+              </div>
+            )}
           </div>
         )}
       </div>
