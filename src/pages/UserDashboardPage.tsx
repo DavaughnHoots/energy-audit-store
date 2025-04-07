@@ -187,60 +187,113 @@ const UserDashboardPage: React.FC = () => {
         recommendationsCount: reportData.recommendations?.length || 0
       });
       
-      // Log the first recommendation to help diagnose field names
+      // Enhanced debugging to see exact data format in API response
       if (reportData.recommendations && reportData.recommendations.length > 0) {
         const firstRec = reportData.recommendations[0];
-        // Safely log all available properties to debug field names
-        console.log('RECOMMENDATION FINANCIAL DATA DEBUG:', {
+        console.log('RECOMMENDATION FULL DATA STRUCTURE:', JSON.stringify(firstRec, null, 2));
+        
+        // Log a comprehensive breakdown of all financial fields and their types
+        console.log('RECOMMENDATION FINANCIAL DEBUG:', {
           title: firstRec?.title || 'Unknown',
-          // Double cast to avoid TypeScript errors
           fieldNames: firstRec ? Object.keys(firstRec as unknown as Record<string, unknown>) : [],
-          financialFields: {
-            estimatedSavings: firstRec?.estimatedSavings,
-            actualSavings: firstRec?.actualSavings,
-            estimatedCost: firstRec?.estimatedCost,
-            implementationCost: firstRec?.implementationCost,
-            paybackPeriod: firstRec?.paybackPeriod
-          },
-          // Safely log the entire recommendation object
-          rawFinancialValues: firstRec || {}
+          // Log details about value types and formats
+          valueTypes: {
+            estimatedSavings: {
+              value: firstRec?.estimatedSavings,
+              type: typeof firstRec?.estimatedSavings,
+              hasSlash: typeof firstRec?.estimatedSavings === 'string' ? (firstRec.estimatedSavings as string).includes('/') : false,
+              hasDollarSign: typeof firstRec?.estimatedSavings === 'string' ? (firstRec.estimatedSavings as string).includes('$') : false
+            },
+            annualSavings: {
+              value: (firstRec as any)?.annualSavings,
+              type: typeof (firstRec as any)?.annualSavings
+            },
+            savingsPerYear: {
+              value: (firstRec as any)?.savingsPerYear,
+              type: typeof (firstRec as any)?.savingsPerYear
+            },
+            implementationCost: {
+              value: firstRec?.implementationCost,
+              type: typeof firstRec?.implementationCost
+            },
+            cost: {
+              value: (firstRec as any)?.cost,
+              type: typeof (firstRec as any)?.cost
+            },
+            paybackPeriod: {
+              value: firstRec?.paybackPeriod,
+              type: typeof firstRec?.paybackPeriod
+            }
+          }
         });
       }
       
-      // Transform report data to dashboard format using functional update to avoid dependency issues
+      // Also log chart data structure
+      if (reportData.charts?.savingsAnalysis && reportData.charts.savingsAnalysis.length > 0) {
+        console.log('CHART DATA STRUCTURE:', {
+          firstItem: reportData.charts.savingsAnalysis[0],
+          allItems: reportData.charts.savingsAnalysis
+        });
+      }
+      
+      // Transform report data to dashboard format with improved financial value extraction
       setStats(prevStats => {
-        // Process recommendations with proper financial data mapping
+        // Helper function to extract numeric value from various formats
+        const extractNumericValue = (value: any): number => {
+          if (typeof value === 'number') return value;
+          if (!value) return 0;
+          
+          // Handle string values that may include currency symbols or units
+          if (typeof value === 'string') {
+            // Remove currency symbols, commas, and any text after a slash (like '/year')
+            const cleanedValue = value
+              .replace(/[$,]/g, '')                // Remove $ and commas
+              .replace(/\/.*$/, '')                // Remove anything after a slash
+              .replace(/[^\d.-]/g, '')             // Remove any non-numeric chars except decimal points
+              .trim();
+            
+            const parsedValue = parseFloat(cleanedValue);
+            return isNaN(parsedValue) ? 0 : parsedValue;
+          }
+          
+          return 0;
+        };
+        
+        // Process recommendations with improved financial data mapping
         const enhancedRecommendations = reportData.recommendations?.map(rec => {
           // Create an "any" reference to access potential dynamic properties safely
           const recAny = rec as any;
           
-          // Extract potential savings values with safe type handling
-          const estimatedSavingsValue = typeof rec.estimatedSavings === 'number' ?
-            rec.estimatedSavings :
-            (parseFloat(String(rec.estimatedSavings || '0')) ||
-             parseFloat(String(recAny.savingsPerYear || '0')) || 0);
-             
-          const actualSavingsValue = typeof rec.actualSavings === 'number' ?
-            rec.actualSavings :
-            parseFloat(String(rec.actualSavings || '0')) || 0;
-            
-          const estimatedCostValue = typeof rec.estimatedCost === 'number' ?
-            rec.estimatedCost :
-            (parseFloat(String(rec.estimatedCost || '0')) ||
-             parseFloat(String(rec.implementationCost || '0')) || 0);
-             
-          const implementationCostValue = typeof rec.implementationCost === 'number' ?
-            rec.implementationCost :
-            (parseFloat(String(rec.implementationCost || '0')) ||
-             parseFloat(String(recAny.cost || '0')) || 0);
+          // Extract financial values with improved parsing logic
+          const estimatedSavingsValue = extractNumericValue(
+            rec.estimatedSavings ?? recAny.annualSavings ?? recAny.savingsPerYear ?? 0
+          );
           
-          // Create a properly typed mapped recommendation
+          const actualSavingsValue = extractNumericValue(
+            rec.actualSavings ?? recAny.realizedSavings ?? 0
+          );
+          
+          const estimatedCostValue = extractNumericValue(
+            rec.estimatedCost ?? rec.implementationCost ?? recAny.cost ?? 0
+          );
+          
+          const implementationCostValue = extractNumericValue(
+            rec.implementationCost ?? recAny.cost ?? rec.estimatedCost ?? 0
+          );
+          
+          // Extract payback period if available
+          const paybackPeriodValue = extractNumericValue(
+            rec.paybackPeriod ?? recAny.roi ?? recAny.returnOnInvestment ?? 0
+          );
+          
+          // Create a properly typed mapped recommendation with all financial values
           const mappedRec = {
             ...rec,
             estimatedSavings: estimatedSavingsValue,
             actualSavings: actualSavingsValue,
             estimatedCost: estimatedCostValue,
-            implementationCost: implementationCostValue
+            implementationCost: implementationCostValue,
+            paybackPeriod: paybackPeriodValue
           };
           
           // Log transformation for debugging
@@ -262,13 +315,28 @@ const UserDashboardPage: React.FC = () => {
           return mappedRec;
         }) || [];
         
+        // Process chart data with the same numeric extraction function
+        const processedSavingsAnalysis = (reportData.charts?.savingsAnalysis || []).map(item => {
+          // Apply same financial data extraction to chart data
+          return {
+            ...item,
+            estimatedSavings: extractNumericValue(item.estimatedSavings),
+            actualSavings: extractNumericValue(item.actualSavings)
+          };
+        });
+        
+        console.log('PROCESSED CHART DATA:', {
+          before: reportData.charts?.savingsAnalysis?.[0] || 'No chart data',
+          after: processedSavingsAnalysis[0] || 'No processed chart data'
+        });
+        
         const dashboardData = {
           ...prevStats,
-          // Properly map chart data with correct financial values
+          // Use processed chart data with proper financial values
           energyAnalysis: {
             energyBreakdown: reportData.charts?.energyBreakdown || [],
             consumption: reportData.charts?.consumption || [],
-            savingsAnalysis: reportData.charts?.savingsAnalysis || []
+            savingsAnalysis: processedSavingsAnalysis
           },
           // Use our enhanced recommendations with proper financial mapping
           enhancedRecommendations,
