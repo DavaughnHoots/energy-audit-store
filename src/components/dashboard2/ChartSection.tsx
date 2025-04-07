@@ -1,5 +1,9 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+// Add PieChart and other components to imports
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, PieChart, Pie, Cell, Label
+} from 'recharts';
 
 interface ChartDataPoint {
   name: string;
@@ -29,13 +33,16 @@ const ChartSection: React.FC<ChartSectionProps> = ({
   savingsAnalysis = [],
   isLoading = false
 }) => {
-  // Custom colors for consistent appearance
-  const colors = {
-    estimated: '#3b82f6', // blue
-    actual: '#10b981',    // green
-    energy: '#8b5cf6',    // purple
-    consumption: '#f59e0b' // amber
-  };
+// Update colors to match your theme
+const colors = {
+  estimated: '#2563eb', // primary blue
+  actual: '#10b981',    // teal green
+  energy: {
+    electricity: '#2563eb', // electric blue
+    gas: '#10b981'          // natural gas teal
+  },
+  consumption: '#2563eb'    // blue for consumption bars
+};
 
   if (isLoading) {
     return (
@@ -103,22 +110,32 @@ const ChartSection: React.FC<ChartSectionProps> = ({
 
         {/* Energy Breakdown Chart */}
         {energyBreakdown && energyBreakdown.length > 0 && (
-          <div>
-            <h3 className="text-md font-medium mb-4">Energy Usage Breakdown</h3>
-            <div className="h-72">
+          <div className="mb-8">
+            <h3 className="text-lg font-medium mb-4">Energy Breakdown</h3>
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={energyBreakdown}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis
-                    tickFormatter={(value) => `${value}%`}
-                  />
+                <PieChart>
+                  <Pie
+                    data={energyBreakdown}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={0}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({name, percent}) => `${(percent * 100).toFixed(1)}%`}
+                  >
+                    {energyBreakdown.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={index === 0 ? colors.energy.electricity : colors.energy.gas}
+                      />
+                    ))}
+                  </Pie>
+                  <Legend />
                   <Tooltip formatter={(value) => `${value}%`} />
-                  <Bar dataKey="value" name="Percentage" fill={colors.energy} />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
