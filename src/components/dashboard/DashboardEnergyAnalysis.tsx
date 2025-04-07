@@ -106,7 +106,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
               </div>
             )}
           </div>
-          <div className="h-60 sm:h-64 overflow-hidden">
+          <div className="h-60 sm:h-80 overflow-hidden">
             {hasEnergyBreakdown ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -116,8 +116,8 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
                     cy="50%"
                     labelLine={false}
                     label={!isMobile && (({ name, percentage }) => `${percentage}%`)}
-                    outerRadius={isMobile ? 65 : 80}
-                    innerRadius={isMobile ? 30 : 40}
+                    outerRadius={isMobile ? 65 : 100}
+                    innerRadius={isMobile ? 30 : 50}
                     fill="#8884d8"
                     dataKey="value"
                     paddingAngle={2}
@@ -158,7 +158,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
               </div>
             )}
           </div>
-          <div className="h-60 sm:h-64 overflow-hidden">
+          <div className="h-60 sm:h-80 overflow-hidden">
             {hasConsumption ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -208,7 +208,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
             </div>
           )}
         </div>
-        <div className="h-60 sm:h-64 overflow-hidden">
+        <div className="h-60 sm:h-80 overflow-hidden">
           {hasSavingsAnalysis ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -225,7 +225,8 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
                 <YAxis 
                   tick={{ fontSize: isMobile ? 10 : 12 }}
                   width={isMobile ? 30 : 35}
-                  domain={[0, 'dataMax + 1']}
+                  // Auto-calculate domain to handle varying financial values
+                  domain={[0, (dataMax: number) => Math.max(10, dataMax * 1.1)]}
                 />
                 <Tooltip 
                   formatter={(value) => formatCurrency(Number(value))}
