@@ -181,25 +181,10 @@ const NewUserDashboardPage: React.FC = () => {
       onRefresh={handleRefresh}
       isLoading={isLoading}
     >
-      {/* Summary Stats */}
+      {/* Summary Stats - Keeping only this section as requested */}
       <SummaryStats stats={stats} />
       
-      {/* Chart Section */}
-      <ChartSection
-        energyBreakdown={stats.energyAnalysis?.energyBreakdown}
-        consumption={stats.energyAnalysis?.consumption}
-        savingsAnalysis={stats.energyAnalysis?.savingsAnalysis}
-        isLoading={isLoading}
-      />
-      
-      {/* Recommendations */}
-      <RecommendationsList
-        recommendations={stats.enhancedRecommendations || []}
-        userCategories={stats.userCategories}
-        auditId={stats.auditId}
-        isLoading={isLoading}
-        onRefresh={handleRefresh}
-      />
+      {/* Note: Chart Section and Recommendations sections removed to build dashboard piece by piece */}
     </SimpleDashboardLayout>
   );
 };
