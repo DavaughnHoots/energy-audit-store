@@ -9,7 +9,7 @@ export interface UserProfileData {
   address: string;
   emailNotifications?: boolean;
   theme?: string;
-  
+
   // Property settings
   windowMaintenance?: {
     windowCount: number;
@@ -87,6 +87,149 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+// Extract default property settings from audit data
+export async function extractPropertySettingsFromAudit(
+  auditData: EnergyAuditData
+): Promise<Partial<UserProfileData>> {
+  if (!auditData) return {};
+
+  console.log('Extracting property settings from audit data:',
+    {
+      propertyType: auditData.basicInfo?.propertyType,
+      yearBuilt: auditData.basicInfo?.yearBuilt,
+      squareFootage: auditData.homeDetails?.squareFootage
+    }
+  );
+
+  // Extract property details from audit data
+  const propertyDetails: Partial<UserProfileData['propertyDetails']> = {};
+
+  // Basic property information
+  if (auditData.basicInfo?.propertyType) {
+    propertyDetails.propertyType = auditData.basicInfo.propertyType;
+  }
+
+  if (auditData.basicInfo?.yearBuilt) {
+    propertyDetails.yearBuilt = Number(auditData.basicInfo.yearBuilt);
+  }
+
+  if (auditData.homeDetails?.squareFootage) {
+    propertyDetails.squareFootage = Number(auditData.homeDetails.squareFootage);
+  }
+
+  if (auditData.homeDetails?.stories) {
+    propertyDetails.stories = Number(auditData.homeDetails.stories);
+  }
+
+  if (auditData.basicInfo?.ownershipStatus) {
+    propertyDetails.ownershipStatus = auditData.basicInfo.ownershipStatus;
+  }
+  
+  // Extract insulation information
+  if (auditData.currentConditions?.insulation) {
+    propertyDetails.insulation = {
+      attic: auditData.currentConditions.insulation.attic || 'not-sure',
+      walls: auditData.currentConditions.insulation.walls || 'not-sure',
+      basement: auditData.currentConditions.insulation.basement || 'not-sure',
+      floor: auditData.currentConditions.insulation.floor || 'not-sure'
+    };
+  }
+  
+  // Extract window data
+  const windowMaintenance: Partial<UserProfileData['windowMaintenance']> = {};
+
+  if (auditData.currentConditions?.numWindows) {
+    windowMaintenance.windowCount = Number(auditData.currentConditions.numWindows);
+  }
+
+  if (auditData.currentConditions?.windowCondition) {
+    windowMaintenance.condition = auditData.currentConditions.windowCondition;
+  }
+
+  if (auditData.currentConditions?.windowType) {
+    windowMaintenance.windowType = auditData.currentConditions.windowType;
+  }
+  
+  // Extract energy systems data
+  const energySystems: Partial<UserProfileData['energySystems']> = {};
+
+  if (auditData.heatingCooling?.heatingSystem) {
+    energySystems.heatingSystem = {
+      type: auditData.heatingCooling.heatingSystem.type || 'unknown',
+      age: Number(auditData.heatingCooling.heatingSystem.age || 0),
+      fuel: auditData.heatingCooling.heatingSystem.fuel || 'unknown'
+    };
+  }
+
+  if (auditData.heatingCooling?.coolingSystem) {
+    energySystems.coolingSystem = {
+      type: auditData.heatingCooling.coolingSystem.type || 'unknown',
+      age: Number(auditData.heatingCooling.coolingSystem.age || 0)
+    };
+  }
+  
+  // Water heater data might not be directly available in the expected format
+  // Skip this for now as it's not critical for property settings
+
+  // Compile the results
+  const result: Partial<UserProfileData> = {};
+
+  if (Object.keys(propertyDetails).length > 0) {
+    result.propertyDetails = propertyDetails as UserProfileData['propertyDetails'];
+  }
+
+  if (Object.keys(windowMaintenance).length > 0) {
+    result.windowMaintenance = windowMaintenance as UserProfileData['windowMaintenance'];
+  }
+
+  if (Object.keys(energySystems).length > 0) {
+    result.energySystems = energySystems as UserProfileData['energySystems'];
+  }
+
+  console.log('Extracted property settings:', result);
+  return result;
+}
+
+// Auto-populate empty property settings with defaults from audit data
+export async function populateDefaultPropertySettings(
+  profileData: UserProfileData | null
+): Promise<UserProfileData | null> {
+  if (!profileData) return null;
+  
+  console.log('Checking if property settings need auto-population...');
+
+  // Check if property settings are empty or incomplete
+  const hasPropertyDetails = profileData.propertyDetails &&
+                           Object.keys(profileData.propertyDetails).length > 0;
+
+  // Don't auto-populate if we already have property details
+  if (hasPropertyDetails) {
+    console.log('Property settings already exist, skipping auto-population');
+    return profileData;
+  }
+
+  // Fetch latest audit data for defaults
+  console.log('Fetching latest audit data for default property settings...');
+  const auditData = await fetchLatestAuditData();
+
+  if (!auditData) {
+    console.log('No audit data available for auto-population');
+    return profileData;
+  }
+
+  // Extract property settings from audit data
+  const defaultSettings = await extractPropertySettingsFromAudit(auditData);
+
+  // Merge defaults with existing profile data (without overwriting)
+  const updatedProfile = {
+    ...profileData,
+    ...defaultSettings
+  };
+
+  console.log('Auto-populated property settings from audit data');
+  return updatedProfile;
+}
+
 export async function fetchUserProfileData(): Promise<UserProfileData | null> {
   try {
     const headers = getAuthHeaders();
@@ -105,7 +248,11 @@ export async function fetchUserProfileData(): Promise<UserProfileData | null> {
       throw new Error(`Failed to fetch user profile data: ${response.status}`);
     }
     
-    return await response.json();
+    // Get the base profile data
+    const profileData = await response.json();
+    
+    // Auto-populate property settings with defaults if needed
+    return await populateDefaultPropertySettings(profileData);
   } catch (error) {
     console.error('Error fetching user profile data:', error);
     return null;
@@ -117,24 +264,24 @@ export async function updateUserProfileSettings(
 ): Promise<{success: boolean; error?: string}> {
   try {
     const headers = getAuthHeaders();
-    
+
     // Add detailed logging for debugging
     console.log('Updating user settings with:', settings);
-    
+
     const response = await fetch(API_ENDPOINTS.AUTH.PROFILE, {
       method: 'PUT',
       credentials: 'include',
       headers,
       body: JSON.stringify(settings)
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       console.error('Failed to update settings. Status:', response.status, 'Response:', data);
-      return { 
-        success: false, 
-        error: data.message || `Server error: ${response.status}` 
+      return {
+        success: false,
+        error: data.message || `Server error: ${response.status}`
       };
     }
     
