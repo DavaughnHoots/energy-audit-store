@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from 'react';
 import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ReportsTab } from './index';
+import { ReportsTab, PropertySettingsTab } from './index';
 
 interface SimpleDashboardLayoutProps {
   children: ReactNode;
@@ -42,13 +42,13 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
             </div>
             <div className="flex items-center gap-4 mt-4 sm:mt-0">
               <Button
-                onClick={() => navigate('/settings/property')}
+                onClick={() => navigate('/settings')}
                 className="flex items-center justify-center gap-2 text-sm"
                 variant="outline"
                 size="sm"
               >
                 <Settings className="h-4 w-4" />
-                <span>Property Settings</span>
+                <span>User Settings</span>
               </Button>
               {lastUpdated && (
                 <p className="text-xs sm:text-sm text-gray-500">
@@ -82,6 +82,16 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
             >
               Reports
             </button>
+            <button
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'property-settings'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+              onClick={() => setActiveTab('property-settings')}
+            >
+              Property Settings
+            </button>
           </div>
         </div>
         
@@ -91,12 +101,14 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>
         ) : (
-          // Content - conditionally show either main content or reports tab
+          // Content - conditionally show content based on active tab
           <div className="space-y-6">
             {activeTab === 'overview' ? (
               children
             ) : activeTab === 'reports' ? (
               <ReportsTab />
+            ) : activeTab === 'property-settings' ? (
+              <PropertySettingsTab />
             ) : (
               children
             )}

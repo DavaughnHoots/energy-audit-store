@@ -2,19 +2,39 @@
 title: "UserDashboardPage"
 type: "Page Component"
 path: "src/pages/UserDashboardPage.tsx"
-description: "Main dashboard page showing user energy statistics and recommendations"
-tags: [dashboard, energy, recommendations, analytics]
-status: "up-to-date"
-last_verified: "2025-04-05"
+description: "Main dashboard page showing user energy statistics and recommendations (deprecated in favor of NewUserDashboardPage)"
+tags: [dashboard, energy, recommendations, analytics, deprecated]
+status: "deprecated"
+last_verified: "2025-04-07"
 ---
 
-# UserDashboardPage
+# UserDashboardPage (Deprecated)
 
 ## Overview
 
-The `UserDashboardPage` is the main dashboard screen that users see after logging in. It provides an overview of energy savings, recommendations, and access to detailed reports. The page has been redesigned to focus on the most valuable content and remove redundant information.
+> **Note: As of April 2025, this dashboard is deprecated. The `/dashboard` URL now redirects to `/dashboard2` which renders the NewUserDashboardPage component.**
 
-## Key Features
+The `UserDashboardPage` was the original dashboard screen that users see after logging in. It provides an overview of energy savings, recommendations, and access to detailed reports. The page has been redesigned to focus on the most valuable content and remove redundant information.
+
+## Redirect Implementation
+
+The App.tsx file has been updated to redirect users from `/dashboard` to `/dashboard2`:
+
+```typescript
+// In App.tsx
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <Navigate to="/dashboard2" replace />
+    </ProtectedRoute>
+  }
+/>
+```
+
+See [[NewUserDashboardPage]] for the current dashboard implementation.
+
+## Key Features (Historical)
 
 - Streamlined tab navigation (Overview and Reports only)
 - Enhanced statistics cards showing energy audit metrics
@@ -105,6 +125,7 @@ The UserDashboardPage has been significantly refactored to:
 - [[DashboardEnergyAnalysis]] - Energy usage visualization component
 - [[EnhancedDashboardRecommendations]] - Improved recommendations component
 - [[ReportsTab]] - Component for viewing and managing energy audit reports
+- [[NewUserDashboardPage]] - The new dashboard implementation that replaces this component
 
 ## Technical Decisions
 
@@ -132,7 +153,7 @@ The dashboard uses an enhanced API endpoint (`/api/dashboard/stats`) that now pr
 
 ## Notes/To-Do
 
-- Consider adding personalized energy efficiency tips based on user data
-- Implement a notification system for new recommendations
-- Add ability to set energy saving goals and track progress
-- Consider adding seasonal comparisons to help users understand energy usage patterns
+- ~~Consider adding personalized energy efficiency tips based on user data~~ (Implemented in NewUserDashboardPage)
+- ~~Implement a notification system for new recommendations~~ (Implemented in NewUserDashboardPage)
+- ~~Add ability to set energy saving goals and track progress~~ (Planned for NewUserDashboardPage)
+- ~~Consider adding seasonal comparisons to help users understand energy usage patterns~~ (Implemented in NewUserDashboardPage)

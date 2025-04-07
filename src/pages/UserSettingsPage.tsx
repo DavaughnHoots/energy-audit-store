@@ -10,7 +10,8 @@ import { usePageTracking } from '../hooks/analytics/usePageTracking';
 import { useComponentTracking } from '../hooks/analytics/useComponentTracking';
 
 interface Props {
-  initialSection?: 'property' | 'general';
+  // No longer need the property section option
+  initialSection?: 'general';
 }
 
 const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
@@ -299,36 +300,9 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="space-y-8">
-        {/* Navigation Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => {
-                setActiveSection('general');
-                trackComponentEvent('switch_tab', { tab: 'general' });
-              }}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeSection === 'general'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              General Settings
-            </button>
-            <button
-              onClick={() => {
-                setActiveSection('property');
-                trackComponentEvent('switch_tab', { tab: 'property' });
-              }}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeSection === 'property'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Property Details
-            </button>
-          </nav>
+        {/* Title */}
+        <div className="border-b border-gray-200 pb-4">
+          <h1 className="text-2xl font-bold">Account Settings</h1>
         </div>
 
         {error && (
@@ -343,9 +317,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
           </Alert>
         )}
 
-        {activeSection === 'general' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
+        <div className="bg-white rounded-lg shadow-sm p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
@@ -494,30 +466,7 @@ const UserSettingsPage: React.FC<Props> = ({ initialSection = 'general' }) => {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {activeSection === 'property' && (
-          <div className="space-y-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <HomeConditionsSection onSave={handleSaveHomeConditions} />
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <WindowMaintenanceSection
-                data={windowData}
-                onSave={handleSaveWindowData}
-              />
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <WeatherizationMonitoringSection
-                data={weatherizationData}
-                onSave={handleSaveWeatherizationData}
-              />
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

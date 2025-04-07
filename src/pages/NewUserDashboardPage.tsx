@@ -6,6 +6,7 @@ import {
   SimpleDashboardLayout,
   SummaryStats,
   ChartSection,
+  PropertySettingsTab,
 } from "@/components/dashboard2";
 import DashboardRecommendationsAdapter from "@/components/dashboard2/DashboardRecommendationsAdapter";
 import { fetchAuditHistory, fetchReportData } from "@/services/reportService";

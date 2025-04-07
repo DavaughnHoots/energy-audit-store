@@ -4,3 +4,4 @@ export { default as RecommendationsList } from './RecommendationsList';
 export { default as SummaryStats } from './SummaryStats';
 export { default as ChartSection } from './ChartSection';
 export { default as ReportsTab } from './ReportsTab';
+export { default as PropertySettingsTab } from './PropertySettingsTab';
