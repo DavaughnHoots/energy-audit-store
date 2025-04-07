@@ -182,7 +182,7 @@ const NewUserDashboardPage: React.FC = () => {
         energyAnalysis: {
           energyBreakdown: reportData.charts?.energyBreakdown || [],
           consumption: reportData.charts?.consumption || [],
-          savingsAnalysis: reportData.charts?.savingsAnalysis || [],
+          savingsAnalysis: reportData.charts?.savingsAnalysis || []
         },
         userCategories: (reportData as any).userPreferences?.categories || [],
         auditId,
@@ -241,10 +241,21 @@ const NewUserDashboardPage: React.FC = () => {
       onRefresh={handleRefresh}
       isLoading={isLoading}
     >
-      {/* Summary Stats - Keeping only this section as requested */}
+      {/* Note: Chart Section and Recommendations sections removed to build dashboard piece by piece */}
+      {/* Summary Stats */}
       <SummaryStats stats={stats} />
 
-      {/* Note: Chart Section and Recommendations sections removed to build dashboard piece by piece */}
+      {/* Spacer */}
+      <div className="my-6"></div>
+
+      {/* Chart Section */}
+      <ChartSection
+        energyBreakdown={stats.energyAnalysis?.energyBreakdown}
+        consumption={stats.energyAnalysis?.consumption}
+        savingsAnalysis={stats.energyAnalysis?.savingsAnalysis}
+        isLoading={isLoading}
+      />
+
     </SimpleDashboardLayout>
   );
 };
