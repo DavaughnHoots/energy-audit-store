@@ -22,7 +22,10 @@ interface EnergyAnalysisProps {
 /**
  * DashboardEnergyAnalysis component
  * 
- * Displays energy usage and savings analysis through interactive charts:
+ * Displays energy usage and savings analysis through interactive charts using the same
+ * rendering approach as the ReportCharts component for consistency.
+ * 
+ * Charts:
  * - Energy Breakdown (Pie Chart): Shows distribution of energy use across categories
  * - Energy Consumption (Bar Chart): Shows energy consumption by category or time
  * - Savings Analysis (Bar Chart): Compares estimated vs actual savings
@@ -53,6 +56,21 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
+  // Log the incoming chart data for debugging (from ReportCharts)
+  useEffect(() => {
+    console.log('Dashboard Energy Analysis: data received', {
+      hasSavingsAnalysis: data?.savingsAnalysis && data.savingsAnalysis.length > 0,
+      savingsAnalysisCount: data?.savingsAnalysis?.length || 0,
+      savingsAnalysisData: data?.savingsAnalysis,
+      totalEstimatedSavings: data?.savingsAnalysis?.reduce((sum, item) => sum + (item.estimatedSavings || 0), 0) || 0,
+      hasEnergyBreakdown: data?.energyBreakdown && data.energyBreakdown.length > 0,
+      energyBreakdownCount: data?.energyBreakdown?.length || 0,
+      hasConsumption: data?.consumption && data.consumption.length > 0,
+      consumptionCount: data?.consumption?.length || 0,
+      dataSource: dataSource
+    });
+  }, [data, dataSource]);
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 mx-0 flex items-center justify-center h-80">
@@ -61,12 +79,15 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
     );
   }
 
-  // Handle missing or empty data with improved placeholder message
-  const hasEnergyBreakdown = data?.energyBreakdown?.length > 0;
-  const hasSavingsAnalysis = data?.savingsAnalysis?.length > 0;
-  const hasConsumption = data?.consumption?.length > 0;
+  // Safely extract data with fallbacks to empty arrays
+  const energyBreakdownData = data?.energyBreakdown || [];
+  const consumptionData = data?.consumption || [];
+  const savingsAnalysisData = data?.savingsAnalysis || [];
   
-  if (!hasEnergyBreakdown && !hasSavingsAnalysis && !hasConsumption) {
+  // If we have no data at all, show the placeholder message
+  // This should rarely happen as the backend should provide default data
+  if (energyBreakdownData.length === 0 && consumptionData.length === 0 && savingsAnalysisData.length === 0) {
+    console.warn('No energy data available, showing placeholder');
     return (
       <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 mx-0">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Energy Analysis</h2>
@@ -83,12 +104,45 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
     );
   }
 
-  // Add percentage calculation for pie chart display
-  const energyBreakdownData = hasEnergyBreakdown ? [...data.energyBreakdown] : [];
-  const totalEnergy = energyBreakdownData.reduce((sum, item) => sum + item.value, 0);
-  energyBreakdownData.forEach(item => {
+  // Add percentage for pie chart display (from ReportCharts)
+  const processedEnergyBreakdown = [...energyBreakdownData];
+  const totalEnergy = processedEnergyBreakdown.reduce((sum, item) => sum + item.value, 0);
+  processedEnergyBreakdown.forEach(item => {
     item['percentage'] = ((item.value / totalEnergy) * 100).toFixed(1);
   });
+  
+  // Process savings analysis data to ensure it has non-zero values for chart visibility (from ReportCharts)
+  const processedSavingsData = (() => {
+    if (savingsAnalysisData.length === 0) {
+      console.warn('Savings analysis data is missing or empty');
+      return [];
+    }
+    
+    // Filter out items with no savings data
+    const validData = savingsAnalysisData.filter(item => 
+      item.estimatedSavings !== undefined && 
+      item.estimatedSavings !== null
+    );
+    
+    if (validData.length === 0) {
+      console.warn('No valid savings data for chart display');
+      return [];
+    }
+    
+    // Check if all values are zero - in this case, we'll add a small offset for visibility
+    const allZeros = validData.every(item => item.estimatedSavings === 0 && item.actualSavings === 0);
+    
+    if (allZeros) {
+      console.warn('All savings values are zero, adding visual offset');
+      return validData.map(item => ({
+        ...item,
+        estimatedSavings: 1, // Small non-zero value for visual representation
+        actualSavings: 0
+      }));
+    }
+    
+    return validData;
+  })();
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 mx-0">
@@ -96,7 +150,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         {/* Energy Breakdown Pie Chart */}
-        <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
+        <div className="bg-white p-3 sm:p-4 shadow rounded-lg mb-4 sm:mb-6">
           <div className="flex justify-between items-center mb-2 sm:mb-4">
             <h3 className="text-base sm:text-lg font-medium">Energy Breakdown</h3>
             {dataSource === 'generated' && (
@@ -107,14 +161,15 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
             )}
           </div>
           <div className="h-60 sm:h-80 overflow-hidden">
-            {hasEnergyBreakdown ? (
+            {processedEnergyBreakdown.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={energyBreakdownData}
+                    data={processedEnergyBreakdown}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
+                    // Don't use labels directly on the chart for mobile
                     label={!isMobile && (({ name, percentage }) => `${percentage}%`)}
                     outerRadius={isMobile ? 65 : 100}
                     innerRadius={isMobile ? 30 : 50}
@@ -122,7 +177,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
                     dataKey="value"
                     paddingAngle={2}
                   >
-                    {energyBreakdownData.map((_, index) => (
+                    {processedEnergyBreakdown.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -148,7 +203,7 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
         </div>
         
         {/* Energy Consumption Factors Bar Chart */}
-        <div className="bg-white p-3 sm:p-4 shadow rounded-lg">
+        <div className="bg-white p-3 sm:p-4 shadow rounded-lg mb-4 sm:mb-6">
           <div className="flex justify-between items-center mb-2 sm:mb-4">
             <h3 className="text-base sm:text-lg font-medium">Energy Consumption Factors</h3>
             {dataSource === 'generated' && (
@@ -159,10 +214,10 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
             )}
           </div>
           <div className="h-60 sm:h-80 overflow-hidden">
-            {hasConsumption ? (
+            {consumptionData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={data.consumption}
+                  data={consumptionData}
                   margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -209,10 +264,10 @@ const DashboardEnergyAnalysis: React.FC<EnergyAnalysisProps> = ({
           )}
         </div>
         <div className="h-60 sm:h-80 overflow-hidden">
-          {hasSavingsAnalysis ? (
+          {processedSavingsData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={data.savingsAnalysis}
+                data={processedSavingsData}
                 margin={{ top: 5, right: 5, left: 0, bottom: 15 }}
                 barSize={isMobile ? 30 : 40}
               >
