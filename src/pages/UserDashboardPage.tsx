@@ -187,8 +187,81 @@ const UserDashboardPage: React.FC = () => {
         recommendationsCount: reportData.recommendations?.length || 0
       });
       
+      // Log the first recommendation to help diagnose field names
+      if (reportData.recommendations && reportData.recommendations.length > 0) {
+        const firstRec = reportData.recommendations[0];
+        // Safely log all available properties to debug field names
+        console.log('RECOMMENDATION FINANCIAL DATA DEBUG:', {
+          title: firstRec?.title || 'Unknown',
+          // Double cast to avoid TypeScript errors
+          fieldNames: firstRec ? Object.keys(firstRec as unknown as Record<string, unknown>) : [],
+          financialFields: {
+            estimatedSavings: firstRec?.estimatedSavings,
+            actualSavings: firstRec?.actualSavings,
+            estimatedCost: firstRec?.estimatedCost,
+            implementationCost: firstRec?.implementationCost,
+            paybackPeriod: firstRec?.paybackPeriod
+          },
+          // Safely log the entire recommendation object
+          rawFinancialValues: firstRec || {}
+        });
+      }
+      
       // Transform report data to dashboard format using functional update to avoid dependency issues
       setStats(prevStats => {
+        // Process recommendations with proper financial data mapping
+        const enhancedRecommendations = reportData.recommendations?.map(rec => {
+          // Create an "any" reference to access potential dynamic properties safely
+          const recAny = rec as any;
+          
+          // Extract potential savings values with safe type handling
+          const estimatedSavingsValue = typeof rec.estimatedSavings === 'number' ?
+            rec.estimatedSavings :
+            (parseFloat(String(rec.estimatedSavings || '0')) ||
+             parseFloat(String(recAny.savingsPerYear || '0')) || 0);
+             
+          const actualSavingsValue = typeof rec.actualSavings === 'number' ?
+            rec.actualSavings :
+            parseFloat(String(rec.actualSavings || '0')) || 0;
+            
+          const estimatedCostValue = typeof rec.estimatedCost === 'number' ?
+            rec.estimatedCost :
+            (parseFloat(String(rec.estimatedCost || '0')) ||
+             parseFloat(String(rec.implementationCost || '0')) || 0);
+             
+          const implementationCostValue = typeof rec.implementationCost === 'number' ?
+            rec.implementationCost :
+            (parseFloat(String(rec.implementationCost || '0')) ||
+             parseFloat(String(recAny.cost || '0')) || 0);
+          
+          // Create a properly typed mapped recommendation
+          const mappedRec = {
+            ...rec,
+            estimatedSavings: estimatedSavingsValue,
+            actualSavings: actualSavingsValue,
+            estimatedCost: estimatedCostValue,
+            implementationCost: implementationCostValue
+          };
+          
+          // Log transformation for debugging
+          console.log(`Financial data mapping for "${rec.title || 'Unknown'}":`, {
+            before: {
+              estimatedSavings: rec.estimatedSavings,
+              actualSavings: rec.actualSavings,
+              estimatedCost: rec.estimatedCost,
+              implementationCost: rec.implementationCost
+            },
+            after: {
+              estimatedSavings: mappedRec.estimatedSavings,
+              actualSavings: mappedRec.actualSavings,
+              estimatedCost: mappedRec.estimatedCost,
+              implementationCost: mappedRec.implementationCost
+            }
+          });
+          
+          return mappedRec;
+        }) || [];
+        
         const dashboardData = {
           ...prevStats,
           // Properly map chart data with correct financial values
@@ -197,15 +270,8 @@ const UserDashboardPage: React.FC = () => {
             consumption: reportData.charts?.consumption || [],
             savingsAnalysis: reportData.charts?.savingsAnalysis || []
           },
-          // Preserve financial data in recommendations
-          enhancedRecommendations: reportData.recommendations?.map(rec => ({
-            ...rec,
-            // Ensure financial values are preserved
-            estimatedSavings: rec.estimatedSavings || 0,
-            actualSavings: rec.actualSavings || 0,
-            estimatedCost: rec.estimatedCost || 0,
-            implementationCost: rec.implementationCost || 0
-          })) || [],
+          // Use our enhanced recommendations with proper financial mapping
+          enhancedRecommendations,
           // Update metadata
           dataSummary: {
             hasDetailedData: true,
