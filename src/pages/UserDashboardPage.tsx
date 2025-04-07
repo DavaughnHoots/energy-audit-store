@@ -9,10 +9,11 @@ import DashboardOverview from '@/components/dashboard/DashboardOverview';
 import ReportsTab from '@/components/dashboard/ReportsTab';
 import { fetchAuditHistory, fetchReportData } from '@/services/reportService';
 import { AuditRecommendation } from '@/types/energyAudit';
-import { 
-  enrichRecommendationWithDefaultValues, 
-  enrichChartDataWithDefaultValues 
+import {
+  enrichRecommendationWithDefaultValues,
+  enrichChartDataWithDefaultValues
 } from '@/utils/defaultFinancialValues';
+import { mergeDashboardData, didOverwriteRecommendations } from '@/utils/dashboardDataMerge';
 
 interface DashboardStats {
   totalSavings: {
@@ -122,9 +123,21 @@ const UserDashboardPage: React.FC = () => {
         data.latestAuditId = null;
       }
       
-      // Update both stats and persisted stats
-      setStats(data);
-      setPersistentStats(data);
+      // Update stats using the new data merge utility to preserve recommendations
+      setStats(prevStats => {
+        // Check if we would be overwriting valid recommendation data with empty data
+        if (didOverwriteRecommendations(prevStats, data)) {
+          console.log('WARNING: Dashboard stats would overwrite existing recommendations - preserving previous data');
+        }
+        
+        // Merge the new data with existing data, preserving valuable information
+        const mergedData = mergeDashboardData(prevStats, data);
+        
+        // Update persisted storage with merged data
+        setPersistentStats(mergedData);
+        
+        return mergedData;
+      });
       setError(null);
       return data.refreshInterval;
 
@@ -357,10 +370,20 @@ const UserDashboardPage: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           console.log('Fallback to dashboard API successful');
-          // Use functional update here too
+          // Use functional update with data merge to preserve important data
           setStats(prevStats => {
-            setPersistentStats(data);
-            return data;
+            // Check if we would be overwriting valid recommendation data with empty data
+            if (didOverwriteRecommendations(prevStats, data)) {
+              console.log('WARNING: Fallback API would overwrite existing recommendations - preserving previous data');
+            }
+            
+            // Merge the new data with existing data, preserving valuable information
+            const mergedData = mergeDashboardData(prevStats, data);
+            
+            // Update persisted storage with merged data
+            setPersistentStats(mergedData);
+            
+            return mergedData;
           });
         } else {
           console.error('Fallback API request failed with status:', response.status);
