@@ -1,3 +1,8 @@
+/**
+ * @deprecated LEGACY COMPONENT - DO NOT USE FOR NEW FEATURES
+ * This component is part of the old dashboard system and is being phased out.
+ * Use the new dashboard components in src/components/dashboard2/ instead.
+ */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuditRecommendation } from '../../types/energyAudit';

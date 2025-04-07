@@ -5,6 +5,7 @@ import { AnalyticsProvider } from './context/AnalyticsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
+import NewUserDashboardPage from './pages/NewUserDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -141,6 +142,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <UserDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard2"
+              element={
+                <ProtectedRoute>
+                  <NewUserDashboardPage />
                 </ProtectedRoute>
               }
             />
