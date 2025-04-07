@@ -2,6 +2,7 @@ import React, { ReactNode, useState } from 'react';
 import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { ReportsTab } from './index';
 
 interface SimpleDashboardLayoutProps {
   children: ReactNode;
@@ -90,9 +91,15 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>
         ) : (
-          // Content
+          // Content - conditionally show either main content or reports tab
           <div className="space-y-6">
-            {children}
+            {activeTab === 'overview' ? (
+              children
+            ) : activeTab === 'reports' ? (
+              <ReportsTab />
+            ) : (
+              children
+            )}
           </div>
         )}
       </div>
