@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -141,7 +141,7 @@ const App: React.FC = () => {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <UserDashboardPage />
+                  <Navigate to="/dashboard2" replace />
                 </ProtectedRoute>
               }
             />
