@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
 // Removed redundant tabs imports
 import ReportsTab from '@/components/dashboard/ReportsTab';
-import { fetchAuditHistory } from '@/services/reportService';
+import { fetchAuditHistory, fetchReportData } from '@/services/reportService';
 
 interface DashboardStats {
   totalSavings: {
@@ -184,38 +184,70 @@ const UserDashboardPage: React.FC = () => {
   }, [fetchDashboardData, refreshKey]);
 
   /**
-   * Function to fetch dashboard data for a specific audit ID
+   * Function to fetch dashboard data for a specific audit ID using the report API
+   * for consistent data between dashboard and interactive report
    */
   const fetchAuditSpecificData = useCallback(async (auditId: string) => {
     try {
-      console.log('Fetching audit-specific dashboard data for audit:', auditId);
+      console.log('Fetching audit-specific data using report API for audit:', auditId);
       
-      // Use the new API endpoint we created
-      const response = await fetchWithAuth(
-        getApiUrl(API_ENDPOINTS.DASHBOARD.AUDIT_STATS(auditId))
-      );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || `Failed to fetch audit-specific data: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Audit-specific dashboard data received:', {
-        hasLatestAuditId: !!data.latestAuditId,
-        specificAuditId: data.specificAuditId,
-        completedAudits: data.completedAudits
+      // Use the report data API instead of dashboard API
+      const reportData = await fetchReportData(auditId);
+      
+      console.log('Report data fetched successfully', {
+        hasCharts: !!reportData.charts,
+        hasRecommendations: !!reportData.recommendations?.length,
+        energyBreakdownCount: reportData.charts?.energyBreakdown?.length || 0,
+        recommendationsCount: reportData.recommendations?.length || 0
       });
       
-      // Update the stats with the audit-specific data
-      setStats(data);
-      setPersistentStats(data);
+      // Transform report data to dashboard format
+      const dashboardData = {
+        ...stats,
+        // Use chart data directly from report
+        energyAnalysis: reportData.charts,
+        // Use recommendations from report
+        enhancedRecommendations: reportData.recommendations,
+        // Update metadata
+        dataSummary: {
+          hasDetailedData: true,
+          isUsingDefaultData: false,
+          dataSource: 'detailed',
+          auditId: auditId
+        },
+        // Add last updated timestamp
+        lastUpdated: new Date().toISOString(),
+        // Keep the audit ID reference
+        latestAuditId: auditId,
+        specificAuditId: auditId
+      };
+      
+      // Update the stats with the transformed data
+      setStats(dashboardData);
+      setPersistentStats(dashboardData);
       
     } catch (err) {
-      console.error('Error fetching audit-specific dashboard data:', err);
-      // Don't clear the existing stats on error
+      console.error('Error fetching report data for dashboard:', err);
+      // Fall back to the original dashboard API on error
+      try {
+        console.log('Falling back to dashboard API for audit:', auditId);
+        const response = await fetchWithAuth(
+          getApiUrl(API_ENDPOINTS.DASHBOARD.AUDIT_STATS(auditId))
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Fallback to dashboard API successful');
+          setStats(data);
+          setPersistentStats(data);
+        } else {
+          console.error('Fallback API request failed with status:', response.status);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback fetch also failed:', fallbackError);
+      }
     }
-  }, []);
+  }, [stats]);
 
   // Fetch first audit from history if no latestAuditId is available
   useEffect(() => {
