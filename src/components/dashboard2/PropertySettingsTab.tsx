@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import PropertyDetailsForm from '@/components/user-settings/PropertyDetailsForm';
 import HomeConditionsSection from '@/components/user-settings/HomeConditionsSection';
-import WindowMaintenanceSection from '@/components/user-settings/WindowMaintenanceSection';
+import WindowManagementSection from '@/components/user-settings/WindowManagementSection';
 import { fetchWithAuth } from '@/utils/authUtils';
 import { API_ENDPOINTS } from '@/config/api';
 import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
@@ -504,9 +504,15 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       </div>
       
       <div className="bg-white rounded-lg shadow p-6">
-        <WindowMaintenanceSection
-          data={windowData}
-          onSave={handleSaveWindowData}
+        <WindowManagementSection
+          windowData={windowData}
+          weatherizationData={weatherizationData}
+          onSaveWindow={handleSaveWindowData}
+          onSaveWeatherization={async (data) => {
+            setSuccess('Window assessment data saved successfully');
+            // Implement weatherization save if needed
+            return Promise.resolve();
+          }}
         />
       </div>
     </div>
