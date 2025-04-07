@@ -67,7 +67,65 @@ const colors = {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-lg font-semibold mb-4">Energy Analysis</h2>
-      
+
+      {/* Energy Breakdown Chart */}
+      {energyBreakdown && energyBreakdown.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-medium mb-4">Energy Breakdown</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={energyBreakdown}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={0}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({name, percent}) => `${(percent * 100).toFixed(1)}%`}
+                  >
+                    {energyBreakdown.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={index === 0 ? colors.energy.electricity : colors.energy.gas}
+                      />
+                    ))}
+                  </Pie>
+                  <Legend />
+                  <Tooltip formatter={(value) => `${value}%`} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+      {/* Energy Consumption Chart */}
+      {consumption && consumption.length > 0 && (
+        <div className="mt-8 pt-8 border-t border-gray-200">
+          <h3 className="text-lg font-medium mb-4">Energy Consumption Factors</h3>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={consumption}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis
+                  label={{ value: 'Energy (kWh)', angle: -90, position: 'insideLeft' }}
+                  tickFormatter={(value) => `${value}`}
+                />
+                <Tooltip formatter={(value) => `${value} kWh`} />
+                <Legend />
+                <Bar dataKey="value" name="Energy (kWh)" fill="#2563eb" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-8">
         {/* Savings Analysis Chart */}
         {savingsAnalysis && savingsAnalysis.length > 0 && (
@@ -108,38 +166,6 @@ const colors = {
           </div>
         )}
 
-        {/* Energy Breakdown Chart */}
-        {energyBreakdown && energyBreakdown.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-lg font-medium mb-4">Energy Breakdown</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={energyBreakdown}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={0}
-                    dataKey="value"
-                    nameKey="name"
-                    label={({name, percent}) => `${(percent * 100).toFixed(1)}%`}
-                  >
-                    {energyBreakdown.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={index === 0 ? colors.energy.electricity : colors.energy.gas}
-                      />
-                    ))}
-                  </Pie>
-                  <Legend />
-                  <Tooltip formatter={(value) => `${value}%`} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
