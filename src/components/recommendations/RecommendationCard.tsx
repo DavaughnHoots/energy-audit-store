@@ -72,7 +72,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
       return new Date(dateString).toLocaleDateString();
     } catch (error) {
       console.error('Error formatting date:', error);
-      return dateString;
+      return dateString || 'Not set';
     }
   };
   
@@ -244,9 +244,9 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
           </summary>
           <div className="mt-2 bg-gray-50 p-3 rounded-lg max-h-40 overflow-y-auto">
             <ul className="space-y-2">
-              {(editHistory[recommendation.id] || []).map((edit, index) => (
+              {(editHistory?.[recommendation.id] ?? []).map((edit, index) => (
                 <li key={index} className="text-xs text-gray-600">
-                  <span className="text-gray-400">{new Date(edit.timestamp).toLocaleString()}:</span>{' '}
+                  <span className="text-gray-400">{new Date(edit.timestamp || '').toLocaleString()}:</span>{' '}
                   Changed <span className="font-medium">{edit.field}</span> from{' '}
                   <span className="font-medium">{edit.oldValue || 'none'}</span> to{' '}
                   <span className="font-medium">{edit.newValue}</span>
@@ -434,7 +434,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
             {recommendation.title}
           </h3>
           
-          <div className="flex items-center text-sm mt-1 space-x-4">
+          <div className="flex flex-wrap items-center text-sm mt-1 gap-y-1 space-x-2 sm:space-x-4">
             {/* Priority indicator */}
             {renderPriorityField()}
             
