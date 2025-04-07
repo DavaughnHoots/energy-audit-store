@@ -32,28 +32,28 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ stats }) => {
     {
       icon: <DollarSign className="h-6 w-6 text-green-500" />,
       title: 'Total Savings',
-      value: '$88.00',
+      value: formatCurrency(stats.totalSavings.actual || 0),
       description: 'Actual energy cost savings',
       bgColor: 'bg-green-50'
     },
     {
       icon: <ClipboardList className="h-6 w-6 text-blue-500" />,
       title: 'Energy Audits',
-      value: stats.completedAudits || '51',
+      value: stats.completedAudits || 0,
       description: 'Completed energy assessments',
       bgColor: 'bg-blue-50'
     },
     {
       icon: <Leaf className="h-6 w-6 text-green-500" />,
       title: 'Active Recommendations',
-      value: stats.activeRecommendations || '159',
+      value: stats.activeRecommendations || 0,
       description: 'Pending improvements',
       bgColor: 'bg-green-50'
     },
     {
       icon: <CheckSquare className="h-6 w-6 text-green-500" />,
       title: 'Implemented Changes',
-      value: stats.implementedChanges || '2',
+      value: stats.implementedChanges || 0,
       description: 'Completed improvements',
       bgColor: 'bg-green-50'
     }
