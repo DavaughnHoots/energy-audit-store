@@ -17,9 +17,11 @@ The `ChartSection` component displays energy data visualizations in the user das
 ## Key Features
 
 - **Energy Breakdown Chart**: Pie chart showing the distribution of energy usage across categories (HVAC, lighting, etc.)
-- **Energy Consumption Factors Chart**: Bar chart showing energy consumption factors with toggleable views:
-  - **Technical View**: Abstract categories (Base, Seasonal, Occupied, Real)
-  - **Room-Based View**: Intuitive room categories (Living Room, Kitchen, Bedrooms, Bathroom, Outdoor)
+- **Energy Consumption Factors Chart**: Bar chart showing energy consumption factors with enhanced user-friendly features:
+  - **Technical/Room-Based Toggle**: Switch between abstract categories and intuitive room categories
+  - **Monthly/Annual Toggle**: Switch between monthly and annual consumption views
+  - **Unit Conversion**: Automatic conversion to MWh for large values (>1000 kWh)
+  - **Contextual Tooltips**: Relatable comparisons (e.g., "equivalent to running 10 LED TVs for 4 hours daily")
 - **Savings Analysis Chart**: Bar chart comparing estimated vs. actual savings
 
 ## Props/Interfaces
@@ -69,14 +71,29 @@ The component relies on the following dependencies:
 
 ## Implementation Details
 
-### Room-Based Visualization
+### User-Friendly Energy Visualization
 
-The component uses the `auditData` prop along with the existing `consumption` data to generate room-based energy consumption visualizations. This is accomplished through:
+The component offers several features to make energy consumption data more intuitive and actionable:
 
-1. Maintaining a state variable `showRoomBased` that toggles between abstract and room-based views
-2. Using the `transformConsumptionToRoomBased` utility to convert abstract consumption data to room-based data
-3. Applying room-specific colors to each bar in the chart when in room-based mode
-4. Providing detailed tooltips that explain what each room category includes
+1. **Room-Based Visualization**:
+   - Uses the `auditData` prop with the `transformConsumptionToRoomBased` utility
+   - Maintains a `showRoomBased` state to toggle between abstract and room-based views
+   - Applies room-specific colors to each bar in the chart
+
+2. **Time Period Normalization**:
+   - Uses a `showMonthly` state to toggle between monthly and annual views
+   - Divides annual values by 12 for monthly view to show more relatable numbers
+   - Updates axis labels and tooltips to indicate the appropriate time period unit
+
+3. **Unit Conversion**:
+   - Automatically converts large energy values (>1000 kWh) to MWh
+   - Uses the `formatEnergyValue` function to apply the appropriate unit based on value size
+   - Simplifies large numbers to make them more comprehensible (e.g., "1.5 MWh" instead of "1500 kWh")
+
+4. **Contextual Tooltips**:
+   - Provides room descriptions that explain what each category includes
+   - Adds relatable real-world comparisons based on the energy consumption value
+   - Adjusts comparisons depending on whether viewing monthly or annual data
 
 ### Color Coding
 
@@ -87,9 +104,19 @@ Room types have consistent color coding:
 - Bathroom: Purple (#8e42f5)
 - Outdoor: Green (#42f575)
 
-### Toggle Mechanism
+### Toggle Mechanisms
 
-Users can toggle between technical and room-based views using a button that appears when both data types are available. The default view is room-based for better user understanding.
+The component provides two intuitive toggles for customizing the view:
+
+1. **View Type Toggle**:
+   - Switch between technical and room-based categories
+   - Button appears only when both data types are available
+   - Default view is room-based for better user understanding
+
+2. **Time Period Toggle**:
+   - Switch between monthly and annual energy consumption
+   - Uses icon indicators (Calendar for annual, Clock for monthly)
+   - Refreshes all chart elements including tooltips, axis labels, and values
 
 ## Related Files
 

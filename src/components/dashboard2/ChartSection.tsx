@@ -5,6 +5,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Label
 } from 'recharts';
 import { transformConsumptionToRoomBased } from '@/utils/energyBreakdownCalculations';
+import { Clock, Calendar } from 'lucide-react';
 
 interface ChartDataPoint {
   name: string;
@@ -57,10 +58,38 @@ const ChartSection: React.FC<ChartSectionProps> = ({
   // State to toggle between abstract and room-based views
   const [showRoomBased, setShowRoomBased] = useState(true);
   
+  // State to toggle between monthly and annual views
+  const [showMonthly, setShowMonthly] = useState(true);
+  
   // Calculate room-based consumption if we have data
   const roomBasedConsumption = auditData 
     ? transformConsumptionToRoomBased(consumption, auditData)
     : [];
+  
+  // Function to convert data to monthly or annual view
+  const applyTimeframeConversion = (data: ChartDataPoint[]) => {
+    if (!data || data.length === 0) return [];
+    
+    return data.map(item => ({
+      ...item,
+      value: showMonthly ? Math.round(item.value / 12) : item.value
+    }));
+  };
+  
+  // Apply timeframe conversion to the data
+  const timeframeAdjustedConsumption = applyTimeframeConversion(consumption);
+  const timeframeAdjustedRoomConsumption = applyTimeframeConversion(roomBasedConsumption);
+  
+  // Function to format energy values with appropriate units
+  const formatEnergyValue = (value: number): string => {
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)} MWh`;
+    }
+    return `${value} kWh`;
+  };
+  
+  // Get the current timeframe unit for display
+  const timeframeUnit = showMonthly ? 'month' : 'year';
 
   // Update colors to support multiple categories
   const colors = {
@@ -84,22 +113,70 @@ const ChartSection: React.FC<ChartSectionProps> = ({
     consumption: '#2563eb'    // blue for consumption bars
   };
 
-  // Room tooltips
-  const roomTooltips: Record<string, string> = {
-    'Living Room': 'Includes entertainment devices, main lighting, and HVAC usage in living spaces',
-    'Kitchen': 'Includes refrigerator, oven, dishwasher, and kitchen appliances',
-    'Bedrooms': 'Includes bedroom lighting, electronics, and heating/cooling',
-    'Bathroom': 'Includes water heating, ventilation, and lighting in bathrooms',
-    'Outdoor': 'Includes exterior lighting, garage, lawn equipment, and outdoor appliances'
+  // Room tooltips with contextual comparisons
+  const getRoomTooltip = (roomName: string, value: number): string => {
+    const baseDescriptions: Record<string, string> = {
+      'Living Room': 'Includes entertainment devices, main lighting, and HVAC usage in living spaces',
+      'Kitchen': 'Includes refrigerator, oven, dishwasher, and kitchen appliances',
+      'Bedrooms': 'Includes bedroom lighting, electronics, and heating/cooling',
+      'Bathroom': 'Includes water heating, ventilation, and lighting in bathrooms',
+      'Outdoor': 'Includes exterior lighting, garage, lawn equipment, and outdoor appliances'
+    };
+    
+    // Contextual comparisons based on energy usage
+    const getContextualComparison = (value: number, monthly: boolean): string => {
+      // Adjust value if we're in annual mode but want monthly comparisons
+      const monthlyValue = monthly ? value : Math.round(value / 12);
+      
+      switch(roomName) {
+        case 'Living Room':
+          if (monthlyValue > 500) return `Equivalent to running 5 gaming consoles 24/7 or 30 LED TVs for 4 hours daily`;
+          if (monthlyValue > 200) return `Equivalent to running 2 gaming consoles 24/7 or 15 LED TVs for 4 hours daily`;
+          return `Equivalent to running 10 LED TVs for 4 hours daily`;
+          
+        case 'Kitchen':
+          if (monthlyValue > 400) return `Equivalent to 220 loads of laundry or operating your refrigerator for 3 months`;
+          if (monthlyValue > 200) return `Equivalent to 110 loads of laundry or operating your refrigerator for 6 weeks`;
+          return `Equivalent to 50 loads of laundry or operating your refrigerator for 3 weeks`;
+          
+        case 'Bedrooms':
+          if (monthlyValue > 300) return `Equivalent to running a bedroom AC for 10 hours daily or charging 500 phones daily`;
+          if (monthlyValue > 150) return `Equivalent to running a bedroom AC for 5 hours daily or charging 250 phones daily`;
+          return `Equivalent to charging 100 phones daily`;
+          
+        case 'Bathroom':
+          if (monthlyValue > 200) return `Equivalent to 20 hours of hot showers daily or running a heat lamp for 7 hours daily`;
+          if (monthlyValue > 100) return `Equivalent to 10 hours of hot showers daily or running a heat lamp for 3 hours daily`;
+          return `Equivalent to 5 hours of hot showers daily`;
+          
+        case 'Outdoor':
+          if (monthlyValue > 400) return `Equivalent to running 10 hours of landscape lighting daily or a pool pump for 8 hours daily`;
+          if (monthlyValue > 200) return `Equivalent to running 5 hours of landscape lighting daily or a pool pump for 4 hours daily`;
+          return `Equivalent to running 2 hours of landscape lighting daily`;
+          
+        default:
+          return '';
+      }
+    };
+    
+    const baseDescription = baseDescriptions[roomName] || '';
+    const contextComparison = getContextualComparison(value, showMonthly);
+    
+    return baseDescription + (contextComparison ? '. ' + contextComparison : '');
   };
 
-  // Custom tooltip formatter that includes room descriptions
+  // Custom tooltip formatter that includes room descriptions and contextual comparisons
   const roomTooltipFormatter = (value: number, name: string, entry: any) => {
-    const roomDescription = roomTooltips[entry.name];
+    const roomDescription = getRoomTooltip(entry.name, value);
     return [
-      `${value} kWh`, 
+      `${formatEnergyValue(value)}/${timeframeUnit}`, 
       `${entry.name}${roomDescription ? ' - ' + roomDescription : ''}`
     ];
+  };
+  
+  // Standard tooltip formatter for non-room-based data
+  const standardTooltipFormatter = (value: number) => {
+    return `${formatEnergyValue(value)}/${timeframeUnit}`;
   };
 
   if (isLoading) {
@@ -171,40 +248,64 @@ const ChartSection: React.FC<ChartSectionProps> = ({
           <div className="mt-0">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">Energy Consumption Factors</h3>
-              {roomBasedConsumption && roomBasedConsumption.length > 0 && consumption && consumption.length > 0 && (
+              <div className="flex space-x-2">
+                {/* Time period toggle */}
                 <button 
-                  className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 py-1 px-2 rounded"
-                  onClick={() => setShowRoomBased(!showRoomBased)}
+                  className="text-sm flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-1 px-2 rounded"
+                  onClick={() => setShowMonthly(!showMonthly)}
                 >
-                  Show {showRoomBased ? 'Technical' : 'Room-Based'} View
+                  {showMonthly ? <Calendar size={14} /> : <Clock size={14} />}
+                  {showMonthly ? 'Annual' : 'Monthly'} View
                 </button>
-              )}
+                
+                {/* Room/Technical toggle */}
+                {roomBasedConsumption && roomBasedConsumption.length > 0 && consumption && consumption.length > 0 && (
+                  <button 
+                    className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 py-1 px-2 rounded"
+                    onClick={() => setShowRoomBased(!showRoomBased)}
+                  >
+                    Show {showRoomBased ? 'Technical' : 'Room-Based'} View
+                  </button>
+                )}
+              </div>
             </div>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={showRoomBased ? roomBasedConsumption : consumption}
+                  data={showRoomBased 
+                    ? timeframeAdjustedRoomConsumption 
+                    : timeframeAdjustedConsumption}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis
-                    label={{ value: 'Energy (kWh)', angle: -90, position: 'outside', dx: -35 }}
-                    tickFormatter={(value) => `${value}`}
+                    label={{ 
+                      value: `Energy (${showMonthly ? 'kWh/month' : 'kWh/year'})`, 
+                      angle: -90, 
+                      position: 'outside', 
+                      dx: -35 
+                    }}
+                    tickFormatter={(value) => {
+                      if (value >= 1000) {
+                        return `${(value/1000).toFixed(1)}k`;
+                      }
+                      return value;
+                    }}
                     width={60} // Increase width to give more space for labels
                   />
                   <Tooltip 
-                    formatter={showRoomBased ? roomTooltipFormatter : (value) => `${value} kWh`} 
+                    formatter={showRoomBased ? roomTooltipFormatter : standardTooltipFormatter} 
                   />
                   <Legend />
                   <Bar 
                     dataKey="value" 
-                    name="Energy (kWh)" 
+                    name={`Energy (${showMonthly ? 'kWh/month' : 'kWh/year'})`}
                     fill={colors.consumption}
                     // Use room-specific colors for the room-based view
                     {...(showRoomBased && {
                       fill: undefined,
-                      children: roomBasedConsumption.map((entry, index) => {
+                      children: timeframeAdjustedRoomConsumption.map((entry, index) => {
                         const colorKey = entry.name.toLowerCase().replace(/\s+/g, '');
                         return (
                           <Cell
@@ -218,11 +319,12 @@ const ChartSection: React.FC<ChartSectionProps> = ({
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            {showRoomBased && (
-              <div className="mt-4 text-sm text-gray-500 italic">
-                This chart shows estimated energy consumption by room, helping you target the highest-usage areas for efficiency improvements.
-              </div>
-            )}
+            <div className="mt-4 text-sm text-gray-500 italic">
+              {showRoomBased 
+                ? `This chart shows estimated energy consumption by room per ${timeframeUnit}, helping you target the highest-usage areas for efficiency improvements.`
+                : `This chart shows energy consumption factors per ${timeframeUnit}. Toggle to Room-Based view for more intuitive insights.`
+              }
+            </div>
           </div>
         )}
       </div>
