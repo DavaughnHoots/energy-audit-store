@@ -87,19 +87,73 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+// Helper function to generate a UUID for request correlation
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Helper function to hash a string for anonymization
+function hashString(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(16).substring(0, 8);
+}
+
 // Extract default property settings from audit data
 export async function extractPropertySettingsFromAudit(
-  auditData: EnergyAuditData
+  auditData: EnergyAuditData,
+  requestId: string = generateUUID(),
+  userId: string = 'anonymous-user'
 ): Promise<Partial<UserProfileData>> {
-  if (!auditData) return {};
+  const startTime = performance.now();
+  
+  if (!auditData) {
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "warn",
+      component: "userProfileService",
+      operation: "extractPropertySettings",
+      correlation: { 
+        request_id: requestId,
+        user_id: userId
+      },
+      details: {
+        error: "No audit data provided",
+        success: false
+      },
+      performance: {
+        duration_ms: Math.round(performance.now() - startTime)
+      }
+    }));
+    return {};
+  }
 
-  console.log('Extracting property settings from audit data:',
-    {
-      propertyType: auditData.basicInfo?.propertyType,
-      yearBuilt: auditData.basicInfo?.yearBuilt,
-      squareFootage: auditData.homeDetails?.squareFootage
+  // Log the start of extraction with the basic audit data
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "info",
+    component: "userProfileService",
+    operation: "extractPropertySettings.start",
+    correlation: {
+      request_id: requestId,
+      user_id: userId,
+      audit_id: (auditData as any).id || 'unknown'
+    },
+    details: {
+      audit_data_available: {
+        property_type: !!auditData.basicInfo?.propertyType,
+        year_built: !!auditData.basicInfo?.yearBuilt,
+        square_footage: !!auditData.homeDetails?.squareFootage
+      }
     }
-  );
+  }));
 
   // Extract property details from audit data
   const propertyDetails: Partial<UserProfileData['propertyDetails']> = {};
@@ -190,13 +244,54 @@ export async function extractPropertySettingsFromAudit(
   return result;
 }
 
-// Auto-populate empty property settings with defaults from audit data
+  // Auto-populate empty property settings with defaults from audit data
 export async function populateDefaultPropertySettings(
-  profileData: UserProfileData | null
+  profileData: UserProfileData | null,
+  requestId: string = generateUUID()
 ): Promise<UserProfileData | null> {
-  if (!profileData) return null;
+  const startTime = performance.now();
   
-  console.log('Checking if property settings need auto-population...');
+  if (!profileData) {
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      component: "userProfileService",
+      operation: "populatePropertySettings",
+      correlation: { request_id: requestId },
+      details: {
+        error: "No profile data provided",
+        success: false
+      },
+      performance: {
+        duration_ms: Math.round(performance.now() - startTime)
+      }
+    }));
+    return null;
+  }
+  
+  // Get anonymized user ID if available
+  const userId = profileData?.email ? 
+    `usr-${hashString(profileData.email)}` : 
+    'anonymous-user';
+  
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "info",
+    component: "userProfileService",
+    operation: "populatePropertySettings.start",
+    correlation: {
+      request_id: requestId,
+      user_id: userId
+    },
+    details: {
+      has_existing_property_details: !!(profileData.propertyDetails && 
+                           Object.keys(profileData.propertyDetails).length > 0),
+      has_partial_settings: !!(profileData.propertyDetails || 
+                             profileData.windowMaintenance || 
+                             profileData.energySystems),
+      attempting_auto_population: true
+    }
+  }));
 
   // Check if property settings are empty or incomplete
   const hasPropertyDetails = profileData.propertyDetails &&
@@ -204,35 +299,179 @@ export async function populateDefaultPropertySettings(
 
   // Don't auto-populate if we already have property details
   if (hasPropertyDetails) {
-    console.log('Property settings already exist, skipping auto-population');
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      component: "userProfileService",
+      operation: "populatePropertySettings.complete",
+      correlation: {
+        request_id: requestId,
+        user_id: userId
+      },
+      details: {
+        success: true,
+        auto_populated: false,
+        reason: "existing_settings_present",
+        existing_property_type: profileData.propertyDetails?.propertyType
+      },
+      performance: {
+        duration_ms: Math.round(performance.now() - startTime)
+      }
+    }));
     return profileData;
   }
 
   // Fetch latest audit data for defaults
-  console.log('Fetching latest audit data for default property settings...');
-  const auditData = await fetchLatestAuditData();
-
+  const fetchStartTime = performance.now();
+  let auditData: EnergyAuditData | null = null;
+  
+  try {
+    auditData = await fetchLatestAuditData();
+    
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      component: "userProfileService",
+      operation: "fetchLatestAuditData",
+      correlation: {
+        request_id: requestId,
+        user_id: userId,
+        audit_id: (auditData as any)?.id || 'not-found'
+      },
+      details: {
+        success: !!auditData,
+        audit_found: !!auditData,
+        audit_date: auditData?.basicInfo?.auditDate
+      },
+      performance: {
+        duration_ms: Math.round(performance.now() - fetchStartTime)
+      }
+    }));
+  } catch (error) {
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "error",
+      component: "userProfileService",
+      operation: "fetchLatestAuditData",
+      correlation: {
+        request_id: requestId,
+        user_id: userId
+      },
+      details: {
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack_trace: error instanceof Error ? error.stack : undefined,
+        success: false
+      },
+      performance: {
+        duration_ms: Math.round(performance.now() - fetchStartTime)
+      }
+    }));
+  }
+  
   if (!auditData) {
-    console.log('No audit data available for auto-population');
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      component: "userProfileService",
+      operation: "populatePropertySettings.complete",
+      correlation: {
+        request_id: requestId,
+        user_id: userId
+      },
+      details: {
+        success: false,
+        reason: "no_audit_data_available",
+        auto_populated: false
+      },
+      performance: {
+        duration_ms: Math.round(performance.now() - startTime)
+      }
+    }));
     return profileData;
   }
-
+  
   // Extract property settings from audit data
-  const defaultSettings = await extractPropertySettingsFromAudit(auditData);
-
+  const extractStartTime = performance.now();
+  const defaultSettings = await extractPropertySettingsFromAudit(auditData, requestId, userId);
+  
   // Merge defaults with existing profile data (without overwriting)
+  const before = { ...profileData };
   const updatedProfile = {
     ...profileData,
     ...defaultSettings
   };
-
-  console.log('Auto-populated property settings from audit data');
+  
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "info",
+    component: "userProfileService",
+    operation: "populatePropertySettings.complete",
+    correlation: {
+      request_id: requestId,
+      user_id: userId,
+      audit_id: (auditData as any).id || 'unknown'
+    },
+    details: {
+      success: true,
+      auto_populated: true,
+      source: "latest_audit",
+      audit_date: auditData.basicInfo?.auditDate,
+      populated_fields: Object.keys(defaultSettings),
+      property_type: defaultSettings.propertyDetails?.propertyType,
+      before: {
+        had_property_details: !!before.propertyDetails,
+        had_window_maintenance: !!before.windowMaintenance,
+        had_energy_systems: !!before.energySystems
+      },
+      after: {
+        has_property_details: !!updatedProfile.propertyDetails,
+        has_window_maintenance: !!updatedProfile.windowMaintenance,
+        has_energy_systems: !!updatedProfile.energySystems,
+        property_type: updatedProfile.propertyDetails?.propertyType,
+        year_built: updatedProfile.propertyDetails?.yearBuilt,
+        square_footage: updatedProfile.propertyDetails?.squareFootage
+      }
+    },
+    performance: {
+      total_duration_ms: Math.round(performance.now() - startTime),
+      fetch_audit_ms: Math.round(fetchStartTime - startTime),
+      extract_settings_ms: Math.round(performance.now() - extractStartTime)
+    }
+  }));
+  
   return updatedProfile;
 }
 
 export async function fetchUserProfileData(): Promise<UserProfileData | null> {
+  const requestId = generateUUID();
+  const startTime = performance.now();
+  
   try {
     const headers = getAuthHeaders();
+    
+    // Get accessToken from cookies to generate user ID
+    const accessToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('accessToken='))
+      ?.split('=')[1];
+    
+    const userId = accessToken ? 
+      `usr-${hashString(accessToken)}` : 
+      'anonymous-user';
+    
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      component: "userProfileService",
+      operation: "fetchUserProfileData.start",
+      correlation: {
+        request_id: requestId,
+        user_id: userId
+      },
+      details: {
+        authenticated: !!accessToken
+      }
+    }));
     
     const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}/profile`, {
       method: 'GET',
@@ -242,17 +481,78 @@ export async function fetchUserProfileData(): Promise<UserProfileData | null> {
     
     if (!response.ok) {
       if (response.status === 401) {
-        console.warn('Authentication required to fetch user profile');
+        console.log(JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "warn",
+          component: "userProfileService",
+          operation: "fetchUserProfileData",
+          correlation: {
+            request_id: requestId,
+            user_id: userId
+          },
+          details: {
+            error: "Authentication required to fetch user profile",
+            status: 401,
+            success: false
+          },
+          performance: {
+            duration_ms: Math.round(performance.now() - startTime)
+          }
+        }));
         return null;
       }
+      
       throw new Error(`Failed to fetch user profile data: ${response.status}`);
     }
     
     // Get the base profile data
     const profileData = await response.json();
     
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      component: "userProfileService",
+      operation: "fetchUserProfileData.retrieved",
+      correlation: {
+        request_id: requestId,
+        user_id: userId
+      },
+      details: {
+        success: true,
+        profile_exists: !!profileData,
+        has_property_details: !!(profileData?.propertyDetails && 
+                             Object.keys(profileData?.propertyDetails || {}).length > 0)
+      },
+      performance: {
+        api_call_ms: Math.round(performance.now() - startTime)
+      }
+    }));
+    
     // Auto-populate property settings with defaults if needed
-    return await populateDefaultPropertySettings(profileData);
+    const populateStartTime = performance.now();
+    const populatedProfile = await populateDefaultPropertySettings(profileData, requestId);
+    
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: "info",
+      component: "userProfileService",
+      operation: "fetchUserProfileData.complete",
+      correlation: {
+        request_id: requestId,
+        user_id: userId
+      },
+      details: {
+        success: true,
+        property_settings_auto_populated: populatedProfile !== profileData,
+        property_type: populatedProfile?.propertyDetails?.propertyType
+      },
+      performance: {
+        total_duration_ms: Math.round(performance.now() - startTime),
+        auto_populate_ms: Math.round(performance.now() - populateStartTime)
+      }
+    }));
+    
+    return populatedProfile;
   } catch (error) {
     console.error('Error fetching user profile data:', error);
     return null;
