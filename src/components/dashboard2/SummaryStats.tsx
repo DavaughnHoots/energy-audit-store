@@ -31,7 +31,7 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ stats }) => {
   const items = [
     {
       icon: <DollarSign className="h-6 w-6 text-green-500" />,
-      title: 'Total Estimated Savings',
+      title: 'Total Savings',
       value: formatCurrency(stats.totalSavings.estimated || 0),
       description: 'Estimated energy cost savings',
       bgColor: 'bg-green-50'
