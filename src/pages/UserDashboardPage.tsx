@@ -9,6 +9,10 @@ import DashboardOverview from '@/components/dashboard/DashboardOverview';
 import ReportsTab from '@/components/dashboard/ReportsTab';
 import { fetchAuditHistory, fetchReportData } from '@/services/reportService';
 import { AuditRecommendation } from '@/types/energyAudit';
+import { 
+  enrichRecommendationWithDefaultValues, 
+  enrichChartDataWithDefaultValues 
+} from '@/utils/defaultFinancialValues';
 
 interface DashboardStats {
   totalSavings: {
@@ -259,42 +263,20 @@ const UserDashboardPage: React.FC = () => {
           return 0;
         };
         
-        // Process recommendations with improved financial data mapping
+        // Process recommendations with default financial values when actual values are missing or zero
         const enhancedRecommendations = reportData.recommendations?.map(rec => {
-          // Create an "any" reference to access potential dynamic properties safely
-          const recAny = rec as any;
-          
-          // Extract financial values with improved parsing logic
-          const estimatedSavingsValue = extractNumericValue(
-            rec.estimatedSavings ?? recAny.annualSavings ?? recAny.savingsPerYear ?? 0
-          );
-          
-          const actualSavingsValue = extractNumericValue(
-            rec.actualSavings ?? recAny.realizedSavings ?? 0
-          );
-          
-          const estimatedCostValue = extractNumericValue(
-            rec.estimatedCost ?? rec.implementationCost ?? recAny.cost ?? 0
-          );
-          
-          const implementationCostValue = extractNumericValue(
-            rec.implementationCost ?? recAny.cost ?? rec.estimatedCost ?? 0
-          );
-          
-          // Extract payback period if available
-          const paybackPeriodValue = extractNumericValue(
-            rec.paybackPeriod ?? recAny.roi ?? recAny.returnOnInvestment ?? 0
-          );
-          
-          // Create a properly typed mapped recommendation with all financial values
-          const mappedRec = {
+          // First extract any numeric values from string representations
+          const parsedRec = {
             ...rec,
-            estimatedSavings: estimatedSavingsValue,
-            actualSavings: actualSavingsValue,
-            estimatedCost: estimatedCostValue,
-            implementationCost: implementationCostValue,
-            paybackPeriod: paybackPeriodValue
+            estimatedSavings: extractNumericValue(rec.estimatedSavings),
+            actualSavings: extractNumericValue(rec.actualSavings),
+            estimatedCost: extractNumericValue(rec.estimatedCost),
+            implementationCost: extractNumericValue(rec.implementationCost),
+            paybackPeriod: extractNumericValue(rec.paybackPeriod)
           };
+          
+          // Then enrich with default values when zero or missing
+          const enrichedRec = enrichRecommendationWithDefaultValues(parsedRec);
           
           // Log transformation for debugging
           console.log(`Financial data mapping for "${rec.title || 'Unknown'}":`, {
@@ -305,24 +287,27 @@ const UserDashboardPage: React.FC = () => {
               implementationCost: rec.implementationCost
             },
             after: {
-              estimatedSavings: mappedRec.estimatedSavings,
-              actualSavings: mappedRec.actualSavings,
-              estimatedCost: mappedRec.estimatedCost,
-              implementationCost: mappedRec.implementationCost
+              estimatedSavings: enrichedRec.estimatedSavings,
+              actualSavings: enrichedRec.actualSavings,
+              estimatedCost: enrichedRec.estimatedCost,
+              implementationCost: enrichedRec.implementationCost
             }
           });
           
-          return mappedRec;
+          return enrichedRec;
         }) || [];
         
-        // Process chart data with the same numeric extraction function
+        // Process chart data with default financial values when actual values are missing or zero
         const processedSavingsAnalysis = (reportData.charts?.savingsAnalysis || []).map(item => {
-          // Apply same financial data extraction to chart data
-          return {
+          // First extract any numeric values from string formats
+          const parsedItem = {
             ...item,
             estimatedSavings: extractNumericValue(item.estimatedSavings),
             actualSavings: extractNumericValue(item.actualSavings)
           };
+          
+          // Then enrich with default values based on item name
+          return enrichChartDataWithDefaultValues(parsedItem);
         });
         
         console.log('PROCESSED CHART DATA:', {
