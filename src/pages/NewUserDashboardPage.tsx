@@ -59,12 +59,16 @@ const NewUserDashboardPage: React.FC = () => {
   // Fetch most recent audit and then its report data
   const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
+    console.log('🔍 Starting dashboard data fetch');
     
     try {
       // First fetch the most recent audit to get its ID
+      console.log('🔍 Fetching audit history...');
       const historyData = await fetchAuditHistory(1, 1);
+      console.log('📊 Audit history data:', historyData);
       
       if (!historyData.audits?.length) {
+        console.warn('⚠️ No audits found in history');
         setIsLoading(false);
         return;
       }
@@ -72,16 +76,18 @@ const NewUserDashboardPage: React.FC = () => {
       // Get audit ID with proper type safety
       const firstAudit = historyData.audits[0];
       if (!firstAudit || !firstAudit.id) {
-        console.error('Missing audit ID in first audit');
+        console.error('❌ Missing audit ID in first audit', firstAudit);
         setIsLoading(false);
         return;
       }
       
       const auditId = firstAudit.id;
-      console.log('Using audit for dashboard:', auditId);
+      console.log('🔍 Using audit for dashboard:', auditId);
       
       // Then fetch the report data for this audit
+      console.log('🔍 Fetching report data for audit:', auditId);
       const reportData = await fetchReportData(auditId);
+      console.log('📊 Report data:', reportData);
       
       // Count active vs. implemented recommendations
       const recommendations = reportData.recommendations || [];
