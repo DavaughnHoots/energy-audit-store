@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, getApiUrl } from '@/config/api';
 import { fetchWithAuth } from '@/utils/authUtils';
@@ -184,10 +184,19 @@ const UserDashboardPage: React.FC = () => {
   }, [fetchDashboardData, refreshKey]);
 
   /**
+   * Reference to track if we're already fetching data to prevent duplicate requests
+   */
+  const isLoadingRef = useRef(false);
+
+  /**
    * Function to fetch dashboard data for a specific audit ID using the report API
    * for consistent data between dashboard and interactive report
    */
   const fetchAuditSpecificData = useCallback(async (auditId: string) => {
+    // Prevent duplicate requests if already loading
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+    
     try {
       console.log('Fetching audit-specific data using report API for audit:', auditId);
       
@@ -201,30 +210,44 @@ const UserDashboardPage: React.FC = () => {
         recommendationsCount: reportData.recommendations?.length || 0
       });
       
-      // Transform report data to dashboard format
-      const dashboardData = {
-        ...stats,
-        // Use chart data directly from report
-        energyAnalysis: reportData.charts,
-        // Use recommendations from report
-        enhancedRecommendations: reportData.recommendations,
-        // Update metadata
-        dataSummary: {
-          hasDetailedData: true,
-          isUsingDefaultData: false,
-          dataSource: 'detailed',
-          auditId: auditId
-        },
-        // Add last updated timestamp
-        lastUpdated: new Date().toISOString(),
-        // Keep the audit ID reference
-        latestAuditId: auditId,
-        specificAuditId: auditId
-      };
-      
-      // Update the stats with the transformed data
-      setStats(dashboardData);
-      setPersistentStats(dashboardData);
+      // Transform report data to dashboard format using functional update to avoid dependency issues
+      setStats(prevStats => {
+        const dashboardData = {
+          ...prevStats,
+          // Properly map chart data with correct financial values
+          energyAnalysis: {
+            energyBreakdown: reportData.charts?.energyBreakdown || [],
+            consumption: reportData.charts?.consumption || [],
+            savingsAnalysis: reportData.charts?.savingsAnalysis || []
+          },
+          // Preserve financial data in recommendations
+          enhancedRecommendations: reportData.recommendations?.map(rec => ({
+            ...rec,
+            // Ensure financial values are preserved
+            estimatedSavings: rec.estimatedSavings || 0,
+            actualSavings: rec.actualSavings || 0,
+            estimatedCost: rec.estimatedCost || 0,
+            implementationCost: rec.implementationCost || 0
+          })) || [],
+          // Update metadata
+          dataSummary: {
+            hasDetailedData: true,
+            isUsingDefaultData: false,
+            dataSource: 'detailed',
+            auditId: auditId
+          },
+          // Add last updated timestamp
+          lastUpdated: new Date().toISOString(),
+          // Keep the audit ID reference
+          latestAuditId: auditId,
+          specificAuditId: auditId
+        };
+        
+        // Also update persisted stats
+        setPersistentStats(dashboardData);
+        
+        return dashboardData;
+      });
       
     } catch (err) {
       console.error('Error fetching report data for dashboard:', err);
@@ -238,16 +261,22 @@ const UserDashboardPage: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           console.log('Fallback to dashboard API successful');
-          setStats(data);
-          setPersistentStats(data);
+          // Use functional update here too
+          setStats(prevStats => {
+            setPersistentStats(data);
+            return data;
+          });
         } else {
           console.error('Fallback API request failed with status:', response.status);
         }
       } catch (fallbackError) {
         console.error('Fallback fetch also failed:', fallbackError);
       }
+    } finally {
+      // Reset loading state
+      isLoadingRef.current = false;
     }
-  }, [stats]);
+  }, []);  // Note: Removed stats from dependency array to prevent infinite loop
 
   // Fetch first audit from history if no latestAuditId is available
   useEffect(() => {
@@ -403,5 +432,3 @@ const UserDashboardPage: React.FC = () => {
     </div>
   );
 };
-
-export default UserDashboardPage;
