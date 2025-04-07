@@ -375,7 +375,7 @@ class EnhancedDashboardService {
                     }));
                 }
             }
-            // 3. Get user product preferences
+            // 3. Get user product preferences - first from user_preferences, then fallback to audit data
             const preferencesQuery = await pool.query(`
         SELECT 
           up.preferred_categories,
@@ -384,11 +384,57 @@ class EnhancedDashboardService {
         WHERE up.user_id = $1
       `, [userId]);
             let productPreferences = null;
+            // First check user preferences table
             if (preferencesQuery.rows.length > 0) {
                 productPreferences = {
                     categories: preferencesQuery.rows[0].preferred_categories || [],
                     budgetConstraint: preferencesQuery.rows[0].budget_constraint || undefined
                 };
+                appLogger.debug('Retrieved user preferences from preferences table:', {
+                    userId,
+                    categoriesCount: productPreferences.categories.length,
+                    budgetConstraint: productPreferences.budgetConstraint
+                });
+            }
+            // If no preferences or empty categories array, try to extract from the audit data
+            if (!productPreferences || !productPreferences.categories || productPreferences.categories.length === 0) {
+                // Try to get product preferences from the audit data if we have an audit ID
+                if (auditId) {
+                    const auditPreferencesQuery = await pool.query(`
+            SELECT 
+              data->'productPreferences'->'categories' as categories,
+              data->'productPreferences'->'budgetConstraint' as budget_constraint
+            FROM energy_audits
+            WHERE id = $1
+          `, [auditId]);
+                    if (auditPreferencesQuery.rows.length > 0 && auditPreferencesQuery.rows[0].categories) {
+                        const categories = auditPreferencesQuery.rows[0].categories;
+                        const budgetConstraint = auditPreferencesQuery.rows[0].budget_constraint ?
+                            parseFloat(auditPreferencesQuery.rows[0].budget_constraint) : undefined;
+                        productPreferences = {
+                            categories: Array.isArray(categories) ? categories : [],
+                            budgetConstraint
+                        };
+                        appLogger.debug('Retrieved user preferences from audit data:', {
+                            userId,
+                            auditId,
+                            categoriesCount: productPreferences.categories.length,
+                            budgetConstraint: productPreferences.budgetConstraint
+                        });
+                    }
+                }
+            }
+            // If still no preferences or empty categories, use default categories
+            if (!productPreferences || !productPreferences.categories || productPreferences.categories.length === 0) {
+                productPreferences = {
+                    categories: ['hvac', 'lighting', 'insulation', 'windows', 'appliances', 'water_heating', 'renewable', 'smart_home'],
+                    budgetConstraint: undefined
+                };
+                appLogger.debug('Using default product preferences categories:', {
+                    userId,
+                    auditId,
+                    categoriesCount: productPreferences.categories.length
+                });
             }
             // Determine if we should use generated data based on stats
             const hasStats = statsQuery.rows[0]?.completed_audits > 0;
@@ -399,6 +445,20 @@ class EnhancedDashboardService {
             const hasRecommendationsData = enhancedRecommendations && enhancedRecommendations.length > 0;
             // Flag to indicate if we're using default data
             const isUsingDefaultData = hasStats && (!hasEnergyData || !hasRecommendationsData);
+            // Enhanced debug logging for recommendations status
+            appLogger.debug('Dashboard recommendations status:', {
+                userId,
+                auditId: newAuditId || latestAuditQuery.rows[0]?.id || null,
+                hasStats,
+                hasRecommendationsData,
+                hasEnergyData,
+                isUsingDefaultData,
+                recommendationsCount: enhancedRecommendations?.length || 0,
+                wouldUseDefaultRecommendations: hasStats && !hasRecommendationsData,
+                generatedRecsLength: this.generateDefaultRecommendations().length
+            });
+            // Always generate default recommendations for testing
+            const defaultRecommendations = this.generateDefaultRecommendations();
             // Create the full enhanced dashboard stats object
             const stats = {
                 totalSavings: {
@@ -435,18 +495,26 @@ class EnhancedDashboardService {
                 energyAnalysis: (hasEnergyData && energyAnalysisData) ? energyAnalysisData :
                     hasStats ? this.generateDefaultEnergyAnalysis() :
                         { energyBreakdown: [], consumption: [], savingsAnalysis: [] },
+                // CRITICAL FIX: ENSURE DASHBOARD ALWAYS HAS RECOMMENDATIONS
+                // Always include recommendations - prioritize real data, fall back to defaults, never return empty array
                 enhancedRecommendations: hasRecommendationsData ? enhancedRecommendations :
-                    hasStats ? this.generateDefaultRecommendations() :
-                        [],
+                    defaultRecommendations, // Always use defaults instead of empty array
                 productPreferences: productPreferences || { categories: [] },
                 // Add data source metadata
                 dataSummary: {
                     hasDetailedData: hasEnergyData && hasRecommendationsData,
-                    isUsingDefaultData: isUsingDefaultData,
-                    dataSource: hasEnergyData && hasRecommendationsData ? 'detailed' :
-                        isUsingDefaultData ? 'generated' : 'empty'
+                    isUsingDefaultData: isUsingDefaultData || !hasRecommendationsData, // Update flag if using default recommendations
+                    dataSource: hasEnergyData && hasRecommendationsData ? 'detailed' : 'generated'
                 }
             };
+            // Final validation and debug log to ensure recommendations are included
+            appLogger.debug('Final dashboard stats object:', {
+                userId,
+                auditId: stats.latestAuditId,
+                hasRecommendations: (stats.enhancedRecommendations && stats.enhancedRecommendations.length > 0),
+                recommendationsCount: stats.enhancedRecommendations?.length || 0,
+                dataSource: stats.dataSummary?.dataSource || 'unknown'
+            });
             await cache.set(cacheKey, JSON.stringify(stats), this.CACHE_TTL);
             return stats;
         }
