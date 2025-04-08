@@ -79,6 +79,23 @@ backend/src/scripts/run_*_tests.ts
 *.psm1
 *.ps1
 
+# Deployment and test scripts
+scripts/heroku_*.js
+scripts/debug_*.js
+scripts/check_*.js
+scripts/deploy_*.js
+scripts/direct_*.js
+run-*.bat
+deploy-*.bat
+heroku-*.bat
+test-*.js
+test-*.mjs
+test-*.ts
+*implementation-plan*.md
+*implementation-summary*.md
+*deployment*.md
+*fix-plan*.md
+
 # Development scripts and utilities
 # backend/src/scripts/*
 backend/src/scripts/heroku_*.js
