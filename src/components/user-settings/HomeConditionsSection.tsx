@@ -10,12 +10,7 @@ interface HomeConditionsData {
     basement: 'poor' | 'average' | 'good' | 'excellent' | 'not-sure';
     floor: 'poor' | 'average' | 'good' | 'excellent' | 'not-sure';
   };
-  windows: {
-    type: 'single' | 'double' | 'triple' | 'not-sure';
-    count: number;
-    condition: 'excellent' | 'good' | 'fair' | 'poor';
-    lastReplaced?: string;
-  };
+  // Windows section moved to dedicated WindowManagementSection component
   weatherization: {
     weatherStripping: 'door-sweep' | 'foam' | 'metal' | 'none' | 'not-sure';
     drafts: boolean;
@@ -30,8 +25,7 @@ interface Props {
 }
 
 const INSULATION_RATINGS = ['excellent', 'good', 'average', 'poor', 'not-sure'];
-const WINDOW_TYPES = ['single', 'double', 'triple', 'not-sure'];
-const WINDOW_CONDITIONS = ['excellent', 'good', 'fair', 'poor'];
+// Window constants moved to WindowManagementSection component
 const WEATHERSTRIPPING_TYPES = ['door-sweep', 'foam', 'metal', 'none', 'not-sure'];
 
 const HomeConditionsSection: React.FC<Props> = ({ onSave, initialData }) => {
@@ -42,11 +36,7 @@ const HomeConditionsSection: React.FC<Props> = ({ onSave, initialData }) => {
       basement: 'not-sure',
       floor: 'not-sure'
     },
-    windows: {
-      type: 'not-sure',
-      count: 0,
-      condition: 'good'
-    },
+    // Windows section moved to WindowManagementSection component
     weatherization: {
       weatherStripping: 'not-sure',
       drafts: false,
@@ -95,12 +85,6 @@ const HomeConditionsSection: React.FC<Props> = ({ onSave, initialData }) => {
   };
 
   const validateForm = (): boolean => {
-    // Validate windows count
-    if (formData.windows.count < 0) {
-      setError('Number of windows cannot be negative');
-      return false;
-    }
-
     // Validate at least one insulation rating
     const hasInsulationRating = Object.values(formData.insulation).some(
       value => value !== 'not-sure'
@@ -183,70 +167,7 @@ const HomeConditionsSection: React.FC<Props> = ({ onSave, initialData }) => {
           </div>
         </div>
 
-        {/* Windows Section */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Windows Assessment</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Window Type
-              </label>
-              <select
-                value={formData.windows.type}
-                onChange={(e) => handleInputChange('windows', 'type', e.target.value)}
-                className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500"
-              >
-                {WINDOW_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')} Pane
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Windows
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.windows.count}
-                onChange={(e) => handleInputChange('windows', 'count', parseInt(e.target.value))}
-                className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Window Condition
-              </label>
-              <select
-                value={formData.windows.condition}
-                onChange={(e) => handleInputChange('windows', 'condition', e.target.value)}
-                className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500"
-              >
-                {WINDOW_CONDITIONS.map((condition) => (
-                  <option key={condition} value={condition}>
-                    {condition.charAt(0).toUpperCase() + condition.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Replaced (if known)
-              </label>
-              <input
-                type="date"
-                value={formData.windows.lastReplaced || ''}
-                onChange={(e) => handleInputChange('windows', 'lastReplaced', e.target.value)}
-                className="w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Windows Section moved to dedicated WindowManagementSection component */}
 
         {/* Weatherization Section */}
         <div className="bg-white rounded-lg p-6 shadow-sm">

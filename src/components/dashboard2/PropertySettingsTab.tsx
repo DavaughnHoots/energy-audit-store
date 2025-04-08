@@ -524,7 +524,7 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h4 className="text-lg font-medium mb-4">Property Details</h4>
         <PropertyDetailsForm 
-          initialData={{ propertyDetails: propertyData, windowMaintenance: windowData }}
+          initialData={{ propertyDetails: propertyData }}
           onSave={(success) => {
             if (success) {
               // We need to create/extract a formatted property details object
@@ -557,13 +557,14 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
                     basement: 'not-sure',
                     floor: 'not-sure'
                   },
-                  // Include nested structure to match expected format
-                  windows: {
-                    type: formData.get('windowType') || windowData?.windowType || 'double',
-                    count: Number(formData.get('windowCount')) || windowData?.windowCount || 8,
+                  // Windows section moved to WindowManagementSection component
+                  // Using existing window data instead of trying to get it from the form
+                  windows: windowData || {
+                    type: 'double',
+                    count: 8,
                     condition: 'good'
                   },
-                  weatherization: {
+                  weatherization: propertyData?.weatherization || {
                     drafts: false,
                     visibleGaps: false,
                     condensation: false,
