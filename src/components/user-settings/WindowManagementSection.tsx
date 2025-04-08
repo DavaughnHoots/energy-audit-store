@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UpdateWindowMaintenanceDto, WindowMaintenance } from '@/types/propertySettings';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -59,14 +58,34 @@ const WindowManagementSection: React.FC<Props> = ({
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-gray-900">Window Management</h3>
       
-      <Tabs defaultValue="details" onValueChange={setActiveTab} value={activeTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="details">Window Details</TabsTrigger>
-          <TabsTrigger value="assessment">Window Assessment</TabsTrigger>
-        </TabsList>
-        
-        {/* Window Details Tab */}
-        <TabsContent value="details">
+      {/* Tab Navigation - styled to match dashboard tabs */}
+      <div className="border-b border-gray-200 mb-6">
+        <div className="flex space-x-8">
+          <button
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'details'
+                ? 'border-green-500 text-green-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+            onClick={() => setActiveTab('details')}
+          >
+            Window Details
+          </button>
+          <button
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'assessment'
+                ? 'border-green-500 text-green-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+            onClick={() => setActiveTab('assessment')}
+          >
+            Window Assessment
+          </button>
+        </div>
+      </div>
+      
+      {/* Window Details Tab */}
+      {activeTab === 'details' && (
           <form onSubmit={handleMaintenanceSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -156,10 +175,10 @@ const WindowManagementSection: React.FC<Props> = ({
               </button>
             </div>
           </form>
-        </TabsContent>
-        
-        {/* Window Assessment Tab */}
-        <TabsContent value="assessment">
+      )}
+      
+      {/* Window Assessment Tab */}
+      {activeTab === 'assessment' && (
           <form onSubmit={handleAssessmentSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <Card>
@@ -239,8 +258,7 @@ const WindowManagementSection: React.FC<Props> = ({
               </button>
             </div>
           </form>
-        </TabsContent>
-      </Tabs>
+      )}
     </div>
   );
 };

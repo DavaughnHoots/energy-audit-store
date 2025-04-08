@@ -18,13 +18,6 @@ const OWNERSHIP_TYPES = [
   { value: 'leased', label: 'Leased/Rented' }
 ];
 
-const WINDOW_TYPES = [
-  { value: 'single', label: 'Single Pane' },
-  { value: 'double', label: 'Double Pane' },
-  { value: 'triple', label: 'Triple Pane' },
-  { value: 'not-sure', label: 'Not Sure' }
-];
-
 const WATER_HEATER_TYPES = [
   { value: 'standard-tank', label: 'Standard Tank' },
   { value: 'tankless', label: 'Tankless' },
@@ -43,8 +36,6 @@ const PropertyDetailsForm: React.FC<PropertyDetailsFormProps> = ({ initialData, 
   const [ownershipStatus, setOwnershipStatus] = useState(initialData?.propertyDetails?.ownershipStatus || '');
   const [squareFootage, setSquareFootage] = useState<number | ''>(initialData?.propertyDetails?.squareFootage || '');
   const [yearBuilt, setYearBuilt] = useState<number | ''>(initialData?.propertyDetails?.yearBuilt || '');
-  const [windowCount, setWindowCount] = useState<number | ''>(initialData?.windowMaintenance?.windowCount || '');
-  const [windowType, setWindowType] = useState(initialData?.windowMaintenance?.windowType || 'not-sure');
   const [waterHeaterType, setWaterHeaterType] = useState(initialData?.energySystems?.waterHeater?.type || 'not-sure');
   
   const [error, setError] = useState('');
@@ -216,8 +207,6 @@ const PropertyDetailsForm: React.FC<PropertyDetailsFormProps> = ({ initialData, 
               setSquareFootage(initialData?.propertyDetails?.squareFootage || '');
               setYearBuilt(initialData?.propertyDetails?.yearBuilt || '');
               setOwnershipStatus(initialData?.propertyDetails?.ownershipStatus || '');
-              setWindowCount(initialData?.windowMaintenance?.windowCount || '');
-              setWindowType(initialData?.windowMaintenance?.windowType || 'not-sure');
               setWaterHeaterType(initialData?.energySystems?.waterHeater?.type || 'not-sure');
               setError('');
               setSuccess('');
