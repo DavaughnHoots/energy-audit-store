@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
 import { Loader2, Filter, SlidersHorizontal, ShoppingBag } from 'lucide-react';
+import { usePageTracking } from '@/hooks/analytics/usePageTracking';
 
 interface Product {
   id: string;
@@ -26,7 +27,9 @@ interface FilterOptions {
 }
 
 const ProductRecommendationsPage: React.FC = () => {
-  const location = useLocation();
+  // Add page tracking
+  usePageTracking('products');
+const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const auditId = queryParams.get('auditId');

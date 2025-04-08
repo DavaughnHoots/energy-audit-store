@@ -14,6 +14,7 @@ import {
   enrichChartDataWithDefaultValues
 } from '@/utils/defaultFinancialValues';
 import { mergeDashboardData, didOverwriteRecommendations } from '@/utils/dashboardDataMerge';
+import { usePageTracking } from '@/hooks/analytics/usePageTracking';
 
 interface DashboardStats {
   totalSavings: {
@@ -61,6 +62,9 @@ interface SavingsChartDataPoint {
 }
 
 const UserDashboardPage: React.FC = () => {
+  // Add page tracking
+  usePageTracking('dashboard');
+  
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<React.ReactNode | null>(null);

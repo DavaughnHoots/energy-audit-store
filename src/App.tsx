@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
+import { usePageTracking } from './hooks/analytics/usePageTracking';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
@@ -24,6 +25,9 @@ import { LineChart, Battery, Users } from 'lucide-react';
 
 // Home component with all the landing page content
 const Home: React.FC = () => {
+  // Add page tracking
+  usePageTracking('home');
+  
   const features = [
     {
       title: 'Product Catalog',

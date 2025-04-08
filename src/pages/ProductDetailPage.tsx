@@ -8,8 +8,12 @@ import { ProductSpecifications } from '../components/products/ProductSpecificati
 import { EnergySavingsCard } from '../components/products/EnergySavingsCard';
 import { useProducts } from '../hooks/useProducts';
 import { Product } from '../../backend/src/types/product';
+import { usePageTracking } from '../hooks/analytics/usePageTracking';
 
 const ProductDetailPage: React.FC = () => {
+  // Add page tracking
+  usePageTracking('products');
+  
   const { id } = useParams<{ id: string }>();
   const { getProduct, isLoading } = useProducts();
   const [product, setProduct] = useState<Product | null>(null);

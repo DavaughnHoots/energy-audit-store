@@ -68,7 +68,7 @@ const DEDUPLICATION_WINDOW = 2000;    // ms to ignore duplicate events
 const DEDUPLICATION_CACHE_SIZE = 50;  // Number of recent events to keep in deduplication cache
 
 // Areas that should not be tracked
-const BLOCKED_ANALYTICS_AREAS: AnalyticsArea[] = ['dashboard'];
+const BLOCKED_ANALYTICS_AREAS: AnalyticsArea[] = ['admin'];
 
 export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sessionId, setSessionId] = useState<string>('');

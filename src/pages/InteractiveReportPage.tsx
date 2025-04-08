@@ -11,6 +11,7 @@ import {
 } from '../services/productRecommendationService';
 import { ReportData, SavingsChartDataPoint } from '../types/report';
 import { RecommendationStatus, RecommendationPriority } from '../types/energyAudit';
+import { usePageTracking } from '../hooks/analytics/usePageTracking';
 
 // Import all report section components
 import ReportExecutiveSummary from '../components/reports/ReportExecutiveSummary';
@@ -23,6 +24,9 @@ import ReportCharts from '../components/reports/ReportCharts';
 import ReportSummary from '../components/reports/ReportSummary';
 
 const InteractiveReportPage: React.FC = () => {
+  // Add page tracking
+  usePageTracking('reports');
+  
   const { auditId } = useParams<{ auditId: string }>();
   const navigate = useNavigate();
   

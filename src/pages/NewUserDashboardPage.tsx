@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePageTracking } from "@/hooks/analytics/usePageTracking";
 import {
   SimpleDashboardLayout,
   SummaryStats,
@@ -295,6 +296,9 @@ const NewUserDashboardPage: React.FC = () => {
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
   };
+
+  // Track page views for analytics
+  usePageTracking('dashboard');
 
   // If there's an error, show it inside the layout
   if (error) {
