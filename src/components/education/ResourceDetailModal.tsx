@@ -120,16 +120,9 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   if (!isOpen) return null;
   
   return createPortal(
-    <Dialog
+    <Dialog 
       isOpen={isOpen}
       onClose={onClose}>
-      <DialogContent>
-  return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={onClose}
-      title={resource?.title || "Resource Details"}
-      description={resource?.description}>
       <DialogContent>
         {loading ? (
           <div className="p-8 flex flex-col items-center justify-center">
@@ -147,7 +140,6 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
           <>
             <DialogHeader>
               <div className="flex justify-between items-start">
-                <DialogTitle>{resource.title}</DialogTitle>
                 <DialogTitle>{resource.title}</DialogTitle>
                 <BookmarkButton 
                   resourceId={resource.id}
@@ -340,13 +332,8 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                   onClose();
                   window.location.href = `/education/${resource.id}`;
                 }}
-                onClick={() => {
-                  onClose();
-                  window.location.href = `/education/${resource.id}`;
-                }}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                View Full Resource
                 View Full Resource
               </Button>
             </div>
