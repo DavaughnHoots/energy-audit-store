@@ -1,48 +1,39 @@
 import React, { useState, useEffect } from 'react';
 
-interface ReadingProgressBarProps {
-  color?: string;
-  height?: number;
-}
+const ReadingProgressBar: React.FC = () => {
+  const [scrollProgress, setScrollProgress] = useState(0);
 
-const ReadingProgressBar: React.FC<ReadingProgressBarProps> = ({ 
-  color = '#10b981', // Default to green-500
-  height = 4
-}) => {
-  const [readingProgress, setReadingProgress] = useState(0);
-  
+  const calculateScrollProgress = () => {
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight - windowHeight;
+    const scrollTop = window.scrollY;
+    const progress = (scrollTop / documentHeight) * 100;
+    setScrollProgress(progress > 100 ? 100 : progress < 0 ? 0 : progress);
+  };
+
   useEffect(() => {
-    const updateReadingProgress = () => {
-      const currentPosition = window.scrollY;
-      const scrollHeight = document.body.scrollHeight - window.innerHeight;
-      
-      if (scrollHeight) {
-        setReadingProgress((currentPosition / scrollHeight) * 100);
-      }
-    };
-    
+    // Initial calculation
+    calculateScrollProgress();
+
     // Add scroll event listener
-    window.addEventListener('scroll', updateReadingProgress);
-    
-    // Initialize progress
-    updateReadingProgress();
-    
+    window.addEventListener('scroll', calculateScrollProgress);
+
     // Clean up
-    return () => window.removeEventListener('scroll', updateReadingProgress);
+    return () => {
+      window.removeEventListener('scroll', calculateScrollProgress);
+    };
   }, []);
-  
+
   return (
-    <div 
-      className="fixed top-0 left-0 w-full z-50 shadow-sm" 
-      style={{ height: `${height}px` }}
-    >
+    <div className="fixed top-0 left-0 z-50 w-full h-1 bg-gray-200">
       <div 
-        className="h-full transition-all duration-100 ease-out"
-        style={{ 
-          width: `${readingProgress}%`,
-          backgroundColor: color
-        }}
-      ></div>
+        className="h-full bg-green-600 transition-all duration-100"
+        style={{ width: `${scrollProgress}%` }}
+        role="progressbar"
+        aria-valuenow={scrollProgress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      />
     </div>
   );
 };

@@ -140,8 +140,10 @@ const App: React.FC = () => {
             <Route path="/energy-audit/:auditId/report" element={<InteractiveReportPage />} />
             <Route path="/reports/:auditId" element={<InteractiveReportPage />} />
             <Route path="/education" element={<EducationPage />} />
-            <Route path="/education/:resourceId" element={<ResourceContentPage />} />
             <Route path="/education/resources/advanced-insulation" element={<AdvancedInsulationPage />} />
+            {/* Special redirect for resource ID 2 to the advanced insulation page */}
+            <Route path="/education/2" element={<Navigate to="/education/resources/advanced-insulation" replace />} />
+            <Route path="/education/:resourceId" element={<ResourceContentPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />

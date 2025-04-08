@@ -19,7 +19,7 @@
   </defs>
   
   <!-- Background -->
-  <rect width="400" height="300" fill="#f9f9f9" />
+  <rect width="400" height="320" fill="#f9f9f9" />
   
   <!-- Title -->
   <text x="200" y="30" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold">Aerogel Insulation</text>
@@ -141,18 +141,18 @@
   
   <!-- Labels and explanation -->
   <g>
-    <text x="75" y="180" font-family="Arial" font-size="12" text-anchor="middle">Higher Heat Transfer</text>
-    <text x="225" y="180" font-family="Arial" font-size="12" text-anchor="middle">Minimal Heat Transfer</text>
+    <text x="127" y="180" font-family="Arial" font-size="12" text-anchor="middle">Higher Heat Transfer</text>
+    <text x="280" y="180" font-family="Arial" font-size="12" text-anchor="middle">Minimal Heat Transfer</text>
   </g>
   
   <!-- Key facts about aerogel -->
   <g transform="translate(50, 200)">
-    <rect x="0" y="0" width="300" height="70" rx="5" ry="5" fill="#e6f5ff" stroke="#80b3ff" stroke-width="1" />
+    <rect x="0" y="0" width="300" height="200" rx="5" ry="5" fill="#e6f5ff" stroke="#80b3ff" stroke-width="1" />
     <text x="150" y="20" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Key Properties of Aerogel</text>
     
     <text x="10" y="40" font-family="Arial" font-size="12">• 95% air by volume - extremely lightweight</text>
     <text x="10" y="60" font-family="Arial" font-size="12">• Up to 40 times better insulation than fiberglass</text>
-    <text x="160" y="40" font-family="Arial" font-size="12">• Moisture resistant</text>
-    <text x="160" y="60" font-family="Arial" font-size="12">• Perfect for thin retrofits</text>
+    <text x="10" y="80" font-family="Arial" font-size="12">• Moisture resistant</text>
+    <text x="10" y="100" font-family="Arial" font-size="12">• Perfect for thin retrofits</text>
   </g>
 </svg>

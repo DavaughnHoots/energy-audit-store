@@ -38,7 +38,7 @@ export const mockResources: EducationalResource[] = [
     level: 'advanced',
     readTime: '8 min read',
     thumbnail: 'https://placehold.co/400x250?text=Insulation+Techniques',
-    url: '/education/advanced-insulation-techniques',
+    url: '/education/resources/advanced-insulation',
     datePublished: '2024-02-10',
     featured: true,
     collectionIds: ['home-improvement'],

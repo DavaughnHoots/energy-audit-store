@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useComponentTracking } from '../../hooks/analytics/useComponentTracking';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface TechnicalDetailsAccordionProps {
   title: string;
@@ -12,44 +13,37 @@ const TechnicalDetailsAccordion: React.FC<TechnicalDetailsAccordionProps> = ({
   technique, 
   children 
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const trackComponentEvent = useComponentTracking('education', 'TechnicalDetailsAccordion');
   
   const toggleAccordion = () => {
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
     
-    // Track the event
-    trackComponentEvent(
-      newExpandedState ? 'accordion_expanded' : 'accordion_collapsed', 
-      { 
-        technique: technique,
-        title: title
-      }
-    );
+    // Track accordion toggle events
+    trackComponentEvent(newIsOpen ? 'technical_details_expanded' : 'technical_details_collapsed', {
+      technique,
+      section: 'insulation_page'
+    });
   };
   
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="mt-6 border border-gray-200 rounded-lg overflow-hidden">
       <button
         onClick={toggleAccordion}
-        className="w-full text-left p-4 flex justify-between items-center bg-gradient-to-r from-green-50 to-blue-50 hover:from-green-100 hover:to-blue-100 transition-colors"
-        aria-expanded={isExpanded}
+        className="w-full flex justify-between items-center p-4 text-left font-medium bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 transition-colors"
+        aria-expanded={isOpen}
       >
-        <span className="font-medium text-green-700">{title}</span>
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className={`h-5 w-5 text-green-600 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`}
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <span>{title}</span>
+        {isOpen ? (
+          <ChevronUp className="h-5 w-5 text-gray-500" />
+        ) : (
+          <ChevronDown className="h-5 w-5 text-gray-500" />
+        )}
       </button>
       
-      {isExpanded && (
-        <div className="p-4 bg-white">
+      {isOpen && (
+        <div className="p-4 bg-white border-t border-gray-200">
           {children}
         </div>
       )}
