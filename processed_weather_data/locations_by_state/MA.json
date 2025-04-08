@@ -1,0 +1,209 @@
+[
+  {
+    "location_id": "1201.0_MA",
+    "zip_code": 1201.0,
+    "city": "Pittsfield",
+    "county": "Berkshire",
+    "latitude": 42.4269,
+    "longitude": -73.289,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1602.0_MA",
+    "zip_code": 1602.0,
+    "city": "Worcester",
+    "county": "Worcester",
+    "latitude": 42.2706,
+    "longitude": -71.8731,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2360_MA",
+    "zip_code": 2360,
+    "city": "Plymouth",
+    "county": "Plymouth",
+    "latitude": 41.9085,
+    "longitude": -70.7279,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1364_MA",
+    "zip_code": 1364,
+    "city": "Orange",
+    "county": "Franklin",
+    "latitude": 42.57,
+    "longitude": -72.2869,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1085_MA",
+    "zip_code": 1085,
+    "city": "Westfield",
+    "county": "Hampden",
+    "latitude": 42.1601,
+    "longitude": -72.7124,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1420_MA",
+    "zip_code": 1420,
+    "city": "Fitchburg",
+    "county": "Worcester",
+    "latitude": 42.5519,
+    "longitude": -71.7558,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2568_MA",
+    "zip_code": 2568,
+    "city": "Vineyard Haven",
+    "county": "Dukes",
+    "latitude": 41.393,
+    "longitude": -70.6159,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2128_MA",
+    "zip_code": 2128,
+    "city": "East Boston",
+    "county": "Suffolk",
+    "latitude": 42.3606,
+    "longitude": -71.0097,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2554_MA",
+    "zip_code": 2554,
+    "city": "Nantucket",
+    "county": "Nantucket",
+    "latitude": 41.253,
+    "longitude": -70.061,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2062.0_MA",
+    "zip_code": 2062.0,
+    "city": "Norwood",
+    "county": "Norfolk",
+    "latitude": 42.1912,
+    "longitude": -71.1733,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1022_MA",
+    "zip_code": 1022,
+    "city": "Chicopee",
+    "county": "Hampden",
+    "latitude": 42.194,
+    "longitude": -72.5348,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2542_MA",
+    "zip_code": 2542,
+    "city": "Sandwich",
+    "county": "Barnstable",
+    "latitude": 41.6584,
+    "longitude": -70.5214,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1247_MA",
+    "zip_code": 1247,
+    "city": "North Adams",
+    "county": "Berkshire",
+    "latitude": 42.6973,
+    "longitude": -73.1696,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2633.0_MA",
+    "zip_code": 2633.0,
+    "city": "Chatham",
+    "county": "Barnstable",
+    "latitude": 41.6875,
+    "longitude": -69.9933,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2718.0_MA",
+    "zip_code": 2718.0,
+    "city": "East Taunton",
+    "county": "Bristol",
+    "latitude": 41.8756,
+    "longitude": -71.0211,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2745_MA",
+    "zip_code": 2745,
+    "city": "New Bedford",
+    "county": "Bristol",
+    "latitude": 41.6791,
+    "longitude": -70.9591,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1742_MA",
+    "zip_code": 1742,
+    "city": "Concord",
+    "county": "Middlesex",
+    "latitude": 42.4681,
+    "longitude": -71.2946,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2050_MA",
+    "zip_code": 2050,
+    "city": "Marshfield",
+    "county": "Plymouth",
+    "latitude": 42.0983,
+    "longitude": -70.6722,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1915_MA",
+    "zip_code": 1915,
+    "city": "Beverly",
+    "county": "Essex",
+    "latitude": 42.5841,
+    "longitude": -70.9153,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2021_MA",
+    "zip_code": 2021,
+    "city": "Canton",
+    "county": "Norfolk",
+    "latitude": 42.2121,
+    "longitude": -71.1142,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2601.0_MA",
+    "zip_code": 2601.0,
+    "city": "Hyannis",
+    "county": "Barnstable",
+    "latitude": 41.672,
+    "longitude": -70.2697,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "2657_MA",
+    "zip_code": 2657,
+    "city": "Provincetown",
+    "county": "Barnstable",
+    "latitude": 42.0744,
+    "longitude": -70.2182,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "1845_MA",
+    "zip_code": 1845,
+    "city": "North Andover",
+    "county": "Essex",
+    "latitude": 42.7126,
+    "longitude": -71.1255,
+    "climate_zone": 4
+  }
+]

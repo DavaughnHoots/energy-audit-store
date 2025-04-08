@@ -1,0 +1,362 @@
+[
+  {
+    "location_id": "17070_PA",
+    "zip_code": 17070,
+    "city": "New Cumberland",
+    "county": "York",
+    "latitude": 40.2184,
+    "longitude": -76.8552,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15522_PA",
+    "zip_code": 15522,
+    "city": "Bedford",
+    "county": "Bedford",
+    "latitude": 40.0853,
+    "longitude": -78.5122,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15701_PA",
+    "zip_code": 15701,
+    "city": "Indiana",
+    "county": "Indiana",
+    "latitude": 40.6322,
+    "longitude": -79.1055,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15701.0_PA",
+    "zip_code": 15701.0,
+    "city": "Indiana",
+    "county": "Indiana",
+    "latitude": 40.6322,
+    "longitude": -79.1055,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15231_PA",
+    "zip_code": 15231,
+    "city": "Pittsburgh",
+    "county": "Allegheny",
+    "latitude": 40.4814,
+    "longitude": -80.2083,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16830_PA",
+    "zip_code": 16830,
+    "city": "Clearfield",
+    "county": "Clearfield",
+    "latitude": 41.0467,
+    "longitude": -78.4117,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "17038_PA",
+    "zip_code": 17038,
+    "city": "Jonestown",
+    "county": "Lebanon",
+    "latitude": 40.4381,
+    "longitude": -76.5643,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "18032_PA",
+    "zip_code": 18032,
+    "city": "Catasauqua",
+    "county": "Lehigh",
+    "latitude": 40.6499,
+    "longitude": -75.4477,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15851_PA",
+    "zip_code": 15851,
+    "city": "Reynoldsville",
+    "county": "Jefferson",
+    "latitude": 41.1795,
+    "longitude": -78.8933,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16323_PA",
+    "zip_code": 16323,
+    "city": "Franklin",
+    "county": "Venango",
+    "latitude": 41.3779,
+    "longitude": -79.8604,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16505_PA",
+    "zip_code": 16505,
+    "city": "Erie",
+    "county": "Erie",
+    "latitude": 42.08,
+    "longitude": -80.1825,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16662_PA",
+    "zip_code": 16662,
+    "city": "Martinsburg",
+    "county": "Blair",
+    "latitude": 40.2964,
+    "longitude": -78.32,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "19114.0_PA",
+    "zip_code": 19114.0,
+    "city": "Philadelphia",
+    "county": "Philadelphia",
+    "latitude": 40.0789,
+    "longitude": -75.0134,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15904_PA",
+    "zip_code": 15904,
+    "city": "Johnstown",
+    "county": "Cambria",
+    "latitude": 40.3149,
+    "longitude": -78.8307,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "19605_PA",
+    "zip_code": 19605,
+    "city": "Reading",
+    "county": "Berks",
+    "latitude": 40.3734,
+    "longitude": -75.9593,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "18902_PA",
+    "zip_code": 18902,
+    "city": "Doylestown",
+    "county": "Bucks",
+    "latitude": 40.3302,
+    "longitude": -75.1229,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "17543.0_PA",
+    "zip_code": 17543.0,
+    "city": "Lititz",
+    "county": "Lancaster",
+    "latitude": 40.1206,
+    "longitude": -76.2945,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "19422_PA",
+    "zip_code": 19422,
+    "city": "Blue Bell",
+    "county": "Montgomery",
+    "latitude": 40.1376,
+    "longitude": -75.2684,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16738_PA",
+    "zip_code": 16738,
+    "city": "Lewis Run",
+    "county": "McKean",
+    "latitude": 41.7984,
+    "longitude": -78.6354,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16101_PA",
+    "zip_code": 16101,
+    "city": "New Castle",
+    "county": "Lawrence",
+    "latitude": 41.0254,
+    "longitude": -80.4134,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16002_PA",
+    "zip_code": 16002,
+    "city": "Butler",
+    "county": "Butler",
+    "latitude": 40.7769,
+    "longitude": -79.9497,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "17057_PA",
+    "zip_code": 17057,
+    "city": "Middletown",
+    "county": "Dauphin",
+    "latitude": 40.1962,
+    "longitude": -76.7725,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15301_PA",
+    "zip_code": 15301,
+    "city": "Washington",
+    "county": "Washington",
+    "latitude": 40.1365,
+    "longitude": -80.2902,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "17754_PA",
+    "zip_code": 17754,
+    "city": "Montoursville",
+    "county": "Lycoming",
+    "latitude": 41.243,
+    "longitude": -76.9217,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16335.0_PA",
+    "zip_code": 16335.0,
+    "city": "Meadville",
+    "county": "Crawford",
+    "latitude": 41.6258,
+    "longitude": -80.2123,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15010_PA",
+    "zip_code": 15010,
+    "city": "Beaver Falls",
+    "county": "Beaver",
+    "latitude": 40.7735,
+    "longitude": -80.3825,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15650_PA",
+    "zip_code": 15650,
+    "city": "Latrobe",
+    "county": "Westmoreland",
+    "latitude": 40.2759,
+    "longitude": -79.4048,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "15122_PA",
+    "zip_code": 15122,
+    "city": "West Mifflin",
+    "county": "Allegheny",
+    "latitude": 40.3552,
+    "longitude": -79.9214,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "18951_PA",
+    "zip_code": 18951,
+    "city": "Quakertown",
+    "county": "Bucks",
+    "latitude": 40.4368,
+    "longitude": -75.3802,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "18346_PA",
+    "zip_code": 18346,
+    "city": "Pocono Summit",
+    "county": "Monroe",
+    "latitude": 41.1382,
+    "longitude": -75.3797,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "17362_PA",
+    "zip_code": 17362,
+    "city": "Spring Grove",
+    "county": "York",
+    "latitude": 39.9194,
+    "longitude": -76.8769,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "18103_PA",
+    "zip_code": 18103,
+    "city": "Allentown",
+    "county": "Lehigh",
+    "latitude": 40.5704,
+    "longitude": -75.4894,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "17870_PA",
+    "zip_code": 17870,
+    "city": "Selinsgrove",
+    "county": "Snyder",
+    "latitude": 40.8193,
+    "longitude": -76.8658,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "16803_PA",
+    "zip_code": 16803,
+    "city": "State College",
+    "county": "Centre",
+    "latitude": 40.8534,
+    "longitude": -77.8401,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "19464.0_PA",
+    "zip_code": 19464.0,
+    "city": "Pottstown",
+    "county": "Montgomery",
+    "latitude": 40.238,
+    "longitude": -75.5549,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "19320_PA",
+    "zip_code": 19320,
+    "city": "Coatesville",
+    "county": "Chester",
+    "latitude": 39.979,
+    "longitude": -75.8655,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "18641_PA",
+    "zip_code": 18641,
+    "city": "Pittston",
+    "county": "Luzerne",
+    "latitude": 41.3335,
+    "longitude": -75.7227,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "19153.0_PA",
+    "zip_code": 19153.0,
+    "city": "Philadelphia",
+    "county": "Delaware",
+    "latitude": 39.8733,
+    "longitude": -75.2268,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "17320.0_PA",
+    "zip_code": 17320.0,
+    "city": "Fairfield",
+    "county": "Adams",
+    "latitude": 39.7341,
+    "longitude": -77.4304,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "19380.0_PA",
+    "zip_code": 19380.0,
+    "city": "West Chester",
+    "county": "Chester",
+    "latitude": 39.9889,
+    "longitude": -75.5803,
+    "climate_zone": 3
+  }
+]

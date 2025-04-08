@@ -1,0 +1,11 @@
+{
+  "file_size_gb": 1.0113835483789444,
+  "total_rows": 8627181,
+  "chunks_processed": 87,
+  "filtered_rows": 0,
+  "total_events_processed": 8627181,
+  "locations_processed": 2056,
+  "daily_records_created": 2330662,
+  "elapsed_time_seconds": 778.0681643486023,
+  "output_database": "processed_weather_data\\weather_energy_data.db"
+}

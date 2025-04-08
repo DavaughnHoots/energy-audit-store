@@ -1,0 +1,362 @@
+[
+  {
+    "location_id": "14701_NY",
+    "zip_code": 14701,
+    "city": "Jamestown",
+    "county": "Chautauqua",
+    "latitude": 42.1534,
+    "longitude": -79.258,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13662.0_NY",
+    "zip_code": 13662.0,
+    "city": "Massena",
+    "county": "St. Lawrence",
+    "latitude": 44.9358,
+    "longitude": -74.8455,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14437.0_NY",
+    "zip_code": 14437.0,
+    "city": "North Dansville",
+    "county": "Livingston",
+    "latitude": 42.5709,
+    "longitude": -77.7131,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12720_NY",
+    "zip_code": 12720,
+    "city": "Bethel",
+    "county": "Sullivan",
+    "latitude": 41.7016,
+    "longitude": -74.795,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "11430_NY",
+    "zip_code": 11430,
+    "city": "Jamaica",
+    "county": "Queens",
+    "latitude": 40.6392,
+    "longitude": -73.7639,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14895_NY",
+    "zip_code": 14895,
+    "city": "Wellsville",
+    "county": "Allegany",
+    "latitude": 42.1078,
+    "longitude": -77.9842,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13069_NY",
+    "zip_code": 13069,
+    "city": "Fulton",
+    "county": "Oswego",
+    "latitude": 43.3504,
+    "longitude": -76.3832,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "10024_NY",
+    "zip_code": 10024,
+    "city": "New York",
+    "county": "New York",
+    "latitude": 40.779,
+    "longitude": -73.9692,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13602.0_NY",
+    "zip_code": 13602.0,
+    "city": "Fort Drum",
+    "county": "Jefferson",
+    "latitude": 44.0556,
+    "longitude": -75.7195,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "11954.0_NY",
+    "zip_code": 11954.0,
+    "city": "Montauk",
+    "county": "Suffolk",
+    "latitude": 41.073,
+    "longitude": -71.9235,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "10577_NY",
+    "zip_code": 10577,
+    "city": "Purchase",
+    "county": "Westchester",
+    "latitude": 41.0624,
+    "longitude": -73.7046,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "10004_NY",
+    "zip_code": 10004,
+    "city": "New York",
+    "county": "New York",
+    "latitude": 40.7012,
+    "longitude": -74.009,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12553.0_NY",
+    "zip_code": 12553.0,
+    "city": "New Windsor",
+    "county": "Orange",
+    "latitude": 41.5045,
+    "longitude": -74.0999,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13212_NY",
+    "zip_code": 13212,
+    "city": "Syracuse",
+    "county": "Onondaga",
+    "latitude": 43.1111,
+    "longitude": -76.1038,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12603_NY",
+    "zip_code": 12603,
+    "city": "Poughkeepsie",
+    "county": "Dutchess",
+    "latitude": 41.6257,
+    "longitude": -73.8816,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12983_NY",
+    "zip_code": 12983,
+    "city": "Saranac Lake",
+    "county": "Franklin",
+    "latitude": 44.3853,
+    "longitude": -74.2062,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12804_NY",
+    "zip_code": 12804,
+    "city": "Queensbury",
+    "county": "Warren",
+    "latitude": 43.3384,
+    "longitude": -73.6102,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13669_NY",
+    "zip_code": 13669,
+    "city": "Ogdensburg",
+    "county": "St. Lawrence",
+    "latitude": 44.6799,
+    "longitude": -75.4642,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13634_NY",
+    "zip_code": 13634,
+    "city": "Hounsfield",
+    "county": "Jefferson",
+    "latitude": 43.9888,
+    "longitude": -76.0262,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "11942_NY",
+    "zip_code": 11942,
+    "city": "East Quogue",
+    "county": "Suffolk",
+    "latitude": 40.8505,
+    "longitude": -72.6193,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "11975_NY",
+    "zip_code": 11975,
+    "city": "Wainscott",
+    "county": "Suffolk",
+    "latitude": 40.9596,
+    "longitude": -72.2519,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14048_NY",
+    "zip_code": 14048,
+    "city": "Dunkirk",
+    "county": "Chautauqua",
+    "latitude": 42.4932,
+    "longitude": -79.2762,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14225_NY",
+    "zip_code": 14225,
+    "city": "Buffalo",
+    "county": "Erie",
+    "latitude": 42.94,
+    "longitude": -78.736,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13045_NY",
+    "zip_code": 13045,
+    "city": "Cortland",
+    "county": "Cortland",
+    "latitude": 42.5926,
+    "longitude": -76.2149,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12302_NY",
+    "zip_code": 12302,
+    "city": "Schenectady",
+    "county": "Schenectady",
+    "latitude": 42.8525,
+    "longitude": -73.9289,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "11735_NY",
+    "zip_code": 11735,
+    "city": "Farmingdale",
+    "county": "Suffolk",
+    "latitude": 40.7344,
+    "longitude": -73.4164,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13441_NY",
+    "zip_code": 13441,
+    "city": "Rome",
+    "county": "Oneida",
+    "latitude": 43.2338,
+    "longitude": -75.407,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14743.0_NY",
+    "zip_code": 14743.0,
+    "city": "Hinsdale",
+    "county": "Cattaraugus",
+    "latitude": 42.2413,
+    "longitude": -78.3714,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12903_NY",
+    "zip_code": 12903,
+    "city": "Plattsburgh",
+    "county": "Clinton",
+    "latitude": 44.6509,
+    "longitude": -73.4681,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "13790_NY",
+    "zip_code": 13790,
+    "city": "Johnson City",
+    "county": "Broome",
+    "latitude": 42.2068,
+    "longitude": -75.9799,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "11779_NY",
+    "zip_code": 11779,
+    "city": "Ronkonkoma",
+    "county": "Suffolk",
+    "latitude": 40.7939,
+    "longitude": -73.1017,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "11967_NY",
+    "zip_code": 11967,
+    "city": "Shirley",
+    "county": "Suffolk",
+    "latitude": 40.8217,
+    "longitude": -72.8689,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14850_NY",
+    "zip_code": 14850,
+    "city": "Ithaca",
+    "county": "Tompkins",
+    "latitude": 42.4908,
+    "longitude": -76.4583,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14624_NY",
+    "zip_code": 14624,
+    "city": "Rochester",
+    "county": "Monroe",
+    "latitude": 43.1167,
+    "longitude": -77.6767,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14527_NY",
+    "zip_code": 14527,
+    "city": "Penn Yan",
+    "county": "Yates",
+    "latitude": 42.6439,
+    "longitude": -77.053,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12549_NY",
+    "zip_code": 12549,
+    "city": "Montgomery",
+    "county": "Orange",
+    "latitude": 41.5092,
+    "longitude": -74.265,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "12110_NY",
+    "zip_code": 12110,
+    "city": "Latham",
+    "county": "Albany",
+    "latitude": 42.7472,
+    "longitude": -73.7991,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "11371_NY",
+    "zip_code": 11371,
+    "city": "Flushing",
+    "county": "Queens",
+    "latitude": 40.7794,
+    "longitude": -73.8803,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14304_NY",
+    "zip_code": 14304,
+    "city": "Niagara Falls",
+    "county": "Niagara",
+    "latitude": 43.1083,
+    "longitude": -78.9382,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "14845_NY",
+    "zip_code": 14845,
+    "city": "Big Flats",
+    "county": "Chemung",
+    "latitude": 42.1599,
+    "longitude": -76.8916,
+    "climate_zone": 4
+  }
+]

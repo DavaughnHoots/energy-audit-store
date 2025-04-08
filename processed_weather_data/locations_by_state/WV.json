@@ -1,0 +1,155 @@
+[
+  {
+    "location_id": "24701.0_WV",
+    "zip_code": 24701.0,
+    "city": "Bluefield",
+    "county": "Mercer",
+    "latitude": 37.2958,
+    "longitude": -81.2077,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "26767_WV",
+    "zip_code": 26767,
+    "city": "Wiley Ford",
+    "county": "Mineral",
+    "latitude": 39.6182,
+    "longitude": -78.7598,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "26187_WV",
+    "zip_code": 26187,
+    "city": "Williamstown",
+    "county": "Wood",
+    "latitude": 39.3451,
+    "longitude": -81.4392,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "26201_WV",
+    "zip_code": 26201,
+    "city": "Buckhannon",
+    "county": "Upshur",
+    "latitude": 39.001,
+    "longitude": -80.2712,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "26847_WV",
+    "zip_code": 26847,
+    "city": "Petersburg",
+    "county": "Grant",
+    "latitude": 38.9949,
+    "longitude": -79.1459,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "25550_WV",
+    "zip_code": 25550,
+    "city": "Point Pleasant",
+    "county": "Mason",
+    "latitude": 38.9146,
+    "longitude": -82.0986,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "25530_WV",
+    "zip_code": 25530,
+    "city": "Kenova",
+    "county": "Wayne",
+    "latitude": 38.365,
+    "longitude": -82.555,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "25311_WV",
+    "zip_code": 25311,
+    "city": "Charleston",
+    "county": "Kanawha",
+    "latitude": 38.3794,
+    "longitude": -81.5914,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "26330_WV",
+    "zip_code": 26330,
+    "city": "Bridgeport",
+    "county": "Harrison",
+    "latitude": 39.2966,
+    "longitude": -80.2281,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "25405_WV",
+    "zip_code": 25405,
+    "city": "Martinsburg",
+    "county": "Berkeley",
+    "latitude": 39.4037,
+    "longitude": -77.975,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "24901_WV",
+    "zip_code": 24901,
+    "city": "Lewisburg",
+    "county": "Greenbrier",
+    "latitude": 37.8583,
+    "longitude": -80.3995,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "26505_WV",
+    "zip_code": 26505,
+    "city": "Morgantown",
+    "county": "Monongalia",
+    "latitude": 39.6499,
+    "longitude": -79.9206,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "24818_WV",
+    "zip_code": 24818,
+    "city": "Brenton",
+    "county": "Wyoming",
+    "latitude": 37.6004,
+    "longitude": -81.5593,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "26241.0_WV",
+    "zip_code": 26241.0,
+    "city": "Elkins",
+    "county": "Randolph",
+    "latitude": 38.8853,
+    "longitude": -79.8528,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "25813_WV",
+    "zip_code": 25813,
+    "city": "Beaver",
+    "county": "Raleigh",
+    "latitude": 37.7873,
+    "longitude": -81.1242,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "26003_WV",
+    "zip_code": 26003,
+    "city": "Wheeling",
+    "county": "Ohio",
+    "latitude": 40.175,
+    "longitude": -80.6463,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "26601_WV",
+    "zip_code": 26601,
+    "city": "Sutton",
+    "county": "Braxton",
+    "latitude": 38.6869,
+    "longitude": -80.6517,
+    "climate_zone": 3
+  }
+]

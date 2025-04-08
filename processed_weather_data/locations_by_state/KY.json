@@ -1,0 +1,245 @@
+[
+  {
+    "location_id": "40601_KY",
+    "zip_code": 40601,
+    "city": "Frankfort",
+    "county": "Franklin",
+    "latitude": 38.1847,
+    "longitude": -84.9033,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "41339_KY",
+    "zip_code": 41339,
+    "city": "Jackson",
+    "county": "Breathitt",
+    "latitude": 37.5913,
+    "longitude": -83.3137,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42066_KY",
+    "zip_code": 42066,
+    "city": "Mayfield",
+    "county": "Graves",
+    "latitude": 36.7696,
+    "longitude": -88.5847,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42223_KY",
+    "zip_code": 42223,
+    "city": "Fort Campbell",
+    "county": "Christian",
+    "latitude": 36.6686,
+    "longitude": -87.4962,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40965_KY",
+    "zip_code": 40965,
+    "city": "Middlesboro",
+    "county": "Bell",
+    "latitude": 36.6106,
+    "longitude": -83.7374,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40422_KY",
+    "zip_code": 40422,
+    "city": "Danville",
+    "county": "Lincoln",
+    "latitude": 37.578,
+    "longitude": -84.77,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42301_KY",
+    "zip_code": 42301,
+    "city": "Owensboro",
+    "county": "Daviess",
+    "latitude": 37.7388,
+    "longitude": -87.1668,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42071_KY",
+    "zip_code": 42071,
+    "city": "Murray",
+    "county": "Calloway",
+    "latitude": 36.6646,
+    "longitude": -88.3728,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42501_KY",
+    "zip_code": 42501,
+    "city": "Somerset",
+    "county": "Pulaski",
+    "latitude": 37.0513,
+    "longitude": -84.6168,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42431_KY",
+    "zip_code": 42431,
+    "city": "Madisonville",
+    "county": "Hopkins",
+    "latitude": 37.3559,
+    "longitude": -87.3982,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40205_KY",
+    "zip_code": 40205,
+    "city": "Louisville",
+    "county": "Jefferson",
+    "latitude": 38.228,
+    "longitude": -85.6637,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40744_KY",
+    "zip_code": 40744,
+    "city": "London",
+    "county": "Laurel",
+    "latitude": 37.087,
+    "longitude": -84.077,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40353_KY",
+    "zip_code": 40353,
+    "city": "Mount Sterling",
+    "county": "Montgomery",
+    "latitude": 38.0575,
+    "longitude": -83.9829,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42086_KY",
+    "zip_code": 42086,
+    "city": "West Paducah",
+    "county": "McCracken",
+    "latitude": 37.0564,
+    "longitude": -88.7739,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40213_KY",
+    "zip_code": 40213,
+    "city": "Louisville Airport",
+    "county": "Jefferson",
+    "latitude": 38.1744,
+    "longitude": -85.736,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42141_KY",
+    "zip_code": 42141,
+    "city": "Glasgow",
+    "county": "Barren",
+    "latitude": 37.0318,
+    "longitude": -85.9537,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42103_KY",
+    "zip_code": 42103,
+    "city": "Bowling Green",
+    "county": "Warren",
+    "latitude": 36.9645,
+    "longitude": -86.4197,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40121.0_KY",
+    "zip_code": 40121.0,
+    "city": "Fort Knox",
+    "county": "Hardin",
+    "latitude": 37.9071,
+    "longitude": -85.9721,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "41018_KY",
+    "zip_code": 41018,
+    "city": "Erlanger",
+    "county": "Boone",
+    "latitude": 39.0446,
+    "longitude": -84.6723,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42064_KY",
+    "zip_code": 42064,
+    "city": "Marion",
+    "county": "Crittenden",
+    "latitude": 37.3363,
+    "longitude": -88.1097,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40510.0_KY",
+    "zip_code": 40510.0,
+    "city": "Lexington",
+    "county": "Fayette",
+    "latitude": 38.0339,
+    "longitude": -84.6115,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40510_KY",
+    "zip_code": 40510,
+    "city": "Lexington",
+    "county": "Fayette",
+    "latitude": 38.0339,
+    "longitude": -84.6115,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42420_KY",
+    "zip_code": 42420,
+    "city": "Henderson",
+    "county": "Henderson",
+    "latitude": 37.8065,
+    "longitude": -87.6823,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40806_KY",
+    "zip_code": 40806,
+    "city": "Baxter",
+    "county": "Harlan",
+    "latitude": 36.8593,
+    "longitude": -83.3585,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "42633_KY",
+    "zip_code": 42633,
+    "city": "Monticello",
+    "county": "Wayne",
+    "latitude": 36.8553,
+    "longitude": -84.8561,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "40475_KY",
+    "zip_code": 40475,
+    "city": "Richmond",
+    "county": "Madison",
+    "latitude": 37.6308,
+    "longitude": -84.3323,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "41214.0_KY",
+    "zip_code": 41214.0,
+    "city": "Debord",
+    "county": "Martin",
+    "latitude": 37.751,
+    "longitude": -82.6367,
+    "climate_zone": 3
+  }
+]

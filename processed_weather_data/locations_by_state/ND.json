@@ -1,0 +1,335 @@
+[
+  {
+    "location_id": "58601_ND",
+    "zip_code": 58601,
+    "city": "Dickinson",
+    "county": "Stark",
+    "latitude": 46.7973,
+    "longitude": -102.8019,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58474.0_ND",
+    "zip_code": 58474.0,
+    "city": "Oakes",
+    "county": "Dickey",
+    "latitude": 46.1731,
+    "longitude": -98.0799,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58367_ND",
+    "zip_code": 58367,
+    "city": "Rolla",
+    "county": "Rolette",
+    "latitude": 48.8844,
+    "longitude": -99.6208,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58784_ND",
+    "zip_code": 58784,
+    "city": "Stanley",
+    "county": "Mountrail",
+    "latitude": 48.3008,
+    "longitude": -102.4064,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58324_ND",
+    "zip_code": 58324,
+    "city": "Cando",
+    "county": "Towner",
+    "latitude": 48.48,
+    "longitude": -99.236,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58368_ND",
+    "zip_code": 58368,
+    "city": "Rugby",
+    "county": "Pierce",
+    "latitude": 48.3904,
+    "longitude": -100.0243,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58552_ND",
+    "zip_code": 58552,
+    "city": "Linton",
+    "county": "Emmons",
+    "latitude": 46.218,
+    "longitude": -100.245,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58730.0_ND",
+    "zip_code": 58730.0,
+    "city": "Crosby",
+    "county": "Divide",
+    "latitude": 48.929,
+    "longitude": -103.297,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58249_ND",
+    "zip_code": 58249,
+    "city": "Langdon",
+    "county": "Cavalier",
+    "latitude": 48.7531,
+    "longitude": -98.3937,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58631_ND",
+    "zip_code": 58631,
+    "city": "Glen Ullin",
+    "county": "Morton",
+    "latitude": 46.8128,
+    "longitude": -101.8602,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58072_ND",
+    "zip_code": 58072,
+    "city": "Valley City",
+    "county": "Barnes",
+    "latitude": 46.9412,
+    "longitude": -98.018,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58401_ND",
+    "zip_code": 58401,
+    "city": "Jamestown",
+    "county": "Stutsman",
+    "latitude": 46.9258,
+    "longitude": -98.6691,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58301.0_ND",
+    "zip_code": 58301.0,
+    "city": "Devils Lake",
+    "county": "Ramsey",
+    "latitude": 48.1142,
+    "longitude": -98.9088,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58205_ND",
+    "zip_code": 58205,
+    "city": "Grand Forks AFB",
+    "county": "Grand Forks",
+    "latitude": 47.9611,
+    "longitude": -97.4012,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58852_ND",
+    "zip_code": 58852,
+    "city": "Tioga township",
+    "county": "Williams",
+    "latitude": 48.381,
+    "longitude": -102.898,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58621_ND",
+    "zip_code": 58621,
+    "city": "Beach",
+    "county": "Golden Valley",
+    "latitude": 46.9252,
+    "longitude": -103.9821,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58220_ND",
+    "zip_code": 58220,
+    "city": "Cavalier city",
+    "county": "Pembina",
+    "latitude": 48.7838,
+    "longitude": -97.6296,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58203_ND",
+    "zip_code": 58203,
+    "city": "Grand Forks",
+    "county": "Grand Forks",
+    "latitude": 47.9492,
+    "longitude": -97.1761,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58237_ND",
+    "zip_code": 58237,
+    "city": "Grafton",
+    "county": "Walsh",
+    "latitude": 48.4047,
+    "longitude": -97.3709,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58040_ND",
+    "zip_code": 58040,
+    "city": "Gwinner",
+    "county": "Sargent",
+    "latitude": 46.2187,
+    "longitude": -97.6435,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58540_ND",
+    "zip_code": 58540,
+    "city": "Garrison",
+    "county": "McLean",
+    "latitude": 47.6458,
+    "longitude": -101.4394,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58639_ND",
+    "zip_code": 58639,
+    "city": "Hettinger",
+    "county": "Adams",
+    "latitude": 46.0149,
+    "longitude": -102.656,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58703_ND",
+    "zip_code": 58703,
+    "city": "Minot",
+    "county": "Ward",
+    "latitude": 48.252,
+    "longitude": -101.2689,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58801_ND",
+    "zip_code": 58801,
+    "city": "Williston",
+    "county": "Williams",
+    "latitude": 48.1739,
+    "longitude": -103.6367,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58421_ND",
+    "zip_code": 58421,
+    "city": "Carrington",
+    "county": "Foster",
+    "latitude": 47.451,
+    "longitude": -99.151,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58102_ND",
+    "zip_code": 58102,
+    "city": "Fargo",
+    "county": "Cass",
+    "latitude": 46.9112,
+    "longitude": -96.8147,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58075.0_ND",
+    "zip_code": 58075.0,
+    "city": "Wahpeton",
+    "county": "Richland",
+    "latitude": 46.2443,
+    "longitude": -96.6072,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58504_ND",
+    "zip_code": 58504,
+    "city": "Bismarck",
+    "county": "Burleigh",
+    "latitude": 46.7825,
+    "longitude": -100.7572,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58554_ND",
+    "zip_code": 58554,
+    "city": "Mandan",
+    "county": "Morton",
+    "latitude": 46.768,
+    "longitude": -100.894,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58341_ND",
+    "zip_code": 58341,
+    "city": "Harvey",
+    "county": "Wells",
+    "latitude": 47.7912,
+    "longitude": -99.9317,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58545_ND",
+    "zip_code": 58545,
+    "city": "Hazen",
+    "county": "Mercer",
+    "latitude": 47.29,
+    "longitude": -101.581,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58705_ND",
+    "zip_code": 58705,
+    "city": "Minot AFB",
+    "county": "Ward",
+    "latitude": 48.4158,
+    "longitude": -101.358,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58854_ND",
+    "zip_code": 58854,
+    "city": "Watford City",
+    "county": "McKenzie",
+    "latitude": 47.7966,
+    "longitude": -103.2552,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58425_ND",
+    "zip_code": 58425,
+    "city": "Cooperstown",
+    "county": "Griggs",
+    "latitude": 47.4228,
+    "longitude": -98.1059,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58282_ND",
+    "zip_code": 58282,
+    "city": "Walhalla",
+    "county": "Pembina",
+    "latitude": 48.9402,
+    "longitude": -97.9053,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58053_ND",
+    "zip_code": 58053,
+    "city": "Lidgerwood",
+    "county": "Richland",
+    "latitude": 46.1,
+    "longitude": -97.15,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "58623.0_ND",
+    "zip_code": 58623.0,
+    "city": "Bowman",
+    "county": "Bowman",
+    "latitude": 46.187,
+    "longitude": -103.4281,
+    "climate_zone": 5
+  }
+]

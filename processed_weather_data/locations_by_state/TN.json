@@ -1,0 +1,191 @@
+[
+  {
+    "location_id": "37830_TN",
+    "zip_code": 37830,
+    "city": "Oak Ridge",
+    "county": "Anderson",
+    "latitude": 36.023,
+    "longitude": -84.2336,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37830.0_TN",
+    "zip_code": 37830.0,
+    "city": "Oak Ridge",
+    "county": "Anderson",
+    "latitude": 36.023,
+    "longitude": -84.2336,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37643_TN",
+    "zip_code": 37643,
+    "city": "Elizabethton",
+    "county": "Carter",
+    "latitude": 36.3712,
+    "longitude": -82.1734,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37617_TN",
+    "zip_code": 37617,
+    "city": "Blountville",
+    "county": "Sullivan",
+    "latitude": 36.4797,
+    "longitude": -82.3989,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "38301_TN",
+    "zip_code": 38301,
+    "city": "Jackson",
+    "county": "Madison",
+    "latitude": 35.5931,
+    "longitude": -88.9167,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37217_TN",
+    "zip_code": 37217,
+    "city": "Nashville",
+    "county": "Davidson",
+    "latitude": 36.1189,
+    "longitude": -86.6892,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37312_TN",
+    "zip_code": 37312,
+    "city": "Cleveland",
+    "county": "Bradley",
+    "latitude": 35.2115,
+    "longitude": -84.7998,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37303_TN",
+    "zip_code": 37303,
+    "city": "Athens",
+    "county": "McMinn",
+    "latitude": 35.3992,
+    "longitude": -84.5618,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "38024.0_TN",
+    "zip_code": 38024.0,
+    "city": "Dyersburg",
+    "county": "Dyer",
+    "latitude": 35.998,
+    "longitude": -89.4066,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37701_TN",
+    "zip_code": 37701,
+    "city": "Alcoa",
+    "county": "Blount",
+    "latitude": 35.818,
+    "longitude": -83.9857,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "38261_TN",
+    "zip_code": 38261,
+    "city": "Union City",
+    "county": "Obion",
+    "latitude": 36.3797,
+    "longitude": -88.9857,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37421_TN",
+    "zip_code": 37421,
+    "city": "Chattanooga",
+    "county": "Hamilton",
+    "latitude": 35.0353,
+    "longitude": -85.2038,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37398_TN",
+    "zip_code": 37398,
+    "city": "Winchester",
+    "county": "Franklin",
+    "latitude": 35.1775,
+    "longitude": -86.0662,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "38572_TN",
+    "zip_code": 38572,
+    "city": "Crossville",
+    "county": "Cumberland",
+    "latitude": 35.9513,
+    "longitude": -85.085,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "38118_TN",
+    "zip_code": 38118,
+    "city": "Memphis",
+    "county": "Shelby",
+    "latitude": 35.0564,
+    "longitude": -89.9863,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37388_TN",
+    "zip_code": 37388,
+    "city": "Tullahoma",
+    "county": "Coffee",
+    "latitude": 35.38,
+    "longitude": -86.246,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37167_TN",
+    "zip_code": 37167,
+    "city": "Smyrna",
+    "county": "Rutherford",
+    "latitude": 36.009,
+    "longitude": -86.5201,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "37042_TN",
+    "zip_code": 37042,
+    "city": "Clarksville",
+    "county": "Montgomery",
+    "latitude": 36.6169,
+    "longitude": -87.4117,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "38474_TN",
+    "zip_code": 38474,
+    "city": "Mount Pleasant",
+    "county": "Maury",
+    "latitude": 35.5544,
+    "longitude": -87.1791,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "38583_TN",
+    "zip_code": 38583,
+    "city": "Sparta",
+    "county": "White",
+    "latitude": 36.0528,
+    "longitude": -85.5359,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "38053_TN",
+    "zip_code": 38053,
+    "city": "Millington",
+    "county": "Shelby",
+    "latitude": 35.3567,
+    "longitude": -89.8703,
+    "climate_zone": 3
+  }
+]

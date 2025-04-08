@@ -1,0 +1,857 @@
+[
+  {
+    "location_id": "56007.0_MN",
+    "zip_code": 56007.0,
+    "city": "Albert Lea",
+    "county": "Freeborn",
+    "latitude": 43.6822,
+    "longitude": -93.3722,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56283_MN",
+    "zip_code": 56283,
+    "city": "Redwood Falls",
+    "county": "Redwood",
+    "latitude": 44.5483,
+    "longitude": -95.0804,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55037_MN",
+    "zip_code": 55037,
+    "city": "Hinckley",
+    "county": "Pine",
+    "latitude": 46.0244,
+    "longitude": -92.8991,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56308_MN",
+    "zip_code": 56308,
+    "city": "Alexandria",
+    "county": "Douglas",
+    "latitude": 45.868,
+    "longitude": -95.394,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55429_MN",
+    "zip_code": 55429,
+    "city": "Minneapolis",
+    "county": "Hennepin",
+    "latitude": 45.0625,
+    "longitude": -93.3508,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55107.0_MN",
+    "zip_code": 55107.0,
+    "city": "Saint Paul",
+    "county": "Ramsey",
+    "latitude": 44.9324,
+    "longitude": -93.0559,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56537_MN",
+    "zip_code": 56537,
+    "city": "Fergus Falls",
+    "county": "Otter Tail",
+    "latitude": 46.2865,
+    "longitude": -96.1534,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56220_MN",
+    "zip_code": 56220,
+    "city": "Canby",
+    "county": "Yellow Medicine",
+    "latitude": 44.7297,
+    "longitude": -96.2623,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56501_MN",
+    "zip_code": 56501,
+    "city": "Detroit Lakes",
+    "county": "Becker",
+    "latitude": 46.8285,
+    "longitude": -95.8857,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56156_MN",
+    "zip_code": 56156,
+    "city": "Luverne",
+    "county": "Rock",
+    "latitude": 43.6217,
+    "longitude": -96.2139,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56143_MN",
+    "zip_code": 56143,
+    "city": "Jackson",
+    "county": "Jackson",
+    "latitude": 43.6496,
+    "longitude": -94.9884,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56378_MN",
+    "zip_code": 56378,
+    "city": "Sauk Centre",
+    "county": "Stearns",
+    "latitude": 45.7057,
+    "longitude": -94.9308,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55902.0_MN",
+    "zip_code": 55902.0,
+    "city": "Rochester",
+    "county": "Olmsted",
+    "latitude": 44.0206,
+    "longitude": -92.4829,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55008_MN",
+    "zip_code": 55008,
+    "city": "Cambridge",
+    "county": "Isanti",
+    "latitude": 45.5628,
+    "longitude": -93.2644,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56470.0_MN",
+    "zip_code": 56470.0,
+    "city": "Park Rapids",
+    "county": "Hubbard",
+    "latitude": 46.9006,
+    "longitude": -95.0678,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55051_MN",
+    "zip_code": 55051,
+    "city": "Mora",
+    "county": "Kanabec",
+    "latitude": 45.8886,
+    "longitude": -93.269,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55449_MN",
+    "zip_code": 55449,
+    "city": "Minneapolis",
+    "county": "Anoka",
+    "latitude": 45.1426,
+    "longitude": -93.2127,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56347_MN",
+    "zip_code": 56347,
+    "city": "Long Prairie",
+    "county": "Todd",
+    "latitude": 45.9017,
+    "longitude": -94.8727,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55355_MN",
+    "zip_code": 55355,
+    "city": "Litchfield",
+    "county": "Meeker",
+    "latitude": 45.0949,
+    "longitude": -94.5084,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55965_MN",
+    "zip_code": 55965,
+    "city": "Preston",
+    "county": "Fillmore",
+    "latitude": 43.677,
+    "longitude": -92.1742,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55616_MN",
+    "zip_code": 55616,
+    "city": "Two Harbors",
+    "county": "Lake",
+    "latitude": 47.2521,
+    "longitude": -91.4098,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56187_MN",
+    "zip_code": 56187,
+    "city": "Worthington",
+    "county": "Nobles",
+    "latitude": 43.6551,
+    "longitude": -95.5792,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56001_MN",
+    "zip_code": 56001,
+    "city": "Mankato",
+    "county": "Blue Earth",
+    "latitude": 44.2228,
+    "longitude": -93.9193,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56215_MN",
+    "zip_code": 56215,
+    "city": "Benson",
+    "county": "Swift",
+    "latitude": 45.331,
+    "longitude": -95.6469,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55720_MN",
+    "zip_code": 55720,
+    "city": "Cloquet",
+    "county": "Carlton",
+    "latitude": 46.6987,
+    "longitude": -92.5034,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56265_MN",
+    "zip_code": 56265,
+    "city": "Montevideo",
+    "county": "Chippewa",
+    "latitude": 44.9675,
+    "longitude": -95.7116,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55371_MN",
+    "zip_code": 55371,
+    "city": "Princeton",
+    "county": "Mille Lacs",
+    "latitude": 45.5643,
+    "longitude": -93.608,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56241_MN",
+    "zip_code": 56241,
+    "city": "Granite Falls",
+    "county": "Yellow Medicine",
+    "latitude": 44.7521,
+    "longitude": -95.5591,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56277_MN",
+    "zip_code": 56277,
+    "city": "Olivia",
+    "county": "Renville",
+    "latitude": 44.7792,
+    "longitude": -95.0303,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55060_MN",
+    "zip_code": 55060,
+    "city": "Owatonna",
+    "county": "Steele",
+    "latitude": 44.1191,
+    "longitude": -93.2569,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56172_MN",
+    "zip_code": 56172,
+    "city": "Slayton",
+    "county": "Murray",
+    "latitude": 43.9905,
+    "longitude": -95.781,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55723_MN",
+    "zip_code": 55723,
+    "city": "Cook",
+    "county": "St. Louis",
+    "latitude": 47.82,
+    "longitude": -92.6817,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55018_MN",
+    "zip_code": 55018,
+    "city": "Dennison",
+    "county": "Goodhue",
+    "latitude": 44.4736,
+    "longitude": -93.0145,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56093_MN",
+    "zip_code": 56093,
+    "city": "Waseca",
+    "county": "Waseca",
+    "latitude": 44.0702,
+    "longitude": -93.5534,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56623_MN",
+    "zip_code": 56623,
+    "city": "Baudette",
+    "county": "Lake of the Woods",
+    "latitude": 48.7261,
+    "longitude": -94.6121,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56081_MN",
+    "zip_code": 56081,
+    "city": "Saint James",
+    "county": "Watonwan",
+    "latitude": 43.9856,
+    "longitude": -94.553,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56208_MN",
+    "zip_code": 56208,
+    "city": "Appleton",
+    "county": "Swift",
+    "latitude": 45.2249,
+    "longitude": -96.0041,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56296_MN",
+    "zip_code": 56296,
+    "city": "Wheaton",
+    "county": "Traverse",
+    "latitude": 45.7828,
+    "longitude": -96.5461,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56201_MN",
+    "zip_code": 56201,
+    "city": "Willmar",
+    "county": "Kandiyohi",
+    "latitude": 45.1111,
+    "longitude": -95.1258,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56685_MN",
+    "zip_code": 56685,
+    "city": "Waskish",
+    "county": "Beltrami",
+    "latitude": 48.1501,
+    "longitude": -94.512,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56101_MN",
+    "zip_code": 56101,
+    "city": "Windom",
+    "county": "Cottonwood",
+    "latitude": 43.91,
+    "longitude": -95.1072,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55042_MN",
+    "zip_code": 55042,
+    "city": "Lake Elmo",
+    "county": "Washington",
+    "latitude": 45.0002,
+    "longitude": -92.8549,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56482.0_MN",
+    "zip_code": 56482.0,
+    "city": "Compton",
+    "county": "Otter Tail",
+    "latitude": 46.4502,
+    "longitude": -95.2135,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56256_MN",
+    "zip_code": 56256,
+    "city": "Madison",
+    "county": "Lac qui Parle",
+    "latitude": 44.9839,
+    "longitude": -96.1788,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56258_MN",
+    "zip_code": 56258,
+    "city": "Marshall",
+    "county": "Lyon",
+    "latitude": 44.4505,
+    "longitude": -95.8219,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55734_MN",
+    "zip_code": 55734,
+    "city": "Eveleth",
+    "county": "St. Louis",
+    "latitude": 47.4274,
+    "longitude": -92.4972,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55313_MN",
+    "zip_code": 55313,
+    "city": "Buffalo",
+    "county": "Wright",
+    "latitude": 45.1601,
+    "longitude": -93.846,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55802_MN",
+    "zip_code": 55802,
+    "city": "Duluth",
+    "county": "St. Louis",
+    "latitude": 46.7245,
+    "longitude": -92.0445,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56401_MN",
+    "zip_code": 56401,
+    "city": "Brainerd",
+    "county": "Crow Wing",
+    "latitude": 46.4021,
+    "longitude": -94.1273,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55336_MN",
+    "zip_code": 55336,
+    "city": "Glencoe",
+    "county": "McLeod",
+    "latitude": 44.7588,
+    "longitude": -94.0905,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56479_MN",
+    "zip_code": 56479,
+    "city": "Staples",
+    "county": "Wadena",
+    "latitude": 46.3809,
+    "longitude": -94.8066,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56649_MN",
+    "zip_code": 56649,
+    "city": "International Falls",
+    "county": "Koochiching",
+    "latitude": 48.5594,
+    "longitude": -93.3956,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55731_MN",
+    "zip_code": 55731,
+    "city": "Ely",
+    "county": "St. Louis",
+    "latitude": 47.8245,
+    "longitude": -91.8307,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56164_MN",
+    "zip_code": 56164,
+    "city": "Pipestone",
+    "county": "Pipestone",
+    "latitude": 43.9854,
+    "longitude": -96.2976,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55783_MN",
+    "zip_code": 55783,
+    "city": "Sturgeon Lake",
+    "county": "Pine",
+    "latitude": 46.4163,
+    "longitude": -92.8049,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56628_MN",
+    "zip_code": 56628,
+    "city": "Bigfork",
+    "county": "Itasca",
+    "latitude": 47.7832,
+    "longitude": -93.6533,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56334_MN",
+    "zip_code": 56334,
+    "city": "Glenwood",
+    "county": "Pope",
+    "latitude": 45.6456,
+    "longitude": -95.3188,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55811_MN",
+    "zip_code": 55811,
+    "city": "Duluth",
+    "county": "St. Louis",
+    "latitude": 46.8435,
+    "longitude": -92.1866,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56031.0_MN",
+    "zip_code": 56031.0,
+    "city": "Fairmont",
+    "county": "Martin",
+    "latitude": 43.6455,
+    "longitude": -94.4168,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55350_MN",
+    "zip_code": 55350,
+    "city": "Hutchinson",
+    "county": "McLeod",
+    "latitude": 44.8596,
+    "longitude": -94.3855,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56728_MN",
+    "zip_code": 56728,
+    "city": "Hallock",
+    "county": "Kittson",
+    "latitude": 48.7525,
+    "longitude": -96.9376,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56542_MN",
+    "zip_code": 56542,
+    "city": "Fosston",
+    "county": "Polk",
+    "latitude": 47.5928,
+    "longitude": -95.7735,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56267_MN",
+    "zip_code": 56267,
+    "city": "Morris",
+    "county": "Stevens",
+    "latitude": 45.5677,
+    "longitude": -95.9659,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56073_MN",
+    "zip_code": 56073,
+    "city": "New Ulm",
+    "county": "Brown",
+    "latitude": 44.3227,
+    "longitude": -94.5024,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56547_MN",
+    "zip_code": 56547,
+    "city": "Glyndon",
+    "county": "Clay",
+    "latitude": 46.8404,
+    "longitude": -96.6544,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55604_MN",
+    "zip_code": 55604,
+    "city": "Grand Marais",
+    "county": "Cook",
+    "latitude": 47.7453,
+    "longitude": -90.3457,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56716_MN",
+    "zip_code": 56716,
+    "city": "Crookston",
+    "county": "Polk",
+    "latitude": 47.8404,
+    "longitude": -96.6201,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56175_MN",
+    "zip_code": 56175,
+    "city": "Tracy",
+    "county": "Lyon",
+    "latitude": 44.2495,
+    "longitude": -95.6119,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56655_MN",
+    "zip_code": 56655,
+    "city": "Longville",
+    "county": "Cass",
+    "latitude": 46.99,
+    "longitude": -94.2039,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56431_MN",
+    "zip_code": 56431,
+    "city": "Spencer",
+    "county": "Aitkin",
+    "latitude": 46.549,
+    "longitude": -93.6757,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55912_MN",
+    "zip_code": 55912,
+    "city": "Austin",
+    "county": "Mower",
+    "latitude": 43.6688,
+    "longitude": -92.932,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55987_MN",
+    "zip_code": 55987,
+    "city": "Winona",
+    "county": "Winona",
+    "latitude": 44.0772,
+    "longitude": -91.7083,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55069_MN",
+    "zip_code": 55069,
+    "city": "Rush City",
+    "county": "Chisago",
+    "latitude": 45.6963,
+    "longitude": -92.9542,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55358_MN",
+    "zip_code": 55358,
+    "city": "Maple Lake",
+    "county": "Wright",
+    "latitude": 45.2353,
+    "longitude": -93.9896,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55347_MN",
+    "zip_code": 55347,
+    "city": "Eden Prairie",
+    "county": "Hennepin",
+    "latitude": 44.8322,
+    "longitude": -93.4705,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56362_MN",
+    "zip_code": 56362,
+    "city": "Paynesville",
+    "county": "Stearns",
+    "latitude": 45.3725,
+    "longitude": -94.7388,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55044_MN",
+    "zip_code": 55044,
+    "city": "Lakeville",
+    "county": "Dakota",
+    "latitude": 44.6252,
+    "longitude": -93.2273,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55771_MN",
+    "zip_code": 55771,
+    "city": "Orr",
+    "county": "St. Louis",
+    "latitude": 48.0171,
+    "longitude": -92.8538,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55746_MN",
+    "zip_code": 55746,
+    "city": "Hibbing",
+    "county": "St. Louis",
+    "latitude": 47.3804,
+    "longitude": -92.8324,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56601_MN",
+    "zip_code": 56601,
+    "city": "Bemidji",
+    "county": "Beltrami",
+    "latitude": 47.5076,
+    "longitude": -94.9278,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55760.0_MN",
+    "zip_code": 55760.0,
+    "city": "McGregor",
+    "county": "Aitkin",
+    "latitude": 46.619,
+    "longitude": -93.3127,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56531_MN",
+    "zip_code": 56531,
+    "city": "Elbow Lake",
+    "county": "Grant",
+    "latitude": 45.9884,
+    "longitude": -95.9935,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56304.0_MN",
+    "zip_code": 56304.0,
+    "city": "Saint Cloud",
+    "county": "Sherburne",
+    "latitude": 45.5442,
+    "longitude": -94.0516,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55927.0_MN",
+    "zip_code": 55927.0,
+    "city": "Dodge Center",
+    "county": "Dodge",
+    "latitude": 44.0203,
+    "longitude": -92.8295,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56474.0_MN",
+    "zip_code": 56474.0,
+    "city": "Pine River",
+    "county": "Cass",
+    "latitude": 46.7265,
+    "longitude": -94.3849,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55075_MN",
+    "zip_code": 55075,
+    "city": "South Saint Paul",
+    "county": "Dakota",
+    "latitude": 44.8601,
+    "longitude": -93.032,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55902_MN",
+    "zip_code": 55902,
+    "city": "Rochester",
+    "county": "Olmsted",
+    "latitude": 43.9042,
+    "longitude": -92.4917,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "55450_MN",
+    "zip_code": 55450,
+    "city": "Minneapolis",
+    "county": "Hennepin",
+    "latitude": 44.8854,
+    "longitude": -93.2313,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "56345_MN",
+    "zip_code": 56345,
+    "city": "Little Falls",
+    "county": "Morrison",
+    "latitude": 45.9509,
+    "longitude": -94.3441,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55744_MN",
+    "zip_code": 55744,
+    "city": "Grand Rapids",
+    "county": "Itasca",
+    "latitude": 47.2111,
+    "longitude": -93.5097,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56751_MN",
+    "zip_code": 56751,
+    "city": "Roseau",
+    "county": "Roseau",
+    "latitude": 48.856,
+    "longitude": -95.6971,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56763_MN",
+    "zip_code": 56763,
+    "city": "Warroad",
+    "county": "Roseau",
+    "latitude": 48.9318,
+    "longitude": -95.3405,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56278_MN",
+    "zip_code": 56278,
+    "city": "Ortonville",
+    "county": "Big Stone",
+    "latitude": 45.3057,
+    "longitude": -96.4244,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "56701_MN",
+    "zip_code": 56701,
+    "city": "Thief River Falls",
+    "county": "Pennington",
+    "latitude": 48.0597,
+    "longitude": -96.1788,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "55021_MN",
+    "zip_code": 55021,
+    "city": "Faribault",
+    "county": "Rice",
+    "latitude": 44.3298,
+    "longitude": -93.3119,
+    "climate_zone": 4
+  }
+]

@@ -1,0 +1,230 @@
+import React, { useState, useEffect } from 'react';
+import { Cog, AlertCircle, Save, RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import PropertyDetailsForm from '@/components/user-settings/PropertyDetailsForm';
+import HomeConditionsSection from '@/components/user-settings/HomeConditionsSection';
+import WindowMaintenanceSection from '@/components/user-settings/WindowMaintenanceSection';
+import { fetchWithAuth } from '@/utils/authUtils';
+import { API_ENDPOINTS } from '@/config/api';
+import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
+
+/**
+ * PropertySettingsTab component for the dashboard
+ * This component reuses the existing property settings components
+ * but integrates them directly into the dashboard.
+ */
+interface PropertySettingsTabProps {
+  isLoading?: boolean;
+  onRefresh?: () => void;
+}
+
+const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
+  isLoading = false,
+  onRefresh,
+}) => {
+  // Analytics tracking
+  const trackComponentEvent = useComponentTracking('dashboard', 'PropertySettingsTab');
+  
+  // State for property settings
+  const [propertyData, setPropertyData] = useState<any>(null);
+  const [windowData, setWindowData] = useState<any>(null);
+  const [weatherizationData, setWeatherizationData] = useState<any>(null);
+  
+  // UI state
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(isLoading);
+  
+  useEffect(() => {
+    fetchPropertyData();
+  }, []);
+  
+  // Fetch all property-related data
+  const fetchPropertyData = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Track event
+      trackComponentEvent('fetch_property_data');
+      
+      // Fetch property details
+      const propertyResponse = await fetchWithAuth(API_ENDPOINTS.SETTINGS.PROPERTY);
+      if (propertyResponse.ok) {
+        const data = await propertyResponse.json();
+        setPropertyData(data);
+      }
+      
+      // Fetch window maintenance data
+      const windowResponse = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WINDOWS);
+      if (windowResponse.ok) {
+        const data = await windowResponse.json();
+        setWindowData(data);
+      }
+      
+      // Fetch weatherization data
+      const weatherResponse = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WEATHERIZATION);
+      if (weatherResponse.ok) {
+        const data = await weatherResponse.json();
+        setWeatherizationData(data);
+      }
+      
+      // Track success
+      trackComponentEvent('fetch_property_data_success');
+    } catch (err) {
+      console.error('Error fetching property data:', err);
+      setError('Failed to load property settings. Please try again.');
+      
+      // Track error
+      trackComponentEvent('fetch_property_data_error', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle saving property details
+  const handleSaveProperty = async (data: any) => {
+    try {
+      // Track attempt
+      trackComponentEvent('save_property_details', { 
+        dataSize: Object.keys(data).length 
+      });
+      
+      const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.PROPERTY, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error('Failed to save property details');
+      
+      setSuccess('Property details saved successfully');
+      setPropertyData(data);
+      
+      // Track success
+      trackComponentEvent('save_property_details_success');
+      return true;
+    } catch (err) {
+      console.error('Property details save error:', err);
+      setError('Failed to save property details');
+      
+      // Track error
+      trackComponentEvent('save_property_details_error', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
+      return false;
+    }
+  };
+  
+  // Handle saving window maintenance data
+  const handleSaveWindowData = async (data: any) => {
+    try {
+      // Track attempt
+      trackComponentEvent('save_window_data', { 
+        dataSize: Object.keys(data).length 
+      });
+      
+      const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WINDOWS, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error('Failed to save window data');
+
+      setWindowData(await response.json());
+      setSuccess('Window maintenance data saved successfully');
+      
+      // Track success
+      trackComponentEvent('save_window_data_success');
+    } catch (err) {
+      console.error('Window data save error:', err);
+      setError('Failed to save window maintenance data');
+      
+      // Track error
+      trackComponentEvent('save_window_data_error', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
+    }
+  };
+  
+  // Handle refresh
+  const handleRefresh = () => {
+    fetchPropertyData();
+    if (onRefresh) onRefresh();
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6 animate-pulse">
+        <div className="h-6 bg-gray-200 rounded w-1/4 mb-6"></div>
+        <div className="space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center">
+          <Cog className="h-5 w-5 text-gray-500 mr-2" />
+          <h3 className="text-xl font-semibold">Property Settings</h3>
+        </div>
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          size="sm"
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <RefreshCw className="h-4 w-4 mr-1" />
+          Refresh
+        </Button>
+      </div>
+      
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {success && (
+        <Alert className="mb-4 bg-green-50 border-green-200">
+          <AlertDescription className="text-green-800">{success}</AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h4 className="text-lg font-medium mb-4">Property Details</h4>
+        <PropertyDetailsForm 
+          initialData={{ propertyDetails: propertyData, windowMaintenance: windowData }}
+          onSave={handleSaveProperty}
+        />
+      </div>
+      
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <HomeConditionsSection onSave={handleSaveProperty} />
+      </div>
+      
+      <div className="bg-white rounded-lg shadow p-6">
+        <WindowMaintenanceSection
+          data={windowData}
+          onSave={handleSaveWindowData}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default PropertySettingsTab;

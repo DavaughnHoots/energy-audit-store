@@ -1,0 +1,299 @@
+[
+  {
+    "location_id": "47303.0_IN",
+    "zip_code": 47303.0,
+    "city": "Muncie",
+    "county": "Delaware",
+    "latitude": 40.2345,
+    "longitude": -85.3936,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "47542_IN",
+    "zip_code": 47542,
+    "city": "Huntingburg",
+    "county": "Dubois",
+    "latitude": 38.2506,
+    "longitude": -86.9472,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46526.0_IN",
+    "zip_code": 46526.0,
+    "city": "Goshen",
+    "county": "Elkhart",
+    "latitude": 41.5263,
+    "longitude": -85.7862,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "47403.0_IN",
+    "zip_code": 47403.0,
+    "city": "Bloomington",
+    "county": "Monroe",
+    "latitude": 39.1432,
+    "longitude": -86.6168,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "47203_IN",
+    "zip_code": 47203,
+    "city": "Columbus",
+    "county": "Bartholomew",
+    "latitude": 39.2619,
+    "longitude": -85.8963,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46703_IN",
+    "zip_code": 46703,
+    "city": "Angola",
+    "county": "Steuben",
+    "latitude": 41.6404,
+    "longitude": -85.0851,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46383_IN",
+    "zip_code": 46383,
+    "city": "Valparaiso",
+    "county": "Porter",
+    "latitude": 41.4535,
+    "longitude": -86.9981,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46914_IN",
+    "zip_code": 46914,
+    "city": "Deer Creek",
+    "county": "Miami",
+    "latitude": 40.6481,
+    "longitude": -86.1521,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46975.0_IN",
+    "zip_code": 46975.0,
+    "city": "Rochester",
+    "county": "Fulton",
+    "latitude": 41.0655,
+    "longitude": -86.1817,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "47978_IN",
+    "zip_code": 47978,
+    "city": "Rensselaer",
+    "county": "Jasper",
+    "latitude": 40.9479,
+    "longitude": -87.1826,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46706_IN",
+    "zip_code": 46706,
+    "city": "Auburn",
+    "county": "DeKalb",
+    "latitude": 41.3072,
+    "longitude": -85.0644,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "47501_IN",
+    "zip_code": 47501,
+    "city": "Washington",
+    "county": "Daviess",
+    "latitude": 38.7004,
+    "longitude": -87.1297,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46534_IN",
+    "zip_code": 46534,
+    "city": "Knox",
+    "county": "Starke",
+    "latitude": 41.3302,
+    "longitude": -86.6648,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46077_IN",
+    "zip_code": 46077,
+    "city": "Zionsville",
+    "county": "Boone",
+    "latitude": 40.0307,
+    "longitude": -86.2514,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46176.0_IN",
+    "zip_code": 46176.0,
+    "city": "Shelbyville",
+    "county": "Shelby",
+    "latitude": 39.5855,
+    "longitude": -85.7998,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46241.0_IN",
+    "zip_code": 46241.0,
+    "city": "Indianapolis",
+    "county": "Marion",
+    "latitude": 39.7252,
+    "longitude": -86.2816,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46350_IN",
+    "zip_code": 46350,
+    "city": "La Porte",
+    "county": "LaPorte",
+    "latitude": 41.5725,
+    "longitude": -86.7345,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "47711_IN",
+    "zip_code": 47711,
+    "city": "Evansville",
+    "county": "Vanderburgh",
+    "latitude": 38.0431,
+    "longitude": -87.5203,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46406.0_IN",
+    "zip_code": 46406.0,
+    "city": "Gary",
+    "county": "Lake",
+    "latitude": 41.6121,
+    "longitude": -87.4091,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "47906_IN",
+    "zip_code": 47906,
+    "city": "West Lafayette",
+    "county": "Tippecanoe",
+    "latitude": 40.4124,
+    "longitude": -86.9474,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46628_IN",
+    "zip_code": 46628,
+    "city": "South Bend",
+    "county": "St. Joseph",
+    "latitude": 41.7072,
+    "longitude": -86.3164,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46947_IN",
+    "zip_code": 46947,
+    "city": "Logansport",
+    "county": "Cass",
+    "latitude": 40.711,
+    "longitude": -86.375,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46254_IN",
+    "zip_code": 46254,
+    "city": "Indianapolis",
+    "county": "Marion",
+    "latitude": 39.825,
+    "longitude": -86.2958,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46953_IN",
+    "zip_code": 46953,
+    "city": "Marion",
+    "county": "Grant",
+    "latitude": 40.4899,
+    "longitude": -85.6797,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46901_IN",
+    "zip_code": 46901,
+    "city": "Kokomo",
+    "county": "Howard",
+    "latitude": 40.5282,
+    "longitude": -86.059,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "47803_IN",
+    "zip_code": 47803,
+    "city": "Terre Haute",
+    "county": "Vigo",
+    "latitude": 39.4429,
+    "longitude": -87.3221,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46582_IN",
+    "zip_code": 46582,
+    "city": "Warsaw",
+    "county": "Kosciusko",
+    "latitude": 41.2747,
+    "longitude": -85.8401,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46017_IN",
+    "zip_code": 46017,
+    "city": "Anderson",
+    "county": "Madison",
+    "latitude": 40.1061,
+    "longitude": -85.6098,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46140.0_IN",
+    "zip_code": 46140.0,
+    "city": "Greenfield",
+    "county": "Hancock",
+    "latitude": 39.8435,
+    "longitude": -85.8971,
+    "climate_zone": 3
+  },
+  {
+    "location_id": "46360_IN",
+    "zip_code": 46360,
+    "city": "Michigan City",
+    "county": "LaPorte",
+    "latitude": 41.7033,
+    "longitude": -86.8212,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46809_IN",
+    "zip_code": 46809,
+    "city": "Fort Wayne",
+    "county": "Allen",
+    "latitude": 40.9725,
+    "longitude": -85.2064,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46514.0_IN",
+    "zip_code": 46514.0,
+    "city": "Elkhart",
+    "county": "Elkhart",
+    "latitude": 41.7222,
+    "longitude": -86.0001,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "46124.0_IN",
+    "zip_code": 46124.0,
+    "city": "Edinburgh",
+    "county": "Bartholomew",
+    "latitude": 39.342,
+    "longitude": -86.031,
+    "climate_zone": 3
+  }
+]

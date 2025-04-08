@@ -1,0 +1,389 @@
+[
+  {
+    "location_id": "70807.0_LA",
+    "zip_code": 70807.0,
+    "city": "Baton Rouge",
+    "county": "East Baton Rouge",
+    "latitude": 30.5378,
+    "longitude": -91.1468,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70062_LA",
+    "zip_code": 70062,
+    "city": "Kenner",
+    "county": "Jefferson",
+    "latitude": 29.9928,
+    "longitude": -90.2508,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71107_LA",
+    "zip_code": 71107,
+    "city": "Shreveport",
+    "county": "Bossier",
+    "latitude": 32.5425,
+    "longitude": -93.7447,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71109_LA",
+    "zip_code": 71109,
+    "city": "Shreveport",
+    "county": "Caddo",
+    "latitude": 32.4469,
+    "longitude": -93.8242,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71457_LA",
+    "zip_code": 71457,
+    "city": "Natchitoches",
+    "county": "Natchitoches",
+    "latitude": 31.7358,
+    "longitude": -93.0992,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70354.0_LA",
+    "zip_code": 70354.0,
+    "city": "Galliano",
+    "county": "Lafourche",
+    "latitude": 29.4447,
+    "longitude": -90.2611,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71110.0_LA",
+    "zip_code": 71110.0,
+    "city": "Barksdale AFB",
+    "county": "Bossier",
+    "latitude": 32.5019,
+    "longitude": -93.6626,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71429_LA",
+    "zip_code": 71429,
+    "city": "Florien",
+    "county": "Sabine",
+    "latitude": 31.4,
+    "longitude": -93.2833,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70656_LA",
+    "zip_code": 70656,
+    "city": "Pitkin",
+    "county": "Vernon",
+    "latitude": 31.0217,
+    "longitude": -92.9107,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70041_LA",
+    "zip_code": 70041,
+    "city": "Buras",
+    "county": "Plaquemines",
+    "latitude": 29.3333,
+    "longitude": -89.4075,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71360_LA",
+    "zip_code": 71360,
+    "city": "Pineville",
+    "county": "Rapides",
+    "latitude": 31.3963,
+    "longitude": -92.2827,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71282_LA",
+    "zip_code": 71282,
+    "city": "Tallulah",
+    "county": "Madison",
+    "latitude": 32.3481,
+    "longitude": -91.0299,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71459_LA",
+    "zip_code": 71459,
+    "city": "Fort Polk",
+    "county": "Vernon",
+    "latitude": 31.0448,
+    "longitude": -93.1916,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71463.0_LA",
+    "zip_code": 71463.0,
+    "city": "Oakdale",
+    "county": "Allen",
+    "latitude": 30.7503,
+    "longitude": -92.6883,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71203_LA",
+    "zip_code": 71203,
+    "city": "Monroe",
+    "county": "Ouachita",
+    "latitude": 32.5156,
+    "longitude": -92.0299,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70560.0_LA",
+    "zip_code": 70560.0,
+    "city": "New Iberia",
+    "county": "Iberia",
+    "latitude": 30.0292,
+    "longitude": -91.8845,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71220_LA",
+    "zip_code": 71220,
+    "city": "Bastrop",
+    "county": "Morehouse",
+    "latitude": 32.7561,
+    "longitude": -91.8806,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71055_LA",
+    "zip_code": 71055,
+    "city": "Minden",
+    "county": "Webster",
+    "latitude": 32.646,
+    "longitude": -93.298,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70460_LA",
+    "zip_code": 70460,
+    "city": "Slidell",
+    "county": "St. Tammany",
+    "latitude": 30.3433,
+    "longitude": -89.8222,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71303_LA",
+    "zip_code": 71303,
+    "city": "Alexandria",
+    "county": "Rapides",
+    "latitude": 31.3347,
+    "longitude": -92.5586,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70546_LA",
+    "zip_code": 70546,
+    "city": "Jennings",
+    "county": "Jefferson Davis",
+    "latitude": 30.2427,
+    "longitude": -92.6735,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70363_LA",
+    "zip_code": 70363,
+    "city": "Houma",
+    "county": "Terrebonne",
+    "latitude": 29.5634,
+    "longitude": -90.6628,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70037_LA",
+    "zip_code": 70037,
+    "city": "Belle Chasse",
+    "county": "Plaquemines",
+    "latitude": 29.8374,
+    "longitude": -90.0245,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70401_LA",
+    "zip_code": 70401,
+    "city": "Hammond",
+    "county": "Tangipahoa",
+    "latitude": 30.5208,
+    "longitude": -90.4175,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70126_LA",
+    "zip_code": 70126,
+    "city": "New Orleans",
+    "county": "Orleans",
+    "latitude": 30.0494,
+    "longitude": -90.0289,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70605_LA",
+    "zip_code": 70605,
+    "city": "Lake Charles",
+    "county": "Calcasieu",
+    "latitude": 30.1256,
+    "longitude": -93.2277,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70427_LA",
+    "zip_code": 70427,
+    "city": "Bogalusa",
+    "county": "Washington",
+    "latitude": 30.8137,
+    "longitude": -89.865,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70510_LA",
+    "zip_code": 70510,
+    "city": "Abbeville",
+    "county": "Vermilion",
+    "latitude": 29.9761,
+    "longitude": -92.0825,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70633_LA",
+    "zip_code": 70633,
+    "city": "Dequincy",
+    "county": "Calcasieu",
+    "latitude": 30.4412,
+    "longitude": -93.4735,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70760_LA",
+    "zip_code": 70760,
+    "city": "New Roads",
+    "county": "Pointe Coupee",
+    "latitude": 30.7183,
+    "longitude": -91.4787,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70665.0_LA",
+    "zip_code": 70665.0,
+    "city": "Sulphur",
+    "county": "Calcasieu",
+    "latitude": 30.1314,
+    "longitude": -93.3761,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70634_LA",
+    "zip_code": 70634,
+    "city": "Deridder",
+    "county": "Beauregard",
+    "latitude": 30.8317,
+    "longitude": -93.3399,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70615_LA",
+    "zip_code": 70615,
+    "city": "Lake Charles",
+    "county": "Calcasieu",
+    "latitude": 30.2106,
+    "longitude": -93.1432,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70501_LA",
+    "zip_code": 70501,
+    "city": "Lafayette",
+    "county": "Lafayette",
+    "latitude": 30.2115,
+    "longitude": -91.981,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "71270.0_LA",
+    "zip_code": 71270.0,
+    "city": "District 10",
+    "county": "Lincoln",
+    "latitude": 32.5144,
+    "longitude": -92.5883,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70570_LA",
+    "zip_code": 70570,
+    "city": "Opelousas",
+    "county": "St. Landry",
+    "latitude": 30.5584,
+    "longitude": -92.0994,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70392_LA",
+    "zip_code": 70392,
+    "city": "Patterson",
+    "county": "St. Mary",
+    "latitude": 29.7095,
+    "longitude": -91.339,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70112_LA",
+    "zip_code": 70112,
+    "city": "New Orleans",
+    "county": "Orleans",
+    "latitude": 29.9526,
+    "longitude": -90.0826,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70118_LA",
+    "zip_code": 70118,
+    "city": "New Orleans",
+    "county": "Orleans",
+    "latitude": 29.9333,
+    "longitude": -90.1333,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70631_LA",
+    "zip_code": 70631,
+    "city": "Cameron",
+    "county": "Cameron",
+    "latitude": 29.78,
+    "longitude": -93.3,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70380_LA",
+    "zip_code": 70380,
+    "city": "Morgan City",
+    "county": "St. Mary",
+    "latitude": 29.6931,
+    "longitude": -91.0986,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70737_LA",
+    "zip_code": 70737,
+    "city": "Gonzales",
+    "county": "Ascension",
+    "latitude": 30.1727,
+    "longitude": -90.9406,
+    "climate_zone": 2
+  },
+  {
+    "location_id": "70358_LA",
+    "zip_code": 70358,
+    "city": "Grand Isle",
+    "county": "Jefferson",
+    "latitude": 29.25,
+    "longitude": -89.966,
+    "climate_zone": 2
+  }
+]

@@ -1,0 +1,587 @@
+[
+  {
+    "location_id": "54656.0_WI",
+    "zip_code": 54656.0,
+    "city": "Sparta",
+    "county": "Monroe",
+    "latitude": 43.9581,
+    "longitude": -90.7397,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53207.0_WI",
+    "zip_code": 53207.0,
+    "city": "Milwaukee",
+    "county": "Milwaukee",
+    "latitude": 42.955,
+    "longitude": -87.9044,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54235_WI",
+    "zip_code": 54235,
+    "city": "Sturgeon Bay",
+    "county": "Door",
+    "latitude": 44.8394,
+    "longitude": -87.4219,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53404_WI",
+    "zip_code": 53404,
+    "city": "Racine",
+    "county": "Racine",
+    "latitude": 42.7586,
+    "longitude": -87.8178,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54880_WI",
+    "zip_code": 54880,
+    "city": "Superior",
+    "county": "Douglas",
+    "latitude": 46.6833,
+    "longitude": -92.0925,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53144_WI",
+    "zip_code": 53144,
+    "city": "Kenosha",
+    "county": "Kenosha",
+    "latitude": 42.595,
+    "longitude": -87.9381,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54220_WI",
+    "zip_code": 54220,
+    "city": "Manitowoc",
+    "county": "Manitowoc",
+    "latitude": 44.1288,
+    "longitude": -87.6806,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54902_WI",
+    "zip_code": 54902,
+    "city": "Oshkosh",
+    "county": "Winnebago",
+    "latitude": 43.967,
+    "longitude": -88.5581,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54618_WI",
+    "zip_code": 54618,
+    "city": "Camp Douglas",
+    "county": "Juneau",
+    "latitude": 43.9392,
+    "longitude": -90.2532,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53094_WI",
+    "zip_code": 53094,
+    "city": "Watertown",
+    "county": "Jefferson",
+    "latitude": 43.1702,
+    "longitude": -88.725,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54937.0_WI",
+    "zip_code": 54937.0,
+    "city": "Fond du Lac",
+    "county": "Fond du Lac",
+    "latitude": 43.7696,
+    "longitude": -88.4907,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54563_WI",
+    "zip_code": 54563,
+    "city": "Tony",
+    "county": "Rusk",
+    "latitude": 45.4935,
+    "longitude": -90.9985,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53805_WI",
+    "zip_code": 53805,
+    "city": "Boscobel",
+    "county": "Grant",
+    "latitude": 43.1561,
+    "longitude": -90.6775,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54872_WI",
+    "zip_code": 54872,
+    "city": "Siren",
+    "county": "Burnett",
+    "latitude": 45.8229,
+    "longitude": -92.3706,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53546_WI",
+    "zip_code": 53546,
+    "city": "Janesville",
+    "county": "Rock",
+    "latitude": 42.6213,
+    "longitude": -89.0419,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54153_WI",
+    "zip_code": 54153,
+    "city": "Oconto",
+    "county": "Oconto",
+    "latitude": 44.8742,
+    "longitude": -87.9096,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54615_WI",
+    "zip_code": 54615,
+    "city": "Black River Falls",
+    "county": "Jackson",
+    "latitude": 44.2507,
+    "longitude": -90.8553,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53095.0_WI",
+    "zip_code": 53095.0,
+    "city": "West Bend",
+    "county": "Washington",
+    "latitude": 43.4226,
+    "longitude": -88.1326,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53225.0_WI",
+    "zip_code": 53225.0,
+    "city": "Milwaukee",
+    "county": "Milwaukee",
+    "latitude": 43.1096,
+    "longitude": -88.0305,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54545_WI",
+    "zip_code": 54545,
+    "city": "Manitowish Waters",
+    "county": "Vilas",
+    "latitude": 46.1204,
+    "longitude": -89.8802,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54540_WI",
+    "zip_code": 54540,
+    "city": "Land O Lakes",
+    "county": "Vilas",
+    "latitude": 46.1514,
+    "longitude": -89.2108,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54020_WI",
+    "zip_code": 54020,
+    "city": "Osceola",
+    "county": "Polk",
+    "latitude": 45.3108,
+    "longitude": -92.6948,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53588_WI",
+    "zip_code": 53588,
+    "city": "Spring Green",
+    "county": "Sauk",
+    "latitude": 43.2111,
+    "longitude": -90.1873,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54723_WI",
+    "zip_code": 54723,
+    "city": "Bay City",
+    "county": "Pierce",
+    "latitude": 44.5926,
+    "longitude": -92.4844,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54501_WI",
+    "zip_code": 54501,
+    "city": "Rhinelander",
+    "county": "Oneida",
+    "latitude": 45.6317,
+    "longitude": -89.4822,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53085_WI",
+    "zip_code": 53085,
+    "city": "Sheboygan Falls",
+    "county": "Sheboygan",
+    "latitude": 43.7748,
+    "longitude": -87.849,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54829_WI",
+    "zip_code": 54829,
+    "city": "Cumberland",
+    "county": "Barron",
+    "latitude": 45.506,
+    "longitude": -91.981,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54568_WI",
+    "zip_code": 54568,
+    "city": "Woodruff",
+    "county": "Vilas",
+    "latitude": 45.9264,
+    "longitude": -89.7307,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53072_WI",
+    "zip_code": 53072,
+    "city": "Pewaukee",
+    "county": "Waukesha",
+    "latitude": 43.0425,
+    "longitude": -88.2461,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54703_WI",
+    "zip_code": 54703,
+    "city": "Eau Claire",
+    "county": "Chippewa",
+    "latitude": 44.8667,
+    "longitude": -91.488,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53105_WI",
+    "zip_code": 53105,
+    "city": "Burlington",
+    "county": "Walworth",
+    "latitude": 42.6909,
+    "longitude": -88.308,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54451_WI",
+    "zip_code": 54451,
+    "city": "Medford",
+    "county": "Taylor",
+    "latitude": 45.1046,
+    "longitude": -90.3025,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54166_WI",
+    "zip_code": 54166,
+    "city": "Wescott",
+    "county": "Shawano",
+    "latitude": 44.7871,
+    "longitude": -88.564,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53913.0_WI",
+    "zip_code": 53913.0,
+    "city": "Baraboo",
+    "county": "Sauk",
+    "latitude": 43.5237,
+    "longitude": -89.7734,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54603_WI",
+    "zip_code": 54603,
+    "city": "La Crosse",
+    "county": "La Crosse",
+    "latitude": 43.8792,
+    "longitude": -91.253,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54555_WI",
+    "zip_code": 54555,
+    "city": "Phillips",
+    "county": "Price",
+    "latitude": 45.7064,
+    "longitude": -90.4052,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54806_WI",
+    "zip_code": 54806,
+    "city": "Ashland",
+    "county": "Ashland",
+    "latitude": 46.5468,
+    "longitude": -90.9184,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54017_WI",
+    "zip_code": 54017,
+    "city": "New Richmond",
+    "county": "St. Croix",
+    "latitude": 45.1476,
+    "longitude": -92.5335,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54981_WI",
+    "zip_code": 54981,
+    "city": "Waupaca",
+    "county": "Waupaca",
+    "latitude": 44.3342,
+    "longitude": -89.0202,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54914_WI",
+    "zip_code": 54914,
+    "city": "Greenville",
+    "county": "Outagamie",
+    "latitude": 44.2595,
+    "longitude": -88.5157,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54494_WI",
+    "zip_code": 54494,
+    "city": "Wisconsin Rapids",
+    "county": "Wood",
+    "latitude": 44.3592,
+    "longitude": -89.8369,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53821_WI",
+    "zip_code": 53821,
+    "city": "Prairie du Chien",
+    "county": "Crawford",
+    "latitude": 43.0194,
+    "longitude": -91.1211,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53039_WI",
+    "zip_code": 53039,
+    "city": "Juneau",
+    "county": "Dodge",
+    "latitude": 43.4285,
+    "longitude": -88.7017,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54449_WI",
+    "zip_code": 54449,
+    "city": "Marshfield",
+    "county": "Wood",
+    "latitude": 44.6381,
+    "longitude": -90.1875,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54751_WI",
+    "zip_code": 54751,
+    "city": "Menomonie city",
+    "county": "Dunn",
+    "latitude": 44.8936,
+    "longitude": -91.8665,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54409.0_WI",
+    "zip_code": 54409.0,
+    "city": "Antigo",
+    "county": "Langlade",
+    "latitude": 45.1566,
+    "longitude": -89.1114,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54843_WI",
+    "zip_code": 54843,
+    "city": "Hayward",
+    "county": "Sawyer",
+    "latitude": 46.0303,
+    "longitude": -91.4426,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53566_WI",
+    "zip_code": 53566,
+    "city": "Monroe",
+    "county": "Green",
+    "latitude": 42.6196,
+    "longitude": -89.5931,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54487_WI",
+    "zip_code": 54487,
+    "city": "Tomahawk",
+    "county": "Lincoln",
+    "latitude": 45.468,
+    "longitude": -89.8096,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54728_WI",
+    "zip_code": 54728,
+    "city": "Chetek",
+    "county": "Barron",
+    "latitude": 45.3106,
+    "longitude": -91.6381,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53818_WI",
+    "zip_code": 53818,
+    "city": "Platteville",
+    "county": "Grant",
+    "latitude": 42.6909,
+    "longitude": -90.4412,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54822_WI",
+    "zip_code": 54822,
+    "city": "Cameron",
+    "county": "Barron",
+    "latitude": 45.4186,
+    "longitude": -91.7764,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54982_WI",
+    "zip_code": 54982,
+    "city": "Wautoma",
+    "county": "Waushara",
+    "latitude": 44.0435,
+    "longitude": -89.304,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54521_WI",
+    "zip_code": 54521,
+    "city": "Eagle River",
+    "county": "Vilas",
+    "latitude": 45.9309,
+    "longitude": -89.267,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "54403_WI",
+    "zip_code": 54403,
+    "city": "Wausau",
+    "county": "Marathon",
+    "latitude": 44.9276,
+    "longitude": -89.6251,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54929_WI",
+    "zip_code": 54929,
+    "city": "Clintonville",
+    "county": "Waupaca",
+    "latitude": 44.6153,
+    "longitude": -88.7313,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54665_WI",
+    "zip_code": 54665,
+    "city": "Viroqua",
+    "county": "Vernon",
+    "latitude": 43.5814,
+    "longitude": -90.8997,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53565.0_WI",
+    "zip_code": 53565.0,
+    "city": "Mineral Point",
+    "county": "Iowa",
+    "latitude": 42.8875,
+    "longitude": -90.2315,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54455_WI",
+    "zip_code": 54455,
+    "city": "Mosinee",
+    "county": "Marathon",
+    "latitude": 44.7794,
+    "longitude": -89.671,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53562_WI",
+    "zip_code": 53562,
+    "city": "Middleton",
+    "county": "Dane",
+    "latitude": 43.1153,
+    "longitude": -89.5311,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54452_WI",
+    "zip_code": 54452,
+    "city": "Merrill",
+    "county": "Lincoln",
+    "latitude": 45.1984,
+    "longitude": -89.71,
+    "climate_zone": 5
+  },
+  {
+    "location_id": "53959_WI",
+    "zip_code": 53959,
+    "city": "Reedsburg",
+    "county": "Sauk",
+    "latitude": 43.5264,
+    "longitude": -89.981,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "53704.0_WI",
+    "zip_code": 53704.0,
+    "city": "Madison city",
+    "county": "Dane",
+    "latitude": 43.1406,
+    "longitude": -89.3453,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54482.0_WI",
+    "zip_code": 54482.0,
+    "city": "Stevens Point",
+    "county": "Portage",
+    "latitude": 44.5437,
+    "longitude": -89.5347,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "54115_WI",
+    "zip_code": 54115,
+    "city": "De Pere",
+    "county": "Brown",
+    "latitude": 44.4794,
+    "longitude": -88.1367,
+    "climate_zone": 4
+  }
+]

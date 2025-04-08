@@ -1,0 +1,470 @@
+[
+  {
+    "location_id": "83101.0_WY",
+    "zip_code": 83101.0,
+    "city": "Kemmerer",
+    "county": "Lincoln",
+    "latitude": 41.8241,
+    "longitude": -110.557,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82082_WY",
+    "zip_code": 82082,
+    "city": "Pine Bluffs",
+    "county": "Laramie",
+    "latitude": 41.1533,
+    "longitude": -104.1302,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82009_WY",
+    "zip_code": 82009,
+    "city": "Cheyenne",
+    "county": "Laramie",
+    "latitude": 41.1579,
+    "longitude": -104.8081,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82801.0_WY",
+    "zip_code": 82801.0,
+    "city": "Sheridan",
+    "county": "Sheridan",
+    "latitude": 44.7603,
+    "longitude": -106.9741,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82513_WY",
+    "zip_code": 82513,
+    "city": "Dubois",
+    "county": "Fremont",
+    "latitude": 43.5484,
+    "longitude": -109.6903,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82513.0_WY",
+    "zip_code": 82513.0,
+    "city": "Dubois",
+    "county": "Fremont",
+    "latitude": 43.5484,
+    "longitude": -109.6903,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82301_WY",
+    "zip_code": 82301,
+    "city": "Rawlins",
+    "county": "Carbon",
+    "latitude": 41.8065,
+    "longitude": -107.1952,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82414_WY",
+    "zip_code": 82414,
+    "city": "Cody",
+    "county": "Park",
+    "latitude": 44.5202,
+    "longitude": -109.0238,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82716_WY",
+    "zip_code": 82716,
+    "city": "Gillette",
+    "county": "Campbell",
+    "latitude": 44.3394,
+    "longitude": -105.5419,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82941_WY",
+    "zip_code": 82941,
+    "city": "Pinedale",
+    "county": "Sublette",
+    "latitude": 42.7956,
+    "longitude": -109.8069,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82604_WY",
+    "zip_code": 82604,
+    "city": "Casper",
+    "county": "Natrona",
+    "latitude": 42.8975,
+    "longitude": -106.4731,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82520_WY",
+    "zip_code": 82520,
+    "city": "Lander",
+    "county": "Fremont",
+    "latitude": 42.8154,
+    "longitude": -108.7261,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83113_WY",
+    "zip_code": 83113,
+    "city": "Big Piney",
+    "county": "Sublette",
+    "latitude": 42.578,
+    "longitude": -110.1097,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82426_WY",
+    "zip_code": 82426,
+    "city": "Greybull",
+    "county": "Big Horn",
+    "latitude": 44.5174,
+    "longitude": -108.0752,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82332.0_WY",
+    "zip_code": 82332.0,
+    "city": "Savery",
+    "county": "Carbon",
+    "latitude": 41.037,
+    "longitude": -107.4998,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82930_WY",
+    "zip_code": 82930,
+    "city": "Evanston",
+    "county": "Uinta",
+    "latitude": 41.2731,
+    "longitude": -111.0306,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82633_WY",
+    "zip_code": 82633,
+    "city": "Douglas",
+    "county": "Converse",
+    "latitude": 42.796,
+    "longitude": -105.3804,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82190_WY",
+    "zip_code": 82190,
+    "city": "Yellowstone National Park",
+    "county": "Teton",
+    "latitude": 44.5444,
+    "longitude": -110.4211,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82443_WY",
+    "zip_code": 82443,
+    "city": "Thermopolis",
+    "county": "Hot Springs",
+    "latitude": 43.467,
+    "longitude": -108.238,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82501_WY",
+    "zip_code": 82501,
+    "city": "Riverton",
+    "county": "Fremont",
+    "latitude": 43.0622,
+    "longitude": -108.447,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82070_WY",
+    "zip_code": 82070,
+    "city": "Laramie",
+    "county": "Albany",
+    "latitude": 41.3165,
+    "longitude": -105.6729,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82901_WY",
+    "zip_code": 82901,
+    "city": "Rock Springs",
+    "county": "Sweetwater",
+    "latitude": 41.5945,
+    "longitude": -109.0528,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82701_WY",
+    "zip_code": 82701,
+    "city": "Newcastle",
+    "county": "Weston",
+    "latitude": 43.8854,
+    "longitude": -104.3179,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83110_WY",
+    "zip_code": 83110,
+    "city": "Afton",
+    "county": "Lincoln",
+    "latitude": 42.7112,
+    "longitude": -110.9422,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83110.0_WY",
+    "zip_code": 83110.0,
+    "city": "Afton",
+    "county": "Lincoln",
+    "latitude": 42.7112,
+    "longitude": -110.9422,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82401_WY",
+    "zip_code": 82401,
+    "city": "Worland",
+    "county": "Washakie",
+    "latitude": 43.9654,
+    "longitude": -107.9502,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82933_WY",
+    "zip_code": 82933,
+    "city": "Fort Bridger",
+    "county": "Uinta",
+    "latitude": 41.3941,
+    "longitude": -110.4059,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82834_WY",
+    "zip_code": 82834,
+    "city": "Buffalo",
+    "county": "Johnson",
+    "latitude": 44.3812,
+    "longitude": -106.7195,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83001_WY",
+    "zip_code": 83001,
+    "city": "Jackson Hole",
+    "county": "Teton",
+    "latitude": 43.6128,
+    "longitude": -110.737,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82327_WY",
+    "zip_code": 82327,
+    "city": "Hanna",
+    "county": "Carbon",
+    "latitude": 41.7253,
+    "longitude": -106.4594,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82005_WY",
+    "zip_code": 82005,
+    "city": "Fe Warren AFB",
+    "county": "Laramie",
+    "latitude": 41.1409,
+    "longitude": -104.8691,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82240_WY",
+    "zip_code": 82240,
+    "city": "Torrington",
+    "county": "Goshen",
+    "latitude": 42.0613,
+    "longitude": -104.1584,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82331_WY",
+    "zip_code": 82331,
+    "city": "Saratoga",
+    "county": "Carbon",
+    "latitude": 41.4435,
+    "longitude": -106.8275,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82442_WY",
+    "zip_code": 82442,
+    "city": "Ten Sleep",
+    "county": "Washakie",
+    "latitude": 44.1466,
+    "longitude": -107.1744,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82601_WY",
+    "zip_code": 82601,
+    "city": "Casper",
+    "county": "Natrona",
+    "latitude": 43.1235,
+    "longitude": -106.3375,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82637_WY",
+    "zip_code": 82637,
+    "city": "Glenrock",
+    "county": "Converse",
+    "latitude": 42.8367,
+    "longitude": -105.8618,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82639_WY",
+    "zip_code": 82639,
+    "city": "Kaycee",
+    "county": "Johnson",
+    "latitude": 43.8989,
+    "longitude": -106.639,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82336_WY",
+    "zip_code": 82336,
+    "city": "Wamsutter",
+    "county": "Sweetwater",
+    "latitude": 41.7297,
+    "longitude": -107.7252,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82050.0_WY",
+    "zip_code": 82050.0,
+    "city": "Albin",
+    "county": "Laramie",
+    "latitude": 41.4417,
+    "longitude": -104.3467,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82084.0_WY",
+    "zip_code": 82084.0,
+    "city": "Tie Siding",
+    "county": "Albany",
+    "latitude": 41.052,
+    "longitude": -105.4694,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "83114.0_WY",
+    "zip_code": 83114.0,
+    "city": "Cokeville",
+    "county": "Lincoln",
+    "latitude": 41.8191,
+    "longitude": -110.974,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82922.0_WY",
+    "zip_code": 82922.0,
+    "city": "Pinedale",
+    "county": "Sublette",
+    "latitude": 43.1,
+    "longitude": -110.32,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82052.0_WY",
+    "zip_code": 82052.0,
+    "city": "Buford",
+    "county": "Albany",
+    "latitude": 41.1566,
+    "longitude": -105.4033,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82201.0_WY",
+    "zip_code": 82201.0,
+    "city": "Wheatland",
+    "county": "Platte",
+    "latitude": 41.9305,
+    "longitude": -104.945,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82834.0_WY",
+    "zip_code": 82834.0,
+    "city": "Buffalo",
+    "county": "Johnson",
+    "latitude": 44.2197,
+    "longitude": -106.1041,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82730.0_WY",
+    "zip_code": 82730.0,
+    "city": "Upton",
+    "county": "Crook",
+    "latitude": 44.294,
+    "longitude": -104.6288,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82325.0_WY",
+    "zip_code": 82325.0,
+    "city": "Encampment",
+    "county": "Carbon",
+    "latitude": 41.135,
+    "longitude": -106.5735,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82935.0_WY",
+    "zip_code": 82935.0,
+    "city": "Green River",
+    "county": "Sweetwater",
+    "latitude": 41.9308,
+    "longitude": -109.9687,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82718.0_WY",
+    "zip_code": 82718.0,
+    "city": "Gillette",
+    "county": "Campbell",
+    "latitude": 43.9325,
+    "longitude": -105.4465,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82213.0_WY",
+    "zip_code": 82213.0,
+    "city": "Glendo",
+    "county": "Platte",
+    "latitude": 42.45,
+    "longitude": -105.0333,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82213_WY",
+    "zip_code": 82213,
+    "city": "Glendo",
+    "county": "Platte",
+    "latitude": 42.45,
+    "longitude": -105.0333,
+    "climate_zone": 4
+  },
+  {
+    "location_id": "82083_WY",
+    "zip_code": 82083,
+    "city": "Rock River",
+    "county": "Carbon",
+    "latitude": 41.6,
+    "longitude": -106.21,
+    "climate_zone": 4
+  }
+]
