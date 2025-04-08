@@ -1,5 +1,6 @@
 // src/components/education/ResourceDetailModal.tsx
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/Dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -118,7 +119,8 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
   if (!isOpen) return null;
   
-  return (
+  // Use createPortal to ensure the modal is rendered at the root level of the DOM
+  return createPortal(
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         {loading ? (
@@ -334,7 +336,8 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
           </>
         ) : null}
       </DialogContent>
-    </Dialog>
+    </Dialog>,
+    document.body // Render directly to the body element
   );
 };
 

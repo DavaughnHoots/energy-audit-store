@@ -254,8 +254,33 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
   const handleSaveProperty = async (data: any): Promise<void> => {
     const startTime = performance.now();
     
+    // Ensure data is a valid object and not false/null/undefined
+    if (!data || typeof data !== 'object') {
+      console.error('PROPERTY DETAILS SAVE ERROR: Invalid data type:', data);
+      setError('Invalid property data format. Please try again.');
+      
+      // Additional logging for troubleshooting
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "error",
+        component: "dashboard.PropertySettingsTab",
+        operation: "validatePropertyData",
+        correlation: {
+          request_id: requestId
+        },
+        details: {
+          error: "Invalid data type provided to handleSaveProperty",
+          data_type: typeof data,
+          data_value: String(data),
+          stack_trace: new Error().stack
+        }
+      }));
+      
+      return;
+    }
+    
     // Log the full data payload for debugging
-    console.log('PROPERTY DETAILS SAVE PAYLOAD:', JSON.stringify(data, null, 2));
+    console.log('PROPERTY DETAILS SAVE PAYLOAD:', data);
     
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
@@ -267,6 +292,9 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       },
       details: {
         property_type: data?.propertyType,
+        data_size: Object.keys(data).length,
+        data_keys: Object.keys(data),
+        data_structure: JSON.stringify(data)
         data_size: Object.keys(data).length,
         data_keys: Object.keys(data),
         data_structure: JSON.stringify(data)
@@ -562,7 +590,55 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
         <h4 className="text-lg font-medium mb-4">Property Details</h4>
         <PropertyDetailsForm 
           initialData={{ propertyDetails: propertyData, windowMaintenance: windowData }}
-          onSave={handleSaveProperty}
+          onSave={(success) => {
+            if (success) {
+              // We need to create/extract a formatted property details object
+              // based on the form values rather than passing a boolean to the API
+              // Extract values from the form and create a proper property details object
+              const formElement = document.querySelector('form');
+              if (formElement) {
+                const formData = new FormData(formElement);
+                const propertyDetails = {
+                  propertyType: formData.get('propertyType') || propertyData?.propertyType || 'single-family',
+                  ownershipStatus: formData.get('ownershipStatus') || propertyData?.ownershipStatus || 'owned',
+                  squareFootage: Number(formData.get('squareFootage')) || propertyData?.squareFootage || 1800,
+                  yearBuilt: Number(formData.get('yearBuilt')) || propertyData?.yearBuilt || 1990,
+                  stories: propertyData?.stories || 1,
+                  insulation: propertyData?.insulation || {
+                    attic: 'not-sure',
+                    walls: 'not-sure',
+                    basement: 'not-sure',
+                    floor: 'not-sure'
+                  },
+                  // Include nested structure to match expected format
+                  windows: {
+                    type: formData.get('windowType') || windowData?.windowType || 'double',
+                    count: Number(formData.get('windowCount')) || windowData?.windowCount || 8,
+                    condition: 'good'
+                  },
+                  weatherization: {
+                    drafts: false,
+                    visibleGaps: false,
+                    condensation: false,
+                    weatherStripping: 'not-sure'
+                  }
+                };
+                
+                console.log('Submitting property details:', propertyDetails);
+                handleSaveProperty(propertyDetails);
+              } else {
+                // Fallback to using the existing data if we can't get form values
+                console.log('Using existing property data:', propertyData);
+                if (propertyData) {
+                  handleSaveProperty(propertyData);
+                } else {
+                  setError('Could not find property form data');
+                }
+              }
+            } else {
+              setError('Failed to save property details');
+            }
+          }}
         />
       </div>
       
