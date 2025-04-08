@@ -119,10 +119,11 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
   if (!isOpen) return null;
   
-  // Use createPortal to ensure the modal is rendered at the root level of the DOM
   return createPortal(
-    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}>
+      <DialogContent>
         {loading ? (
           <div className="p-8 flex flex-col items-center justify-center">
             <Loader2 className="h-8 w-8 text-green-500 animate-spin mb-4" />
@@ -139,7 +140,7 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
           <>
             <DialogHeader>
               <div className="flex justify-between items-start">
-                <DialogTitle className="text-xl text-gray-900">{resource.title}</DialogTitle>
+                <DialogTitle>{resource.title}</DialogTitle>
                 <BookmarkButton 
                   resourceId={resource.id}
                   isBookmarked={resource.is_bookmarked}
@@ -327,10 +328,13 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
               <Button 
                 variant="default" 
                 className="bg-green-600 hover:bg-green-700"
-                onClick={() => window.open(resource.url, '_blank')}
+                onClick={() => {
+                  onClose();
+                  window.location.href = `/education/${resource.id}`;
+                }}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                View Resource
+                View Full Resource
               </Button>
             </div>
           </>
