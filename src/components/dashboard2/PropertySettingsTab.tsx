@@ -648,13 +648,27 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       
       <div className="bg-white rounded-lg shadow p-6">
         <WindowManagementSection
-          windowData={windowData}
+          data={windowData}
           weatherizationData={weatherizationData}
-          onSaveWindow={handleSaveWindowData}
-          onSaveWeatherization={async (data) => {
-            setSuccess('Window assessment data saved successfully');
-            // Implement weatherization save if needed
-            return Promise.resolve();
+          onSave={handleSaveWindowData}
+          onWeatherizationSave={async (data) => {
+            // Update weatherization data
+            console.log('📊 SAVING WEATHERIZATION DATA:', data);
+            const weatherizationDetail = {
+              ...weatherizationData,
+              ...data,
+            };
+
+            if (propertyData) {
+              // Merge with property data to save together
+              return handleSaveProperty({
+                ...propertyData,
+                weatherization: weatherizationDetail
+              });
+            } else {
+              console.log('⚠️ No property data available to save weatherization data with');
+              return Promise.resolve(); // Return resolved promise if no data to save
+            }
           }}
         />
       </div>
