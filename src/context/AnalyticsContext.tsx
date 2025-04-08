@@ -25,7 +25,8 @@ export type AnalyticsArea =
   | 'community'
   | 'auth'
   | 'admin'     // Add support for admin dashboard area
-  | 'debug';    // Add support for debug/diagnostics area
+  | 'debug'     // Add support for debug/diagnostics area
+  | 'home';     // Add support for home page area
 
 interface AnalyticsEvent {
   sessionId: string;

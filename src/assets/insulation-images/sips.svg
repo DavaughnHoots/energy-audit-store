@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="osb-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a87a42" />
+      <stop offset="100%" stop-color="#d4a76a" />
+    </linearGradient>
+    <linearGradient id="foam-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d9f0fc" />
+      <stop offset="100%" stop-color="#a1d6f7" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f5f5f5" />
+  
+  <!-- SIP Wall Section -->
+  <g transform="translate(50, 50)">
+    <!-- OSB Panel Top -->
+    <rect x="0" y="0" width="300" height="30" fill="url(#osb-gradient)" stroke="#8c6739" stroke-width="1" />
+    
+    <!-- Foam Core -->
+    <rect x="0" y="30" width="300" height="140" fill="url(#foam-gradient)" stroke="#8abcde" stroke-width="1" />
+    
+    <!-- Foam Texture -->
+    <g opacity="0.5">
+      <circle cx="30" cy="60" r="5" fill="#ffffff" />
+      <circle cx="70" cy="85" r="4" fill="#ffffff" />
+      <circle cx="110" cy="65" r="6" fill="#ffffff" />
+      <circle cx="150" cy="100" r="5" fill="#ffffff" />
+      <circle cx="190" cy="70" r="7" fill="#ffffff" />
+      <circle cx="230" cy="90" r="4" fill="#ffffff" />
+      <circle cx="270" cy="60" r="6" fill="#ffffff" />
+      
+      <circle cx="40" cy="130" r="5" fill="#ffffff" />
+      <circle cx="80" cy="110" r="4" fill="#ffffff" />
+      <circle cx="120" cy="140" r="6" fill="#ffffff" />
+      <circle cx="160" cy="120" r="5" fill="#ffffff" />
+      <circle cx="200" cy="145" r="7" fill="#ffffff" />
+      <circle cx="240" cy="115" r="4" fill="#ffffff" />
+      <circle cx="260" cy="135" r="6" fill="#ffffff" />
+    </g>
+    
+    <!-- OSB Panel Bottom -->
+    <rect x="0" y="170" width="300" height="30" fill="url(#osb-gradient)" stroke="#8c6739" stroke-width="1" />
+  </g>
+  
+  <!-- LEGO-like connectors -->
+  <rect x="80" y="40" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="120" y="40" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="160" y="40" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="200" y="40" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="240" y="40" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="280" y="40" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  
+  <rect x="80" y="250" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="120" y="250" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="160" y="250" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="200" y="250" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="240" y="250" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  <rect x="280" y="250" width="15" height="10" fill="#e0e0e0" stroke="#888" stroke-width="1" rx="2" />
+  
+  <!-- Title and labels -->
+  <text x="200" y="30" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold">Structural Insulated Panel (SIP)</text>
+  <text x="200" y="270" font-family="Arial" font-size="14" text-anchor="middle">Foam Core Sandwiched Between OSB Panels</text>
+  
+  <!-- Annotations -->
+  <text x="40" y="65" font-family="Arial" font-size="12" text-anchor="end">OSB</text>
+  <text x="40" y="150" font-family="Arial" font-size="12" text-anchor="end">Foam Core</text>
+  <text x="40" y="235" font-family="Arial" font-size="12" text-anchor="end">OSB</text>
+</svg>

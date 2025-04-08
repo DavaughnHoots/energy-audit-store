@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="vip-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f2f2f2" />
+      <stop offset="100%" stop-color="#d9d9d9" />
+    </linearGradient>
+    <linearGradient id="core-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e6e6e6" />
+      <stop offset="100%" stop-color="#cccccc" />
+    </linearGradient>
+    <linearGradient id="barrier-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b3b3cc" />
+      <stop offset="100%" stop-color="#9999b3" />
+    </linearGradient>
+    <linearGradient id="comparison-gradient-1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe6cc" />
+      <stop offset="100%" stop-color="#ffcc99" />
+    </linearGradient>
+    <linearGradient id="comparison-gradient-2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cce6ff" />
+      <stop offset="100%" stop-color="#99ccff" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f9f9f9" />
+  
+  <!-- Title -->
+  <text x="200" y="30" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold">Vacuum Insulation Panels (VIPs)</text>
+  <text x="200" y="50" font-family="Arial" font-size="14" text-anchor="middle" font-style="italic">"Insulation that sounds like it belongs on a spaceship."</text>
+  
+  <!-- Main VIP Illustration -->
+  <g transform="translate(50, 70)">
+    <!-- VIP Panel -->
+    <rect x="0" y="0" width="140" height="100" rx="2" ry="2" fill="url(#vip-gradient)" stroke="#999999" stroke-width="1" />
+    
+    <!-- Vacuum Core -->
+    <rect x="10" y="10" width="120" height="80" rx="1" ry="1" fill="url(#core-gradient)" stroke="#b3b3b3" stroke-width="1" />
+    
+    <!-- Barrier Film -->
+    <rect x="5" y="5" width="130" height="90" rx="1" ry="1" fill="none" stroke="url(#barrier-gradient)" stroke-width="1" stroke-dasharray="2,1" />
+    
+    <!-- Panel Labels -->
+    <text x="70" y="-10" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">VIP Construction</text>
+    <text x="70" y="30" font-family="Arial" font-size="10" text-anchor="middle">Vacuum Core</text>
+    <text x="70" y="115" font-family="Arial" font-size="10" text-anchor="middle">Metalized Barrier Film</text>
+    
+    <!-- Vacuum Indicator -->
+    <text x="70" y="70" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold" fill="#666666">VACUUM</text>
+    
+    <!-- Microscopic structure in core -->
+    <g opacity="0.5">
+      <circle cx="30" cy="40" r="2" fill="#b3b3b3" />
+      <circle cx="45" cy="35" r="1.5" fill="#b3b3b3" />
+      <circle cx="60" cy="45" r="2" fill="#b3b3b3" />
+      <circle cx="75" cy="38" r="1.5" fill="#b3b3b3" />
+      <circle cx="90" cy="42" r="2" fill="#b3b3b3" />
+      <circle cx="105" cy="36" r="1.5" fill="#b3b3b3" />
+      
+      <circle cx="35" cy="60" r="1.5" fill="#b3b3b3" />
+      <circle cx="50" cy="65" r="2" fill="#b3b3b3" />
+      <circle cx="65" cy="55" r="1.5" fill="#b3b3b3" />
+      <circle cx="80" cy="62" r="2" fill="#b3b3b3" />
+      <circle cx="95" cy="58" r="1.5" fill="#b3b3b3" />
+      <circle cx="110" cy="64" r="2" fill="#b3b3b3" />
+      
+      <circle cx="30" cy="80" r="2" fill="#b3b3b3" />
+      <circle cx="45" cy="75" r="1.5" fill="#b3b3b3" />
+      <circle cx="60" cy="85" r="2" fill="#b3b3b3" />
+      <circle cx="75" cy="78" r="1.5" fill="#b3b3b3" />
+      <circle cx="90" cy="82" r="2" fill="#b3b3b3" />
+      <circle cx="105" cy="76" r="1.5" fill="#b3b3b3" />
+    </g>
+  </g>
+  
+  <!-- Performance Comparison -->
+  <g transform="translate(210, 70)">
+    <!-- Comparison Label -->
+    <text x="70" y="-10" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Performance Comparison</text>
+    
+    <!-- Traditional Insulation -->
+    <rect x="0" y="0" width="40" height="100" fill="url(#comparison-gradient-1)" stroke="#ffb366" stroke-width="1" />
+    <text x="20" y="115" font-family="Arial" font-size="10" text-anchor="middle">Traditional</text>
+    <text x="20" y="127" font-family="Arial" font-size="10" text-anchor="middle">(10cm)</text>
+    
+    <!-- Aerogel -->
+    <rect x="50" y="40" width="40" height="60" fill="url(#comparison-gradient-1)" stroke="#ffb366" stroke-width="1" />
+    <text x="70" y="115" font-family="Arial" font-size="10" text-anchor="middle">Aerogel</text>
+    <text x="70" y="127" font-family="Arial" font-size="10" text-anchor="middle">(3cm)</text>
+    
+    <!-- VIP -->
+    <rect x="100" y="80" width="40" height="20" fill="url(#comparison-gradient-1)" stroke="#ffb366" stroke-width="1" />
+    <text x="120" y="115" font-family="Arial" font-size="10" text-anchor="middle">VIP</text>
+    <text x="120" y="127" font-family="Arial" font-size="10" text-anchor="middle">(1cm)</text>
+    
+    <!-- Performance Scale -->
+    <line x1="-10" y1="0" x2="-10" y2="100" stroke="#666666" stroke-width="1" />
+    <text x="-15" y="10" font-family="Arial" font-size="8" text-anchor="end">0%</text>
+    <text x="-15" y="50" font-family="Arial" font-size="8" text-anchor="end">50%</text>
+    <text x="-15" y="100" font-family="Arial" font-size="8" text-anchor="end">100%</text>
+    <text x="-35" y="50" font-family="Arial" font-size="10" text-anchor="middle" transform="rotate(-90, -35, 50)">Thermal Resistance</text>
+    
+    <!-- Thickness Scale -->
+    <line x1="0" y1="130" x2="140" y2="130" stroke="#666666" stroke-width="1" />
+    <text x="70" y="145" font-family="Arial" font-size="10" text-anchor="middle">Thickness Required</text>
+  </g>
+  
+  <!-- Benefits and Applications -->
+  <g transform="translate(50, 190)">
+    <rect x="0" y="0" width="300" height="80" rx="5" ry="5" fill="#e6f2ff" stroke="#80b3ff" stroke-width="1" />
+    
+    <text x="150" y="20" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Benefits &amp; Applications</text>
+    
+    <text x="10" y="40" font-family="Arial" font-size="12">• Up to 10x better than traditional insulation</text>
+    <text x="10" y="60" font-family="Arial" font-size="12">• Ultra-thin profile (5-20mm)</text>
+    <text x="160" y="40" font-family="Arial" font-size="12">• Ideal for refrigerators, thin walls</text>
+    <text x="160" y="60" font-family="Arial" font-size="12">• Perfect for space-constrained renovations</text>
+  </g>
+  
+  <!-- Caution note -->
+  <g transform="translate(200, 175)">
+    <path d="M-5,-5 L5,-5 L0,-15 Z" fill="#ff9999" stroke="#ff6666" stroke-width="1" />
+    <circle cx="0" cy="0" r="7" fill="#ff9999" stroke="#ff6666" stroke-width="1" />
+    <text x="0" y="3" font-family="Arial" font-size="8" text-anchor="middle" font-weight="bold">!</text>
+    <text x="15" y="3" font-family="Arial" font-size="9" fill="#cc0000">Handle with care - puncturing destroys performance</text>
+  </g>
+</svg>

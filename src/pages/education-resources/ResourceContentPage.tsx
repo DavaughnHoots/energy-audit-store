@@ -9,6 +9,7 @@ import { ArrowLeft, Bookmark, BookmarkCheck } from 'lucide-react';
 import ProgressIndicator from '@/components/education/ProgressIndicator';
 import StarRating from '@/components/education/StarRating';
 import BookmarkButton from '@/components/education/BookmarkButton';
+import InsulationInteractiveFeatures from '@/components/education/InsulationInteractiveFeatures';
 import { usePageTracking } from '@/hooks/analytics/usePageTracking';
 import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
 
@@ -210,10 +211,13 @@ const ResourceContentPage: React.FC = () => {
         )}
         
         <div className="px-6 py-8">
-          <div 
+          <div
             className="prose prose-green max-w-none"
             dangerouslySetInnerHTML={{ __html: contentData.content as string }}
           />
+          
+          {/* Add interactive features for Advanced Insulation Techniques */}
+          {resourceId === '2' && <InsulationInteractiveFeatures />}
         </div>
       </div>
       

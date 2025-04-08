@@ -16,6 +16,7 @@ import EnergyAuditPage from './pages/EnergyAuditPage';
 import InteractiveReportPage from './pages/InteractiveReportPage';
 import EducationPage from './pages/EducationPage';
 import ResourceContentPage from './pages/education-resources/ResourceContentPage';
+import AdvancedInsulationPage from './pages/education-resources/AdvancedInsulationPage';
 import CommunityPage from './pages/CommunityPage';
 import SignIn from './components/auth/SignIn';
 import SignUp from './components/auth/SignUp';
@@ -140,6 +141,7 @@ const App: React.FC = () => {
             <Route path="/reports/:auditId" element={<InteractiveReportPage />} />
             <Route path="/education" element={<EducationPage />} />
             <Route path="/education/:resourceId" element={<ResourceContentPage />} />
+            <Route path="/education/resources/advanced-insulation" element={<AdvancedInsulationPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />

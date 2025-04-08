@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="aerogel-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e6f2ff" />
+      <stop offset="100%" stop-color="#cce6ff" />
+    </linearGradient>
+    <linearGradient id="wall-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d9d9d9" />
+      <stop offset="100%" stop-color="#b3b3b3" />
+    </linearGradient>
+    <linearGradient id="warm-side-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffebcc" />
+      <stop offset="100%" stop-color="#ffd699" />
+    </linearGradient>
+    <linearGradient id="cold-side-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cce0ff" />
+      <stop offset="100%" stop-color="#99c2ff" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f9f9f9" />
+  
+  <!-- Title -->
+  <text x="200" y="30" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold">Aerogel Insulation</text>
+  <text x="200" y="50" font-family="Arial" font-size="14" text-anchor="middle" font-style="italic">"Mostly air. Totally powerful."</text>
+  
+  <!-- Main Content -->
+  <g transform="translate(50, 80)">
+    <!-- Wall cross-section with traditional insulation vs aerogel -->
+    <rect x="0" y="0" width="300" height="150" fill="url(#wall-gradient)" stroke="#999999" stroke-width="1" />
+    
+    <!-- Divider between Traditional and Aerogel -->
+    <line x1="150" y1="0" x2="150" y2="150" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,3" />
+    
+    <!-- Traditional Insulation Side -->
+    <rect x="20" y="20" width="110" height="110" fill="#f5f5f5" stroke="#cccccc" stroke-width="1" />
+    <text x="75" y="15" font-family="Arial" font-size="12" text-anchor="middle">Traditional Insulation</text>
+    
+    <!-- Traditional Insulation Internal Structure -->
+    <path d="M30,30 L40,40 L50,30 L60,40 L70,30 L80,40 L90,30 L100,40 L110,30 L120,40" stroke="#cccccc" stroke-width="1" fill="none" />
+    <path d="M30,50 L40,60 L50,50 L60,60 L70,50 L80,60 L90,50 L100,60 L110,50 L120,60" stroke="#cccccc" stroke-width="1" fill="none" />
+    <path d="M30,70 L40,80 L50,70 L60,80 L70,70 L80,80 L90,70 L100,80 L110,70 L120,80" stroke="#cccccc" stroke-width="1" fill="none" />
+    <path d="M30,90 L40,100 L50,90 L60,100 L70,90 L80,100 L90,90 L100,100 L110,90 L120,100" stroke="#cccccc" stroke-width="1" fill="none" />
+    <path d="M30,110 L40,120 L50,110 L60,120 L70,110 L80,120 L90,110 L100,120 L110,110 L120,120" stroke="#cccccc" stroke-width="1" fill="none" />
+    
+    <!-- Aerogel Side -->
+    <rect x="170" y="20" width="110" height="110" fill="url(#aerogel-gradient)" stroke="#80b3ff" stroke-width="1" />
+    <text x="225" y="15" font-family="Arial" font-size="12" text-anchor="middle">Aerogel Insulation</text>
+    
+    <!-- Aerogel Microscopic Structure -->
+    <g id="aerogel-structure">
+      <!-- Represent the nano-porous structure of aerogel -->
+      <circle cx="180" cy="30" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="195" cy="35" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="210" cy="33" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="227" cy="31" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="240" cy="36" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="255" cy="34" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="270" cy="30" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      
+      <circle cx="183" cy="50" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="200" cy="55" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="215" cy="53" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="230" cy="51" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="245" cy="56" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="260" cy="54" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="273" cy="50" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      
+      <circle cx="186" cy="70" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="205" cy="75" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="220" cy="73" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="233" cy="71" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="250" cy="76" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="265" cy="74" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="276" cy="70" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      
+      <circle cx="189" cy="90" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="210" cy="95" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="225" cy="93" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="236" cy="91" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="255" cy="96" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="270" cy="94" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="279" cy="90" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      
+      <circle cx="192" cy="110" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="215" cy="115" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="230" cy="113" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="239" cy="111" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="260" cy="116" r="3" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="275" cy="114" r="4" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      <circle cx="282" cy="110" r="2" fill="#ffffff" stroke="#b3d9ff" stroke-width="0.5" />
+      
+      <!-- Silica network lines connecting aerogel pores -->
+      <path d="M180,30 L195,35 L210,33 L227,31 L240,36 L255,34 L270,30" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+      <path d="M183,50 L200,55 L215,53 L230,51 L245,56 L260,54 L273,50" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+      <path d="M186,70 L205,75 L220,73 L233,71 L250,76 L265,74 L276,70" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+      <path d="M189,90 L210,95 L225,93 L236,91 L255,96 L270,94 L279,90" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+      <path d="M192,110 L215,115 L230,113 L239,111 L260,116 L275,114 L282,110" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+      
+      <path d="M180,30 L183,50 L186,70 L189,90 L192,110" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+      <path d="M210,33 L215,53 L220,73 L225,93 L230,113" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+      <path d="M240,36 L245,56 L250,76 L255,96 L260,116" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+      <path d="M270,30 L273,50 L276,70 L279,90 L282,110" stroke="#d9ebff" stroke-width="0.5" fill="none" />
+    </g>
+  </g>
+  
+  <!-- Temperature indicators -->
+  <g transform="translate(20, 80)">
+    <!-- Warm side -->
+    <rect x="0" y="0" width="20" height="150" fill="url(#warm-side-gradient)" stroke="#ffc266" stroke-width="1" />
+    <text x="10" y="75" font-family="Arial" font-size="12" text-anchor="middle" writing-mode="tb">Warm Side</text>
+  </g>
+  
+  <g transform="translate(360, 80)">
+    <!-- Cold side -->
+    <rect x="0" y="0" width="20" height="150" fill="url(#cold-side-gradient)" stroke="#80b3ff" stroke-width="1" />
+    <text x="10" y="75" font-family="Arial" font-size="12" text-anchor="middle" writing-mode="tb">Cold Side</text>
+  </g>
+  
+  <!-- Heat flow arrows for traditional insulation (more arrows = more heat transfer) -->
+  <g fill="#ff6666">
+    <path d="M45,160 L65,160" stroke="#ff6666" stroke-width="2" />
+    <polygon points="70,160 60,156 60,164" fill="#ff6666" />
+    
+    <path d="M75,160 L95,160" stroke="#ff6666" stroke-width="2" />
+    <polygon points="100,160 90,156 90,164" fill="#ff6666" />
+    
+    <path d="M105,160 L125,160" stroke="#ff6666" stroke-width="2" />
+    <polygon points="130,160 120,156 120,164" fill="#ff6666" />
+  </g>
+  
+  <!-- Heat flow arrows for aerogel (fewer arrows = less heat transfer) -->
+  <g fill="#ff6666">
+    <path d="M200,160 L230,160" stroke="#ff6666" stroke-width="2" stroke-dasharray="3,3" />
+    <polygon points="235,160 225,156 225,164" fill="#ff6666" />
+    
+    <path d="M245,160 L275,160" stroke="#ff6666" stroke-width="2" stroke-dasharray="5,5" />
+    <polygon points="280,160 270,156 270,164" fill="#ff6666" />
+  </g>
+  
+  <!-- Labels and explanation -->
+  <g>
+    <text x="75" y="180" font-family="Arial" font-size="12" text-anchor="middle">Higher Heat Transfer</text>
+    <text x="225" y="180" font-family="Arial" font-size="12" text-anchor="middle">Minimal Heat Transfer</text>
+  </g>
+  
+  <!-- Key facts about aerogel -->
+  <g transform="translate(50, 200)">
+    <rect x="0" y="0" width="300" height="70" rx="5" ry="5" fill="#e6f5ff" stroke="#80b3ff" stroke-width="1" />
+    <text x="150" y="20" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Key Properties of Aerogel</text>
+    
+    <text x="10" y="40" font-family="Arial" font-size="12">• 95% air by volume - extremely lightweight</text>
+    <text x="10" y="60" font-family="Arial" font-size="12">• Up to 40 times better insulation than fiberglass</text>
+    <text x="160" y="40" font-family="Arial" font-size="12">• Moisture resistant</text>
+    <text x="160" y="60" font-family="Arial" font-size="12">• Perfect for thin retrofits</text>
+  </g>
+</svg>

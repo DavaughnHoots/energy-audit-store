@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="pcm-solid-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cce5ff" />
+      <stop offset="100%" stop-color="#99c2ff" />
+    </linearGradient>
+    <linearGradient id="pcm-liquid-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b3d1ff" />
+      <stop offset="100%" stop-color="#80b3ff" />
+    </linearGradient>
+    <radialGradient id="sun-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#ffff80" />
+      <stop offset="100%" stop-color="#ffcc00" />
+    </radialGradient>
+    <radialGradient id="moon-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#f5f5f5" />
+      <stop offset="100%" stop-color="#d9d9d9" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f9f9f9" />
+  
+  <!-- Divider for day/night -->
+  <line x1="200" y1="40" x2="200" y2="260" stroke="#ddd" stroke-width="2" stroke-dasharray="5,5" />
+  
+  <!-- Day side (Left) -->
+  <rect x="20" y="40" width="160" height="220" rx="5" fill="#f0f7ff" stroke="#b3d9ff" stroke-width="1" />
+  
+  <!-- Night side (Right) -->
+  <rect x="220" y="40" width="160" height="220" rx="5" fill="#e6e6ff" stroke="#b3b3cc" stroke-width="1" />
+  
+  <!-- Sun and Moon -->
+  <circle cx="55" cy="70" r="20" fill="url(#sun-gradient)" />
+  <circle cx="345" cy="70" r="18" fill="url(#moon-gradient)" />
+  <!-- Moon craters -->
+  <circle cx="339" cy="64" r="3" fill="#bfbfbf" opacity="0.5" />
+  <circle cx="352" cy="72" r="2" fill="#bfbfbf" opacity="0.5" />
+  <circle cx="345" cy="78" r="4" fill="#bfbfbf" opacity="0.5" />
+  
+  <!-- Day PCM (liquid) -->
+  <g transform="translate(40, 120)">
+    <rect x="0" y="0" width="120" height="80" rx="3" fill="url(#pcm-liquid-gradient)" stroke="#6699ff" stroke-width="1" />
+    <!-- Liquid surface waves -->
+    <path d="M5,10 Q15,5 25,10 Q35,15 45,10 Q55,5 65,10 Q75,15 85,10 Q95,5 105,10 Q115,15 115,10" fill="none" stroke="#80b3ff" stroke-width="1" />
+    <text x="60" y="50" font-family="Arial" font-size="14" text-anchor="middle" fill="#ffffff">Liquid</text>
+    <!-- Heat absorption arrows -->
+    <path d="M30,70 L30,95" stroke="#ff6666" stroke-width="2" />
+    <polygon points="30,100 25,90 35,90" fill="#ff6666" />
+    <path d="M60,70 L60,95" stroke="#ff6666" stroke-width="2" />
+    <polygon points="60,100 55,90 65,90" fill="#ff6666" />
+    <path d="M90,70 L90,95" stroke="#ff6666" stroke-width="2" />
+    <polygon points="90,100 85,90 95,90" fill="#ff6666" />
+  </g>
+  
+  <!-- Night PCM (solid) -->
+  <g transform="translate(240, 120)">
+    <rect x="0" y="0" width="120" height="80" rx="3" fill="url(#pcm-solid-gradient)" stroke="#6699ff" stroke-width="1" />
+    <!-- Crystal/solid pattern -->
+    <line x1="20" y1="20" x2="30" y2="10" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="20" y1="20" x2="10" y2="10" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="20" y1="20" x2="20" y2="35" stroke="#e6f0ff" stroke-width="1" />
+    
+    <line x1="60" y1="15" x2="70" y2="5" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="60" y1="15" x2="50" y2="5" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="60" y1="15" x2="60" y2="30" stroke="#e6f0ff" stroke-width="1" />
+    
+    <line x1="100" y1="25" x2="110" y2="15" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="100" y1="25" x2="90" y2="15" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="100" y1="25" x2="100" y2="40" stroke="#e6f0ff" stroke-width="1" />
+    
+    <line x1="30" y1="60" x2="40" y2="50" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="30" y1="60" x2="20" y2="50" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="30" y1="60" x2="30" y2="75" stroke="#e6f0ff" stroke-width="1" />
+    
+    <line x1="80" y1="50" x2="90" y2="40" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="80" y1="50" x2="70" y2="40" stroke="#e6f0ff" stroke-width="1" />
+    <line x1="80" y1="50" x2="80" y2="65" stroke="#e6f0ff" stroke-width="1" />
+    
+    <text x="60" y="50" font-family="Arial" font-size="14" text-anchor="middle" fill="#ffffff">Solid</text>
+    <!-- Heat release arrows -->
+    <path d="M30,5 L30,-20" stroke="#80b3ff" stroke-width="2" />
+    <polygon points="30,-25 25,-15 35,-15" fill="#80b3ff" />
+    <path d="M60,5 L60,-20" stroke="#80b3ff" stroke-width="2" />
+    <polygon points="60,-25 55,-15 65,-15" fill="#80b3ff" />
+    <path d="M90,5 L90,-20" stroke="#80b3ff" stroke-width="2" />
+    <polygon points="90,-25 85,-15 95,-15" fill="#80b3ff" />
+  </g>
+  
+  <!-- Labels -->
+  <text x="100" y="230" font-family="Arial" font-size="12" text-anchor="middle">Absorbs Heat (Melts)</text>
+  <text x="300" y="230" font-family="Arial" font-size="12" text-anchor="middle">Releases Heat (Solidifies)</text>
+  
+  <text x="100" y="250" font-family="Arial" font-size="12" text-anchor="middle">Daytime</text>
+  <text x="300" y="250" font-family="Arial" font-size="12" text-anchor="middle">Nighttime</text>
+  
+  <!-- Title -->
+  <text x="200" y="30" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold">Phase Change Materials (PCMs)</text>
+  <text x="200" y="280" font-family="Arial" font-size="14" text-anchor="middle">Nature's Thermostat: Heat Storage &amp; Release</text>
+</svg>
