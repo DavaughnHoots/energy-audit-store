@@ -595,9 +595,21 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
               // We need to create/extract a formatted property details object
               // based on the form values rather than passing a boolean to the API
               // Extract values from the form and create a proper property details object
+              console.log('🔍 FORM SUBMISSION - onSave callback triggered with success:', success);
+              
               const formElement = document.querySelector('form');
+              console.log('🔍 FORM ELEMENT FOUND:', !!formElement);
+              
               if (formElement) {
                 const formData = new FormData(formElement);
+                
+                // Log form data for debugging
+                console.log('📋 FORM DATA KEYS:', [...formData.keys()]);
+                console.log('📋 FORM DATA VALUES:');
+                for (const [key, value] of formData.entries()) {
+                  console.log(`   - ${key}: ${value}`);
+                }
+                
                 const propertyDetails = {
                   propertyType: formData.get('propertyType') || propertyData?.propertyType || 'single-family',
                   ownershipStatus: formData.get('ownershipStatus') || propertyData?.ownershipStatus || 'owned',
@@ -624,14 +636,32 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
                   }
                 };
                 
-                console.log('Submitting property details:', propertyDetails);
+                console.log('📤 PROPERTY DETAILS TO SUBMIT:', JSON.stringify(propertyDetails, null, 2));
+                
+                // Check for invalid types
+                if (typeof propertyDetails.propertyType !== 'string') {
+                  console.error('❌ INVALID propertyType:', propertyDetails.propertyType);
+                }
+                if (typeof propertyDetails.ownershipStatus !== 'string') {
+                  console.error('❌ INVALID ownershipStatus:', propertyDetails.ownershipStatus);
+                }
+                if (typeof propertyDetails.squareFootage !== 'number') {
+                  console.error('❌ INVALID squareFootage:', propertyDetails.squareFootage);
+                }
+                if (typeof propertyDetails.yearBuilt !== 'number') {
+                  console.error('❌ INVALID yearBuilt:', propertyDetails.yearBuilt);
+                }
+                
                 handleSaveProperty(propertyDetails);
               } else {
                 // Fallback to using the existing data if we can't get form values
-                console.log('Using existing property data:', propertyData);
+                console.log('⚠️ FORM ELEMENT NOT FOUND - Using existing property data instead');
+                console.log('📊 EXISTING PROPERTY DATA:', propertyData);
+                
                 if (propertyData) {
                   handleSaveProperty(propertyData);
                 } else {
+                  console.error('❌ NO PROPERTY DATA AVAILABLE');
                   setError('Could not find property form data');
                 }
               }
