@@ -171,8 +171,8 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
             </DialogHeader>
             
             <div className="relative">
-              <img 
-                src={resource.thumbnail} 
+              <img
+                src={resource.thumbnail}
                 alt={resource.title}
                 className="w-full h-64 object-cover rounded-md"
               />
@@ -194,7 +194,7 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
               {/* Progress indicator if user has started */}
               {resource.progress && (
                 <div className="absolute bottom-3 left-3 bg-white/90 rounded-md p-2">
-                  <ProgressIndicator 
+                  <ProgressIndicator
                     progress={resource.progress}
                     showPercentage={true}
                     size="sm"

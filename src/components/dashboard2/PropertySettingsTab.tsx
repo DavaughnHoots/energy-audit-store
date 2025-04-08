@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import PropertyDetailsForm from '@/components/user-settings/PropertyDetailsForm';
 import HomeConditionsSection from '@/components/user-settings/HomeConditionsSection';
 import WindowManagementSection from '@/components/user-settings/WindowManagementSection';
-import WindowManagementSection from '@/components/user-settings/WindowManagementSection';
 import { fetchWithAuth } from '@/utils/authUtils';
 import { API_ENDPOINTS } from '@/config/api';
 import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
@@ -321,9 +320,6 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       },
       details: {
         property_type: data?.propertyType,
-        data_size: Object.keys(data).length,
-        data_keys: Object.keys(data),
-        data_structure: JSON.stringify(data)
         data_size: Object.keys(data).length,
         data_keys: Object.keys(data),
         data_structure: JSON.stringify(data)
@@ -698,85 +694,6 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
               setError('Failed to save property details');
             }
           }}
-          onSave={(success) => {
-            if (success) {
-              // We need to create/extract a formatted property details object
-              // based on the form values rather than passing a boolean to the API
-              // Extract values from the form and create a proper property details object
-              console.log('🔍 FORM SUBMISSION - onSave callback triggered with success:', success);
-              
-              const formElement = document.querySelector('form');
-              console.log('🔍 FORM ELEMENT FOUND:', !!formElement);
-              
-              if (formElement) {
-                const formData = new FormData(formElement);
-                
-                // Log form data for debugging
-                console.log('📋 FORM DATA KEYS:', [...formData.keys()]);
-                console.log('📋 FORM DATA VALUES:');
-                for (const [key, value] of formData.entries()) {
-                  console.log(`   - ${key}: ${value}`);
-                }
-                
-                const propertyDetails = {
-                  propertyType: formData.get('propertyType') || propertyData?.propertyType || 'single-family',
-                  ownershipStatus: formData.get('ownershipStatus') || propertyData?.ownershipStatus || 'owned',
-                  squareFootage: Number(formData.get('squareFootage')) || propertyData?.squareFootage || 1800,
-                  yearBuilt: Number(formData.get('yearBuilt')) || propertyData?.yearBuilt || 1990,
-                  stories: propertyData?.stories || 1,
-                  insulation: propertyData?.insulation || {
-                    attic: 'not-sure',
-                    walls: 'not-sure',
-                    basement: 'not-sure',
-                    floor: 'not-sure'
-                  },
-                  // Include nested structure to match expected format
-                  windows: {
-                    type: formData.get('windowType') || windowData?.windowType || 'double',
-                    count: Number(formData.get('windowCount')) || windowData?.windowCount || 8,
-                    condition: 'good'
-                  },
-                  weatherization: {
-                    drafts: false,
-                    visibleGaps: false,
-                    condensation: false,
-                    weatherStripping: 'not-sure'
-                  }
-                };
-                
-                console.log('📤 PROPERTY DETAILS TO SUBMIT:', JSON.stringify(propertyDetails, null, 2));
-                
-                // Check for invalid types
-                if (typeof propertyDetails.propertyType !== 'string') {
-                  console.error('❌ INVALID propertyType:', propertyDetails.propertyType);
-                }
-                if (typeof propertyDetails.ownershipStatus !== 'string') {
-                  console.error('❌ INVALID ownershipStatus:', propertyDetails.ownershipStatus);
-                }
-                if (typeof propertyDetails.squareFootage !== 'number') {
-                  console.error('❌ INVALID squareFootage:', propertyDetails.squareFootage);
-                }
-                if (typeof propertyDetails.yearBuilt !== 'number') {
-                  console.error('❌ INVALID yearBuilt:', propertyDetails.yearBuilt);
-                }
-                
-                handleSaveProperty(propertyDetails);
-              } else {
-                // Fallback to using the existing data if we can't get form values
-                console.log('⚠️ FORM ELEMENT NOT FOUND - Using existing property data instead');
-                console.log('📊 EXISTING PROPERTY DATA:', propertyData);
-                
-                if (propertyData) {
-                  handleSaveProperty(propertyData);
-                } else {
-                  console.error('❌ NO PROPERTY DATA AVAILABLE');
-                  setError('Could not find property form data');
-                }
-              }
-            } else {
-              setError('Failed to save property details');
-            }
-          }}
         />
       </div>
       
@@ -786,30 +703,9 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       
       <div className="bg-white rounded-lg shadow p-6">
         <WindowManagementSection
-        <WindowManagementSection
           data={windowData}
           weatherizationData={weatherizationData}
-          weatherizationData={weatherizationData}
           onSave={handleSaveWindowData}
-          onWeatherizationSave={async (data) => {
-            // Update weatherization data
-            console.log('📊 SAVING WEATHERIZATION DATA:', data);
-            const weatherizationDetail = {
-              ...weatherizationData,
-              ...data,
-            };
-
-            if (propertyData) {
-              // Merge with property data to save together
-              return handleSaveProperty({
-                ...propertyData,
-                weatherization: weatherizationDetail
-              });
-            } else {
-              console.log('⚠️ No property data available to save weatherization data with');
-              return Promise.resolve(); // Return resolved promise if no data to save
-            }
-          }}
           onWeatherizationSave={async (data) => {
             // Update weatherization data
             console.log('📊 SAVING WEATHERIZATION DATA:', data);

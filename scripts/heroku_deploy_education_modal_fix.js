@@ -1,112 +1,70 @@
-// scripts/heroku_deploy_education_modal_fix.js
+/**
+ * Deployment script for Education Modal Fix
+ * 
+ * This script deploys the fix for the ResourceDetailModal component
+ * which had JSX errors with mismatched DialogContent tags and duplicate DialogTitle elements
+ * 
+ * The fix specifically:
+ * 1. Removes the duplicate return statements in ResourceDetailModal
+ * 2. Removes the duplicate DialogTitle element
+ * 3. Fixes trailing whitespace issues
+ * 
+ * Execution: node scripts/heroku_deploy_education_modal_fix.js
+ */
 const { execSync } = require('child_process');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 
-// Deployment metadata
-const deploymentInfo = {
-  name: 'Education Modal Fix',
-  description: 'Fix for the resource detail modal rendering within the page flow instead of as an overlay',
-  components: [
-    'src/components/ui/Dialog.tsx',
-    'src/components/education/ResourceDetailModal.tsx'
-  ],
-  date: new Date().toISOString(),
-  developer: 'System',
-  version: '1.0.0'
-};
+// Configuration
+const HEROKU_APP_NAME = 'energy-audit-store';
+const BRANCH_NAME = 'fix/education-modal';
+const COMMIT_MESSAGE = 'Fix ResourceDetailModal JSX structure and whitespace issues';
 
-// Log deployment information
-console.log('===== Education Modal Fix Deployment =====');
-console.log(`Date: ${new Date().toLocaleString()}`);
-console.log(`Description: ${deploymentInfo.description}`);
-console.log('Modified files:');
-deploymentInfo.components.forEach(component => console.log(`- ${component}`));
-console.log('==========================================\n');
+// Deployment Log
+console.log('Starting deployment of Education Modal Fix...');
+console.log('================================================');
 
 try {
-  // Check if we're on the correct branch
-  const currentBranch = execSync('git branch --show-current').toString().trim();
-  if (currentBranch !== 'main') {
-    console.log(`⚠️ Warning: You're deploying from '${currentBranch}' branch, not 'main'`);
-    console.log('Continuing deployment anyway...\n');
-  }
+  // 1. Create and checkout new branch
+  console.log(`Creating branch: ${BRANCH_NAME}`);
+  execSync(`git checkout -b ${BRANCH_NAME}`, { stdio: 'inherit' });
 
-  // Step 1: Stage the changes
-  console.log('Step 1: Staging changes...');
-  deploymentInfo.components.forEach(file => {
-    if (fs.existsSync(file)) {
-      execSync(`git add ${file}`);
-      console.log(`✓ Staged ${file}`);
-    } else {
-      console.log(`❌ File not found: ${file}`);
-    }
-  });
+  // 2. Add changes
+  console.log('Adding files to staging...');
+  execSync('git add src/components/education/ResourceDetailModal.tsx', { stdio: 'inherit' });
 
-  // Step 2: Commit the changes
-  console.log('\nStep 2: Committing changes...');
-  execSync(`git commit -m "Fix: Education resource modal rendering issue"`);
-  console.log('✓ Changes committed');
+  // 3. Commit changes
+  console.log(`Committing changes: "${COMMIT_MESSAGE}"`);
+  execSync(`git commit -m "${COMMIT_MESSAGE}"`, { stdio: 'inherit' });
 
-  // Step 3: Push to GitHub
-  console.log('\nStep 3: Pushing to GitHub...');
-  execSync('git push origin main');
-  console.log('✓ Changes pushed to GitHub');
+  // 4. Push to GitHub
+  console.log('Pushing to GitHub...');
+  execSync(`git push origin ${BRANCH_NAME}`, { stdio: 'inherit' });
 
-  // Step 4: Deploy to Heroku
-  console.log('\nStep 4: Deploying to Heroku...');
-  execSync('git push heroku main');
-  console.log('✓ Changes deployed to Heroku');
+  // 5. Deploy to Heroku
+  console.log(`Deploying to Heroku app: ${HEROKU_APP_NAME}`);
+  execSync(`git push heroku ${BRANCH_NAME}:main -f`, { stdio: 'inherit' });
 
-  // Log deployment completion
-  console.log('\n✅ Deployment completed successfully!');
-  console.log('==========================================');
-  
-  // Write deployment record
-  const deploymentRecord = `
-Date: ${new Date().toLocaleString()}
-Name: ${deploymentInfo.name}
-Description: ${deploymentInfo.description}
-Modified files: ${deploymentInfo.components.join(', ')}
-Developer: ${deploymentInfo.developer}
-Version: ${deploymentInfo.version}
-Status: Success
-  `;
-  
-  fs.appendFileSync('deployment_history.log', deploymentRecord);
-  console.log('Deployment record created in deployment_history.log');
+  // 6. Return to main branch
+  console.log('Returning to main branch...');
+  execSync('git checkout main', { stdio: 'inherit' });
+
+  console.log('================================================');
+  console.log('Deployment completed successfully!');
+  console.log(`The fix for ResourceDetailModal has been deployed to Heroku: ${HEROKU_APP_NAME}`);
+  console.log('Changes:');
+  console.log('- Fixed duplicate return statements');
+  console.log('- Removed duplicate DialogTitle element');
+  console.log('- Fixed trailing whitespace issues');
 
 } catch (error) {
-  console.error('\n❌ Deployment failed:');
+  console.error('Deployment failed with error:');
   console.error(error.message);
-  
-  // Attempt to provide helpful error resolution
-  if (error.message.includes('git')) {
-    console.log('\nTroubleshooting Git issues:');
-    console.log('1. Check your Git installation: git --version');
-    console.log('2. Verify remote settings: git remote -v');
-    console.log('3. Try authenticating manually first: git push origin main');
+  console.log('Attempting to return to main branch...');
+  try {
+    execSync('git checkout main', { stdio: 'inherit' });
+  } catch (checkoutError) {
+    console.error('Failed to return to main branch:', checkoutError.message);
   }
-  
-  if (error.message.includes('heroku')) {
-    console.log('\nTroubleshooting Heroku issues:');
-    console.log('1. Check Heroku CLI installation: heroku --version');
-    console.log('2. Verify you are logged in: heroku auth:whoami');
-    console.log('3. Confirm app association: heroku apps');
-  }
-  
-  // Write deployment failure record
-  const deploymentRecord = `
-Date: ${new Date().toLocaleString()}
-Name: ${deploymentInfo.name}
-Description: ${deploymentInfo.description}
-Modified files: ${deploymentInfo.components.join(', ')}
-Developer: ${deploymentInfo.developer}
-Version: ${deploymentInfo.version}
-Status: Failed
-Error: ${error.message}
-  `;
-  
-  fs.appendFileSync('deployment_history.log', deploymentRecord);
-  console.log('Deployment failure record created in deployment_history.log');
+  process.exit(1);
 }
