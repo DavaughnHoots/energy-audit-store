@@ -48,7 +48,7 @@ generate_db_structure.py
 
 # Editor directories and files
 .vscode/*
-!.vscode/extensions.json
+.vscode/extensions.json
 .idea
 .DS_Store
 *.suo
@@ -62,7 +62,7 @@ trunk/
 .trunk/
 .git/*
 .trunk/*
-.claudesync/*
+*.claudesync/*
 *.idx
 *.pack
 *.sample
@@ -77,18 +77,20 @@ backend/src/scripts/test_*.js
 backend/src/scripts/run_*_tests.*
 
 # Documentation files
-# *.md Temporarily commenting out to allow our documentation files
+*.md
 *.txt
 !README.md
-# *.bat Temporarily commenting out to allow our bat files
+*.bat
 *.psm1
+*.ps1
 
 # Development scripts and utilities
-backend/src/scripts/
-!backend/src/scripts/heroku_*.js
+# backend/src/scripts/*
+backend/src/scripts/heroku_*.js
 !backend/src/scripts/heroku_*.ts
 !backend/src/scripts/run_*_migration.js
 !backend/src/scripts/run_*_migration.ts
+backend/src/scripts/*
 
 # Migration scripts (only needed during development)
 # Keep the migrations directory but exclude specific files
@@ -108,9 +110,5 @@ deploy_rollback_march19.ps1
 # Ignore large files that exceed GitHub's limits
 processed_weather_data/weather_energy_data.db
 WeatherEvents_Jan2016-Dec2022.csv
-create-dummy-index.bat
-deploy-financial-data-improvements.bat
-deploy-financial-data-improvements.bat
-deploy-financial-data-improvements.bat
 53ab1c8a-5b4e-4962-bcce-7152cebcf8dd.png
 f372cc6d-4cb5-449d-acfa-f4b16597a9e3.png
