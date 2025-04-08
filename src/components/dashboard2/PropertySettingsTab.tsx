@@ -254,6 +254,9 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
   const handleSaveProperty = async (data: any): Promise<void> => {
     const startTime = performance.now();
     
+    // Log the full data payload for debugging
+    console.log('PROPERTY DETAILS SAVE PAYLOAD:', JSON.stringify(data, null, 2));
+    
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
       level: "info",
@@ -264,15 +267,22 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       },
       details: {
         property_type: data?.propertyType,
-        data_size: Object.keys(data).length
+        data_size: Object.keys(data).length,
+        data_keys: Object.keys(data),
+        data_structure: JSON.stringify(data)
       }
     }));
     
     try {
       // Track attempt
-      trackComponentEvent('save_property_details', { 
-        dataSize: Object.keys(data).length 
+      trackComponentEvent('save_property_details', {
+        dataSize: Object.keys(data).length
       });
+      
+      // Create a deep copy of data for logging purposes only
+      const dataCopy = JSON.parse(JSON.stringify(data));
+      
+      console.log('PROPERTY SETTINGS - Request payload:', JSON.stringify(dataCopy, null, 2));
       
       const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.PROPERTY, {
         method: 'PUT',
@@ -282,7 +292,30 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
         body: JSON.stringify(data)
       });
 
-      if (!response.ok) throw new Error('Failed to save property details');
+      // Log the full response
+      const responseText = await response.text();
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        responseData = { rawText: responseText };
+      }
+      
+      console.log('PROPERTY SETTINGS - Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries([...response.headers.entries()]),
+        body: responseData
+      });
+
+      if (!response.ok) {
+        console.error('PROPERTY SETTINGS - Error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: responseData
+        });
+        throw new Error(`Failed to save property details: ${response.status} ${response.statusText}`);
+      }
       
       setSuccess('Property details saved successfully');
       setPropertyData(data);
@@ -310,8 +343,8 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       
       // Success, void return
     } catch (err) {
-      console.error('Property details save error:', err);
-      setError('Failed to save property details');
+      console.error('PROPERTY SETTINGS - Save error:', err);
+      setError(`Failed to save property details: ${err instanceof Error ? err.message : 'Unknown error'}`);
       
       // Track error
       trackComponentEvent('save_property_details_error', {
@@ -344,6 +377,9 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
   const handleSaveWindowData = async (data: any): Promise<void> => {
     const startTime = performance.now();
     
+    // Log the full data payload for debugging
+    console.log('WINDOW DATA SAVE PAYLOAD:', JSON.stringify(data, null, 2));
+    
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
       level: "info",
@@ -354,15 +390,23 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       },
       details: {
         window_count: data?.windowCount,
-        data_size: Object.keys(data).length
+        window_type: data?.windowType,
+        data_size: Object.keys(data).length,
+        data_keys: Object.keys(data),
+        data_structure: JSON.stringify(data)
       }
     }));
     
     try {
       // Track attempt
-      trackComponentEvent('save_window_data', { 
-        dataSize: Object.keys(data).length 
+      trackComponentEvent('save_window_data', {
+        dataSize: Object.keys(data).length
       });
+      
+      // Create a deep copy of data for logging purposes only
+      const dataCopy = JSON.parse(JSON.stringify(data));
+      
+      console.log('WINDOW SETTINGS - Request payload:', JSON.stringify(dataCopy, null, 2));
       
       const response = await fetchWithAuth(API_ENDPOINTS.SETTINGS.WINDOWS, {
         method: 'PUT',
@@ -372,10 +416,32 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
         body: JSON.stringify(data)
       });
 
-      if (!response.ok) throw new Error('Failed to save window data');
+      // Log the full response
+      const responseText = await response.text();
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        responseData = { rawText: responseText };
+      }
+      
+      console.log('WINDOW SETTINGS - Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries([...response.headers.entries()]),
+        body: responseData
+      });
 
-      const updatedData = await response.json();
-      setWindowData(updatedData);
+      if (!response.ok) {
+        console.error('WINDOW SETTINGS - Error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: responseData
+        });
+        throw new Error(`Failed to save window data: ${response.status} ${response.statusText}`);
+      }
+
+      setWindowData(responseData);
       setSuccess('Window maintenance data saved successfully');
       
       // Track success
@@ -392,7 +458,8 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
         details: {
           success: true,
           updated_fields: Object.keys(data),
-          window_count: data?.windowCount
+          window_count: data?.windowCount,
+          window_type: data?.windowType
         },
         performance: {
           duration_ms: Math.round(performance.now() - startTime)
@@ -401,8 +468,8 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       
       // Success, void return
     } catch (err) {
-      console.error('Window data save error:', err);
-      setError('Failed to save window maintenance data');
+      console.error('WINDOW SETTINGS - Save error:', err);
+      setError(`Failed to save window data: ${err instanceof Error ? err.message : 'Unknown error'}`);
       
       // Track error
       trackComponentEvent('save_window_data_error', {
