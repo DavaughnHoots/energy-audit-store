@@ -1,7 +1,6 @@
 // src/components/education/ResourceRatingAndReview.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import ResourceDetailModal from './ResourceDetailModal';
 import StarRating from './StarRating';
 import { ResourceRatingInfo } from '@/types/education';
 import { cn } from '@/lib/utils';
@@ -23,15 +22,7 @@ const ResourceRatingAndReview: React.FC<ResourceRatingAndReviewProps> = ({
   className,
   size = 'md',
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
+  // No modal state management needed
 
   const iconSizes = {
     sm: 'h-3 w-3',
@@ -48,19 +39,15 @@ const ResourceRatingAndReview: React.FC<ResourceRatingAndReviewProps> = ({
   if (!ratingInfo) {
     return (
       <div className={cn('flex items-center gap-2', className)}>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleOpenModal}
-          className="text-green-600 border-green-200 hover:border-green-400"
-        >
-          View Details & Reviews
-        </Button>
-        <ResourceDetailModal 
-          resourceId={resourceId} 
-          isOpen={isModalOpen} 
-          onClose={handleCloseModal} 
-        />
+        <a href={`/education/${resourceId}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-green-600 border-green-200 hover:border-green-400"
+          >
+            View Details & Reviews
+          </Button>
+        </a>
       </div>
     );
   }
@@ -103,23 +90,18 @@ const ResourceRatingAndReview: React.FC<ResourceRatingAndReviewProps> = ({
       )}
       
       {showReviewButton && (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleOpenModal}
-          className="text-green-600 border-green-200 hover:border-green-400 mt-2"
-        >
-          {ratingInfo.count > 0 
-            ? `Read ${ratingInfo.count} Review${ratingInfo.count !== 1 ? 's' : ''}` 
-            : 'Be the first to review'}
-        </Button>
+        <a href={`/education/${resourceId}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-green-600 border-green-200 hover:border-green-400 mt-2"
+          >
+            {ratingInfo.count > 0
+              ? `Read ${ratingInfo.count} Review${ratingInfo.count !== 1 ? 's' : ''}`
+              : 'Be the first to review'}
+          </Button>
+        </a>
       )}
-      
-      <ResourceDetailModal 
-        resourceId={resourceId} 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-      />
     </div>
   );
 };
