@@ -1,11 +1,7 @@
-import React from 'react';
-import { 
-  UpdateWindowMaintenanceDto, 
-  WindowMaintenance, 
-  UpdateWeatherizationDto, 
-  WeatherizationMonitoring, 
-  Severity 
-} from '@/types/propertySettings';
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UpdateWindowMaintenanceDto, WindowMaintenance } from '@/types/propertySettings';
+import { Card, CardContent } from '@/components/ui/card';
 
 // Constants for window types
 const WINDOW_TYPES = [
@@ -15,294 +11,236 @@ const WINDOW_TYPES = [
   { value: 'not-sure', label: 'Not Sure' }
 ];
 
-const SEVERITY_OPTIONS: Severity[] = ['none', 'mild', 'moderate', 'severe'];
-
 interface Props {
-  windowData?: WindowMaintenance;
-  weatherizationData?: WeatherizationMonitoring;
-  onSaveWindow: (data: UpdateWindowMaintenanceDto) => Promise<void>;
-  onSaveWeatherization: (data: UpdateWeatherizationDto) => Promise<void>;
+  data?: WindowMaintenance;
+  weatherizationData?: any;
+  onSave: (data: UpdateWindowMaintenanceDto) => Promise<void>;
+  onWeatherizationSave?: (data: any) => Promise<void>;
 }
 
-/**
- * Unified Window Management Section
- * Combines window maintenance and window assessment functionality
- */
 const WindowManagementSection: React.FC<Props> = ({ 
-  windowData, 
-  weatherizationData, 
-  onSaveWindow, 
-  onSaveWeatherization 
+  data, 
+  weatherizationData,
+  onSave, 
+  onWeatherizationSave 
 }) => {
-  const [activeTab, setActiveTab] = React.useState<'details' | 'assessment'>('details');
+  const [activeTab, setActiveTab] = useState('details');
   
-  // Window maintenance state
-  const [windowFormData, setWindowFormData] = React.useState<UpdateWindowMaintenanceDto>({
-    windowCount: windowData?.windowCount || 0,
-    windowType: windowData?.windowType || 'not-sure',
-    lastReplacementDate: windowData?.lastReplacementDate || null,
-    nextMaintenanceDate: windowData?.nextMaintenanceDate || null,
-    maintenanceNotes: windowData?.maintenanceNotes || null
+  // Window maintenance form data
+  const [formData, setFormData] = React.useState<UpdateWindowMaintenanceDto>({
+    windowCount: data?.windowCount || 0,
+    windowType: data?.windowType || 'not-sure',
+    lastReplacementDate: data?.lastReplacementDate || null,
+    nextMaintenanceDate: data?.nextMaintenanceDate || null,
+    maintenanceNotes: data?.maintenanceNotes || null
   });
 
-  // Weatherization state
-  const [weatherizationFormData, setWeatherizationFormData] = React.useState<UpdateWeatherizationDto>({
-    inspectionDate: weatherizationData?.inspectionDate || new Date().toISOString().split('T')[0],
-    condensationIssues: weatherizationData?.condensationIssues || { locations: [], severity: 'none' },
-    draftLocations: weatherizationData?.draftLocations || { locations: [], severity: 'none' },
-    notes: weatherizationData?.notes || null
+  // Window assessment form data (weatherization)
+  const [assessmentData, setAssessmentData] = React.useState({
+    drafts: weatherizationData?.drafts || false,
+    visibleGaps: weatherizationData?.visibleGaps || false,
+    condensation: weatherizationData?.condensation || false,
+    weatherStripping: weatherizationData?.weatherStripping || 'not-sure'
   });
 
-  // Window maintenance handlers
-  const handleWindowSubmit = async (e: React.FormEvent) => {
+  const handleMaintenanceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSaveWindow(windowFormData);
+    await onSave(formData);
   };
 
-  // Weatherization handlers
-  const handleWeatherizationSubmit = async (e: React.FormEvent) => {
+  const handleAssessmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSaveWeatherization(weatherizationFormData);
-  };
-
-  const handleLocationChange = (
-    type: 'condensationIssues' | 'draftLocations',
-    field: 'locations' | 'severity',
-    value: string | string[]
-  ) => {
-    setWeatherizationFormData(prev => ({
-      ...prev,
-      [type]: {
-        ...prev[type],
-        [field]: value
-      }
-    }));
+    if (onWeatherizationSave) {
+      await onWeatherizationSave(assessmentData);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Window Management</h3>
-        <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-          <button
-            className={`px-4 py-2 text-sm font-medium ${
-              activeTab === 'details'
-                ? 'bg-green-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            onClick={() => setActiveTab('details')}
-          >
-            Window Details
-          </button>
-          <button
-            className={`px-4 py-2 text-sm font-medium ${
-              activeTab === 'assessment'
-                ? 'bg-green-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            onClick={() => setActiveTab('assessment')}
-          >
-            Window Assessment
-          </button>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium text-gray-900">Window Management</h3>
+      
+      <Tabs defaultValue="details" onValueChange={setActiveTab} value={activeTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="details">Window Details</TabsTrigger>
+          <TabsTrigger value="assessment">Window Assessment</TabsTrigger>
+        </TabsList>
+        
+        {/* Window Details Tab */}
+        <TabsContent value="details">
+          <form onSubmit={handleMaintenanceSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="windowCount" className="block text-sm font-medium text-gray-700">
+                  Number of Windows
+                </label>
+                <input
+                  type="number"
+                  id="windowCount"
+                  name="windowCount"
+                  min={0}
+                  value={formData.windowCount || 0}
+                  onChange={(e) => setFormData(prev => ({ ...prev, windowCount: parseInt(e.target.value) }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                />
+              </div>
 
-      {activeTab === 'details' ? (
-        // Window Details Form
-        <form onSubmit={handleWindowSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="windowCount" className="block text-sm font-medium text-gray-700">
-                Number of Windows
-              </label>
-              <input
-                type="number"
-                id="windowCount"
-                min={0}
-                value={windowFormData.windowCount}
-                onChange={(e) => setWindowFormData(prev => ({ ...prev, windowCount: parseInt(e.target.value) }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-              />
+              <div>
+                <label htmlFor="windowType" className="block text-sm font-medium text-gray-700">
+                  Window Type
+                </label>
+                <select
+                  id="windowType"
+                  name="windowType"
+                  value={formData.windowType || 'not-sure'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, windowType: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                >
+                  {WINDOW_TYPES.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="lastReplacement" className="block text-sm font-medium text-gray-700">
+                  Last Replacement Date
+                </label>
+                <input
+                  type="date"
+                  id="lastReplacement"
+                  name="lastReplacementDate"
+                  value={formData.lastReplacementDate || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, lastReplacementDate: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="nextMaintenance" className="block text-sm font-medium text-gray-700">
+                  Next Maintenance Due
+                </label>
+                <input
+                  type="date"
+                  id="nextMaintenance"
+                  name="nextMaintenanceDate"
+                  value={formData.nextMaintenanceDate || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nextMaintenanceDate: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                />
+              </div>
             </div>
 
             <div>
-              <label htmlFor="windowType" className="block text-sm font-medium text-gray-700">
-                Window Type
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+                Maintenance Notes
               </label>
-              <select
-                id="windowType"
-                value={windowFormData.windowType || 'not-sure'}
-                onChange={(e) => setWindowFormData(prev => ({ ...prev, windowType: e.target.value }))}
+              <textarea
+                id="notes"
+                name="maintenanceNotes"
+                rows={3}
+                value={formData.maintenanceNotes || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, maintenanceNotes: e.target.value }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                placeholder="Enter any notes about window maintenance or issues..."
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
-                {WINDOW_TYPES.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+                Save Window Details
+              </button>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="lastReplacement" className="block text-sm font-medium text-gray-700">
-                Last Replacement Date
-              </label>
-              <input
-                type="date"
-                id="lastReplacement"
-                value={windowFormData.lastReplacementDate || ''}
-                onChange={(e) => setWindowFormData(prev => ({ ...prev, lastReplacementDate: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-              />
+          </form>
+        </TabsContent>
+        
+        {/* Window Assessment Tab */}
+        <TabsContent value="assessment">
+          <form onSubmit={handleAssessmentSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <h4 className="font-medium mb-4">Window Issues</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="drafts" 
+                        checked={assessmentData.drafts}
+                        onChange={(e) => 
+                          setAssessmentData(prev => ({ ...prev, drafts: e.target.checked }))
+                        }
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="drafts" className="text-sm text-gray-700">Air drafts coming from windows</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="visibleGaps" 
+                        checked={assessmentData.visibleGaps}
+                        onChange={(e) => 
+                          setAssessmentData(prev => ({ ...prev, visibleGaps: e.target.checked }))
+                        }
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="visibleGaps" className="text-sm text-gray-700">Visible gaps around window frames</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="condensation" 
+                        checked={assessmentData.condensation}
+                        onChange={(e) => 
+                          setAssessmentData(prev => ({ ...prev, condensation: e.target.checked }))
+                        }
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="condensation" className="text-sm text-gray-700">Condensation forms between panes</label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <h4 className="font-medium mb-4">Weather Protection</h4>
+                  <div className="space-y-4">
+                    <label htmlFor="weatherStripping" className="block text-sm font-medium text-gray-700">
+                      Weather Stripping Condition
+                    </label>
+                    <select
+                      id="weatherStripping"
+                      value={assessmentData.weatherStripping}
+                      onChange={(e) => setAssessmentData(prev => ({ ...prev, weatherStripping: e.target.value }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                    >
+                      <option value="good">Good Condition</option>
+                      <option value="worn">Worn/Aging</option>
+                      <option value="damaged">Damaged/Missing</option>
+                      <option value="not-sure">Not Sure</option>
+                      <option value="none">No Weather Stripping</option>
+                    </select>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <div>
-              <label htmlFor="nextMaintenance" className="block text-sm font-medium text-gray-700">
-                Next Maintenance Due
-              </label>
-              <input
-                type="date"
-                id="nextMaintenance"
-                value={windowFormData.nextMaintenanceDate || ''}
-                onChange={(e) => setWindowFormData(prev => ({ ...prev, nextMaintenanceDate: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-              />
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Save Assessment
+              </button>
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="maintenanceNotes" className="block text-sm font-medium text-gray-700">
-              Maintenance Notes
-            </label>
-            <textarea
-              id="maintenanceNotes"
-              rows={3}
-              value={windowFormData.maintenanceNotes || ''}
-              onChange={(e) => setWindowFormData(prev => ({ ...prev, maintenanceNotes: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              Save Window Details
-            </button>
-          </div>
-        </form>
-      ) : (
-        // Window Assessment Form
-        <form onSubmit={handleWeatherizationSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="inspectionDate" className="block text-sm font-medium text-gray-700">
-              Inspection Date
-            </label>
-            <input
-              type="date"
-              id="inspectionDate"
-              value={weatherizationFormData.inspectionDate}
-              onChange={(e) => setWeatherizationFormData(prev => ({ ...prev, inspectionDate: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            />
-          </div>
-
-          {/* Condensation Issues */}
-          <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-            <h4 className="text-md font-medium text-gray-900">Condensation Issues</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="condensationSeverity" className="block text-sm text-gray-700">
-                  Severity
-                </label>
-                <select
-                  id="condensationSeverity"
-                  value={weatherizationFormData.condensationIssues?.severity}
-                  onChange={(e) => handleLocationChange('condensationIssues', 'severity', e.target.value as Severity)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                >
-                  {SEVERITY_OPTIONS.map(severity => (
-                    <option key={severity} value={severity}>
-                      {severity.charAt(0).toUpperCase() + severity.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="condensationLocations" className="block text-sm text-gray-700">
-                  Locations (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  id="condensationLocations"
-                  value={weatherizationFormData.condensationIssues?.locations.join(', ')}
-                  onChange={(e) => handleLocationChange('condensationIssues', 'locations', e.target.value.split(',').map(s => s.trim()))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Draft Locations */}
-          <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-            <h4 className="text-md font-medium text-gray-900">Draft Issues</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="draftSeverity" className="block text-sm text-gray-700">
-                  Severity
-                </label>
-                <select
-                  id="draftSeverity"
-                  value={weatherizationFormData.draftLocations?.severity}
-                  onChange={(e) => handleLocationChange('draftLocations', 'severity', e.target.value as Severity)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                >
-                  {SEVERITY_OPTIONS.map(severity => (
-                    <option key={severity} value={severity}>
-                      {severity.charAt(0).toUpperCase() + severity.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="draftLocations" className="block text-sm text-gray-700">
-                  Locations (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  id="draftLocations"
-                  value={weatherizationFormData.draftLocations?.locations.join(', ')}
-                  onChange={(e) => handleLocationChange('draftLocations', 'locations', e.target.value.split(',').map(s => s.trim()))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="assessmentNotes" className="block text-sm font-medium text-gray-700">
-              Assessment Notes
-            </label>
-            <textarea
-              id="assessmentNotes"
-              rows={3}
-              value={weatherizationFormData.notes || ''}
-              onChange={(e) => setWeatherizationFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              Save Assessment
-            </button>
-          </div>
-        </form>
-      )}
+          </form>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
