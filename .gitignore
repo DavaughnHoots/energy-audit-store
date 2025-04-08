@@ -159,3 +159,6 @@ backend/src/migrations/setup_energy_audit_db.sql
 weather_analysis_results/degree_days.png
 weather_analysis_results/monthly_precipitation.png
 weather_analysis_results/monthly_temperatures.png
+dashboard-redesign-implementation-plan.md.backup
+*.backup
+*.sh
