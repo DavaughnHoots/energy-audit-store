@@ -13,8 +13,6 @@ import vipDiagram from '@/assets/insulation-images/vip.svg';
 import sipsDiagram from '@/assets/insulation-images/sips.svg';
 import pcmDiagram from '@/assets/insulation-images/pcm.svg';
 import radiantDiagram from '@/assets/insulation-images/radiant-barrier.svg';
-import 
-
 
 const AdvancedInsulationPage: React.FC = () => {
   const navigate = useNavigate();
