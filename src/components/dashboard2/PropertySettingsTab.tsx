@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import PropertyDetailsForm from '@/components/user-settings/PropertyDetailsForm';
 import HomeConditionsSection from '@/components/user-settings/HomeConditionsSection';
-import WindowMaintenanceSection from '@/components/user-settings/WindowMaintenanceSection';
+import WindowManagementSection from '@/components/user-settings/WindowManagementSection';
 import { fetchWithAuth } from '@/utils/authUtils';
 import { API_ENDPOINTS } from '@/config/api';
 import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
@@ -582,9 +582,29 @@ const PropertySettingsTab: React.FC<PropertySettingsTabProps> = ({
       </div>
       
       <div className="bg-white rounded-lg shadow p-6">
-        <WindowMaintenanceSection
+        <WindowManagementSection
           data={windowData}
+          weatherizationData={weatherizationData}
           onSave={handleSaveWindowData}
+          onWeatherizationSave={async (data) => {
+            // Update weatherization data
+            console.log('📊 SAVING WEATHERIZATION DATA:', data);
+            const weatherizationDetail = {
+              ...weatherizationData,
+              ...data,
+            };
+
+            if (propertyData) {
+              // Merge with property data to save together
+              return handleSaveProperty({
+                ...propertyData,
+                weatherization: weatherizationDetail
+              });
+            } else {
+              console.log('⚠️ No property data available to save weatherization data with');
+              return Promise.resolve(); // Return resolved promise if no data to save
+            }
+          }}
         />
       </div>
     </div>
