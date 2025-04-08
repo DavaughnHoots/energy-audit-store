@@ -8,11 +8,12 @@ import InsulationTechniquePoll from '@/components/education/InsulationTechniqueP
 import ReadingProgressBar from '@/components/education/ReadingProgressBar';
 import { usePageTracking } from '@/hooks/analytics/usePageTracking';
 import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
-import aerogelDiagram from '@/assets/insulation-diagrams/aerogel-diagram.svg';
-import vipDiagram from '@/assets/insulation-diagrams/vip-diagram.svg';
-import sipsDiagram from '@/assets/insulation-diagrams/sips-diagram.svg';
-import pcmDiagram from '@/assets/insulation-diagrams/pcm-diagram.svg';
-import radiantDiagram from '@/assets/insulation-diagrams/radiant-barrier-diagram.svg';
+import aerogelDiagram from '@/assets/insulation-images/aerogel.svg';
+import vipDiagram from '@/assets/insulation-images/vip.svg';
+import sipsDiagram from '@/assets/insulation-images/sips.svg';
+import pcmDiagram from '@/assets/insulation-images/pcm.svg';
+import radiantDiagram from '@/assets/insulation-images/radiant-barrier.svg';
+import 
 
 
 const AdvancedInsulationPage: React.FC = () => {
