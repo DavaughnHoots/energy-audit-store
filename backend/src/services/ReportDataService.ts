@@ -220,8 +220,15 @@ export class ReportDataService {
                       typeof rec.estimatedCost === 'number' ? rec.estimatedCost : 0,
         paybackPeriod: typeof rec.payback_period === 'number' ? rec.payback_period : 
                       typeof rec.paybackPeriod === 'number' ? rec.paybackPeriod : 0,
-        actualSavings: typeof rec.actual_savings === 'number' ? rec.actual_savings : 
-                      typeof rec.actualSavings === 'number' ? rec.actualSavings : null,
+        actualSavings: 
+          // First try to parse actual_savings as a number if it's a string
+          typeof rec.actual_savings === 'string' ? parseFloat(rec.actual_savings) || null :
+          // Next check if it's already a number
+          typeof rec.actual_savings === 'number' ? rec.actual_savings : 
+          // Then try camelCase version as string
+          typeof rec.actualSavings === 'string' ? parseFloat(rec.actualSavings) || null :
+          // Then try camelCase version as number
+          typeof rec.actualSavings === 'number' ? rec.actualSavings : null,
         implementationDate: rec.implementation_date || rec.implementationDate || null,
         implementationCost: typeof rec.implementation_cost === 'number' ? rec.implementation_cost : 
                            typeof rec.implementationCost === 'number' ? rec.implementationCost : null,
