@@ -23,48 +23,48 @@ async function verifyRecommendationOwnership(client: PoolClient, recommendationI
   return true;
 }
 
-// Validate and normalize status value to prevent DB errors
-function validateStatus(status: string): string {
-  const validStatuses = ['pending', 'in-progress', 'implemented', 'rejected', 'deferred'];
+// Validate and normalize implementation status value to prevent DB errors
+function validateImplementationStatus(status: string): string {
+  const validImplementationStatuses = ['pending', 'in-progress', 'implemented', 'rejected', 'deferred'];
   // Convert status to lowercase and trim whitespace
   status = status.toLowerCase().trim();
   
   // Check if status is valid
-  if (!validStatuses.includes(status)) {
-    appLogger.warn(`Invalid status value received: ${status}, defaulting to 'pending'`);
+  if (!validImplementationStatuses.includes(status)) {
+    appLogger.warn(`Invalid implementation status value received: ${status}, defaulting to 'pending'`);
     return 'pending';
   }
   
   return status;
 }
 
-// Format date string to YYYY-MM-DD format
+// Format date string to timestamp format
 function formatDateString(dateStr: string): string {
   try {
-    // Handle ISO date string conversion to YYYY-MM-DD
+    // Handle ISO date string conversion
     const date = new Date(dateStr);
     // Check if date is valid
     if (isNaN(date.getTime())) {
       throw new Error('Invalid date');
     }
-    return date.toISOString().split('T')[0];
+    return date.toISOString();
   } catch (error) {
     appLogger.warn(`Invalid date format: ${dateStr}, using current date`);
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString();
   }
 }
 
-// Update recommendation status
+// Update recommendation implementation status
 router.put('/:id/status', validateToken, async (req: AuthenticatedRequest, res) => {
   const client = await pool.connect();
   try {
     const { id } = req.params;
-    const status = validateStatus(req.body.status);
+    const implementationStatus = validateImplementationStatus(req.body.status);
     const userId = req.user?.id;
 
-    appLogger.info('Updating recommendation status', {
+    appLogger.info('Updating recommendation implementation status', {
       recommendationId: id,
-      newStatus: status,
+      newStatus: implementationStatus,
       userId,
       originalStatus: req.body.status,
       requestBody: JSON.stringify(req.body)
@@ -93,28 +93,31 @@ router.put('/:id/status', validateToken, async (req: AuthenticatedRequest, res) 
       return res.status(404).json({ error: `Recommendation with ID ${id} not found` });
     }
 
-    // Update recommendation status only
+    // Update implementation_status instead of status
     const updateResult = await client.query(`
       UPDATE audit_recommendations
-      SET status = $1,
+      SET implementation_status = $1,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $2
-      RETURNING id, status
-    `, [status, id]);
+      RETURNING id, implementation_status
+    `, [implementationStatus, id]);
 
     await client.query('COMMIT');
 
     // Invalidate dashboard cache
     await dashboardService.invalidateUserCache(userId);
 
-    appLogger.info('Status updated successfully', {
+    appLogger.info('Implementation status updated successfully', {
       recommendationId: id,
-      status: updateResult.rows[0].status
+      implementationStatus: updateResult.rows[0].implementation_status
     });
 
     res.json({ 
-      message: 'Status updated successfully',
-      recommendation: updateResult.rows[0]
+      message: 'Implementation status updated successfully',
+      recommendation: {
+        id: updateResult.rows[0].id,
+        status: updateResult.rows[0].implementation_status
+      }
     });
   } catch (error) {
     await client.query('ROLLBACK');
@@ -136,12 +139,14 @@ router.put('/:id/implementation-details', validateToken, async (req: Authenticat
     const { id } = req.params;
     const implementationDate = formatDateString(req.body.implementationDate);
     const implementationCost = parseFloat(req.body.implementationCost) || 0;
+    const actualSavings = parseFloat(req.body.actualSavings) || null;
     const userId = req.user?.id;
 
     appLogger.info('Updating implementation details', {
       recommendationId: id,
       implementationDate,
       implementationCost,
+      actualSavings,
       userId,
       originalDate: req.body.implementationDate,
       requestBody: JSON.stringify(req.body)
@@ -170,15 +175,41 @@ router.put('/:id/implementation-details', validateToken, async (req: Authenticat
       return res.status(404).json({ error: `Recommendation with ID ${id} not found` });
     }
 
-    // Update implementation details only
-    const updateResult = await client.query(`
+    // Also update the implementation_status to 'implemented' if it's being implemented
+    const queryParams = [];
+    let querySetClause = '';
+    
+    // Always update implementation_date and implementation_cost
+    querySetClause = `
+      implementation_date = $1,
+      implementation_cost = $2,
+    `;
+    queryParams.push(implementationDate, implementationCost);
+    
+    // Add actual_savings if provided
+    if (actualSavings !== null) {
+      querySetClause += `actual_savings = $${queryParams.length + 1},\n`;
+      queryParams.push(actualSavings);
+    }
+    
+    // Always set implementation_status to 'implemented' and update timestamp
+    querySetClause += `
+      implementation_status = 'implemented',
+      updated_at = CURRENT_TIMESTAMP
+    `;
+    
+    // Add the id parameter
+    queryParams.push(id);
+
+    // Update implementation details with all the parameters
+    const updateQuery = `
       UPDATE audit_recommendations
-      SET implementation_date = $1,
-          implementation_cost = $2,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3
-      RETURNING id, implementation_date, implementation_cost
-    `, [implementationDate, implementationCost, id]);
+      SET ${querySetClause}
+      WHERE id = $${queryParams.length}
+      RETURNING id, implementation_date, implementation_cost, implementation_status, actual_savings
+    `;
+    
+    const updateResult = await client.query(updateQuery, queryParams);
 
     await client.query('COMMIT');
 
@@ -188,7 +219,9 @@ router.put('/:id/implementation-details', validateToken, async (req: Authenticat
     appLogger.info('Implementation details updated successfully', {
       recommendationId: id,
       date: updateResult.rows[0].implementation_date,
-      cost: updateResult.rows[0].implementation_cost
+      cost: updateResult.rows[0].implementation_cost,
+      status: updateResult.rows[0].implementation_status,
+      savings: updateResult.rows[0].actual_savings
     });
 
     res.json({ 
@@ -213,14 +246,18 @@ router.put('/:id/savings', validateToken, async (req: AuthenticatedRequest, res)
   const client = await pool.connect();
   try {
     const { id } = req.params;
-    const { actualSavings, notes, month } = req.body;
+    const actualSavings = parseFloat(req.body.actualSavings) || 0;
+    const notes = req.body.notes || '';
+    const month = req.body.month || new Date().toISOString().split('T')[0].substring(0, 7) + '-01'; // Default to first day of current month
     const userId = req.user?.id;
 
     appLogger.info('Updating recommendation savings', {
       recommendationId: id,
       actualSavings,
       month,
-      userId
+      notes,
+      userId,
+      requestBody: JSON.stringify(req.body)
     });
 
     if (!userId) {
@@ -236,16 +273,28 @@ router.put('/:id/savings', validateToken, async (req: AuthenticatedRequest, res)
       return res.status(403).json({ error: 'Not authorized to update this recommendation' });
     }
 
-    // Update recommendation savings (no longer updating implementation_cost here)
-    await client.query(`
+    // First check if recommendation exists
+    const checkResult = await client.query(`
+      SELECT id, implementation_status FROM audit_recommendations WHERE id = $1
+    `, [id]);
+    
+    if (checkResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: `Recommendation with ID ${id} not found` });
+    }
+
+    // Update recommendation actual_savings and last_savings_update
+    const updateResult = await client.query(`
       UPDATE audit_recommendations
       SET actual_savings = $1,
+          last_savings_update = CURRENT_TIMESTAMP,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $2
+      RETURNING id, actual_savings, last_savings_update
     `, [actualSavings, id]);
 
     // Update monthly savings
-    await client.query(`
+    const monthlySavingsResult = await client.query(`
       INSERT INTO monthly_savings (
         user_id,
         recommendation_id,
@@ -260,6 +309,7 @@ router.put('/:id/savings', validateToken, async (req: AuthenticatedRequest, res)
         actual_savings = EXCLUDED.actual_savings,
         notes = EXCLUDED.notes,
         updated_at = CURRENT_TIMESTAMP
+      RETURNING month, actual_savings, notes
     `, [userId, id, month, actualSavings, notes]);
 
     await client.query('COMMIT');
@@ -267,7 +317,20 @@ router.put('/:id/savings', validateToken, async (req: AuthenticatedRequest, res)
     // Invalidate dashboard cache
     await dashboardService.invalidateUserCache(userId);
 
-    res.json({ message: 'Savings updated successfully' });
+    appLogger.info('Savings updated successfully', {
+      recommendationId: id, 
+      actualSavings: updateResult.rows[0].actual_savings,
+      monthlyEntry: monthlySavingsResult.rows[0]
+    });
+
+    res.json({ 
+      message: 'Savings updated successfully',
+      savings: {
+        totalSavings: updateResult.rows[0].actual_savings,
+        lastUpdated: updateResult.rows[0].last_savings_update,
+        monthlySavings: monthlySavingsResult.rows[0]
+      }
+    });
   } catch (error) {
     await client.query('ROLLBACK');
     appLogger.error('Error updating recommendation savings:', {
