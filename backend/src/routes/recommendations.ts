@@ -60,11 +60,13 @@ router.put('/:id/status', validateToken, async (req: AuthenticatedRequest, res) 
   try {
     const { id } = req.params;
     const implementationStatus = validateImplementationStatus(req.body.status);
+    const actualSavings = req.body.actualSavings !== undefined ? parseFloat(req.body.actualSavings) || 0 : null;
     const userId = req.user?.id;
 
     appLogger.info('Updating recommendation implementation status', {
       recommendationId: id,
       newStatus: implementationStatus,
+      actualSavings,
       userId,
       originalStatus: req.body.status,
       requestBody: JSON.stringify(req.body)
@@ -93,14 +95,31 @@ router.put('/:id/status', validateToken, async (req: AuthenticatedRequest, res) 
       return res.status(404).json({ error: `Recommendation with ID ${id} not found` });
     }
 
-    // Update implementation_status instead of status
-    const updateResult = await client.query(`
+    // Build the query dynamically based on whether actualSavings is provided
+    let queryText = `
       UPDATE audit_recommendations
       SET implementation_status = $1,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2
-      RETURNING id, implementation_status
-    `, [implementationStatus, id]);
+          updated_at = CURRENT_TIMESTAMP`;
+    
+    const queryParams = [implementationStatus];
+    
+    // If actualSavings is provided, include it in the update
+    if (actualSavings !== null) {
+      queryText += `,
+          actual_savings = $${queryParams.length + 1},
+          last_savings_update = CURRENT_TIMESTAMP`;
+      queryParams.push(actualSavings.toString()); // Convert to string for PostgreSQL
+    }
+    
+    // Complete the query
+    queryText += `
+      WHERE id = $${queryParams.length + 1}
+      RETURNING id, implementation_status, actual_savings, last_savings_update`;
+    
+    queryParams.push(id);
+    
+    // Execute the update
+    const updateResult = await client.query(queryText, queryParams);
 
     await client.query('COMMIT');
 
@@ -109,14 +128,17 @@ router.put('/:id/status', validateToken, async (req: AuthenticatedRequest, res) 
 
     appLogger.info('Implementation status updated successfully', {
       recommendationId: id,
-      implementationStatus: updateResult.rows[0].implementation_status
+      implementationStatus: updateResult.rows[0].implementation_status,
+      actualSavings: updateResult.rows[0].actual_savings
     });
 
     res.json({ 
       message: 'Implementation status updated successfully',
       recommendation: {
         id: updateResult.rows[0].id,
-        status: updateResult.rows[0].implementation_status
+        status: updateResult.rows[0].implementation_status,
+        actualSavings: updateResult.rows[0].actual_savings,
+        lastSavingsUpdate: updateResult.rows[0].last_savings_update
       }
     });
   } catch (error) {
@@ -182,21 +204,20 @@ router.put('/:id/implementation-details', validateToken, async (req: Authenticat
     // Always update implementation_date and implementation_cost
     querySetClause = `
       implementation_date = $1,
-      implementation_cost = $2,
-    `;
+      implementation_cost = $2`;
     queryParams.push(implementationDate, implementationCost);
     
     // Add actual_savings if provided
     if (actualSavings !== null) {
-      querySetClause += `actual_savings = $${queryParams.length + 1},\n`;
+      querySetClause += `,
+      actual_savings = $${queryParams.length + 1}`;
       queryParams.push(actualSavings);
     }
     
     // Always set implementation_status to 'implemented' and update timestamp
-    querySetClause += `
+    querySetClause += `,
       implementation_status = 'implemented',
-      updated_at = CURRENT_TIMESTAMP
-    `;
+      updated_at = CURRENT_TIMESTAMP`;
     
     // Add the id parameter
     queryParams.push(id);
