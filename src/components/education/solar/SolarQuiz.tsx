@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import ResultsSummaryModal from "../ResultsSummaryModal";
 
 const questions = [
   {
@@ -63,6 +64,7 @@ export default function SolarQuiz({ onComplete }: SolarQuizProps) {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [showResult, setShowResult] = useState<{ recommendation: string; description: string; details: string } | null>(null);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   const handleAnswer = (questionId: number, answer: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }));
@@ -75,6 +77,7 @@ export default function SolarQuiz({ onComplete }: SolarQuizProps) {
       const key = `${answers[1]}|${answers[2]}|${answer}`;
       const result = resultsMap[key] || defaultResult;
       setShowResult(result);
+      setShowSummaryModal(true);
       if (onComplete) {
         onComplete(result);
       }
@@ -90,70 +93,78 @@ export default function SolarQuiz({ onComplete }: SolarQuizProps) {
   const currentQ = questions.find(q => q.id === currentQuestion);
 
   return (
-    <div className="my-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">🔍 Solar Solution Finder Quiz</CardTitle>
-          <p className="text-sm text-gray-600">Answer 3 questions to find your ideal solar solution.</p>
-        </CardHeader>
-        <CardContent>
-          {!showResult ? (
-            <>
-              {/* Progress indicator */}
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
-                <div 
-                  className="bg-green-600 h-2 rounded-full transition-all duration-300" 
-                  style={{ width: `${((currentQuestion - 1) / questions.length) * 100}%` }}
-                ></div>
-              </div>
+    <>
+      <div className="my-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">🔍 Solar Solution Finder Quiz</CardTitle>
+            <p className="text-sm text-gray-600">Answer 3 questions to find your ideal solar solution.</p>
+          </CardHeader>
+          <CardContent>
+            {!showResult ? (
+              <>
+                {/* Progress indicator */}
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
+                  <div 
+                    className="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${((currentQuestion - 1) / questions.length) * 100}%` }}
+                  ></div>
+                </div>
 
-              {/* Question */}
-              {currentQ && (
-                <div key={currentQ.id} className="mb-6">
-                  <p className="font-medium mb-3">{currentQ.question}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {currentQ.options.map((option) => (
-                      <Button
-                        key={option}
-                        variant={answers[currentQ.id] === option ? "default" : "outline"}
-                        onClick={() => handleAnswer(currentQ.id, option)}
-                        className="mb-2"
-                      >
-                        {option}
-                      </Button>
-                    ))}
+                {/* Question */}
+                {currentQ && (
+                  <div key={currentQ.id} className="mb-6">
+                    <p className="font-medium mb-3">{currentQ.question}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {currentQ.options.map((option) => (
+                        <Button
+                          key={option}
+                          variant={answers[currentQ.id] === option ? "default" : "outline"}
+                          onClick={() => handleAnswer(currentQ.id, option)}
+                          className="mb-2"
+                        >
+                          {option}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
+                )}
+              </>
+            ) : (
+              <div className="py-2">
+                {/* Results - simple version, modal will show detailed view */}
+                <div className="text-center mb-4">
+                  <div className="inline-block p-3 bg-green-100 rounded-full mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-1">Recommended: {showResult.recommendation}</h3>
+                  <p className="text-gray-600 mb-4">{showResult.description}</p>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="py-2">
-              {/* Results */}
-              <div className="text-center mb-4">
-                <div className="inline-block p-3 bg-green-100 rounded-full mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={resetQuiz}>
+                    Start Over
+                  </Button>
+                  <Button onClick={() => setShowSummaryModal(true)}>View Detailed Results</Button>
                 </div>
-                <h3 className="text-xl font-bold mb-1">Recommended: {showResult.recommendation}</h3>
-                <p className="text-gray-600 mb-4">{showResult.description}</p>
               </div>
-              
-              <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                <h4 className="font-semibold mb-2">Why this works for you:</h4>
-                <p>{showResult.details}</p>
-              </div>
-              
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={resetQuiz}>
-                  Start Over
-                </Button>
-                <Button>Get A Free Consultation</Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Results Summary Modal */}
+      {showResult && (
+        <ResultsSummaryModal
+          open={showSummaryModal}
+          onOpenChange={setShowSummaryModal}
+          resultType="solar-quiz"
+          result={showResult}
+          onStartAudit={onComplete ? () => onComplete(showResult) : () => {}}
+        />
+      )}
+    </>
   );
 }

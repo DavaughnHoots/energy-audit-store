@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import ResultsSummaryModal from "../ResultsSummaryModal";
 
 // Solar irradiance data by region (kWh/m²/day)
 const solarIrradianceData = {
@@ -60,6 +61,9 @@ export default function SolarCalculator({ onComplete }: SolarCalculatorProps) {
     co2Reduction: number;
     paybackPeriod: number;
   }>(null);
+  
+  // Modal state
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -120,168 +124,181 @@ export default function SolarCalculator({ onComplete }: SolarCalculatorProps) {
   };
 
   return (
-    <div className="my-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">☀️ Solar Potential Calculator</CardTitle>
-          <p className="text-sm text-gray-600">Estimate how much solar power your home could generate and save</p>
-        </CardHeader>
-        <CardContent>
-          {!results ? (
-            <form 
-              onSubmit={(e) => { 
-                e.preventDefault(); 
-                calculateSolarPotential(); 
-              }}
-              className="space-y-4"
-            >
-              {/* Roof Area Input */}
-              <div>
-                <label htmlFor="roofArea" className="block text-sm font-medium text-gray-700 mb-1">
-                  Roof Area (approx. sq ft)
-                </label>
-                <input
-                  type="number"
-                  id="roofArea"
-                  name="roofArea"
-                  value={formData.roofArea}
-                  onChange={handleInputChange}
-                  min="100"
-                  max="10000"
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  For reference, a typical 2000 sq ft home has about 800-1200 sq ft of roof area.
-                </p>
-              </div>
+    <>
+      <div className="my-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">☀️ Solar Potential Calculator</CardTitle>
+            <p className="text-sm text-gray-600">Estimate how much solar power your home could generate and save</p>
+          </CardHeader>
+          <CardContent>
+            {!results ? (
+              <form 
+                onSubmit={(e) => { 
+                  e.preventDefault(); 
+                  calculateSolarPotential(); 
+                }}
+                className="space-y-4"
+              >
+                {/* Roof Area Input */}
+                <div>
+                  <label htmlFor="roofArea" className="block text-sm font-medium text-gray-700 mb-1">
+                    Roof Area (approx. sq ft)
+                  </label>
+                  <input
+                    type="number"
+                    id="roofArea"
+                    name="roofArea"
+                    value={formData.roofArea}
+                    onChange={handleInputChange}
+                    min="100"
+                    max="10000"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    For reference, a typical 2000 sq ft home has about 800-1200 sq ft of roof area.
+                  </p>
+                </div>
 
-              {/* Region Selection */}
-              <div>
-                <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
-                  Region
-                </label>
-                <select
-                  id="region"
-                  name="region"
-                  value={formData.region}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="northeast">Northeast (NY, MA, CT, etc)</option>
-                  <option value="midwest">Midwest (IL, OH, MI, etc)</option>
-                  <option value="southeast">Southeast (FL, GA, SC, etc)</option>
-                  <option value="southwest">Southwest (TX, AZ, NM, etc)</option>
-                  <option value="west">West (CA, NV, etc)</option>
-                  <option value="northwest">Northwest (WA, OR, etc)</option>
-                </select>
-              </div>
+                {/* Region Selection */}
+                <div>
+                  <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
+                    Region
+                  </label>
+                  <select
+                    id="region"
+                    name="region"
+                    value={formData.region}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="northeast">Northeast (NY, MA, CT, etc)</option>
+                    <option value="midwest">Midwest (IL, OH, MI, etc)</option>
+                    <option value="southeast">Southeast (FL, GA, SC, etc)</option>
+                    <option value="southwest">Southwest (TX, AZ, NM, etc)</option>
+                    <option value="west">West (CA, NV, etc)</option>
+                    <option value="northwest">Northwest (WA, OR, etc)</option>
+                  </select>
+                </div>
 
-              {/* Monthly Bill Input */}
-              <div>
-                <label htmlFor="monthlyBill" className="block text-sm font-medium text-gray-700 mb-1">
-                  Average Monthly Electric Bill ($)
-                </label>
-                <input
-                  type="number"
-                  id="monthlyBill"
-                  name="monthlyBill"
-                  value={formData.monthlyBill}
-                  onChange={handleInputChange}
-                  min="30"
-                  max="1000"
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
+                {/* Monthly Bill Input */}
+                <div>
+                  <label htmlFor="monthlyBill" className="block text-sm font-medium text-gray-700 mb-1">
+                    Average Monthly Electric Bill ($)
+                  </label>
+                  <input
+                    type="number"
+                    id="monthlyBill"
+                    name="monthlyBill"
+                    value={formData.monthlyBill}
+                    onChange={handleInputChange}
+                    min="30"
+                    max="1000"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </div>
 
-              {/* Roof Orientation */}
-              <div>
-                <label htmlFor="orientation" className="block text-sm font-medium text-gray-700 mb-1">
-                  Main Roof Orientation
-                </label>
-                <select
-                  id="orientation"
-                  name="orientation"
-                  value={formData.orientation}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="south">South Facing (Optimal)</option>
-                  <option value="southeast">Southeast Facing</option>
-                  <option value="southwest">Southwest Facing</option>
-                  <option value="east">East Facing</option>
-                  <option value="west">West Facing</option>
-                  <option value="north">North Facing</option>
-                  <option value="flat">Flat Roof</option>
-                </select>
-              </div>
+                {/* Roof Orientation */}
+                <div>
+                  <label htmlFor="orientation" className="block text-sm font-medium text-gray-700 mb-1">
+                    Main Roof Orientation
+                  </label>
+                  <select
+                    id="orientation"
+                    name="orientation"
+                    value={formData.orientation}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="south">South Facing (Optimal)</option>
+                    <option value="southeast">Southeast Facing</option>
+                    <option value="southwest">Southwest Facing</option>
+                    <option value="east">East Facing</option>
+                    <option value="west">West Facing</option>
+                    <option value="north">North Facing</option>
+                    <option value="flat">Flat Roof</option>
+                  </select>
+                </div>
 
-              <div className="pt-3">
-                <Button 
-                  type="submit"
-                  className="w-full"
-                >
-                  Calculate Solar Potential
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <div>
-              {/* Results Display */}
-              <div className="grid md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-lg mb-1">Estimated System</h3>
-                  <p className="text-3xl font-bold text-green-600 mb-1">{results.systemSize} kW</p>
-                  <p className="text-sm text-gray-600">System Size</p>
+                <div className="pt-3">
+                  <Button 
+                    type="submit"
+                    className="w-full"
+                  >
+                    Calculate Solar Potential
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div>
+                {/* Results Display */}
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-1">Estimated System</h3>
+                    <p className="text-3xl font-bold text-green-600 mb-1">{results.systemSize} kW</p>
+                    <p className="text-sm text-gray-600">System Size</p>
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-1">Annual Production</h3>
+                    <p className="text-3xl font-bold text-blue-600 mb-1">{results.annualProduction.toLocaleString()} kWh</p>
+                    <p className="text-sm text-gray-600">Electricity Generated</p>
+                  </div>
+                  
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-1">Monthly Savings</h3>
+                    <p className="text-3xl font-bold text-yellow-600 mb-1">${results.monthlySavings}</p>
+                    <p className="text-sm text-gray-600">On Electric Bill</p>
+                  </div>
+                  
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-1">Payback Period</h3>
+                    <p className="text-3xl font-bold text-purple-600 mb-1">{results.paybackPeriod} years</p>
+                    <p className="text-sm text-gray-600">After Tax Credits</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                  <h3 className="font-semibold text-lg mb-1">Environmental Impact</h3>
+                  <p className="text-xl mb-2">
+                    Your system would prevent <span className="font-bold text-green-600">{results.co2Reduction.toLocaleString()} lbs</span> of CO₂ emissions per year.
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    That's equivalent to planting about {Math.round(results.co2Reduction / 50)} trees!
+                  </p>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setResults(null)}
+                  >
+                    Recalculate
+                  </Button>
+                  <Button onClick={() => setShowSummaryModal(true)}>
+                    Get a Free Quote & Assessment
+                  </Button>
                 </div>
                 
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-lg mb-1">Annual Production</h3>
-                  <p className="text-3xl font-bold text-blue-600 mb-1">{results.annualProduction.toLocaleString()} kWh</p>
-                  <p className="text-sm text-gray-600">Electricity Generated</p>
-                </div>
-                
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-lg mb-1">Monthly Savings</h3>
-                  <p className="text-3xl font-bold text-yellow-600 mb-1">${results.monthlySavings}</p>
-                  <p className="text-sm text-gray-600">On Electric Bill</p>
-                </div>
-                
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-lg mb-1">Payback Period</h3>
-                  <p className="text-3xl font-bold text-purple-600 mb-1">{results.paybackPeriod} years</p>
-                  <p className="text-sm text-gray-600">After Tax Credits</p>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <h3 className="font-semibold text-lg mb-1">Environmental Impact</h3>
-                <p className="text-xl mb-2">
-                  Your system would prevent <span className="font-bold text-green-600">{results.co2Reduction.toLocaleString()} lbs</span> of CO₂ emissions per year.
-                </p>
-                <p className="text-sm text-gray-600">
-                  That's equivalent to planting about {Math.round(results.co2Reduction / 50)} trees!
+                <p className="text-xs text-gray-500 mt-4">
+                  Note: These calculations provide estimates based on typical values. Actual results may vary based on specific site conditions, equipment selected, and other factors. Professional assessment is recommended.
                 </p>
               </div>
-
-              <div className="flex justify-between">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setResults(null)}
-                >
-                  Recalculate
-                </Button>
-                <Button>
-                  Get a Free Solar Quote
-                </Button>
-              </div>
-              
-              <p className="text-xs text-gray-500 mt-4">
-                Note: These calculations provide estimates based on typical values. Actual results may vary based on specific site conditions, equipment selected, and other factors. Professional assessment is recommended.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Results Summary Modal */}
+      {results && (
+        <ResultsSummaryModal
+          open={showSummaryModal}
+          onOpenChange={setShowSummaryModal}
+          resultType="solar-calculator"
+          result={results}
+          onStartAudit={onComplete ? () => onComplete(results) : () => {}}
+        />
+      )}
+    </>
   );
 }

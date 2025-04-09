@@ -4,13 +4,14 @@ import StickyCTAFooter from '../StickyCTAFooter';
 import TableOfContents from '../TableOfContents';
 import SolarCalculator from './SolarCalculator';
 import SolarQuiz from './SolarQuiz';
+import ResultsSummaryModal from '../ResultsSummaryModal';
 
-// TODO: Create and import SVG assets
-// import rooftopSvg from '../../../assets/solar-images/rooftop-panel.svg';
-// import solarShinglesSvg from '../../../assets/solar-images/solar-shingles.svg';
-// import groundMountedSvg from '../../../assets/solar-images/ground-mounted.svg';
-// import solarCarportSvg from '../../../assets/solar-images/solar-carport.svg';
-// import batteryStorageSvg from '../../../assets/solar-images/battery-storage.svg';
+// Import solar-related SVG images
+import rooftopSvg from '../../../assets/residential-solar-images/RooftopSolarPanel.svg';
+import solarShinglesSvg from '../../../assets/residential-solar-images/panelvshingle.svg';
+import groundMountedSvg from '../../../assets/residential-solar-images/groundmountedpanel.svg';
+import solarCarportSvg from '../../../assets/residential-solar-images/carportpanel.svg';
+import batteryStorageSvg from '../../../assets/residential-solar-images/energyflowpaneltobattery.svg';
 
 interface SolarInteractiveFeaturesProps {
   onStartAudit: () => void;
@@ -298,6 +299,14 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
   const [userVote, setUserVote] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [showQuizModal, setShowQuizModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  
+  // Default summary content for the main CTA
+  const [summaryContent, setSummaryContent] = useState({
+    recommendation: "Personalized Solar Assessment",
+    description: "Get a complete energy analysis for your home",
+    details: "Our comprehensive energy audit will evaluate your home's energy usage patterns, solar potential, and identify the best solar solution for your specific needs and budget."
+  });
   
   const handleVote = (option: string) => {
     if (userVote === null) {
@@ -334,17 +343,14 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
                 <li><strong>Heads-up:</strong> Initial investment ranges from $15,000–$25,000 before incentives (but ROI is typically 7–10 years).</li>
               </ul>
               <button
-                onClick={() => setSelectedOption('rooftop-pv')}
+                onClick={() => setSelectedOption(selectedOption === 'rooftop-pv' ? '' : 'rooftop-pv')}
                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                Calculate My Solar Potential ☀️
+                {selectedOption === 'rooftop-pv' ? 'Hide Solar Potential ↑' : 'Calculate My Solar Potential ☀️'}
               </button>
             </div>
             <div className="md:w-1/3 bg-gray-100 p-3 rounded">
-              {/* Replace with actual SVG when available */}
-              <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500">Rooftop Solar Panel Image</span>
-              </div>
+              <img src={rooftopSvg} alt="Rooftop solar panels" className="w-full" />
             </div>
           </div>
           {selectedOption === 'rooftop-pv' &&
@@ -374,17 +380,14 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
                 <li><strong>Watch Out:</strong> Costs 2–3x more than panels with slightly lower efficiency.</li>
               </ul>
               <button
-                onClick={() => setSelectedOption('solar-shingles')}
+                onClick={() => setSelectedOption(selectedOption === 'solar-shingles' ? '' : 'solar-shingles')}
                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                See Design Options 🎨
+                {selectedOption === 'solar-shingles' ? 'Hide Design Options ↑' : 'See Design Options 🎨'}
               </button>
             </div>
             <div className="md:w-1/3 bg-gray-100 p-3 rounded">
-              {/* Replace with actual SVG when available */}
-              <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500">Solar Shingles Comparison Image</span>
-              </div>
+              <img src={solarShinglesSvg} alt="Solar shingles vs traditional panels" className="w-full" />
             </div>
           </div>
           <div className="bg-blue-50 p-4 rounded-lg my-6">
@@ -416,17 +419,14 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
                 <li><strong>Consider This:</strong> Requires permitting and more land clearance.</li>
               </ul>
               <button
-                onClick={() => setSelectedOption('ground-mounted')}
+                onClick={() => setSelectedOption(selectedOption === 'ground-mounted' ? '' : 'ground-mounted')}
                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                Explore Land Requirements 📐
+                {selectedOption === 'ground-mounted' ? 'Hide Land Requirements ↑' : 'Explore Land Requirements 📐'}
               </button>
             </div>
             <div className="md:w-1/3 bg-gray-100 p-3 rounded">
-              {/* Replace with actual SVG when available */}
-              <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500">Ground-Mounted Array Image</span>
-              </div>
+              <img src={groundMountedSvg} alt="Ground-mounted solar array" className="w-full" />
             </div>
           </div>
           {selectedOption === 'ground-mounted' &&
@@ -454,17 +454,14 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
                 <li><strong>Keep in Mind:</strong> Custom structures cost more than rack-mounted panels.</li>
               </ul>
               <button
-                onClick={() => setSelectedOption('solar-structures')}
+                onClick={() => setSelectedOption(selectedOption === 'solar-structures' ? '' : 'solar-structures')}
                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                Design My Solar Structure 🛠️
+                {selectedOption === 'solar-structures' ? 'Hide Solar Structure ↑' : 'Design My Solar Structure 🛠️'}
               </button>
             </div>
             <div className="md:w-1/3 bg-gray-100 p-3 rounded">
-              {/* Replace with actual SVG when available */}
-              <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500">Solar Carport Image</span>
-              </div>
+              <img src={solarCarportSvg} alt="Solar carport" className="w-full" />
             </div>
           </div>
           {selectedOption === 'solar-structures' &&
@@ -492,17 +489,14 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
                 <li><strong>Heads-up:</strong> Adds $10,000–$20,000 to your system cost, but qualifies for a 30% tax credit.</li>
               </ul>
               <button
-                onClick={() => setSelectedOption('battery-storage')}
+                onClick={() => setSelectedOption(selectedOption === 'battery-storage' ? '' : 'battery-storage')}
                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                Estimate My Backup Power Needs 🔌
+                {selectedOption === 'battery-storage' ? 'Hide Backup Power Info ↑' : 'Estimate My Backup Power Needs 🔌'}
               </button>
             </div>
             <div className="md:w-1/3 bg-gray-100 p-3 rounded">
-              {/* Replace with actual SVG when available */}
-              <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500">Battery Storage System Image</span>
-              </div>
+              <img src={batteryStorageSvg} alt="Battery storage system" className="w-full" />
             </div>
           </div>
           {selectedOption === 'battery-storage' &&
@@ -553,7 +547,7 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
             <p className="text-lg">Ready to find the perfect solar solution for your home? Take our personalized energy audit to get a customized recommendation.</p>
           </blockquote>
           <button
-            onClick={() => setShowQuizModal(true)}
+            onClick={() => setShowSummaryModal(true)}
             className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium text-lg"
           >
             Start My Free Solar Assessment ☀️
@@ -561,7 +555,16 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
         </section>
       </div>
       
-      {/* Energy Audit Quiz Modal */}
+      {/* Results Summary Modal (for main CTA) */}
+      <ResultsSummaryModal
+        open={showSummaryModal}
+        onOpenChange={setShowSummaryModal}
+        resultType="solar-quiz"
+        result={summaryContent}
+        onStartAudit={onStartAudit}
+      />
+      
+      {/* Legacy Energy Audit Quiz Modal - kept for backup */}
       <EnergyAuditQuizModal
         open={showQuizModal}
         onOpenChange={setShowQuizModal}
@@ -570,7 +573,7 @@ const SolarInteractiveFeatures: React.FC<SolarInteractiveFeaturesProps> = ({
       
       {/* Sticky CTA Footer */}
       <StickyCTAFooter
-        onStartAudit={onStartAudit}
+        onStartAudit={() => setShowSummaryModal(true)}
         delayBeforeShow={5000}
         scrollTriggerPoint={40}
       />

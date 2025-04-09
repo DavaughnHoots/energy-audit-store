@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import EnergyAuditQuizModal from './EnergyAuditQuizModal';
 import StickyCTAFooter from './StickyCTAFooter';
 import TableOfContents from './TableOfContents';
+import ResultsSummaryModal from './ResultsSummaryModal';
 import aerogelSvg from '../../assets/insulation-images/aerogel.svg';
 import pcmSvg from '../../assets/insulation-images/pcm.svg';
 import radiantBarrierSvg from '../../assets/insulation-images/radiant-barrier.svg';
@@ -266,6 +267,14 @@ const InsulationInteractiveFeatures: React.FC<InsulationInteractiveFeaturesProps
   const [userVote, setUserVote] = useState<string | null>(null);
   const [selectedTechnique, setSelectedTechnique] = useState<string>('');
   const [showQuizModal, setShowQuizModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  
+  // Default summary content for the main CTA
+  const [summaryContent, setSummaryContent] = useState({
+    recommendation: "Complete Home Insulation Assessment",
+    description: "Get a personalized insulation strategy for your home",
+    details: "Our comprehensive energy audit will analyze your home's specific insulation needs, factoring in your climate zone, building structure, and energy usage patterns to recommend the most cost-effective insulation solutions."
+  });
   const handleVote = (option: string) => {
     if (userVote === null) {
       setPollVotes({
@@ -300,10 +309,10 @@ const InsulationInteractiveFeatures: React.FC<InsulationInteractiveFeaturesProps
                 <li><strong>Heads-up:</strong> Pricier upfront, but energy savings kick in fast.</li>
               </ul>
               <button
-                onClick={() => setSelectedTechnique('aerogel')}
+                onClick={() => setSelectedTechnique(selectedTechnique === 'aerogel' ? '' : 'aerogel')}
                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                Show Me the Savings 💸
+                {selectedTechnique === 'aerogel' ? 'Hide Savings Info ↑' : 'Show Me the Savings 💸'}
               </button>
             </div>
             <div className="md:w-1/3 bg-gray-100 p-3 rounded">
@@ -332,10 +341,10 @@ const InsulationInteractiveFeatures: React.FC<InsulationInteractiveFeaturesProps
             <li><strong>Watch Out:</strong> They're fragile—don't hammer them in place.</li>
           </ul>
           <button
-            onClick={() => setSelectedTechnique('vips')}
+            onClick={() => setSelectedTechnique(selectedTechnique === 'vips' ? '' : 'vips')}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
           >
-            Let's Get Nerdy 🧠
+            {selectedTechnique === 'vips' ? 'Hide VIP Details ↑' : 'Let\'s Get Nerdy 🧠'}
           </button>
           <InsulationPoll
             onVote={handleVote}
@@ -364,10 +373,10 @@ const InsulationInteractiveFeatures: React.FC<InsulationInteractiveFeaturesProps
             <li><strong>Consider This:</strong> Works best when planned into a build from day one.</li>
           </ul>
           <button
-            onClick={() => setSelectedTechnique('sips')}
+            onClick={() => setSelectedTechnique(selectedTechnique === 'sips' ? '' : 'sips')}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
           >
-            Can I DIY This? 🛠️
+            {selectedTechnique === 'sips' ? 'Hide DIY Info ↑' : 'Can I DIY This? 🛠️'}
           </button>
           <div className="bg-blue-50 p-4 rounded-lg my-6">
             <h4 className="font-bold">⚡ Pro Tip</h4>
@@ -397,10 +406,10 @@ const InsulationInteractiveFeatures: React.FC<InsulationInteractiveFeaturesProps
                 <li><strong>Keep in Mind:</strong> Needs big temp swings to really shine.</li>
               </ul>
               <button
-                onClick={() => setSelectedTechnique('pcms')}
+                onClick={() => setSelectedTechnique(selectedTechnique === 'pcms' ? '' : 'pcms')}
                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                How Does That Even Work? 🤯
+                {selectedTechnique === 'pcms' ? 'Hide PCM Details ↑' : 'How Does That Even Work? 🤯'}
               </button>
             </div>
             <div className="md:w-1/3 bg-gray-100 p-3 rounded">
@@ -431,10 +440,10 @@ const InsulationInteractiveFeatures: React.FC<InsulationInteractiveFeaturesProps
                 <li><strong>Heads-up:</strong> Not great for cold climates or tight spaces.</li>
               </ul>
               <button
-                onClick={() => setSelectedTechnique('radiant')}
+                onClick={() => setSelectedTechnique(selectedTechnique === 'radiant' ? '' : 'radiant')}
                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
-                Protect My Attic 🌞
+                {selectedTechnique === 'radiant' ? 'Hide Attic Protection ↑' : 'Protect My Attic 🌞'}
               </button>
             </div>
             <div className="md:w-1/3 bg-gray-100 p-3 rounded">
@@ -458,22 +467,32 @@ const InsulationInteractiveFeatures: React.FC<InsulationInteractiveFeaturesProps
             <p className="text-lg">Next Step: Want to find out which technique fits your home best? Take our 60-second audit quiz and get instant recommendations.</p>
           </blockquote>
           <button
-            onClick={() => setShowQuizModal(true)}
+            onClick={() => setShowSummaryModal(true)}
             className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium text-lg"
           >
             Start My Energy Audit 🔍
           </button>
         </section>
       </div>
-      {/* Energy Audit Quiz Modal */}
+      {/* Results Summary Modal */}
+      <ResultsSummaryModal
+        open={showSummaryModal}
+        onOpenChange={setShowSummaryModal}
+        resultType="insulation-quiz"
+        result={summaryContent}
+        onStartAudit={onStartAudit}
+      />
+      
+      {/* Legacy Energy Audit Quiz Modal */}
       <EnergyAuditQuizModal
         open={showQuizModal}
         onOpenChange={setShowQuizModal}
         onComplete={onStartAudit}
       />
+      
       {/* Sticky CTA Footer */}
       <StickyCTAFooter
-        onStartAudit={onStartAudit}
+        onStartAudit={() => setShowSummaryModal(true)}
         delayBeforeShow={5000}
         scrollTriggerPoint={40}
       />
