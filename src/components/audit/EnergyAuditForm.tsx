@@ -57,6 +57,8 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [submittedAuditId, setSubmittedAuditId] = useState<string | null>(null);
+  // Add a ref to track if we've already applied the data to prevent infinite loops
+  const dataAppliedRef = useRef(false);
   
   // Add granular analytics tracking with feature-specific names
   const trackNavigation = useComponentTracking('energy_audit' as AnalyticsArea, 'EnergyAuditForm_Navigation');
@@ -230,8 +232,12 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
   
   // Apply previous audit data after user profile and/or latest audit are loaded
   useEffect(() => {
-    // Only proceed if we don't have stored data or initial data and at least one data source is available
-    if (!getStoredAuditData() && !initialData && (userProfileData || previousAuditData)) {
+    // Only proceed if we don't have stored data or initial data, at least one data source is available,
+    // and we haven't already applied the data (to prevent infinite loops)
+    if (!getStoredAuditData() && !initialData && (userProfileData || previousAuditData) && !dataAppliedRef.current) {
+      // Set the ref to true to prevent this effect from running again
+      dataAppliedRef.current = true;
+      
       console.log('Applying available data for a new audit...');
       console.log('User profile available:', !!userProfileData);
       console.log('Previous audit available:', !!previousAuditData);
