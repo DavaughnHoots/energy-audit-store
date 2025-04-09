@@ -15,7 +15,7 @@ import EnergyUseForm from './forms/EnergyUseForm';
 import LightingForm from './forms/LightingForm';
 import ProductPreferencesForm from './forms/ProductPreferencesForm';
 import AuditSubmissionModal from './AuditSubmissionModal';
-import { Dialog } from '@/components/ui/Dialog';
+import { Dialog, DialogTitle, DialogDescription, DialogContent } from '@/components/ui/Dialog';
 import { getStoredAuditData, storeAuditData, clearStoredAuditData } from '@/utils/auditStorage';
 import { 
   fetchUserProfileData, 
@@ -228,12 +228,15 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
     }
   }, [isAuthenticated]);
   
-  // Apply previous audit data after user profile and latest audit are loaded
+  // Apply previous audit data after user profile and/or latest audit are loaded
   useEffect(() => {
-    if (!getStoredAuditData() && !initialData && userProfileData && previousAuditData) {
-      console.log('Applying previous audit data for a new audit...');
+    // Only proceed if we don't have stored data or initial data and at least one data source is available
+    if (!getStoredAuditData() && !initialData && (userProfileData || previousAuditData)) {
+      console.log('Applying available data for a new audit...');
+      console.log('User profile available:', !!userProfileData);
+      console.log('Previous audit available:', !!previousAuditData);
       
-      // Merge previous audit data with current form data, but prioritize user profile for basic info
+      // Merge available data with current form data
       const newFormData = { ...formData };
       const newAutofilledFields = { ...autofilledFields };
       
@@ -241,41 +244,41 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       const prefilledSummary: string[] = [];
       
       // Basic info - prioritize user profile data
-      if (userProfileData.fullName) {
+      if (userProfileData?.fullName) {
         newFormData.basicInfo.fullName = userProfileData.fullName;
         newAutofilledFields.basicInfo.push('fullName');
         prefilledSummary.push('name');
-      } else if (previousAuditData.basicInfo?.fullName) {
+      } else if (previousAuditData?.basicInfo?.fullName) {
         newFormData.basicInfo.fullName = previousAuditData.basicInfo.fullName;
         newAutofilledFields.basicInfo.push('fullName');
         prefilledSummary.push('name');
       }
       
-      if (userProfileData.email) {
+      if (userProfileData?.email) {
         newFormData.basicInfo.email = userProfileData.email;
         newAutofilledFields.basicInfo.push('email');
         prefilledSummary.push('email');
-      } else if (previousAuditData.basicInfo?.email) {
+      } else if (previousAuditData?.basicInfo?.email) {
         newFormData.basicInfo.email = previousAuditData.basicInfo.email;
         newAutofilledFields.basicInfo.push('email');
         prefilledSummary.push('email');
       }
       
-      if (userProfileData.phone) {
+      if (userProfileData?.phone) {
         newFormData.basicInfo.phone = userProfileData.phone;
         newAutofilledFields.basicInfo.push('phone');
         prefilledSummary.push('phone');
-      } else if (previousAuditData.basicInfo?.phone) {
+      } else if (previousAuditData?.basicInfo?.phone) {
         newFormData.basicInfo.phone = previousAuditData.basicInfo.phone;
         newAutofilledFields.basicInfo.push('phone');
         prefilledSummary.push('phone');
       }
       
-      if (userProfileData.address) {
+      if (userProfileData?.address) {
         newFormData.basicInfo.address = userProfileData.address;
         newAutofilledFields.basicInfo.push('address');
         prefilledSummary.push('address');
-      } else if (previousAuditData.basicInfo?.address) {
+      } else if (previousAuditData?.basicInfo?.address) {
         newFormData.basicInfo.address = previousAuditData.basicInfo.address;
         newAutofilledFields.basicInfo.push('address');
         prefilledSummary.push('address');
@@ -309,7 +312,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         }
       } 
       // Fill remaining fields from previous audit if no user profile data
-      else if (previousAuditData.basicInfo) {
+      else if (previousAuditData?.basicInfo) {
         if (previousAuditData.basicInfo.propertyType && !newFormData.basicInfo.propertyType) {
           newFormData.basicInfo.propertyType = previousAuditData.basicInfo.propertyType;
           prefilledSummary.push('property type');
@@ -322,7 +325,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       }
       
       // For home details, use previous audit data if not set from property details
-      if (previousAuditData.homeDetails) {
+      if (previousAuditData?.homeDetails) {
         // Only use previous audit data if not already set from property details
         if (previousAuditData.homeDetails.squareFootage && !newFormData.homeDetails.squareFootage) {
           newFormData.homeDetails.squareFootage = previousAuditData.homeDetails.squareFootage;
@@ -377,7 +380,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
         }
       }
       // If not available in user profile, use from previous audit
-      else if (previousAuditData.currentConditions) {
+      else if (previousAuditData?.currentConditions) {
         if (previousAuditData.currentConditions.numWindows) {
           newFormData.currentConditions.numWindows = previousAuditData.currentConditions.numWindows;
           newAutofilledFields.currentConditions.push('numWindows');
@@ -397,20 +400,20 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       }
       
       // Air leaks from weatherization in user profile
-      if (userProfileData.weatherization?.draftLocations?.locations) {
+      if (userProfileData?.weatherization?.draftLocations?.locations) {
         newFormData.currentConditions.airLeaks = userProfileData.weatherization.draftLocations.locations;
         newAutofilledFields.currentConditions.push('airLeaks');
         prefilledSummary.push('air leaks');
       }
       // Or from previous audit if not in user profile
-      else if (previousAuditData.currentConditions?.airLeaks?.length) {
+      else if (previousAuditData?.currentConditions?.airLeaks?.length) {
         newFormData.currentConditions.airLeaks = previousAuditData.currentConditions.airLeaks;
         newAutofilledFields.currentConditions.push('airLeaks');
         prefilledSummary.push('air leaks');
       }
       
       // Copy other current conditions from previous audit
-      if (previousAuditData.currentConditions) {
+      if (previousAuditData?.currentConditions) {
         if (previousAuditData.currentConditions.insulation) {
           newFormData.currentConditions.insulation = {
             ...newFormData.currentConditions.insulation,
@@ -446,7 +449,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       }
       
       // Copy HVAC details from previous audit
-      if (previousAuditData.heatingCooling) {
+      if (previousAuditData?.heatingCooling) {
         newFormData.heatingCooling = {
           ...newFormData.heatingCooling,
           ...previousAuditData.heatingCooling
@@ -455,7 +458,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       }
       
       // Copy energy consumption details from previous audit
-      if (previousAuditData.energyConsumption) {
+      if (previousAuditData?.energyConsumption) {
         newFormData.energyConsumption = {
           ...newFormData.energyConsumption,
           ...previousAuditData.energyConsumption
@@ -464,7 +467,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       }
       
       // Copy product preferences from previous audit
-      if (previousAuditData.productPreferences) {
+      if (previousAuditData?.productPreferences) {
         newFormData.productPreferences = {
           ...newFormData.productPreferences,
           ...previousAuditData.productPreferences
@@ -1137,11 +1140,12 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
           clearStoredAuditData();
           navigate(`/dashboard?newAudit=${submittedAuditId}`);
         }}
-        title="Update Your Profile"
-        description="Would you like to update your profile with the information from this energy audit?"
       >
-        <div className="mt-4 space-y-2">
-          {fieldsToUpdate.includes('basicInfo') && (
+        <DialogContent>
+          <DialogTitle>Update Your Profile</DialogTitle>
+          <DialogDescription>Would you like to update your profile with the information from this energy audit?</DialogDescription>
+          <div className="mt-4 space-y-2">
+            {fieldsToUpdate.includes('basicInfo') && (
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -1225,6 +1229,7 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
             Update Profile
           </button>
         </div>
+        </DialogContent>
       </Dialog>
     </>
   );
