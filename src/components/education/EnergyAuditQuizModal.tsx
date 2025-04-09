@@ -1,160 +1,242 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useComponentTracking } from '../../hooks/analytics/useComponentTracking';
+import { Dialog, DialogHeader, DialogTitle, DialogContent } from '../ui/Dialog';
 
 interface EnergyAuditQuizModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  trackingLocation: string;
-  resourceId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onComplete?: (answers: QuizAnswers) => void;
 }
 
-interface QuizQuestion {
-  id: string;
-  question: string;
-  options: { value: string; label: string }[];
+export interface QuizAnswers {
+  homeType: string;
+  homeAge: string;
+  climateZone: string;
+  currentInsulation: string;
+  energyBills: string;
+  priorities: string[];
 }
 
 const EnergyAuditQuizModal: React.FC<EnergyAuditQuizModalProps> = ({
-  isOpen,
-  onClose,
-  trackingLocation,
-  resourceId
+  open,
+  onOpenChange,
+  onComplete
 }) => {
-  const navigate = useNavigate();
-  const trackComponentEvent = useComponentTracking('education', 'EnergyAuditQuizModal');
-  
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  
-  // Quiz questions - simplified version to qualify for energy audit
-  const questions: QuizQuestion[] = [
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState<QuizAnswers>({
+    homeType: '',
+    homeAge: '',
+    climateZone: '',
+    currentInsulation: '',
+    energyBills: '',
+    priorities: []
+  });
+
+  const questions = [
     {
-      id: 'home_type',
-      question: 'What type of home do you live in?',
+      id: 'homeType',
+      question: 'What type of home do you have?',
       options: [
-        { value: 'single_family', label: 'Single-family house' },
+        { value: 'single-family', label: 'Single-family house' },
+        { value: 'townhouse', label: 'Townhouse/Duplex' },
         { value: 'apartment', label: 'Apartment/Condo' },
-        { value: 'townhouse', label: 'Townhouse' },
         { value: 'mobile', label: 'Mobile home' }
       ]
     },
     {
-      id: 'home_age',
+      id: 'homeAge',
       question: 'How old is your home?',
       options: [
-        { value: 'new', label: 'Less than 5 years' },
-        { value: 'recent', label: '5-15 years' },
-        { value: 'older', label: '16-30 years' },
-        { value: 'historic', label: 'Over 30 years' }
+        { value: 'new', label: 'Less than 10 years' },
+        { value: 'medium', label: '10-30 years' },
+        { value: 'older', label: '30-50 years' },
+        { value: 'historic', label: 'Over 50 years' }
       ]
     },
     {
-      id: 'energy_bill',
-      question: 'How much is your average monthly energy bill?',
+      id: 'climateZone',
+      question: 'What climate do you live in?',
       options: [
-        { value: 'low', label: 'Less than $100' },
-        { value: 'medium', label: '$100-$200' },
-        { value: 'high', label: '$200-$300' },
-        { value: 'very_high', label: 'Over $300' }
+        { value: 'hot', label: 'Hot (mostly cooling needs)' },
+        { value: 'cold', label: 'Cold (mostly heating needs)' },
+        { value: 'mixed', label: 'Mixed (both heating and cooling)' },
+        { value: 'temperate', label: 'Temperate (mild year-round)' }
       ]
+    },
+    {
+      id: 'currentInsulation',
+      question: 'How would you describe your current insulation?',
+      options: [
+        { value: 'none', label: 'Minimal or none' },
+        { value: 'basic', label: 'Basic/standard' },
+        { value: 'partial', label: 'Some areas well-insulated' },
+        { value: 'unknown', label: 'I\'m not sure' }
+      ]
+    },
+    {
+      id: 'energyBills',
+      question: 'How would you characterize your energy bills?',
+      options: [
+        { value: 'very-high', label: 'Very high - major concern' },
+        { value: 'high', label: 'Higher than I\'d like' },
+        { value: 'reasonable', label: 'Reasonable for my area' },
+        { value: 'low', label: 'Already quite efficient' }
+      ]
+    },
+    {
+      id: 'priorities',
+      question: 'What are your priorities for insulation improvements? (Select all that apply)',
+      options: [
+        { value: 'cost-savings', label: 'Lower energy bills' },
+        { value: 'comfort', label: 'Comfort/temperature regulation' },
+        { value: 'environmental', label: 'Environmental impact' },
+        { value: 'noise', label: 'Noise reduction' },
+        { value: 'value', label: 'Increasing home value' }
+      ],
+      multiSelect: true
     }
   ];
-  
-  // Ensure we always have a valid question
-  const currentQuestion = questions[currentQuestionIndex] || questions[0];
-  
-  const handleAnswer = (value: string) => {
-    if (!currentQuestion) return;
-    
-    // Save the answer
-    setAnswers({
-      ...answers,
-      [currentQuestion.id]: value
+
+  const handleSingleSelect = (questionId: string, value: string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: value
+    }));
+  };
+
+  const handleMultiSelect = (questionId: string, value: string) => {
+    setAnswers(prev => {
+      const currentSelections = prev[questionId as keyof QuizAnswers] as string[] || [];
+      
+      if (currentSelections.includes(value)) {
+        return {
+          ...prev,
+          [questionId]: currentSelections.filter(item => item !== value)
+        };
+      } else {
+        return {
+          ...prev,
+          [questionId]: [...currentSelections, value]
+        };
+      }
     });
-    
-    // Track the answer
-    trackComponentEvent('quiz_answer', {
-      question_id: currentQuestion.id,
-      answer: value,
-      resource_id: resourceId,
-      location: trackingLocation
-    });
-    
-    // Move to next question or finish
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+  };
+
+  const handleNext = () => {
+    if (currentStep < questions.length - 1) {
+      setCurrentStep(currentStep + 1);
     } else {
       // Quiz completed
-      trackComponentEvent('quiz_complete', {
-        resource_id: resourceId,
-        location: trackingLocation
-      });
-      
-      // Navigate to the full energy audit form with pre-filled answers
-      const queryParams = new URLSearchParams();
-      Object.entries(answers).forEach(([key, value]) => {
-        queryParams.append(key, value);
-      });
-      queryParams.append('source', 'education');
-      queryParams.append('resource', resourceId);
-      
-      navigate(`/energy-audit?${queryParams.toString()}`);
+      if (onComplete) {
+        onComplete(answers);
+      }
+      onOpenChange(false);
     }
   };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const currentQuestion = questions[currentStep];
+  const isLastQuestion = currentStep === questions.length - 1;
   
-  if (!isOpen) return null;
-  
+  // Check if current question is answered
+  const isCurrentQuestionAnswered = () => {
+    if (!currentQuestion) return false;
+    
+    const answer = answers[currentQuestion.id as keyof QuizAnswers];
+    if (currentQuestion.multiSelect) {
+      return (answer as string[])?.length > 0;
+    }
+    return !!answer;
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold text-gray-800">Quick Energy Audit</h3>
-            <button 
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogHeader>
+        <DialogTitle>60-Second Insulation Audit</DialogTitle>
+      </DialogHeader>
+      <DialogContent>
+        <div className="quiz-progress mb-4">
+          <div className="h-1 w-full bg-gray-200 rounded-full">
+            <div
+              className="h-1 bg-green-600 rounded-full transition-all duration-300"
+              style={{ width: `${((currentStep + 1) / questions.length) * 100}%` }}
+            ></div>
           </div>
-          
-          <div className="mb-6">
-            <div className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-              <span>{Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% complete</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-green-600 h-2 rounded-full" 
-                style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
-              />
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            {currentQuestion && (
-              <>
-                <h4 className="text-lg font-medium mb-4">{currentQuestion.question}</h4>
-                <div className="space-y-3">
-                  {currentQuestion.options.map(option => (
-                    <button
-                      key={option.value}
-                      className="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-green-50 hover:border-green-500 transition-colors"
-                      onClick={() => handleAnswer(option.value)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+          <div className="text-right text-sm text-gray-500 mt-1">
+            Question {currentStep + 1} of {questions.length}
           </div>
         </div>
-      </div>
-    </div>
+
+        <div className="quiz-question mb-6">
+          {currentQuestion && (
+            <>
+              <h3 className="text-lg font-semibold mb-3">{currentQuestion.question}</h3>
+            
+              <div className="options-list space-y-2">
+                {currentQuestion.options.map((option) => (
+                  <div key={option.value} className="option">
+                    {currentQuestion.multiSelect ? (
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={option.value}
+                          checked={(answers[currentQuestion.id as keyof QuizAnswers] as string[] || []).includes(option.value)}
+                          onChange={() => handleMultiSelect(currentQuestion.id, option.value)}
+                          className="mr-2"
+                        />
+                        <label htmlFor={option.value} className="cursor-pointer">{option.label}</label>
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          name={currentQuestion.id}
+                          id={option.value}
+                          value={option.value}
+                          checked={answers[currentQuestion.id as keyof QuizAnswers] === option.value}
+                          onChange={() => handleSingleSelect(currentQuestion.id, option.value)}
+                          className="mr-2"
+                        />
+                        <label htmlFor={option.value} className="cursor-pointer">{option.label}</label>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="mt-6 flex justify-between">
+          {currentStep > 0 ? (
+            <button
+              onClick={handleBack}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Back
+            </button>
+          ) : (
+            <div></div> // Empty div for spacing when there's no back button
+          )}
+          
+          <button
+            onClick={handleNext}
+            disabled={!isCurrentQuestionAnswered()}
+            className={`px-4 py-2 rounded-lg ${
+              isCurrentQuestionAnswered()
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            {isLastQuestion ? "Get Recommendations" : "Next"}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import AdvancedInsulationPage from './pages/AdvancedInsulationPage';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
@@ -16,7 +17,6 @@ import EnergyAuditPage from './pages/EnergyAuditPage';
 import InteractiveReportPage from './pages/InteractiveReportPage';
 import EducationPage from './pages/EducationPage';
 import ResourceContentPage from './pages/education-resources/ResourceContentPage';
-import AdvancedInsulationPage from './pages/education-resources/AdvancedInsulationPage';
 import CommunityPage from './pages/CommunityPage';
 import SignIn from './components/auth/SignIn';
 import SignUp from './components/auth/SignUp';
@@ -143,6 +143,9 @@ const App: React.FC = () => {
             <Route path="/education/resources/advanced-insulation" element={<AdvancedInsulationPage />} />
             {/* Special redirect for resource ID 2 to the advanced insulation page */}
             <Route path="/education/2" element={<Navigate to="/education/resources/advanced-insulation" replace />} />
+            <Route path="/education/resources/residential-solar" element={<ResourceContentPage resourceId="residential-solar" />} />
+            {/* Special redirect for residential solar to the dedicated path */}
+            <Route path="/education/residential-solar" element={<Navigate to="/education/resources/residential-solar" replace />} />
             <Route path="/education/:resourceId" element={<ResourceContentPage />} />
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/sign-in" element={<SignIn />} />

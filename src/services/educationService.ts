@@ -9,13 +9,21 @@ import {
   ResourceReview,
   ResourceRatingInfo
 } from '../types/education';
-import { 
-  mockResources, 
-  mockCollections, 
+
+// Import from the new structure
+import {
+  getAllResources,
+  getResourceById,
+  getResourcesByTopic,
   getFeaturedResources,
+  getResourceContent
+} from '../data/education';
+
+// For legacy support
+import { 
+  mockCollections, 
   getResourcesByCollectionId,
   getResourcesByType,
-  getResourcesByTopic,
   getResourcesByLevel
 } from '../data/educational-resources';
 
@@ -30,7 +38,7 @@ const applyFilters = (
     const matchesSearch = searchTerm === '' || (
       resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      (resource.tags && resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
     );
     
     // Type filter
@@ -64,8 +72,8 @@ const sortResources = (
       // In a real app, this would use user preferences or history
       // For now, we'll use a combination of rating and popularity
       return sortedResources.sort((a, b) => {
-        const aScore = (a.rating?.average || 0) * 0.7 + (a.popularity / 1000) * 0.3;
-        const bScore = (b.rating?.average || 0) * 0.7 + (b.popularity / 1000) * 0.3;
+        const aScore = (a.rating?.average || 0) * 0.7 + ((a.popularity || 0) / 1000) * 0.3;
+        const bScore = (b.rating?.average || 0) * 0.7 + ((b.popularity || 0) / 1000) * 0.3;
         return bScore - aScore;
       });
     default:
@@ -79,7 +87,7 @@ export const educationService = {
     // Simulate API request with delay
     return new Promise(resolve => {
       setTimeout(() => {
-        let filteredResources = applyFilters(mockResources, filters);
+        let filteredResources = applyFilters(getAllResources(), filters);
         
         // Apply sorting if specified
         if (filters.sortBy) {
@@ -97,7 +105,6 @@ export const educationService = {
     return new Promise(resolve => {
       setTimeout(() => {
         console.log(`Adding bookmark for resource ${resourceId}`);
-        
         // Simulate successful API call
         resolve(true);
       }, 300);
@@ -123,7 +130,7 @@ export const educationService = {
     return new Promise(resolve => {
       setTimeout(() => {
         // Simulate getting bookmarked resources (random subset for demo)
-        const bookmarkedResources = mockResources
+        const bookmarkedResources = getAllResources()
           .filter(() => Math.random() > 0.7) // Random 30% of resources
           .map(resource => ({
             ...resource,
@@ -154,7 +161,7 @@ export const educationService = {
     return new Promise(resolve => {
       setTimeout(() => {
         // Simulate getting in-progress resources (random subset for demo)
-        const inProgressResources = mockResources
+        const inProgressResources = getAllResources()
           .filter(() => Math.random() > 0.8) // Random 20% of resources
           .map(resource => ({
             ...resource,
@@ -250,8 +257,8 @@ export const educationService = {
         
         for (let rating = 1; rating <= 5; rating++) {
           if (distribution[rating] !== undefined) {
-            total += rating * distribution[rating];
-            count += distribution[rating];
+            total += rating * (distribution[rating] || 0);
+            count += (distribution[rating] || 0);
           }
         }
         
@@ -274,7 +281,7 @@ export const educationService = {
   getResourceById: async (id: string): Promise<EducationalResource | null> => {
     return new Promise(resolve => {
       setTimeout(() => {
-        const resource = mockResources.find(r => r.id === id) || null;
+        const resource = getResourceById(id) || null;
         resolve(resource);
       }, 200);
     });
@@ -321,17 +328,17 @@ export const educationService = {
   getRelatedResources: async (resourceId: string): Promise<EducationalResource[]> => {
     return new Promise(resolve => {
       setTimeout(() => {
-        const resource = mockResources.find(r => r.id === resourceId);
+        const resource = getResourceById(resourceId);
         if (!resource) {
           resolve([]);
           return;
         }
         
         // Find resources with similar topics or tags
-        const relatedResources = mockResources.filter(r => 
+        const relatedResources = getAllResources().filter(r => 
           r.id !== resourceId && (
             r.topic === resource.topic ||
-            r.tags.some(tag => resource.tags.includes(tag)) ||
+            (r.tags && resource.tags && r.tags.some(tag => resource.tags.includes(tag))) ||
             (resource.relatedResourceIds && resource.relatedResourceIds.includes(r.id))
           )
         );
@@ -379,14 +386,19 @@ export const educationService = {
         }
         
         const normalizedQuery = query.toLowerCase().trim();
-        const results = mockResources.filter(resource => 
+        const results = getAllResources().filter(resource => 
           resource.title.toLowerCase().includes(normalizedQuery) ||
           resource.description.toLowerCase().includes(normalizedQuery) ||
-          resource.tags.some(tag => tag.toLowerCase().includes(normalizedQuery))
+          (resource.tags && resource.tags.some(tag => tag.toLowerCase().includes(normalizedQuery)))
         );
         
         resolve(results);
       }, 300);
     });
+  },
+  
+  // New method: Get resource content
+  getResourceContent: async (resourceId: string) => {
+    return getResourceContent(resourceId);
   }
 };

@@ -2,21 +2,37 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { educationService } from '@/services/educationService';
-import { resourceContents } from '@/data/educational-content';
 import { EducationalResource } from '@/types/education';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Bookmark, BookmarkCheck } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import ProgressIndicator from '@/components/education/ProgressIndicator';
 import StarRating from '@/components/education/StarRating';
 import BookmarkButton from '@/components/education/BookmarkButton';
+import ContentRenderer from '@/components/education/ContentRenderer';
 import InsulationInteractiveFeatures from '@/components/education/InsulationInteractiveFeatures';
+import InteractivePoll from '@/components/education/InteractivePoll';
 import { usePageTracking } from '@/hooks/analytics/usePageTracking';
 import { useComponentTracking } from '@/hooks/analytics/useComponentTracking';
 
-const ResourceContentPage: React.FC = () => {
-  const { resourceId } = useParams<{ resourceId: string }>();
+interface ContentData {
+  id: string;
+  content: string;
+  preview?: string;
+  videoUrl?: string;
+  infographicUrl?: string;
+}
+
+interface ResourceContentPageProps {
+  resourceId?: string;
+}
+
+const ResourceContentPage: React.FC<ResourceContentPageProps> = (props) => {
+  const params = useParams<{ resourceId: string }>();
+  // Use the prop resourceId if provided, otherwise use the URL parameter
+  const resourceId = props.resourceId || params.resourceId;
   const navigate = useNavigate();
   const [resource, setResource] = useState<EducationalResource | null>(null);
+  const [contentData, setContentData] = useState<ContentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -37,6 +53,19 @@ const ResourceContentPage: React.FC = () => {
         }
         
         setResource(resourceData);
+        
+        // Load the content if the resource has a contentFile
+        if (resourceData.contentFile) {
+          try {
+            const content = await educationService.getResourceContent(resourceId);
+            setContentData(content);
+          } catch (contentErr) {
+            console.error('Error loading content:', contentErr);
+            throw new Error('Content not found');
+          }
+        } else {
+          throw new Error('Content not available for this resource');
+        }
         
         // Track progress if not already completed
         if (!resourceData.progress || resourceData.progress.status !== 'completed') {
@@ -92,8 +121,6 @@ const ResourceContentPage: React.FC = () => {
       console.error('Error marking resource as complete:', err);
     }
   };
-  
-  const contentData = resourceId ? resourceContents[resourceId] : null;
   
   if (loading) {
     return (
@@ -211,13 +238,18 @@ const ResourceContentPage: React.FC = () => {
         )}
         
         <div className="px-6 py-8">
-          <div
-            className="prose prose-green max-w-none"
-            dangerouslySetInnerHTML={{ __html: contentData.content as string }}
-          />
+          <div className="prose prose-green max-w-none">
+            <ContentRenderer content={contentData.content as string} />
+          </div>
           
           {/* Add interactive features for Advanced Insulation Techniques */}
-          {resourceId === '2' && <InsulationInteractiveFeatures />}
+          {resourceId === '2' && <InsulationInteractiveFeatures
+            onStartAudit={() => {
+              // Navigate to the energy audit page
+              navigate('/energy-audit');
+              trackComponentEvent('start_audit_from_education', { resourceId });
+            }}
+          />}
         </div>
       </div>
       

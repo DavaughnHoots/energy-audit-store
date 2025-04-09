@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useComponentTracking } from '../../hooks/analytics/useComponentTracking';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface TechnicalDetailsAccordionProps {
   title: string;
@@ -8,43 +7,53 @@ interface TechnicalDetailsAccordionProps {
   children: React.ReactNode;
 }
 
+/**
+ * An accordion component that displays technical details about insulation techniques
+ */
 const TechnicalDetailsAccordion: React.FC<TechnicalDetailsAccordionProps> = ({ 
-  title, 
+  title,
   technique, 
   children 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const trackComponentEvent = useComponentTracking('education', 'TechnicalDetailsAccordion');
-  
+
   const toggleAccordion = () => {
-    const newIsOpen = !isOpen;
-    setIsOpen(newIsOpen);
+    const newState = !isOpen;
+    setIsOpen(newState);
     
-    // Track accordion toggle events
-    trackComponentEvent(newIsOpen ? 'technical_details_expanded' : 'technical_details_collapsed', {
-      technique,
-      section: 'insulation_page'
-    });
+    if (newState) {
+      trackComponentEvent('technical_details_expanded', { technique });
+    } else {
+      trackComponentEvent('technical_details_collapsed', { technique });
+    }
   };
-  
+
   return (
-    <div className="mt-6 border border-gray-200 rounded-lg overflow-hidden">
+    <div className="mt-6 border border-gray-200 rounded-md">
       <button
+        className="w-full flex justify-between items-center p-4 focus:outline-none"
         onClick={toggleAccordion}
-        className="w-full flex justify-between items-center p-4 text-left font-medium bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 transition-colors"
         aria-expanded={isOpen}
       >
-        <span>{title}</span>
-        {isOpen ? (
-          <ChevronUp className="h-5 w-5 text-gray-500" />
-        ) : (
-          <ChevronDown className="h-5 w-5 text-gray-500" />
-        )}
+        <span className="font-medium text-gray-800">{title}</span>
+        <svg
+          className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+            clipRule="evenodd"
+          />
+        </svg>
       </button>
-      
       {isOpen && (
-        <div className="p-4 bg-white border-t border-gray-200">
-          {children}
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <div className="text-gray-700 space-y-2">
+            {children}
+          </div>
         </div>
       )}
     </div>

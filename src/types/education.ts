@@ -3,6 +3,14 @@ export type ResourceType = 'article' | 'video' | 'infographic' | 'quiz' | 'calcu
 export type ResourceTopic = 'home-appliances' | 'insulation' | 'renewable-energy' | 'energy-management' | 'energy-saving' | 'smart-home';
 export type ResourceLevel = 'beginner' | 'intermediate' | 'advanced';
 
+export interface ResourceContent {
+  id: string;
+  preview: string;
+  content: string;
+  videoUrl?: string;
+  infographicUrl?: string;
+}
+
 export interface EducationalResource {
   id: string;
   title: string;
@@ -26,6 +34,7 @@ export interface EducationalResource {
   relatedResourceIds?: string[];
   is_bookmarked?: boolean; // Whether the current user has bookmarked this resource
   progress?: ResourceProgress; // User's progress on this resource
+  contentFile?: string; // Path to content file relative to /src/data/education/content
 }
 
 export interface ResourceProgress {
