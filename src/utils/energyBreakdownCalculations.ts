@@ -563,3 +563,20 @@ export function calculateRoomEnergyConsumption(
     { name: 'Outdoor', value: Math.round(totalConsumption * normalizedDistribution.outdoor / 100) }
   ];
 }
+
+/**
+ * Alias for calculateRoomEnergyConsumption to maintain compatibility with existing code
+ * @param consumption Consumption data points
+ * @param auditData Audit data for room-based calculations
+ * @returns Room-based energy consumption data points
+ */
+export function transformConsumptionToRoomBased(
+  consumption: ChartDataPoint[],
+  auditData: any
+): ChartDataPoint[] {
+  // Calculate total consumption from consumption data points
+  const totalConsumption = consumption.reduce((sum, item) => sum + item.value, 0);
+  
+  // Call the original function with the calculated total
+  return calculateRoomEnergyConsumption(auditData, totalConsumption);
+}

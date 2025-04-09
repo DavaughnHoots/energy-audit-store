@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell, Label
 } from 'recharts';
-import { transformConsumptionToRoomBased } from '@/utils/energyBreakdownCalculations';
+import { transformConsumptionToRoomBased } from '../../utils/energyBreakdownCalculations';
 import { Clock, Calendar } from 'lucide-react';
 
 interface ChartDataPoint {
