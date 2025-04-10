@@ -939,6 +939,30 @@ const EnergyAuditForm: React.FC<EnergyAuditFormProps> = ({ onSubmit, initialData
       });
       
       if (isAuthenticated) {
+        // Record badge activity for audit completion
+        try {
+          // Get user ID from auth
+          const { user } = useAuth();
+          if (user?.id) {
+            // Import badgeService for activity tracking
+            import('@/services/badgeService').then(({ badgeService }) => {
+              badgeService.recordActivity(user.id, 'audit_completed', {
+                auditId: result.id,
+                timestamp: new Date().toISOString(),
+                propertyType: formData.basicInfo.propertyType,
+                yearBuilt: formData.basicInfo.yearBuilt
+              }).then(() => {
+                console.log('Recorded audit completion activity for badges');
+              }).catch((badgeError: Error) => {
+                console.error('Error recording badge activity:', badgeError);
+              });
+            });
+          }
+        } catch (badgeError) {
+          // Don't fail the main process if badge recording fails
+          console.error('Error recording badge activity:', badgeError);
+        }
+        
         // Show profile update dialog if user modified fields that could be updated in profile
         handleShowUpdateProfileDialog();
       } else {

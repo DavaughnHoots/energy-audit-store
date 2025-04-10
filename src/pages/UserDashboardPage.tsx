@@ -16,6 +16,8 @@ import {
 import { mergeDashboardData, didOverwriteRecommendations } from '@/utils/dashboardDataMerge';
 import { usePageTracking } from '@/hooks/analytics/usePageTracking';
 
+import { badgeService } from '../services/BadgeService';
+
 interface DashboardStats {
   totalSavings: {
     estimated: number;
@@ -408,7 +410,9 @@ const UserDashboardPage: React.FC = () => {
       fetchDashboardData().then(interval => {
         if (interval) {
           refreshTimeout = setTimeout(refresh, interval);
-        }
+        
+    await badgeService.evaluateBadges();
+}
       });
     };
 
