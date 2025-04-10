@@ -24,8 +24,23 @@ export interface TokenInfo {
  */
 export async function getTokenInfo(): Promise<TokenInfo> {
   try {
-    const response = await apiClient.get<TokenInfo>('/auth-token/token-info');
-    return response.data;
+    const response = await apiClient.get<any>('/auth-token/token-info');
+    console.log('Raw token info response:', response);
+    
+    // Extract data, handling both direct and wrapped responses
+    const data = response.data?.data || response.data;
+    
+    // Ensure Boolean values for token presence and create a well-formed response
+    // This handles cases where the values might be truthy but not strictly boolean
+    const result: TokenInfo = {
+      hasAccessToken: Boolean(data?.hasAccessToken),
+      hasRefreshToken: Boolean(data?.hasRefreshToken),
+      userId: data?.userId || null,
+      tokenInfo: data?.tokenInfo || null
+    };
+    
+    console.log('Processed token info:', result);
+    return result;
   } catch (error) {
     console.error('Error fetching token info:', error);
     return {

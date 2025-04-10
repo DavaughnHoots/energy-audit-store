@@ -48,10 +48,15 @@ export function useAuth() {
     }
   };
   
+  // Track profile recovery attempts to prevent infinite loops
+  const [recoveryAttempted, setRecoveryAttempted] = useState(false);
+  
   // Load user from localStorage or try to retrieve from API if tokens exist
   useEffect(() => {
     const loadUser = async () => {
       try {
+        console.log('Starting auth check with recovery attempted:', recoveryAttempted);
+        
         // Sync cookies to localStorage if needed
         syncAuthTokens();
         
@@ -61,14 +66,19 @@ export function useAuth() {
         
         if (userJson) {
           setUser(JSON.parse(userJson));
+          console.log('User loaded from localStorage successfully');
         } 
         // If we have a token but no user, try to retrieve the profile from API
         else if (accessToken) {
           await recoverUserProfileFromToken(accessToken);
         } 
-        // Check if we have HttpOnly cookies with tokens
-        else {
+        // Check if we have HttpOnly cookies with tokens (only if we haven't already tried recovery)
+        else if (!recoveryAttempted) {
+          setRecoveryAttempted(true); // Mark that we've attempted recovery to prevent loops
+          console.log('Checking for HttpOnly cookie tokens');
+          
           const tokenInfo = await getTokenInfo();
+          console.log('Token info retrieved:', tokenInfo);
           
           if (tokenInfo.hasAccessToken) {
             console.log('Found HttpOnly cookie token but no user data, attempting profile recovery');
@@ -79,11 +89,17 @@ export function useAuth() {
                 localStorage.setItem('user', JSON.stringify(response.data.user));
                 setUser(response.data.user);
                 console.log('User profile recovered successfully from HttpOnly cookies');
+              } else {
+                console.warn('Profile endpoint returned success but no user data');
               }
             } catch (profileError) {
               console.error('Error recovering user profile from HttpOnly cookies:', profileError);
             }
+          } else {
+            console.log('No HttpOnly cookie tokens found');
           }
+        } else {
+          console.log('Recovery already attempted, skipping to prevent loops');
         }
       } catch (err) {
         console.error('Error loading user from localStorage:', err);
