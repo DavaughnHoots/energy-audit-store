@@ -86,7 +86,7 @@ export class BadgeService {
       
       // Convert to a record object for easier frontend consumption
       const badges: Record<string, UserBadge> = {};
-      result.rows.forEach(row => {
+      result.rows.forEach((row: any) => {
         badges[row.badge_id] = {
           badgeId: row.badge_id,
           progress: row.progress,
@@ -494,11 +494,68 @@ export class BadgeService {
       const progress = Math.min(Math.floor((totalSavings / threshold) * 100), 100);
       return progress;
     } catch (error) {
-      appLogger.error('Error calculating savings progress', { error, userId });
+      appLogger.error('Error calculating savings progress', { error: error as Error, userId });
       return 0;
     }
   }
+
+  /**
+   * Clear the cache for a specific user's badge data
+   * Used when fresh badge data is needed after direct database changes
+   */
+  async clearUserCache(userId: string): Promise<boolean> {
+    try {
+      appLogger.info(`Clearing badge cache for user ${userId}`);
+      
+      // In a real implementation, this would clear any in-memory or Redis cache
+      // For this implementation, we'll just return true since there's no active cache
+      
+      return true;
+    } catch (error) {
+      appLogger.error('Error clearing user badge cache', { error: error as Error, userId });
+      return false;
+    }
+  }
   
+  /**
+   * Get a specific badge for a user
+   */
+  async getBadge(userId: string, badgeId: string): Promise<UserBadge | null> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(`
+        SELECT badge_id, progress, earned, earned_at, visible
+        FROM user_badges
+        WHERE user_id = $1 AND badge_id = $2
+      `, [userId, badgeId]);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      const row = result.rows[0];
+      return {
+        badgeId: row.badge_id,
+        progress: row.progress,
+        earned: row.earned,
+        earnedAt: row.earned_at,
+        visible: row.visible
+      };
+    } catch (error) {
+      appLogger.error('Error fetching user badge', { error: error as Error, userId, badgeId });
+      return null;
+    } finally {
+      client.release();
+    }
+  }
+  
+  /**
+   * Award a badge to a user
+   */
+  async awardBadge(userId: string, badgeId: string): Promise<boolean> {
+    return this.updateBadgeProgress(userId, badgeId, 100);
+  }
+
   /**
    * Evaluate all badges for a user
    * This is typically used for manual evaluation or testing

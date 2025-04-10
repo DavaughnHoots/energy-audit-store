@@ -177,6 +177,56 @@ router.post(
 );
 
 /**
+ * Manually refresh badge cache for a user
+ * Used when the frontend needs fresh badge data after direct database changes
+ */
+router.post(
+  '/users/:userId/badges/refresh',
+  [
+    validateToken,
+    param('userId').isUUID().withMessage('Valid user ID is required'),
+    validateRequest
+  ],
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      appLogger.info(`Badge cache refresh requested for user ${req.params.userId}`);
+      
+      // Ensure user can only refresh their own badges unless they're an admin
+      if (req.user?.id !== req.params.userId && req.user?.role !== 'admin') {
+        appLogger.warn(`Unauthorized attempt to refresh badges for user ${req.params.userId} by user ${req.user?.id}`);
+        return res.status(403).json({ error: 'Unauthorized to refresh badges for this user' });
+      }
+      
+      const userId = req.params.userId;
+      
+      // Force re-evaluation of all badges
+      appLogger.info(`Evaluating all badges for user ${userId}`);
+      const evaluationResults = await badgeService.evaluateAllBadges(userId);
+      
+      // Clear any cached badge data in the service
+      appLogger.info(`Clearing badge cache for user ${userId}`);
+      await badgeService.clearUserCache(userId);
+      
+      // Get fresh badge data
+      appLogger.info(`Fetching fresh badge data for user ${userId}`);
+      const freshBadges = await badgeService.getUserBadges(userId);
+      
+      appLogger.info(`Badge refresh completed for user ${userId}`);
+      res.json({ 
+        success: true, 
+        message: 'Badge cache refreshed',
+        evaluationResults,
+        badges: freshBadges 
+      });
+    } catch (error) {
+      appLogger.error(`Error refreshing badge cache for user ${req.params.userId}:`, error);
+      console.error('Error refreshing badge cache:', error);
+      res.status(500).json({ error: 'Failed to refresh badge cache' });
+    }
+  }
+);
+
+/**
  * Record a user activity that might trigger badge evaluations
  */
 router.post(
