@@ -419,6 +419,43 @@ class BadgeService {
       badgeById: {}
     };
   }
+  
+  /**
+   * Force evaluation of all badges for a user
+   * This is primarily for diagnostic purposes
+   */
+  async evaluateAllBadges(userId: string): Promise<any[]> {
+    try {
+      // Try to call the API endpoint if available
+      const result = await badgeApiClient.evaluateBadges(userId);
+      
+      // Invalidate cache after evaluation
+      this.invalidateUserCache(userId);
+      
+      return result;
+    } catch (error) {
+      console.error(`Error evaluating all badges for user ${userId}:`, error);
+      
+      // Record activities for each badge type to trigger evaluation
+      try {
+        const activities = [
+          this.recordActivity(userId, 'audit_completed', { force: true }),
+          this.recordActivity(userId, 'recommendation_implemented', { force: true }),
+          this.recordActivity(userId, 'savings_updated', { force: true })
+        ];
+        
+        const results = await Promise.all(activities);
+        
+        // Invalidate cache
+        this.invalidateUserCache(userId);
+        
+        return results.flatMap(r => r.badgeUpdates || []);
+      } catch (e) {
+        console.error('Error in fallback badge evaluation:', e);
+        return [];
+      }
+    }
+  }
 }
 
 export const badgeService = new BadgeService();

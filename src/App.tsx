@@ -12,6 +12,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
 import NewUserDashboardPage from './pages/NewUserDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import BadgesDiagnosticPage from './pages/BadgesDiagnosticPage';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ContentWrapper from './components/layout/ContentWrapper';
@@ -194,6 +195,14 @@ const App: React.FC = () => {
                     element={
                       <ProtectedRoute>
                         <AdminDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/badge-diagnostics"
+                    element={
+                      <ProtectedRoute>
+                        <BadgesDiagnosticPage />
                       </ProtectedRoute>
                     }
                   />
