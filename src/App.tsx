@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import AdvancedInsulationPage from './pages/AdvancedInsulationPage';
 import ResidentialSolarPage from './pages/ResidentialSolarPage';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
@@ -123,6 +123,9 @@ const Home: React.FC = () => {
   );
 };
 
+// Lazy-loaded components
+const BadgesDiagnosticPage = lazy(() => import('./pages/BadgesDiagnosticPage'));
+
 // Main App component with routing
 const App: React.FC = () => {
   return (
@@ -190,6 +193,16 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/diagnostics/badges"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center">Loading diagnostics...</div>}>
+                    <BadgesDiagnosticPage />
+                  </Suspense>
                 </ProtectedRoute>
               }
             />
