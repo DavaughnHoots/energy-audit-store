@@ -1,5 +1,6 @@
 /**
  * Service for retrieving token information from the server
+ * Used to access HttpOnly cookies that can't be directly accessed by JavaScript
  */
 
 import { apiClient } from './apiClient';
@@ -23,9 +24,12 @@ export interface TokenInfo {
 export function decodeJwtToken(token: string): any {
   try {
     const tokenParts = token.split('.');
-    if (tokenParts.length !== 3) return null;
+    if (tokenParts.length < 2) return null;
     
     const base64Payload = tokenParts[1];
+    // Ensure base64Payload is a string before passing to atob
+    if (typeof base64Payload !== 'string') return null;
+    
     return JSON.parse(atob(base64Payload));
   } catch (e) {
     console.error('Error decoding JWT token:', e);
@@ -35,6 +39,8 @@ export function decodeJwtToken(token: string): any {
 
 /**
  * Fetch token information from the server
+ * This allows JavaScript to see information about HttpOnly cookies
+ * that would otherwise be invisible to the frontend
  */
 export async function getTokenInfo(): Promise<TokenInfo> {
   try {
@@ -119,7 +125,8 @@ export async function getTokenInfo(): Promise<TokenInfo> {
 }
 
 /**
- * Check if there are valid tokens available
+ * Check if there are valid tokens available (either in localStorage or HttpOnly cookies)
+ * @returns True if valid tokens are available
  */
 export async function hasValidTokens(): Promise<boolean> {
   // First check localStorage
@@ -128,7 +135,7 @@ export async function hasValidTokens(): Promise<boolean> {
     return true;
   }
   
-  // If not found in localStorage, check with the server for HttpOnly cookies
+  // If not found in localStorage, check with the server (for HttpOnly cookies)
   try {
     const tokenInfo = await getTokenInfo();
     return tokenInfo.hasAccessToken;

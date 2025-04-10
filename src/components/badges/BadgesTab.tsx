@@ -66,21 +66,24 @@ const BadgesTab: React.FC = () => {
   const [showLocked, setShowLocked] = useState<boolean>(true);
 
   // Get user's earned badges
-  const earnedBadges = BADGES.filter(badge => 
-    PLACEHOLDER_USER_BADGES[badge.id]?.earned
-  );
+  const earnedBadges = BADGES.filter(badge => {
+    if (!badge.id) return false;
+    return PLACEHOLDER_USER_BADGES[badge.id]?.earned === true;
+  });
 
   // Get user's in-progress badges (not earned but have progress)
-  const inProgressBadges = BADGES.filter(badge => 
-    !PLACEHOLDER_USER_BADGES[badge.id]?.earned && 
-    (PLACEHOLDER_USER_BADGES[badge.id]?.progress || 0) > 0
-  );
+  const inProgressBadges = BADGES.filter(badge => {
+    if (!badge.id) return false;
+    return !PLACEHOLDER_USER_BADGES[badge.id]?.earned && 
+      (PLACEHOLDER_USER_BADGES[badge.id]?.progress || 0) > 0;
+  });
 
   // Get locked badges (no progress)
-  const lockedBadges = BADGES.filter(badge => 
-    !PLACEHOLDER_USER_BADGES[badge.id]?.earned && 
-    (!PLACEHOLDER_USER_BADGES[badge.id] || PLACEHOLDER_USER_BADGES[badge.id]?.progress === 0)
-  );
+  const lockedBadges = BADGES.filter(badge => {
+    if (!badge.id) return false;
+    return !PLACEHOLDER_USER_BADGES[badge.id]?.earned && 
+      (!PLACEHOLDER_USER_BADGES[badge.id] || PLACEHOLDER_USER_BADGES[badge.id]?.progress === 0);
+  });
 
   // Filter badges based on active category
   const getFilteredBadges = (badges: Badge[]) => {
