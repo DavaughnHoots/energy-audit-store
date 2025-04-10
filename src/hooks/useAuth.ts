@@ -23,13 +23,36 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Load user from localStorage on mount
+  // Load user from localStorage or try to retrieve from API if tokens exist
   useEffect(() => {
-    const loadUser = () => {
+    const loadUser = async () => {
       try {
+        // First try to load from localStorage
         const userJson = localStorage.getItem('user');
+        const accessToken = localStorage.getItem('accessToken');
+        
         if (userJson) {
           setUser(JSON.parse(userJson));
+        } 
+        // If we have a token but no user, try to retrieve the profile from API
+        else if (accessToken) {
+          console.log('Found access token but no user data, attempting profile recovery');
+          try {
+            const response = await apiClient.get<{ user: User }>('/auth/profile');
+            if (response.data.user) {
+              // Save the recovered user data
+              localStorage.setItem('user', JSON.stringify(response.data.user));
+              setUser(response.data.user);
+              console.log('User profile recovered successfully');
+            }
+          } catch (profileError) {
+            console.error('Error recovering user profile:', profileError);
+            // If profile fetch fails, tokens might be invalid - clean up
+            if (apiClient.isUnauthorizedError(profileError)) {
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('refreshToken');
+            }
+          }
         }
       } catch (err) {
         console.error('Error loading user from localStorage:', err);
