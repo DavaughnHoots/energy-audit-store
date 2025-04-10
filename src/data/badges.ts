@@ -10,6 +10,60 @@ import { Badge } from '../types/badges';
 export const BADGES: Badge[] = [
   // ==== SAVINGS BADGES ====
   {
+  // Audit Badges
+  'audit-bronze': {
+    id: 'audit-bronze',
+    name: 'Audit Novice',
+    description: 'Complete your first energy audit',
+    category: 'audit',
+    tier: 'bronze',
+    points: 100,
+    criteria: {
+      type: 'count',
+      count: 1,
+      metric: 'audits'
+    }
+  },
+  'audit-silver': {
+    id: 'audit-silver',
+    name: 'Audit Enthusiast',
+    description: 'Complete 3 energy audits',
+    category: 'audit',
+    tier: 'silver',
+    points: 200,
+    criteria: {
+      type: 'count',
+      count: 3,
+      metric: 'audits'
+    }
+  },
+  'audit-gold': {
+    id: 'audit-gold',
+    name: 'Audit Expert',
+    description: 'Complete 5 energy audits',
+    category: 'audit',
+    tier: 'gold',
+    points: 300,
+    criteria: {
+      type: 'count',
+      count: 5,
+      metric: 'audits'
+    }
+  },
+  'audit-platinum': {
+    id: 'audit-platinum',
+    name: 'Audit Master',
+    description: 'Complete 10 energy audits',
+    category: 'audit',
+    tier: 'platinum',
+    points: 500,
+    criteria: {
+      type: 'count',
+      count: 10,
+      metric: 'audits'
+    }
+  },
+
     id: 'savings-bronze',
     name: 'Energy Saver',
     description: 'Save $100 on energy costs through efficient practices and improvements.',

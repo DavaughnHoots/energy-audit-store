@@ -522,4 +522,75 @@ export class BadgeService {
     
     return results;
   }
+
+/**
+ * Evaluate badges based on audit count
+ * 
+ * @param userId The user ID to evaluate badges for
+ * @param auditCount The current audit count
+ */
+async evaluateAuditBadges(userId: string, auditCount: number) {
+  try {
+    console.log(`Evaluating audit badges for user ${userId} with count ${auditCount}`);
+    
+    // Audit badges thresholds
+    const BRONZE_THRESHOLD = 1;
+    const SILVER_THRESHOLD = 3;
+    const GOLD_THRESHOLD = 5;
+    const PLATINUM_THRESHOLD = 10;
+    
+    // Evaluate bronze (1 audit)
+    if (auditCount >= BRONZE_THRESHOLD) {
+      await this.awardBadgeIfNotEarned(userId, 'audit-bronze');
+    }
+    
+    // Evaluate silver (3 audits)
+    if (auditCount >= SILVER_THRESHOLD) {
+      await this.awardBadgeIfNotEarned(userId, 'audit-silver');
+    }
+    
+    // Evaluate gold (5 audits)
+    if (auditCount >= GOLD_THRESHOLD) {
+      await this.awardBadgeIfNotEarned(userId, 'audit-gold');
+    }
+    
+    // Evaluate platinum (10 audits)
+    if (auditCount >= PLATINUM_THRESHOLD) {
+      await this.awardBadgeIfNotEarned(userId, 'audit-platinum');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error evaluating audit badges for user ${userId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Award a badge if not already earned
+ * 
+ * @param userId The user ID to award the badge to
+ * @param badgeId The badge ID to award
+ * @returns True if badge was awarded, false if already earned
+ */
+private async awardBadgeIfNotEarned(userId: string, badgeId: string): Promise<boolean> {
+  try {
+    // Check if user already has the badge
+    const userBadge = await this.getBadge(userId, badgeId);
+    
+    // If badge exists and is already earned, do nothing
+    if (userBadge && userBadge.earned) {
+      console.log(`User ${userId} already earned badge ${badgeId}`);
+      return false;
+    }
+    
+    // Award the badge
+    console.log(`Awarding badge ${badgeId} to user ${userId}`);
+    await this.awardBadge(userId, badgeId);
+    return true;
+  } catch (error) {
+    console.error(`Error awarding badge ${badgeId} to user ${userId}:`, error);
+    return false;
+  }
+}
 }

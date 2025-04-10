@@ -17,6 +17,7 @@ import { mergeDashboardData, didOverwriteRecommendations } from '@/utils/dashboa
 import { usePageTracking } from '@/hooks/analytics/usePageTracking';
 
 import { badgeService } from '../services/BadgeService';
+import useAuth from '@/context/AuthContext';
 
 interface DashboardStats {
   totalSavings: {
@@ -187,6 +188,35 @@ const UserDashboardPage: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
+  // Effect to evaluate badges based on dashboard stats
+  useEffect(() => {
+    if (isAuthenticated && stats && !isLoading) {
+      const evaluateBadgesFromStats = async () => {
+        try {
+          // Get user ID from auth context
+          const { user } = useAuth();
+          if (!user?.id) return;
+          
+          console.log('Evaluating badges from dashboard stats...');
+          
+          // Trigger evaluation for audit count
+          if (stats.completedAudits && stats.completedAudits > 0) {
+            await badgeService.recordActivity(user.id, 'audits_count_check', {
+              count: stats.completedAudits,
+              timestamp: new Date().toISOString()
+            });
+            console.log('Evaluated badge status for audit count:', stats.completedAudits);
+          }
+        } catch (error) {
+          // Don't let badge evaluation errors affect dashboard operation
+          console.error('Error evaluating badges from dashboard stats:', error);
+        }
+      };
+      
+      evaluateBadgesFromStats();
+    }
+  }, [isAuthenticated, stats, isLoading]);
+
 
   /**
    * Function to fetch dashboard data for a specific audit ID using the report API
