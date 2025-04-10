@@ -1,113 +1,172 @@
 import { useEffect, useState } from 'react';
-import { BADGES } from '../data/badges';
-import { Badge, UserBadge, POINTS } from '../types/badges';
+import { UserBadge, UserLevel, Badge } from '../types/badges';
+import { badgeService } from '../services/badgeService';
+import { useAuth } from './useAuth';
 
 /**
- * Custom hook to calculate badge progress based on user stats
- * This is a placeholder implementation for frontend-first development
- * In the real application, this would query the backend API
+ * Hook for fetching all badges for the current user
+ * @returns Object containing badges, loading state, and error
  */
-export function useBadgeProgress(userData: {
-  savings?: number;
-  auditCount?: number;
-  implementedCount?: number;
-  additionalStats?: Record<string, any>;
-}) {
+export function useUserBadges() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [userBadges, setUserBadges] = useState<Record<string, UserBadge>>({});
+  const [points, setPoints] = useState<UserLevel | null>(null);
+  const [allBadges, setAllBadges] = useState<Badge[]>([]);
   
   useEffect(() => {
-    const calculateProgress = () => {
-      const badges: Record<string, UserBadge> = {};
-      
-      BADGES.forEach(badge => {
-        let progress = 0;
-        let earned = false;
-        
-        // Calculate progress based on criteria type
-        switch (badge.criteria.type) {
-          case 'savingsAmount':
-            progress = Math.min(
-              Math.floor((userData.savings || 0) / badge.criteria.threshold * 100),
-              100
-            );
-            earned = (userData.savings || 0) >= badge.criteria.threshold;
-            break;
-            
-          case 'auditCount':
-            progress = Math.min(
-              Math.floor((userData.auditCount || 0) / badge.criteria.threshold * 100),
-              100
-            );
-            earned = (userData.auditCount || 0) >= badge.criteria.threshold;
-            break;
-            
-          case 'implementedCount':
-            progress = Math.min(
-              Math.floor((userData.implementedCount || 0) / badge.criteria.threshold * 100),
-              100
-            );
-            earned = (userData.implementedCount || 0) >= badge.criteria.threshold;
-            break;
-            
-          case 'custom':
-            if (badge.criteria.customCheck) {
-              earned = badge.criteria.customCheck(userData);
-              progress = earned ? 100 : 0;
-            }
-            break;
-        }
-        
-        badges[badge.id] = {
-          badgeId: badge.id,
-          earned,
-          progress,
-          earnedDate: earned ? new Date() : undefined,
-          visible: true
-        };
-      });
-      
-      setUserBadges(badges);
-    };
-    
-    calculateProgress();
-  }, [userData]);
-  
-  /**
-   * Calculate user points based on current progress and achievements
-   */
-  const calculatePoints = () => {
-    let totalPoints = 0;
-    
-    // Points from savings
-    if (userData.savings) {
-      totalPoints += userData.savings * POINTS.SAVINGS_DOLLAR;
-    }
-    
-    // Points from audits
-    if (userData.auditCount) {
-      totalPoints += userData.auditCount * POINTS.AUDIT_COMPLETED;
-    }
-    
-    // Points from implemented recommendations
-    if (userData.implementedCount) {
-      totalPoints += userData.implementedCount * POINTS.RECOMMENDATION_IMPLEMENTED;
-    }
-    
-    // Points from earned badges
-    Object.values(userBadges).forEach(badge => {
-      if (badge.earned) {
-        totalPoints += POINTS.BADGE_EARNED;
+    async function fetchBadges() {
+      if (!user?.id) {
+        setLoading(false);
+        return;
       }
-    });
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch badges, points, and badge definitions in parallel
+        const [badges, userPoints, badgeDefinitions] = await Promise.all([
+          badgeService.getUserBadges(user.id),
+          badgeService.getUserPoints(user.id),
+          badgeService.getAllBadges()
+        ]);
+        
+        setUserBadges(badges);
+        setPoints(userPoints);
+        setAllBadges(badgeDefinitions);
+      } catch (err) {
+        console.error('Error fetching user badges:', err);
+        setError('Failed to load badges. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
     
-    return Math.floor(totalPoints);
-  };
+    fetchBadges();
+  }, [user?.id]);
   
   return {
+    loading,
+    error,
     userBadges,
-    totalPoints: calculatePoints(),
+    points,
+    allBadges,
     earnedBadges: Object.values(userBadges).filter(badge => badge.earned),
     inProgressBadges: Object.values(userBadges).filter(badge => !badge.earned && badge.progress > 0),
-    lockedBadges: Object.values(userBadges).filter(badge => !badge.earned && badge.progress === 0)
+    lockedBadges: Object.values(userBadges).filter(badge => !badge.earned && badge.progress === 0),
+    refreshBadges: async () => {
+      if (user?.id) {
+        setLoading(true);
+        try {
+          badgeService.invalidateUserCache(user.id);
+          const badges = await badgeService.getUserBadges(user.id);
+          const userPoints = await badgeService.getUserPoints(user.id);
+          setUserBadges(badges);
+          setPoints(userPoints);
+        } catch (err) {
+          console.error('Error refreshing badges:', err);
+          setError('Failed to refresh badges.');
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
   };
+}
+
+/**
+ * Hook for fetching a specific badge and its progress
+ * @param badgeId ID of the badge to fetch
+ * @returns Badge details, progress, loading state and error
+ */
+export function useBadgeProgress(badgeId: string) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [badgeProgress, setBadgeProgress] = useState<UserBadge | null>(null);
+  const [badgeDefinition, setBadgeDefinition] = useState<Badge | null>(null);
+  
+  useEffect(() => {
+    if (!user?.id || !badgeId) {
+      setLoading(false);
+      return;
+    }
+    
+    async function fetchBadgeProgress() {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Get user badges and badge definition
+        const [userBadges, badge] = await Promise.all([
+          badgeService.getUserBadges(user.id),
+          badgeService.getBadge(badgeId)
+        ]);
+        
+        // Get progress for this specific badge
+        if (badge) {
+          setBadgeDefinition(badge);
+        }
+        
+        // Get user badge progress or create default progress object
+        const progress = userBadges[badgeId] || {
+          badgeId,
+          progress: 0,
+          earned: false,
+          visible: true
+        };
+        
+        setBadgeProgress(progress);
+      } catch (err) {
+        console.error(`Error fetching badge progress for ${badgeId}:`, err);
+        setError('Failed to load badge progress. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchBadgeProgress();
+  }, [user?.id, badgeId]);
+  
+  return { loading, error, badgeProgress, badgeDefinition };
+}
+
+/**
+ * Hook for fetching recent achievements (earned badges)
+ * @param limit Maximum number of achievements to fetch (default: 3)
+ * @returns Recent achievements, loading state and error
+ */
+export function useRecentAchievements(limit: number = 3) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [achievements, setAchievements] = useState<Badge[]>([]);
+  
+  useEffect(() => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    
+    async function fetchAchievements() {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const recentAchievements = await badgeService.getRecentAchievements(user.id, limit);
+        setAchievements(recentAchievements);
+      } catch (err) {
+        console.error('Error fetching recent achievements:', err);
+        setError('Failed to load achievements. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchAchievements();
+  }, [user?.id, limit]);
+  
+  return { loading, error, achievements };
 }
