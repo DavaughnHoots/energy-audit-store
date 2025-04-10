@@ -1,69 +1,69 @@
 /**
- * Badge definitions for the gamification system
+ * Badge definitions and constants for the backend
+ * This mirrors the frontend badge definitions in src/data/badges.ts
  */
 
-import { Badge } from '../types/badges';
+// Badge category types
+export const BADGE_CATEGORIES = [
+  'savings',
+  'audits',
+  'improvements',
+  'education',
+  'special'
+];
+
+// Badge tier levels
+export const BADGE_TIERS = [
+  'bronze',
+  'silver',
+  'gold',
+  'platinum',
+  'special'
+];
+
+// Badge criteria types
+export const BADGE_CRITERIA_TYPES = [
+  'savingsAmount',
+  'auditCount',
+  'implementedCount',
+  'custom'
+];
+
+// Badge reward types
+export const BADGE_REWARD_TYPES = [
+  'feature',
+  'discount',
+  'content',
+  'recognition'
+];
+
+/**
+ * Points awarded for different activities
+ */
+export const POINTS = {
+  SAVINGS_DOLLAR: 0.1,        // 0.1 points per dollar saved
+  AUDIT_COMPLETED: 10,        // 10 points per audit
+  RECOMMENDATION_IMPLEMENTED: 15, // 15 points per implemented change
+  BADGE_EARNED: 25            // 25 points per badge earned
+};
+
+/**
+ * Level definitions with thresholds
+ */
+export const LEVELS = [
+  { level: 1, threshold: 0, title: 'Energy Novice' },      // Everyone starts here
+  { level: 2, threshold: 100, title: 'Energy Apprentice' },   // 100 points
+  { level: 3, threshold: 250, title: 'Energy Enthusiast' },   // 250 points
+  { level: 4, threshold: 500, title: 'Energy Expert' },   // 500 points
+  { level: 5, threshold: 1000, title: 'Energy Master' }   // 1000 points
+];
 
 /**
  * Collection of all available badges in the system
  */
-export const BADGES: Badge[] = [
+export const BADGES = [
   // ==== SAVINGS BADGES ====
   {
-  // Audit Badges
-  'audit-bronze': {
-    id: 'audit-bronze',
-    name: 'Audit Novice',
-    description: 'Complete your first energy audit',
-    category: 'audit',
-    tier: 'bronze',
-    points: 100,
-    criteria: {
-      type: 'count',
-      count: 1,
-      metric: 'audits'
-    }
-  },
-  'audit-silver': {
-    id: 'audit-silver',
-    name: 'Audit Enthusiast',
-    description: 'Complete 3 energy audits',
-    category: 'audit',
-    tier: 'silver',
-    points: 200,
-    criteria: {
-      type: 'count',
-      count: 3,
-      metric: 'audits'
-    }
-  },
-  'audit-gold': {
-    id: 'audit-gold',
-    name: 'Audit Expert',
-    description: 'Complete 5 energy audits',
-    category: 'audit',
-    tier: 'gold',
-    points: 300,
-    criteria: {
-      type: 'count',
-      count: 5,
-      metric: 'audits'
-    }
-  },
-  'audit-platinum': {
-    id: 'audit-platinum',
-    name: 'Audit Master',
-    description: 'Complete 10 energy audits',
-    category: 'audit',
-    tier: 'platinum',
-    points: 500,
-    criteria: {
-      type: 'count',
-      count: 10,
-      metric: 'audits'
-    }
-  },
-
     id: 'savings-bronze',
     name: 'Energy Saver',
     description: 'Save $100 on energy costs through efficient practices and improvements.',
@@ -264,12 +264,7 @@ export const BADGES: Badge[] = [
     tier: 'special',
     criteria: {
       type: 'custom',
-      threshold: 1,
-      customCheck: (userData) => {
-        // Custom check implementation would go here
-        // For now, just return false
-        return false;
-      }
+      threshold: 1
     },
     visibility: 'public'
   },
@@ -282,12 +277,7 @@ export const BADGES: Badge[] = [
     tier: 'special',
     criteria: {
       type: 'custom',
-      threshold: 1,
-      customCheck: (userData) => {
-        // Custom check implementation would go here
-        // For now, just return false
-        return false;
-      }
+      threshold: 1
     },
     visibility: 'public'
   },
@@ -300,12 +290,7 @@ export const BADGES: Badge[] = [
     tier: 'special',
     criteria: {
       type: 'custom',
-      threshold: 1,
-      customCheck: (userData) => {
-        // Custom check implementation would go here
-        // For now, just return false
-        return false;
-      }
+      threshold: 1
     },
     reward: {
       description: 'Unlock advanced educational content',
@@ -323,12 +308,7 @@ export const BADGES: Badge[] = [
     tier: 'special',
     criteria: {
       type: 'custom',
-      threshold: 1,
-      customCheck: (userData) => {
-        // Custom check implementation would go here
-        // For now, just return false
-        return false;
-      }
+      threshold: 1
     },
     reward: {
       description: 'Special profile badge visible to others',
@@ -342,20 +322,20 @@ export const BADGES: Badge[] = [
 /**
  * Get a badge by ID
  */
-export const getBadgeById = (id: string): Badge | undefined => {
+export const getBadgeById = (id) => {
   return BADGES.find(badge => badge.id === id);
 };
 
 /**
  * Get all badges in a specific category
  */
-export const getBadgesByCategory = (category: string): Badge[] => {
+export const getBadgesByCategory = (category) => {
   return BADGES.filter(badge => badge.category === category);
 };
 
 /**
  * Get badges for a specific tier
  */
-export const getBadgesByTier = (tier: string): Badge[] => {
+export const getBadgesByTier = (tier) => {
   return BADGES.filter(badge => badge.tier === tier);
 };

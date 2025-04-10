@@ -1,6 +1,8 @@
 import { API_ENDPOINTS, API_BASE_URL, getApiUrl } from '../config/api';
 import { ReportData, PaginatedAuditHistory } from '../types/report';
-import { fetchWithAuth } from '../utils/authUtils';
+import { fetchWithAuth, getAccessToken } from '../utils/authUtils';
+import { savingsBadgeIntegration } from './savingsBadgeIntegration';
+import { AuditRecommendation } from '../types/energyAudit';
 
 /**
  * Validates that an audit ID is a non-empty string that's not "null"
@@ -109,6 +111,49 @@ export const updateRecommendationStatus = async (
     }
     
     console.log('Recommendation status updated successfully');
+    
+    // If recommendation is marked as implemented and has savings, trigger badge evaluation
+    if (status === 'implemented') {
+      try {
+        // Get user ID from token
+        const token = getAccessToken();
+        let userId = '';
+        
+        if (token) {
+          // Simple token parsing - assumes token is in JWT format
+          const tokenParts = token.split('.');
+          if (tokenParts.length === 3 && tokenParts[1]) {
+            try {
+              const decodedPayload = atob(tokenParts[1]);
+              const payload = JSON.parse(decodedPayload);
+              userId = payload.userId || payload.sub || '';
+            } catch (parseError) {
+              console.error('Error parsing JWT token:', parseError);
+            }
+          }
+        }
+        
+        if (userId) {
+          // Create a basic recommendation object with the data we have
+          const recommendation: Partial<AuditRecommendation> = {
+            id: recommendationId,
+            status: 'implemented',
+            actualSavings: actualSavings || 0
+          };
+          
+          // Record the implementation for badge evaluation
+          await savingsBadgeIntegration.handleRecommendationImplemented(
+            userId,
+            recommendation as AuditRecommendation
+          );
+          
+          console.log('Triggered savings badge evaluation for recommendation implementation');
+        }
+      } catch (badgeError) {
+        // Don't fail the main operation if badge evaluation fails
+        console.error('Error triggering badge evaluation:', badgeError);
+      }
+    }
   } catch (error) {
     console.error('Error updating recommendation status:', error);
     throw error;

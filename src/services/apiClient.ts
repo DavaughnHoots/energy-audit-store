@@ -1,16 +1,33 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 // Default API URL based on environment - can be overridden in environment variables
 const API_URL = import.meta.env.VITE_API_URL || 
                 process.env.VITE_API_URL || 
                 'https://energy-audit-store.herokuapp.com/api';
 
+// Check if the cookieUtils module is available
+let syncAuthTokens: (() => void) | undefined;
+let getCookie: ((name: string) => string | null) | undefined;
+
+try {
+  // Try to dynamically import cookieUtils functions if they exist
+  const cookieUtils = require('../utils/cookieUtils');
+  syncAuthTokens = cookieUtils.syncAuthTokens;
+  getCookie = cookieUtils.getCookie;
+} catch (e) {
+  // If cookieUtils is not available, provide fallback implementations
+  console.log('Cookie utils not available, using fallbacks');
+  syncAuthTokens = () => {};
+  getCookie = () => null;
+}
+
 /**
  * Axios instance configured for API requests
  * This instance handles auth tokens and common headers
  */
-export const apiClient = axios.create({
+const axiosInstance = axios.create({
   baseURL: API_URL,
+  timeout: 15000, // 15 seconds timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,10 +35,23 @@ export const apiClient = axios.create({
 });
 
 // Request interceptor to add auth token if available
-apiClient.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
+    // Sync tokens from cookies if that functionality exists
+    if (syncAuthTokens) {
+      syncAuthTokens();
+    }
+    
     // Get token from localStorage if available
-    const token = localStorage.getItem('accessToken');
+    let token = localStorage.getItem('accessToken');
+    
+    // If no token in localStorage but getCookie is available, try cookies
+    if (!token && getCookie) {
+      token = getCookie('accessToken');
+      if (token) {
+        localStorage.setItem('accessToken', token);
+      }
+    }
     
     // Add authorization header if token exists
     if (token) {
@@ -34,7 +64,7 @@ apiClient.interceptors.request.use(
 );
 
 // Handle 401 Unauthorized errors by refreshing token or redirecting to login
-apiClient.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
@@ -62,10 +92,11 @@ apiClient.interceptors.response.use(
             }
             
             // Update auth header with new token
+            axiosInstance.defaults.headers.common.Authorization = `Bearer ${response.data.accessToken}`;
             originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
             
             // Retry the original request
-            return apiClient(originalRequest);
+            return axiosInstance(originalRequest);
           }
         }
       } catch (refreshError) {
@@ -84,5 +115,110 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Type for API response
+export interface ApiResponse<T> {
+  data: T;
+  success: boolean;
+  message?: string;
+  errors?: any[];
+}
+
+// Export API client methods
+export const apiClient = {
+  /**
+   * Make a GET request
+   */
+  get: async <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+    try {
+      return await axiosInstance.get<T>(url, config);
+    } catch (error) {
+      console.error(`GET request failed to ${url}:`, error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Make a POST request
+   */
+  post: async <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+    try {
+      return await axiosInstance.post<T>(url, data, config);
+    } catch (error) {
+      console.error(`POST request failed to ${url}:`, error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Make a PUT request
+   */
+  put: async <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+    try {
+      return await axiosInstance.put<T>(url, data, config);
+    } catch (error) {
+      console.error(`PUT request failed to ${url}:`, error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Make a DELETE request
+   */
+  delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+    try {
+      return await axiosInstance.delete<T>(url, config);
+    } catch (error) {
+      console.error(`DELETE request failed to ${url}:`, error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Check if the error is a network error
+   */
+  isNetworkError: (error: any): boolean => {
+    return axios.isAxiosError(error) && !error.response;
+  },
+  
+  /**
+   * Check if the error is a 401 (Unauthorized) error
+   */
+  isUnauthorizedError: (error: any): boolean => {
+    return axios.isAxiosError(error) && error.response?.status === 401;
+  },
+  
+  /**
+   * Get error message from error object (formatted for display)
+   */
+  getErrorMessage: (error: any): string => {
+    if (axios.isAxiosError(error)) {
+      if (!error.response) {
+        return 'Network error. Please check your internet connection.';
+      }
+      
+      // Handle structured error responses from our API
+      if (error.response.data) {
+        if (error.response.data.message) {
+          return error.response.data.message;
+        }
+        
+        if (error.response.data.error) {
+          return error.response.data.error;
+        }
+        
+        if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+          return error.response.data.errors.map((e: any) => e.message || e).join(', ');
+        }
+      }
+      
+      // Fall back to HTTP status text
+      return error.response.statusText || 'An error occurred';
+    }
+    
+    // For non-Axios errors
+    return error.message || 'An unknown error occurred';
+  }
+};
 
 export default apiClient;

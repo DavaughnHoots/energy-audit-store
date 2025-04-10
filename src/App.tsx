@@ -1,7 +1,9 @@
 import React from 'react';
 import AdvancedInsulationPage from './pages/AdvancedInsulationPage';
 import ResidentialSolarPage from './pages/ResidentialSolarPage';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import PilotStudyFAQPage from './pages/PilotStudyFAQPage';
+import PilotStudyBanner from './components/PilotStudyBanner';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
 import { usePageTracking } from './hooks/analytics/usePageTracking';
@@ -10,8 +12,10 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboardPage';
 import NewUserDashboardPage from './pages/NewUserDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import BadgesDiagnosticPage from './pages/BadgesDiagnosticPage';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
+import ContentWrapper from './components/layout/ContentWrapper';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import EnergyAuditPage from './pages/EnergyAuditPage';
@@ -130,73 +134,84 @@ const App: React.FC = () => {
       <Router>
         <AuthProvider>
           <AnalyticsProvider>
-        <div className="min-h-screen flex flex-col bg-gray-50">
-        <Header />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/products" element={<ProductsPage />} />
-            <Route path="/products/:id" element={<ProductDetailPage />} />
-            <Route path="/energy-audit" element={<EnergyAuditPage />} />
-            <Route path="/energy-audit/:auditId/report" element={<InteractiveReportPage />} />
-            <Route path="/reports/:auditId" element={<InteractiveReportPage />} />
-            <Route path="/education" element={<EducationPage />} />
-            <Route path="/education/resources/advanced-insulation" element={<AdvancedInsulationPage />} />
-            {/* Special redirect for resource ID 2 to the advanced insulation page */}
-            <Route path="/education/2" element={<Navigate to="/education/resources/advanced-insulation" replace />} />
-            <Route path="/education/resources/residential-solar" element={<ResidentialSolarPage />} />
-            {/* Special redirect for residential solar to the dedicated path */}
-            <Route path="/education/residential-solar" element={<Navigate to="/education/resources/residential-solar" replace />} />
-            {/* Special redirect for resource ID 3 to the residential solar page */}
-            <Route path="/education/3" element={<Navigate to="/education/resources/residential-solar" replace />} />
-            <Route path="/education/:resourceId" element={<ResourceContentPage />} />
-            <Route path="/community" element={<CommunityPage />} />
-            <Route path="/sign-in" element={<SignIn />} />
-            <Route path="/sign-up" element={<SignUp />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Navigate to="/dashboard2" replace />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard2"
-              element={
-                <ProtectedRoute>
-                  <NewUserDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <UserSettingsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings/property"
-              element={
-                <ProtectedRoute>
-                  <UserSettingsPage initialSection="general" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AdminDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </main>
-        <Footer />
-        </div>
+          <div className="min-h-screen flex flex-col bg-gray-50">
+            <Header />
+            <main className="flex-grow">
+              <ContentWrapper>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products/:id" element={<ProductDetailPage />} />
+                  <Route path="/energy-audit" element={<EnergyAuditPage />} />
+                  <Route path="/energy-audit/:auditId/report" element={<InteractiveReportPage />} />
+                  <Route path="/reports/:auditId" element={<InteractiveReportPage />} />
+                  <Route path="/education" element={<EducationPage />} />
+                  <Route path="/education/resources/advanced-insulation" element={<AdvancedInsulationPage />} />
+                  {/* Special redirect for resource ID 2 to the advanced insulation page */}
+                  <Route path="/education/2" element={<Navigate to="/education/resources/advanced-insulation" replace />} />
+                  <Route path="/education/resources/residential-solar" element={<ResidentialSolarPage />} />
+                  {/* Special redirect for residential solar to the dedicated path */}
+                  <Route path="/education/residential-solar" element={<Navigate to="/education/resources/residential-solar" replace />} />
+                  {/* Special redirect for resource ID 3 to the residential solar page */}
+                  <Route path="/education/3" element={<Navigate to="/education/resources/residential-solar" replace />} />
+                  <Route path="/education/:resourceId" element={<ResourceContentPage />} />
+                  <Route path="/community" element={<CommunityPage />} />
+                  <Route path="/sign-in" element={<SignIn />} />
+                  <Route path="/sign-up" element={<SignUp />} />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Navigate to="/dashboard2" replace />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard2"
+                    element={
+                      <ProtectedRoute>
+                        <NewUserDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <ProtectedRoute>
+                        <UserSettingsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings/property"
+                    element={
+                      <ProtectedRoute>
+                        <UserSettingsPage initialSection="general" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <AdminDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/badge-diagnostics"
+                    element={
+                      <ProtectedRoute>
+                        <BadgesDiagnosticPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/pilot-study-faq" element={<PilotStudyFAQPage />} />
+                </Routes>
+              </ContentWrapper>
+            </main>
+            <Footer />
+          </div>
           </AnalyticsProvider>
         </AuthProvider>
       </Router>

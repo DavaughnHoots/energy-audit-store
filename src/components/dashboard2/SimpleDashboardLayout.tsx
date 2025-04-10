@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from 'react';
 import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ReportsTab, PropertySettingsTab, BadgesTab } from './index';
+import { ReportsTab, PropertySettingsTab, BadgesTab, SurveyTab } from './index';
 
 interface SimpleDashboardLayoutProps {
   children: ReactNode;
@@ -102,6 +102,16 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
             >
               Property Settings
             </button>
+            <button
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'survey'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'bg-blue-50 border-transparent text-blue-700 hover:text-blue-800 hover:border-blue-300'
+              }`}
+              onClick={() => setActiveTab('survey')}
+            >
+              Survey
+            </button>
           </div>
         </div>
         
@@ -121,6 +131,8 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
               <BadgesTab />
             ) : activeTab === 'property-settings' ? (
               <PropertySettingsTab />
+            ) : activeTab === 'survey' ? (
+              <SurveyTab />
             ) : (
               children
             )}

@@ -30,7 +30,8 @@ import reportDataRoutes from './routes/reportData.enhanced.js';
 import adminRoutes from './routes/admin.enhanced.js';
 // Original imports kept but disabled: ./routes/auditHistory.js
 import userPropertySettingsRoutes from './routes/userPropertySettings.js';
-import recommendationsRoutes from './routes/recommendations.js';
+// Use enhanced recommendations routes with badge integration
+import recommendationsRoutes from './routes/recommendations.enhanced.js';
 import userProfileRoutes from './routes/userProfile.js';
 import productsRoutes from './routes/products.js';
 import visualizationRoutes from './routes/visualization.js';
@@ -40,12 +41,16 @@ import energyConsumptionRoutes from './routes/energyConsumption.js';
 // Using analytics routes
 import analyticsRoutes from './routes/analytics.js';
 import directAdminRoutes from './routes/direct-admin.js';
+import badgesRoutes from './routes/badges.js';
+import surveyRoutes from './routes/survey.js';
+import authTokenRoutes from './routes/auth-token.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import { runEnergyConsumptionMigration } from './scripts/run_energy_consumption_migration.js';
 import { runEducationMigration } from './scripts/run_education_migration.js';
+import { runSurveyTablesMigration } from './migrations/20250410_create_survey_tables.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 // Product comparison migration removed - table already exists
@@ -93,6 +98,15 @@ if (process.env.NODE_ENV === 'production') {
     })
     .catch(error => {
       appLogger.error('Error running education tables migration on startup', { error });
+    });
+    
+  // Run survey tables migration
+  runSurveyTablesMigration()
+    .then(result => {
+      appLogger.info('Survey tables migration completed on startup', { result });
+    })
+    .catch(error => {
+      appLogger.error('Error running survey tables migration on startup', { error });
     });
     
   // Run initial orphaned audit association
@@ -212,7 +226,8 @@ app.use('/api/education', educationRoutes);
 app.use('/api/energy-audit/history', authenticate, auditHistoryRoutes);
 // Use a parameter pattern that matches the frontend's expected URL format
 app.use('/api/energy-audit/:id/report-data', optionalTokenValidation, reportDataRoutes);
-app.use('/api/energy-audit', energyAuditRoutes);
+// Use enhanced energy audit routes with badge integration
+app.use('/api/energy-audit', await import('./routes/energyAudit.enhanced.js').then(m => m.default));
 app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
 app.use('/api/recommendations/products', productRecommendationsRoutes);
@@ -224,6 +239,9 @@ app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/direct-admin', authenticate, directAdminRoutes);
+app.use('/api/badges', badgesRoutes);
+app.use('/api/survey', surveyRoutes);
+app.use('/api/auth-token', authTokenRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

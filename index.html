@@ -5,7 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Energy Efficient Shop</title>
-  </head>
+  
+  <!-- Badge cache refresh script (temporary, remove after fixing cache issues) -->
+  <script>
+    // Only run the refresh script if URL has refresh_badges=true parameter
+    if (window.location.search.includes('refresh_badges=true')) {
+      const script = document.createElement('script');
+      script.src = '/refresh_badge_cache.js';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  </script>
+</head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

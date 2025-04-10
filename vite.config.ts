@@ -29,7 +29,7 @@ export default defineConfig({
         'mock-aws-s3',
         'nock',
         '@mapbox/node-pre-gyp',
-        'axios',
+        // Removed axios from external since we need it in the frontend
       ],
     },
     minify: true,
