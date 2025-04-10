@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { getCookie, syncAuthTokens } from '../utils/cookieUtils';
 
 /**
  * Base API client for making HTTP requests to the backend
@@ -19,8 +20,21 @@ const axiosInstance = axios.create({
 
 // Add request interceptor to attach authentication token
 axiosInstance.interceptors.request.use((config) => {
+  // First try to sync cookies to localStorage (only if needed)
+  syncAuthTokens();
+  
   // Get token from local storage
-  const token = localStorage.getItem('accessToken');
+  let token = localStorage.getItem('accessToken');
+  
+  // If no token in localStorage, try to get from cookies as fallback
+  if (!token) {
+    token = getCookie('accessToken');
+    if (token) {
+      // Save to localStorage for future requests
+      localStorage.setItem('accessToken', token);
+      console.log('Retrieved accessToken from cookies and saved to localStorage');
+    }
+  }
   
   // If token exists, add it to the Authorization header
   if (token) {

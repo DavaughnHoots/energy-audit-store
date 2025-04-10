@@ -209,6 +209,19 @@ const BadgesDiagnosticPage: React.FC = () => {
                 <p>
                   <strong>Role:</strong> {user.role || "unknown"}
                 </p>
+                <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+                  <p className="font-medium">Token Information:</p>
+                  <p>Access Token: {tokenInfo.accessToken ? "Present" : "Missing"}</p>
+                  <p>Refresh Token: {tokenInfo.refreshToken ? "Present" : "Missing"}</p>
+                  {tokenInfo.tokenDetails && (
+                    <div className="mt-1">
+                      <p className="font-medium">Token Payload:</p>
+                      <pre className="overflow-x-auto bg-gray-200 p-1 rounded">
+                        {JSON.stringify(tokenInfo.tokenDetails, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ) : (

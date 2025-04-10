@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../services/apiClient';
+import { syncAuthTokens } from '../utils/cookieUtils';
 
 /**
  * User interface representing authenticated user information
@@ -27,6 +28,9 @@ export function useAuth() {
   useEffect(() => {
     const loadUser = async () => {
       try {
+        // Sync cookies to localStorage if needed
+        syncAuthTokens();
+        
         // First try to load from localStorage
         const userJson = localStorage.getItem('user');
         const accessToken = localStorage.getItem('accessToken');
