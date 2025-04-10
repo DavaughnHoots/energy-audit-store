@@ -21,6 +21,10 @@ try {
   console.log('Adding files to staging...');
   execSync('git add src/hooks/useAuth.ts', { stdio: 'inherit' });
   execSync('git add src/pages/BadgesDiagnosticPage.tsx', { stdio: 'inherit' });
+  execSync('git add src/utils/cookieUtils.ts', { stdio: 'inherit' });
+  execSync('git add src/services/tokenInfoService.ts', { stdio: 'inherit' });
+  execSync('git add backend/src/routes/auth-token.ts', { stdio: 'inherit' });
+  execSync('git add backend/src/server.ts', { stdio: 'inherit' });
   execSync('git add energy-audit-vault/operations/bug-fixes/badge-auth-issues-fix.md', { stdio: 'inherit' });
 
   // Commit changes

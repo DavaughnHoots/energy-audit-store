@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../services/apiClient';
 import { syncAuthTokens } from '../utils/cookieUtils';
+import { getTokenInfo, hasValidTokens } from '../services/tokenInfoService';
 
 /**
  * User interface representing authenticated user information
@@ -23,6 +24,29 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Helper function to recover a user profile from a token
+   */
+  const recoverUserProfileFromToken = async (token: string) => {
+    console.log('Found access token but no user data, attempting profile recovery');
+    try {
+      const response = await apiClient.get<{ user: User }>('/auth/profile');
+      if (response.data.user) {
+        // Save the recovered user data
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        console.log('User profile recovered successfully');
+      }
+    } catch (profileError) {
+      console.error('Error recovering user profile:', profileError);
+      // If profile fetch fails, tokens might be invalid - clean up
+      if (apiClient.isUnauthorizedError(profileError)) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+      }
+    }
+  };
   
   // Load user from localStorage or try to retrieve from API if tokens exist
   useEffect(() => {
@@ -40,21 +64,24 @@ export function useAuth() {
         } 
         // If we have a token but no user, try to retrieve the profile from API
         else if (accessToken) {
-          console.log('Found access token but no user data, attempting profile recovery');
-          try {
-            const response = await apiClient.get<{ user: User }>('/auth/profile');
-            if (response.data.user) {
-              // Save the recovered user data
-              localStorage.setItem('user', JSON.stringify(response.data.user));
-              setUser(response.data.user);
-              console.log('User profile recovered successfully');
-            }
-          } catch (profileError) {
-            console.error('Error recovering user profile:', profileError);
-            // If profile fetch fails, tokens might be invalid - clean up
-            if (apiClient.isUnauthorizedError(profileError)) {
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
+          await recoverUserProfileFromToken(accessToken);
+        } 
+        // Check if we have HttpOnly cookies with tokens
+        else {
+          const tokenInfo = await getTokenInfo();
+          
+          if (tokenInfo.hasAccessToken) {
+            console.log('Found HttpOnly cookie token but no user data, attempting profile recovery');
+            try {
+              const response = await apiClient.get<{ user: User }>('/auth/profile');
+              if (response.data.user) {
+                // Save the recovered user data
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                setUser(response.data.user);
+                console.log('User profile recovered successfully from HttpOnly cookies');
+              }
+            } catch (profileError) {
+              console.error('Error recovering user profile from HttpOnly cookies:', profileError);
             }
           }
         }

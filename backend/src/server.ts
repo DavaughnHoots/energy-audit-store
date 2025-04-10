@@ -43,6 +43,7 @@ import analyticsRoutes from './routes/analytics.js';
 import directAdminRoutes from './routes/direct-admin.js';
 import badgesRoutes from './routes/badges.js';
 import surveyRoutes from './routes/survey.js';
+import authTokenRoutes from './routes/auth-token.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -240,6 +241,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/direct-admin', authenticate, directAdminRoutes);
 app.use('/api/badges', badgesRoutes);
 app.use('/api/survey', surveyRoutes);
+app.use('/api/auth-token', authTokenRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
