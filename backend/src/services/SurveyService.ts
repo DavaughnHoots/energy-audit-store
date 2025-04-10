@@ -271,11 +271,42 @@ export class SurveyService {
       
       const answersResult = await pool.query(answersQuery, [id]);
       
-      // Process checkbox_values from JSONB string to array
-      const answers = answersResult.rows.map(row => ({
-        ...row,
-        checkbox_values: row.checkbox_values ? JSON.parse(row.checkbox_values) : null
-      }));
+      // Define type for row data
+      interface AnswerRow {
+        question_id: string;
+        question_section: string;
+        question_type: string;
+        likert_value: number | null;
+        text_value: string | null;
+        checkbox_values: any;
+      }
+      
+      // Process checkbox_values - handle both string and already parsed JSON
+      const answers = answersResult.rows.map((row: AnswerRow) => {
+        try {
+          return {
+            ...row,
+            checkbox_values: row.checkbox_values 
+              ? (typeof row.checkbox_values === 'string' 
+                  ? JSON.parse(row.checkbox_values) 
+                  : row.checkbox_values)
+              : null
+          };
+        } catch (error) {
+          appLogger.error('Error processing checkbox_values:', { 
+            error, 
+            responseId: id, 
+            value: row.checkbox_values,
+            valueType: typeof row.checkbox_values 
+          });
+          
+          // Return with original value to prevent complete failure
+          return {
+            ...row, 
+            checkbox_values: row.checkbox_values
+          };
+        }
+      });
       
       return {
         ...response,
