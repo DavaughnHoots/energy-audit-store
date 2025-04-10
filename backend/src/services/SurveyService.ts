@@ -149,6 +149,145 @@ export class SurveyService {
   }
   
   /**
+   * Get paginated survey responses for admin dashboard
+   * 
+   * @param page - Page number (1-based)
+   * @param limit - Number of responses per page
+   * @returns Paginated survey responses with total count
+   */
+  static async getPaginatedResponses(page: number = 1, limit: number = 5): Promise<{
+    responses: Array<{
+      id: number;
+      user_id: string | null;
+      submission_date: Date;
+      user_agent: string | null;
+      completion_time_seconds: number | null;
+      sections: string[];
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    try {
+      // Get total count for pagination
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM survey_responses
+      `;
+      const countResult = await pool.query(countQuery);
+      const total = parseInt(countResult.rows[0].total);
+      
+      // Calculate pagination values
+      const offset = (page - 1) * limit;
+      const totalPages = Math.ceil(total / limit);
+      
+      // Query for paginated responses
+      const query = `
+        WITH response_sections AS (
+          SELECT 
+            response_id,
+            ARRAY_AGG(DISTINCT question_section) as sections
+          FROM survey_response_answers
+          GROUP BY response_id
+        )
+        SELECT 
+          sr.id,
+          sr.user_id,
+          sr.submission_date,
+          sr.user_agent,
+          sr.completion_time_seconds,
+          COALESCE(rs.sections, ARRAY[]::text[]) as sections
+        FROM survey_responses sr
+        LEFT JOIN response_sections rs ON sr.id = rs.response_id
+        ORDER BY sr.submission_date DESC
+        LIMIT $1 OFFSET $2
+      `;
+      
+      const result = await pool.query(query, [limit, offset]);
+      
+      return {
+        responses: result.rows,
+        total,
+        page,
+        limit,
+        totalPages
+      };
+    } catch (error) {
+      appLogger.error('Error getting paginated survey responses:', { error });
+      throw error;
+    }
+  }
+  
+  /**
+   * Get a specific survey response by ID with all its answers
+   * 
+   * @param id - Survey response ID
+   * @returns Survey response with answer details or null if not found
+   */
+  static async getResponseById(id: number | string): Promise<{
+    id: number;
+    submission_date: Date;
+    user_id: string | null;
+    completion_time_seconds: number | null;
+    answers: Array<{
+      question_id: string;
+      question_section: string; 
+      question_type: string;
+      likert_value: number | null;
+      text_value: string | null;
+      checkbox_values: string[] | null;
+    }>;
+  } | null> {
+    try {
+      // Get the base response details
+      const responseQuery = `
+        SELECT id, submission_date, user_id, completion_time_seconds
+        FROM survey_responses
+        WHERE id = $1
+      `;
+      
+      const responseResult = await pool.query(responseQuery, [id]);
+      
+      if (responseResult.rows.length === 0) {
+        return null;
+      }
+      
+      const response = responseResult.rows[0];
+      
+      // Get all the answers for this response
+      const answersQuery = `
+        SELECT 
+          question_id,
+          question_section,
+          question_type,
+          likert_value,
+          text_value,
+          checkbox_values
+        FROM survey_response_answers
+        WHERE response_id = $1
+        ORDER BY question_section, question_id
+      `;
+      
+      const answersResult = await pool.query(answersQuery, [id]);
+      
+      // Process checkbox_values from JSONB string to array
+      const answers = answersResult.rows.map(row => ({
+        ...row,
+        checkbox_values: row.checkbox_values ? JSON.parse(row.checkbox_values) : null
+      }));
+      
+      return {
+        ...response,
+        answers
+      };
+    } catch (error) {
+      appLogger.error('Error getting survey response by ID:', { error });
+      throw error;
+    }
+  }
+  
+  /**
    * Get all text responses for analysis
    * 
    * @returns All text responses grouped by question

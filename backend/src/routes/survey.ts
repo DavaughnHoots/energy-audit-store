@@ -111,4 +111,68 @@ router.get('/text-responses', validateToken, async (req: AuthenticatedRequest, r
   }
 });
 
+/**
+ * @route GET /api/survey/admin/responses
+ * @desc Get paginated survey responses for admin dashboard
+ * @access Admin only
+ */
+router.get('/admin/responses', validateToken, async (req: AuthenticatedRequest, res: express.Response) => {
+  // Check if user is admin
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Unauthorized, admin access required' });
+  }
+  
+  try {
+    // Parse pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 5;
+    
+    // Get paginated responses
+    const results = await SurveyService.getPaginatedResponses(page, limit);
+    
+    res.json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    appLogger.error('Error retrieving paginated survey responses:', { error });
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while retrieving survey responses'
+    });
+  }
+});
+
+/**
+ * @route GET /api/survey/responses/:id
+ * @desc Get a specific survey response by ID
+ * @access Admin only
+ */
+router.get('/responses/:id', validateToken, async (req: AuthenticatedRequest, res: express.Response) => {
+  // Check if user is admin
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Unauthorized, admin access required' });
+  }
+  
+  try {
+    const responseId = req.params.id;
+    const surveyResponse = await SurveyService.getResponseById(responseId);
+    
+    if (!surveyResponse) {
+      return res.status(404).json({ error: 'Survey response not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: surveyResponse
+    });
+  } catch (error) {
+    appLogger.error('Error retrieving survey response:', { error });
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while retrieving the survey response'
+    });
+  }
+});
+
 export default router;

@@ -291,9 +291,22 @@ const AdminDashboardPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Granular Analytics Section */}
-            <GranularAnalytics startDate={startDate} endDate={endDate} />
-          </div>
+          {/* Granular Analytics Section */}
+          <GranularAnalytics startDate={startDate} endDate={endDate} />
+        </div>
+        
+        {/* Pilot Study Survey Responses Section */}
+        <div className="border-t pt-6 mt-8">
+          <h2 className="text-xl font-bold mb-4">Pilot Study Survey Responses</h2>
+          <p className="text-gray-600 mb-4">
+            View and analyze feedback collected from users participating in the pilot study.
+          </p>
+          
+          {/* Importing the survey response list component */}
+          <React.Suspense fallback={<div>Loading survey responses...</div>}>
+            {React.createElement(React.lazy(() => import('../components/admin/SurveyResponseList')))}
+          </React.Suspense>
+        </div>
         </>
       ) : (
         <Card>
