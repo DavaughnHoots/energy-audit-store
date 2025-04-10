@@ -9,16 +9,84 @@ import { getBadgeById, BADGES } from '../data/badges';
 class BadgeService {
   /**
    * Fetch all user badges from the server
+   * If userId is not provided, attempt to extract it from tokens or localStorage
    */
-  async getUserBadges(userId: string): Promise<Record<string, UserBadge>> {
-    // In a real implementation, this would be an API call
-    // For now, return some placeholder data from localStorage
+  async getUserBadges(userId?: string): Promise<Record<string, UserBadge>> {
+    // Try to get userId if not provided
+    if (!userId) {
+      try {
+        // First try to get from localStorage user object
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          userId = user.id || user.userId;
+        }
+        
+        // If still no userId, try to get from token info
+        if (!userId) {
+          // Check if we have tokenInfo in localStorage
+          const tokenInfoJson = localStorage.getItem('token-info');
+          if (tokenInfoJson) {
+            const tokenInfo = JSON.parse(tokenInfoJson);
+            userId = tokenInfo.userId || tokenInfo.tokenInfo?.userId;
+          }
+        }
+        
+        // If still no userId, generate a fallback
+        if (!userId) {
+          console.warn('Using anonymous user for badges');
+          userId = 'anonymous-user';
+        }
+      } catch (error) {
+        console.error('Error determining userId for badges:', error);
+        userId = 'anonymous-user';
+      }
+    }
     
+    console.log('Fetching badges for user:', userId);
+    
+    // Now fetch badges with the determined userId
     try {
       const storedBadges = localStorage.getItem(`user_badges_${userId}`);
       
       if (storedBadges) {
         return JSON.parse(storedBadges);
+      }
+      
+      // If user ID matches a test account, provide some sample data
+      if (userId === '51324b2b-39d6-486d-875b-04d0f103c49a' || 
+          userId.includes('admin') || 
+          userId.includes('test')) {
+        console.log('Using sample badges for test account');
+        return {
+          'savings-bronze': {
+            badgeId: 'savings-bronze',
+            earned: true,
+            progress: 100,
+            earnedDate: new Date('2025-03-15'),
+            visible: true
+          },
+          'audits-bronze': {
+            badgeId: 'audits-bronze',
+            earned: true,
+            progress: 100,
+            earnedDate: new Date('2025-03-10'),
+            visible: true
+          },
+          'improvements-bronze': {
+            badgeId: 'improvements-bronze',
+            earned: true,
+            progress: 100,
+            earnedDate: new Date('2025-03-20'),
+            visible: true
+          },
+          'improvements-silver': {
+            badgeId: 'improvements-silver',
+            earned: false,
+            progress: 40,
+            visible: true
+          }
+        };
       }
       
       // If no stored badges, return empty record

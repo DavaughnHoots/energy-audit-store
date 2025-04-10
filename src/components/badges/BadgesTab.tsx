@@ -1,60 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BADGES, getBadgeById, getBadgesByCategory } from '../../data/badges';
 import { Badge, UserBadge, UserLevel, LEVELS } from '../../types/badges';
 import BadgeCollection from './BadgeCollection';
 import LevelProgressBar from './LevelProgressBar';
-
-// Placeholder user data for frontend-first development
-// This will be replaced with real API data later
-const PLACEHOLDER_USER_BADGES: Record<string, UserBadge> = {
-  'savings-bronze': {
-    badgeId: 'savings-bronze',
-    earned: true,
-    progress: 100,
-    earnedDate: new Date('2025-03-15'),
-    visible: true
-  },
-  'savings-silver': {
-    badgeId: 'savings-silver',
-    earned: false,
-    progress: 65,
-    visible: true
-  },
-  'audits-bronze': {
-    badgeId: 'audits-bronze',
-    earned: true,
-    progress: 100,
-    earnedDate: new Date('2025-03-10'),
-    visible: true
-  },
-  'improvements-bronze': {
-    badgeId: 'improvements-bronze',
-    earned: true,
-    progress: 100,
-    earnedDate: new Date('2025-03-20'),
-    visible: true
-  },
-  'improvements-silver': {
-    badgeId: 'improvements-silver',
-    earned: false,
-    progress: 40,
-    visible: true
-  },
-  'special-scholar': {
-    badgeId: 'special-scholar',
-    earned: false,
-    progress: 75,
-    visible: true
-  }
-};
-
-// Placeholder user level data for frontend-first development
-const PLACEHOLDER_USER_LEVEL: UserLevel = {
-  level: 3,
-  points: 325,
-  nextLevelPoints: 500,
-  title: 'Energy Enthusiast'
-};
+import { badgeService } from '../../services/badgeService';
+import { getTokenInfo } from '../../services/tokenInfoService';
 
 /**
  * Main tab component that displays the user's badge collection and level progress
@@ -64,22 +14,100 @@ const BadgesTab: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showEarned, setShowEarned] = useState<boolean>(true);
   const [showLocked, setShowLocked] = useState<boolean>(true);
-
+  
+  // State for user badges and level
+  const [userBadges, setUserBadges] = useState<Record<string, UserBadge>>({});
+  const [userLevel, setUserLevel] = useState<UserLevel>({
+    level: 1,
+    points: 0,
+    nextLevelPoints: 100,
+    title: 'Newcomer'
+  });
+  const [loading, setLoading] = useState<boolean>(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  // Load user badges and level on component mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setLoading(true);
+        
+        // Determine user ID from various sources
+        let uid: string | null = null;
+        
+        // First try from localStorage user object
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          try {
+            const user = JSON.parse(userJson);
+            uid = user.id || user.userId;
+            console.log('Found user ID in localStorage:', uid);
+          } catch (e) {
+            console.error('Error parsing user from localStorage:', e);
+          }
+        }
+        
+        // If still no user ID, try from token info
+        if (!uid) {
+          try {
+            // Attempt to get token info from the API
+            const tokenInfo = await getTokenInfo();
+            console.log('Token info response:', tokenInfo);
+            
+            if (tokenInfo.userId || (tokenInfo.tokenInfo && tokenInfo.tokenInfo?.userId)) {
+              uid = tokenInfo.userId || (tokenInfo.tokenInfo ? tokenInfo.tokenInfo.userId : null);
+              console.log('Found user ID in token info:', uid);
+            }
+          } catch (e) {
+            console.error('Error getting token info:', e);
+          }
+        }
+        
+        if (uid) {
+          setUserId(uid);
+          
+          // Load user badges
+          const badges = await badgeService.getUserBadges(uid);
+          setUserBadges(badges);
+          
+          // Calculate user points based on badges
+          let totalPoints = 0;
+          Object.values(badges).forEach(badge => {
+            if (badge.earned) totalPoints += 50;
+            else if (badge.progress > 0) totalPoints += Math.floor(badge.progress * 0.25);
+          });
+          
+          // Set user level based on points
+          setUserLevel(badgeService.getUserLevel(totalPoints));
+        } else {
+          console.warn('No user ID found for badges');
+          setUserBadges({});
+        }
+      } catch (error) {
+        console.error('Error loading badge data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadUserData();
+  }, []);
+  
   // Get user's earned badges
   const earnedBadges = BADGES.filter(badge => 
-    PLACEHOLDER_USER_BADGES[badge.id]?.earned
+    userBadges[badge.id]?.earned
   );
 
   // Get user's in-progress badges (not earned but have progress)
   const inProgressBadges = BADGES.filter(badge => 
-    !PLACEHOLDER_USER_BADGES[badge.id]?.earned && 
-    (PLACEHOLDER_USER_BADGES[badge.id]?.progress || 0) > 0
+    !userBadges[badge.id]?.earned && 
+    (userBadges[badge.id]?.progress || 0) > 0
   );
 
   // Get locked badges (no progress)
   const lockedBadges = BADGES.filter(badge => 
-    !PLACEHOLDER_USER_BADGES[badge.id]?.earned && 
-    (!PLACEHOLDER_USER_BADGES[badge.id] || PLACEHOLDER_USER_BADGES[badge.id]?.progress === 0)
+    !userBadges[badge.id]?.earned && 
+    (!userBadges[badge.id] || userBadges[badge.id]?.progress === 0)
   );
 
   // Filter badges based on active category
@@ -108,7 +136,7 @@ const BadgesTab: React.FC = () => {
       
       {/* Level progress bar */}
       <div className="mb-8">
-        <LevelProgressBar userLevel={PLACEHOLDER_USER_LEVEL} />
+        <LevelProgressBar userLevel={userLevel} />
       </div>
 
       {/* Category and filter tabs */}
@@ -193,7 +221,7 @@ const BadgesTab: React.FC = () => {
         {showEarned && filteredEarnedBadges.length > 0 && (
           <BadgeCollection
             badges={filteredEarnedBadges}
-            userBadges={PLACEHOLDER_USER_BADGES}
+            userBadges={userBadges}
             title={`Earned Badges (${filteredEarnedBadges.length})`}
             emptyMessage="No earned badges in this category yet."
             className="mb-6"
@@ -204,7 +232,7 @@ const BadgesTab: React.FC = () => {
         {showLocked && filteredInProgressBadges.length > 0 && (
           <BadgeCollection
             badges={filteredInProgressBadges}
-            userBadges={PLACEHOLDER_USER_BADGES}
+            userBadges={userBadges}
             title={`In Progress (${filteredInProgressBadges.length})`}
             emptyMessage="No badges in progress in this category."
             className="mb-6"
@@ -215,7 +243,7 @@ const BadgesTab: React.FC = () => {
         {showLocked && filteredLockedBadges.length > 0 && (
           <BadgeCollection
             badges={filteredLockedBadges}
-            userBadges={PLACEHOLDER_USER_BADGES}
+            userBadges={userBadges}
             title={`Locked (${filteredLockedBadges.length})`}
             emptyMessage="No locked badges in this category."
             className="mb-6"
@@ -241,7 +269,11 @@ const BadgesTab: React.FC = () => {
             <div>
               <h3 className="text-lg font-medium">{recentAchievement.name}</h3>
               <p className="text-sm text-gray-600">
-                Earned on {PLACEHOLDER_USER_BADGES[recentAchievement.id]?.earnedDate?.toLocaleDateString() || 'recently'}
+                Earned on {
+                  recentAchievement && userBadges[recentAchievement.id]?.earnedDate 
+                    ? new Date(userBadges[recentAchievement.id]?.earnedDate as any).toLocaleDateString() 
+                    : 'recently'
+                }
               </p>
               <p className="mt-1">{recentAchievement.description}</p>
               {recentAchievement.reward && (
