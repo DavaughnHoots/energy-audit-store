@@ -83,14 +83,41 @@ export function useAuth() {
           if (tokenInfo.hasAccessToken) {
             console.log('Found HttpOnly cookie token but no user data, attempting profile recovery');
             try {
-              const response = await apiClient.get<{ user: User }>('/auth/profile');
-              if (response.data.user) {
+              // Force cache-busting to avoid 304 Not Modified responses
+              const response = await apiClient.get<{ user: User }>('/auth/profile', {
+                headers: {
+                  'Cache-Control': 'no-cache',
+                  'Pragma': 'no-cache',
+                  'If-None-Match': '',  // Prevent 304 response
+                  'X-Requested-With': 'XMLHttpRequest'
+                },
+                params: {
+                  _t: new Date().getTime() // Add timestamp to bust cache
+                }
+              });
+              
+              console.log('Profile recovery response:', response);
+              
+              if (response.data && response.data.user) {
                 // Save the recovered user data
                 localStorage.setItem('user', JSON.stringify(response.data.user));
                 setUser(response.data.user);
                 console.log('User profile recovered successfully from HttpOnly cookies');
               } else {
                 console.warn('Profile endpoint returned success but no user data');
+                
+                // Extract user data from the token info itself if available
+                if (tokenInfo.tokenInfo && tokenInfo.tokenInfo.userId) {
+                  const userData = {
+                    id: tokenInfo.tokenInfo.userId,
+                    email: tokenInfo.tokenInfo.email || '',
+                    role: tokenInfo.tokenInfo.role || 'user'
+                  };
+                  
+                  console.log('Created user data from token:', userData);
+                  localStorage.setItem('user', JSON.stringify(userData));
+                  setUser(userData);
+                }
               }
             } catch (profileError) {
               console.error('Error recovering user profile from HttpOnly cookies:', profileError);
