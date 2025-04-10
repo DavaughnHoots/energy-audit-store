@@ -42,12 +42,14 @@ import energyConsumptionRoutes from './routes/energyConsumption.js';
 import analyticsRoutes from './routes/analytics.js';
 import directAdminRoutes from './routes/direct-admin.js';
 import badgesRoutes from './routes/badges.js';
+import surveyRoutes from './routes/survey.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { runSearchMigration } from './scripts/heroku_migration.js';
 import { runEnergyConsumptionMigration } from './scripts/run_energy_consumption_migration.js';
 import { runEducationMigration } from './scripts/run_education_migration.js';
+import { runSurveyTablesMigration } from './migrations/20250410_create_survey_tables.js';
 import fs from 'fs';
 import { associateOrphanedAudits } from './scripts/associate_orphaned_audits.js';
 // Product comparison migration removed - table already exists
@@ -95,6 +97,15 @@ if (process.env.NODE_ENV === 'production') {
     })
     .catch(error => {
       appLogger.error('Error running education tables migration on startup', { error });
+    });
+    
+  // Run survey tables migration
+  runSurveyTablesMigration()
+    .then(result => {
+      appLogger.info('Survey tables migration completed on startup', { result });
+    })
+    .catch(error => {
+      appLogger.error('Error running survey tables migration on startup', { error });
     });
     
   // Run initial orphaned audit association
@@ -228,6 +239,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/direct-admin', authenticate, directAdminRoutes);
 app.use('/api/badges', badgesRoutes);
+app.use('/api/survey', surveyRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

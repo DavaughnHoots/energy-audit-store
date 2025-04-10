@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePageTracking } from '@/hooks/analytics/usePageTracking';
+import SurveyApiService from '@/services/surveyApiService';
 
 interface Question {
   id: string;
@@ -21,6 +22,9 @@ const PilotSurvey: React.FC = () => {
   const [responses, setResponses] = useState<Record<string, any>>({});
   const [submitted, setSubmitted] = useState(false);
   const [activeSection, setActiveSection] = useState('usability');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const surveyStartTime = useRef<number>(Date.now());
   
   const surveyData: Record<string, SurveySection> = {
     usability: {
@@ -92,11 +96,43 @@ const PilotSurvey: React.FC = () => {
     }));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  // Initialize the survey start time when component mounts
+  useEffect(() => {
+    surveyStartTime.current = Date.now();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Survey responses submitted:', responses);
-    // Here you would typically send the data to your backend
-    setSubmitted(true);
+    
+    if (isSubmitting) return;
+    
+    // Reset error state
+    setSubmitError(null);
+    setIsSubmitting(true);
+    
+    try {
+      // Calculate completion time in seconds
+      const completionTime = Math.floor((Date.now() - surveyStartTime.current) / 1000);
+      
+      // Submit response to backend
+      const result = await SurveyApiService.submitSurveyResponse({
+        responses,
+        completionTime
+      });
+      
+      if (result.success) {
+        setSubmitted(true);
+        // Clear responses for if user wants to submit another response
+        setResponses({});
+      } else {
+        setSubmitError(result.message);
+      }
+    } catch (error) {
+      console.error('Error submitting survey:', error);
+      setSubmitError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const renderQuestion = (question: Question) => {
