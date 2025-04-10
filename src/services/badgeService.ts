@@ -252,6 +252,7 @@ class BadgeService {
   /**
    * Calculate a user's level based on points
    * Used for fallback when API is unavailable
+   * @private Internal method, use getUserLevel for public access
    */
   private calculateUserLevel(points: number): UserLevel {
     // Default level in case the LEVELS array is empty
@@ -398,6 +399,13 @@ class BadgeService {
     // This would ideally check a real user role
     // For now, just return false - can be expanded later when we have proper role management
     return false;
+  }
+  /**
+   * Get user level based on points
+   * Public method that returns a user's level based on their points
+   */
+  getUserLevel(points: number): UserLevel {
+    return this.calculateUserLevel(points);
   }
   
   /**
