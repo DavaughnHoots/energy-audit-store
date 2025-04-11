@@ -43,7 +43,8 @@ import analyticsRoutes from './routes/analytics.js';
 import directAdminRoutes from './routes/direct-admin.js';
 import badgesRoutes from './routes/badges.js';
 import surveyRoutes from './routes/survey.js';
-import authTokenRoutes from './routes/auth-token.js';
+// Use enhanced auth-token routes with CORS handling
+import authTokenRoutes from './routes/auth-token.enhanced.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -136,57 +137,54 @@ const app = express();
 // Trust proxy - required for Heroku
 app.set('trust proxy', 1);
 
-// ==========================================
-// CORS MIDDLEWARE - MUST BE FIRST IN CHAIN
-// Direct implementation with explicit headers
-// ==========================================
-app.use((req: Request, res: Response, next: NextFunction) => {
-  // Get allowed origins based on environment
+// =======================================
+// GLOBAL PREFLIGHT OPTIONS HANDLER
+// This must be before any other middleware
+// =======================================
+app.options('*', (req, res) => {
   const allowedOrigins = process.env.NODE_ENV === 'production' 
     ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
     : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
   
   const origin = req.headers.origin;
   
-  // Log CORS information for debugging
-  appLogger.info('CORS middleware processing request', {
+  // Log for debugging
+  console.log(`OPTIONS request received for ${req.path}`, {
     origin,
-    method: req.method,
-    path: req.path,
-    allowedOrigins,
-    requestId: req.id
+    method: req.method
   });
   
-  // Only set header if origin is in our allowlist
+  // Set CORS headers
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Fallback to wildcard
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+  
+  // End preflight request successfully
+  res.status(200).end();
+});
+
+// CORS middleware with simplified configuration
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+  
+  const origin = req.headers.origin;
+  
+  // Set CORS headers for all responses
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    appLogger.info('CORS headers set for allowed origin', {
-      origin,
-      method: req.method,
-      path: req.path,
-      requestId: req.id
-    });
-  } else if (origin) {
-    appLogger.warn('CORS blocked - origin not in allowlist', {
-      origin,
-      method: req.method,
-      path: req.path,
-      requestId: req.id
-    });
-  }
-  
-  // Handle preflight requests specially (immediately return success for OPTIONS)
-  if (req.method === 'OPTIONS') {
-    appLogger.info('CORS preflight request - returning 200 OK', {
-      origin,
-      path: req.path,
-      requestId: req.id
-    });
-    return res.status(200).end();
   }
   
   next();
@@ -289,20 +287,35 @@ app.get('/api/debug/config', (req: Request, res: Response) => {
       admin: 'Enhanced',
       analytics: 'Standard with enhanced service',
       auditHistory: 'Enhanced',
-      reportData: 'Enhanced'
+      reportData: 'Enhanced',
+      authToken: 'Enhanced with CORS fix'
     }
   });
 });
 
 // CORS test endpoint to verify CORS configuration
 app.get('/api/debug/cors', (req: Request, res: Response) => {
+  // Ensure CORS headers are set for this endpoint
+  const origin = req.headers.origin;
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
   res.json({
     success: true,
     origin: req.get('origin') || 'No origin',
     message: 'CORS is configured correctly',
-    allowedOrigins: process.env.NODE_ENV === 'production' 
-      ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
-      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+    allowedOrigins: allowedOrigins,
     corsEnabled: true,
     headers: {
       'Access-Control-Allow-Origin': res.get('Access-Control-Allow-Origin') || 'Not set',
@@ -440,10 +453,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION with CORS fix v2)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with CORS fix v3)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-analytics-cors-fix-v2'
+    version: 'enhanced-analytics-cors-fix-v3'
   }));
 });
 
