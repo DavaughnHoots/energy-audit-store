@@ -138,7 +138,7 @@ const app = express();
 app.set('trust proxy', 1);
 
 // =======================================
-// GLOBAL PREFLIGHT OPTIONS HANDLER
+// GLOBAL PREFLIGHT OPTIONS HANDLER - ENHANCED VERSION
 // This must be before any other middleware
 // =======================================
 app.options('*', (req, res) => {
@@ -148,18 +148,30 @@ app.options('*', (req, res) => {
   
   const origin = req.headers.origin;
   
-  // Log for debugging
-  console.log(`OPTIONS request received for ${req.path}`, {
-    origin,
-    method: req.method
+  // Enhanced logging for preflight requests
+  appLogger.info('OPTIONS preflight request received', {
+    path: req.path,
+    origin: req.headers.origin,
+    method: req.method,
+    headers: req.headers
   });
   
-  // Set CORS headers
+  // Set CORS headers with improved handling
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // Fallback to wildcard
+    appLogger.info('Allowing specific origin', { origin });
+  } else if (process.env.NODE_ENV !== 'production') {
+    // In development, can use wildcard
     res.setHeader('Access-Control-Allow-Origin', '*');
+    appLogger.info('Using wildcard origin in development');
+  } else {
+    // In production, if origin not in allowed list, use the first allowed origin
+    // This is better than nothing but may still cause issues
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
+    appLogger.warn('Using default origin - origin not in allowed list', { 
+      receivedOrigin: origin,
+      usingDefault: allowedOrigins[0] 
+    });
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
@@ -167,11 +179,19 @@ app.options('*', (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
   
+  // Log the response headers we're setting
+  appLogger.info('OPTIONS response headers set', {
+    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+    'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+    'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+    'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+  });
+  
   // End preflight request successfully
   res.status(200).end();
 });
 
-// CORS middleware with simplified configuration
+// Enhanced CORS middleware with improved configuration and logging
 app.use((req: Request, res: Response, next: NextFunction) => {
   const allowedOrigins = process.env.NODE_ENV === 'production' 
     ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
@@ -179,12 +199,33 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   
   const origin = req.headers.origin;
   
+  // Enhanced CORS debug logging
+  if (req.path.includes('/api/auth-token') || req.method === 'OPTIONS') {
+    appLogger.info('CORS request received', {
+      path: req.path,
+      origin: req.headers.origin,
+      method: req.method,
+      headers: req.headers
+    });
+  }
+  
   // Set CORS headers for all responses
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (process.env.NODE_ENV !== 'production') {
+    // In dev environment, can use wildcard
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  // Always set these headers regardless of origin match in production
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // If this is a preflight OPTIONS request, respond immediately
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+    return res.status(200).end();
   }
   
   next();
