@@ -1,6 +1,7 @@
 /**
  * Special CORS middleware specifically for auth-token routes
  * This ensures CORS headers are set before any auth checks
+ * Enhanced with detailed logging for debugging
  */
 
 import { Request, Response, NextFunction } from 'express';
@@ -8,16 +9,22 @@ import { appLogger } from '../utils/logger.js';
 
 export function authTokenCorsMiddleware(req: Request, res: Response, next: NextFunction): void {
   try {
-    // Log every request to auth-token endpoints for debugging
-    appLogger.info('Auth-token CORS middleware executing', {
+    // Enhanced request logging with timing information
+    const requestTime = new Date();
+    appLogger.info('AUTH-TOKEN CORS MIDDLEWARE START', {
+      timestamp: requestTime.toISOString(),
       path: req.path,
       method: req.method,
       origin: req.headers.origin,
-      isAuthTokenRoute: req.path.includes('/auth-token'),
-      requestId: req.id || 'no-request-id'
+      host: req.headers.host,
+      cookie: !!req.headers.cookie,
+      requestId: req.id || 'no-request-id',
+      allHeaders: JSON.stringify(req.headers),
+      nodeEnv: process.env.NODE_ENV || 'undefined',
+      requestUrl: req.url
     });
 
-    // Set CORS headers for ALL routes, but especially for auth-token
+    // Set CORS headers for ALL routes
     const allowedOrigins = [
       'https://energy-audit-store-e66479ed4f2b.herokuapp.com',
       'https://energy-audit-store.herokuapp.com',
@@ -28,54 +35,89 @@ export function authTokenCorsMiddleware(req: Request, res: Response, next: NextF
     
     const origin = req.headers.origin;
     
-    // Always set Allow-Origin
-    if (origin && allowedOrigins.includes(origin)) {
+    // Debugging mode - always log origins for this route
+    appLogger.info('AUTH-TOKEN CORS checking origin', {
+      receivedOrigin: origin,
+      allowedOrigins: allowedOrigins,
+      originInAllowed: origin ? allowedOrigins.includes(origin) : false,
+      isProduction: process.env.NODE_ENV === 'production',
+      path: req.path
+    });
+    
+    // FOR TESTING: During this debugging phase, we're going to be extra permissive with CORS
+    // We'll log detailed information about what's happening while still allowing the request
+    if (origin) {
+      // If we have an origin, use it - even if not in our allowed list
+      // This is more permissive than normal but helps with debugging
       res.setHeader('Access-Control-Allow-Origin', origin);
-    } else if (process.env.NODE_ENV !== 'production') {
-      // In dev, allow all origins
-      res.setHeader('Access-Control-Allow-Origin', '*');
+      appLogger.info('AUTH-TOKEN CORS accepting origin for debugging', { origin });
     } else {
-      // In production with unknown origin, use the first allowed origin
-      // This is technically not correct but better than nothing
-      res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
-      appLogger.warn('Using default origin for unknown request origin', {
-        defaultOrigin: allowedOrigins[0],
-        requestOrigin: origin,
-        path: req.path
-      });
+      // No origin header - use a default one
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      appLogger.info('AUTH-TOKEN CORS using wildcard origin (no origin in request)');
     }
     
-    // Always set these headers
+    // Super-permissive headers during debugging
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+    res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+    
+    // Log the response headers we're setting
+    appLogger.info('AUTH-TOKEN CORS headers being set', {
+      'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+      'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+      'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+      'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials'),
+      'Access-Control-Max-Age': res.getHeader('Access-Control-Max-Age')
+    });
     
     // Handle OPTIONS requests immediately without further processing
     if (req.method === 'OPTIONS') {
-      appLogger.info('Responding to OPTIONS request', {
+      appLogger.info('AUTH-TOKEN CORS OPTIONS REQUEST - responding immediately', {
         path: req.path,
         origin: req.headers.origin,
-        headers: {
-          'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
-          'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
-          'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
-          'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
-        }
+        headers: JSON.stringify(req.headers)
       });
       
-      res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
       return res.status(200).end();
     }
     
     // For normal requests, continue to the next middleware
+    appLogger.info('AUTH-TOKEN CORS MIDDLEWARE END - continuing to next middleware', {
+      method: req.method,
+      path: req.path,
+      processingTime: new Date().getTime() - requestTime.getTime() + 'ms'
+    });
+    
     next();
   } catch (error) {
-    appLogger.error('Error in auth-token CORS middleware', {
+    // Enhanced error logging
+    appLogger.error('AUTH-TOKEN CORS MIDDLEWARE ERROR', {
       error: (error as Error).message,
       stack: (error as Error).stack,
       path: req.path,
-      method: req.method
+      method: req.method,
+      headers: JSON.stringify(req.headers)
     });
+    
+    // Even if there's an error, set basic CORS headers to improve chance of success
+    try {
+      if (req.headers.origin) {
+        res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+      res.setHeader('Access-Control-Allow-Headers', '*');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      
+      appLogger.info('AUTH-TOKEN CORS emergency headers set after error');
+    } catch (headerError) {
+      appLogger.error('Failed to set emergency CORS headers', { error: headerError });
+    }
+    
+    // Continue to next middleware even if there was an error
     next();
   }
 }
