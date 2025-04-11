@@ -19,6 +19,7 @@ import cookieParser from 'cookie-parser';
 import { standardLimiter, authLimiter, apiLimiter, productsLimiter, productDetailLimiter, productSearchLimiter } from './middleware/rateLimitMiddleware.js';
 import { authenticate } from './middleware/auth.js';
 import { optionalTokenValidation } from './middleware/optionalTokenValidation.js';
+import { authTokenCorsMiddleware } from './middleware/auth-token-cors.js';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import educationRoutes from './routes/education.js';
@@ -312,6 +313,10 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/direct-admin', authenticate, directAdminRoutes);
 app.use('/api/badges', badgesRoutes);
 app.use('/api/survey', surveyRoutes);
+
+// Special CORS middleware specifically for auth-token routes
+// This must be applied before mounting the routes
+app.use('/api/auth-token', authTokenCorsMiddleware);
 app.use('/api/auth-token', authTokenRoutes);
 
 // Health check endpoint
@@ -494,10 +499,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION with CORS fix v3)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with CORS fix v5 for auth-token)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-analytics-cors-fix-v3'
+    version: 'enhanced-cors-fix-v5-auth-token'
   }));
 });
 
