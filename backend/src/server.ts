@@ -136,6 +136,62 @@ const app = express();
 // Trust proxy - required for Heroku
 app.set('trust proxy', 1);
 
+// ==========================================
+// CORS MIDDLEWARE - MUST BE FIRST IN CHAIN
+// Direct implementation with explicit headers
+// ==========================================
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Get allowed origins based on environment
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+  
+  const origin = req.headers.origin;
+  
+  // Log CORS information for debugging
+  appLogger.info('CORS middleware processing request', {
+    origin,
+    method: req.method,
+    path: req.path,
+    allowedOrigins,
+    requestId: req.id
+  });
+  
+  // Only set header if origin is in our allowlist
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    appLogger.info('CORS headers set for allowed origin', {
+      origin,
+      method: req.method,
+      path: req.path,
+      requestId: req.id
+    });
+  } else if (origin) {
+    appLogger.warn('CORS blocked - origin not in allowlist', {
+      origin,
+      method: req.method,
+      path: req.path,
+      requestId: req.id
+    });
+  }
+  
+  // Handle preflight requests specially (immediately return success for OPTIONS)
+  if (req.method === 'OPTIONS') {
+    appLogger.info('CORS preflight request - returning 200 OK', {
+      origin,
+      path: req.path,
+      requestId: req.id
+    });
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
 // Request ID middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   req.id = req.id || uuidv4();
@@ -145,64 +201,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Apply logger context middleware
 app.use(loggerContextMiddleware);
-
-// Security middleware
-// UPDATED: Enhanced allowed origins to include both domains in production
-const getAllowedOrigins = () => {
-  // Development environments
-  if (process.env.NODE_ENV !== 'production') {
-    return ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
-  }
-  
-  // Production environments - include both domains
-  const origins = [
-    'https://energy-audit-store.herokuapp.com',
-    'https://energy-audit-store-e66479ed4f2b.herokuapp.com'
-  ];
-  
-  // Add custom frontend URL if specified
-  if (process.env.FRONTEND_URL && !origins.includes(process.env.FRONTEND_URL)) {
-    origins.push(process.env.FRONTEND_URL);
-  }
-  
-  return origins;
-};
-
-// UPDATED: Better CORS configuration with dynamic origin handling
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = getAllowedOrigins();
-    
-    // Allow requests with no origin (like mobile apps, curl requests)
-    if (!origin) {
-      return callback(null, true);
-    }
-    
-    // Check if the origin is allowed
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    } else {
-      // Log the blocked origin for debugging
-      appLogger.warn(`CORS blocked request from origin: ${origin}`);
-      return callback(null, false);
-    }
-  },
-  credentials: true, // Allow credentials (cookies, auth headers)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Credentials'
-  ],
-  exposedHeaders: ['Set-Cookie', 'Date', 'ETag']
-}));
 
 // Cookie middleware (before rate limiting)
 app.use(cookieParser(process.env.JWT_SECRET));
@@ -302,7 +300,15 @@ app.get('/api/debug/cors', (req: Request, res: Response) => {
     success: true,
     origin: req.get('origin') || 'No origin',
     message: 'CORS is configured correctly',
-    allowedOrigins: getAllowedOrigins(),
+    allowedOrigins: process.env.NODE_ENV === 'production' 
+      ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
+      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+    corsEnabled: true,
+    headers: {
+      'Access-Control-Allow-Origin': res.get('Access-Control-Allow-Origin') || 'Not set',
+      'Access-Control-Allow-Credentials': res.get('Access-Control-Allow-Credentials') || 'Not set',
+      'Access-Control-Allow-Methods': res.get('Access-Control-Allow-Methods') || 'Not set'
+    },
     timestamp: new Date().toISOString()
   });
 });
@@ -434,10 +440,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION with CORS fixes)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with CORS fix v2)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-analytics-cors-fix'
+    version: 'enhanced-analytics-cors-fix-v2'
   }));
 });
 
