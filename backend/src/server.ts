@@ -43,8 +43,8 @@ import analyticsRoutes from './routes/analytics.js';
 import directAdminRoutes from './routes/direct-admin.js';
 import badgesRoutes from './routes/badges.js';
 import surveyRoutes from './routes/survey.js';
-// Use enhanced auth-token routes with CORS handling
-import authTokenRoutes from './routes/auth-token.enhanced.js';
+// Import standard auth-token routes (we'll override them with direct handlers)
+import authTokenRoutes from './routes/auth-token.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -138,57 +138,56 @@ const app = express();
 app.set('trust proxy', 1);
 
 // =======================================
-// GLOBAL PREFLIGHT OPTIONS HANDLER
-// This must be before any other middleware
+// CORS HELPER FUNCTIONS 
 // =======================================
-app.options('*', (req, res) => {
-  const allowedOrigins = process.env.NODE_ENV === 'production' 
+const getAllowedOrigins = () => {
+  return process.env.NODE_ENV === 'production' 
     ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
     : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
-  
+};
+
+const setCorsHeaders = (req: Request, res: Response) => {
+  const allowedOrigins = getAllowedOrigins();
   const origin = req.headers.origin;
   
-  // Log for debugging
-  console.log(`OPTIONS request received for ${req.path}`, {
+  console.log(`Setting CORS headers for ${req.method} ${req.path}`, {
     origin,
-    method: req.method
+    method: req.method,
+    allowedOrigins
   });
   
-  // Set CORS headers
+  // Only set header if origin is in our allowlist or use wildcard for development
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // Fallback to wildcard
+  } else if (process.env.NODE_ENV !== 'production') {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Expires, Pragma, If-None-Match, Access-Control-Request-Method, Access-Control-Request-Headers');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
   
-  // End preflight request successfully
+  // Log that CORS headers were set
+  console.log('CORS headers set for:', {
+    path: req.path,
+    method: req.method,
+    origin: origin || 'none'
+  });
+};
+
+// Handle OPTIONS requests directly for the problematic endpoint
+// This is placed BEFORE any other middleware
+app.options('/api/auth-token/token-info', (req: Request, res: Response) => {
+  console.log('Direct OPTIONS handler for /api/auth-token/token-info hit');
+  setCorsHeaders(req, res);
   res.status(200).end();
 });
 
-// CORS middleware with simplified configuration
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
-  
-  const origin = req.headers.origin;
-  
-  // Set CORS headers for all responses
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-  }
-  
-  next();
-});
+// Middleware stack
+app.use(cookieParser(process.env.JWT_SECRET));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Request ID middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -197,15 +196,63 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// Add a direct handler for the token-info endpoint that bypasses the router
+app.get('/api/auth-token/token-info', (req: Request, res: Response, next: NextFunction) => {
+  console.log('Direct GET handler for /api/auth-token/token-info hit');
+  setCorsHeaders(req, res);
+  
+  // Extract the access token and refresh token from cookies
+  const { accessToken, refreshToken } = req.cookies;
+  
+  // Log token state
+  console.log('Token state in direct handler:', {
+    hasAccessToken: !!accessToken,
+    hasRefreshToken: !!refreshToken,
+    origin: req.headers.origin
+  });
+  
+  // If we don't have tokens in cookies, return empty
+  if (!accessToken && !refreshToken) {
+    return res.json({
+      hasAccessToken: false,
+      hasRefreshToken: false,
+      userId: null,
+      tokenInfo: null
+    });
+  }
+
+  // Authenticate and proceed to normal handler
+  authenticate(req, res, (err) => {
+    if (err) {
+      console.error('Authentication error in direct handler:', err);
+      return res.status(401).json({ error: 'Authentication failed' });
+    }
+    
+    try {
+      // Get the user from the request (added by authenticate middleware)
+      const user = (req as any).user;
+
+      // Return token info to the frontend
+      return res.json({
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken,
+        userId: user?.id,
+        tokenInfo: {
+          userId: user?.id,
+          email: user?.email,
+          role: user?.role,
+          exp: user?.exp
+        }
+      });
+    } catch (error) {
+      console.error('Error in token-info direct endpoint:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+});
+
 // Apply logger context middleware
 app.use(loggerContextMiddleware);
-
-// Cookie middleware (before rate limiting)
-app.use(cookieParser(process.env.JWT_SECRET));
-
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting is now globally disabled via the DISABLE_RATE_LIMITING flag in rateLimitMiddleware.ts
 // These routes will automatically use the noLimitMiddleware due to the flag
@@ -271,7 +318,10 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/direct-admin', authenticate, directAdminRoutes);
 app.use('/api/badges', badgesRoutes);
 app.use('/api/survey', surveyRoutes);
-app.use('/api/auth-token', authTokenRoutes);
+
+// IMPORTANT: We're not mounting the authTokenRoutes because we're handling 
+// the /api/auth-token/token-info endpoint directly above.
+// This ensures our direct handler takes precedence
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -288,7 +338,7 @@ app.get('/api/debug/config', (req: Request, res: Response) => {
       analytics: 'Standard with enhanced service',
       auditHistory: 'Enhanced',
       reportData: 'Enhanced',
-      authToken: 'Enhanced with CORS fix'
+      authToken: 'Direct handler with CORS fix v4'
     }
   });
 });
@@ -296,31 +346,19 @@ app.get('/api/debug/config', (req: Request, res: Response) => {
 // CORS test endpoint to verify CORS configuration
 app.get('/api/debug/cors', (req: Request, res: Response) => {
   // Ensure CORS headers are set for this endpoint
-  const origin = req.headers.origin;
-  const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
-  
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  setCorsHeaders(req, res);
 
   res.json({
     success: true,
     origin: req.get('origin') || 'No origin',
-    message: 'CORS is configured correctly',
-    allowedOrigins: allowedOrigins,
+    message: 'CORS is configured correctly (V4)',
+    allowedOrigins: getAllowedOrigins(),
     corsEnabled: true,
     headers: {
       'Access-Control-Allow-Origin': res.get('Access-Control-Allow-Origin') || 'Not set',
       'Access-Control-Allow-Credentials': res.get('Access-Control-Allow-Credentials') || 'Not set',
-      'Access-Control-Allow-Methods': res.get('Access-Control-Allow-Methods') || 'Not set'
+      'Access-Control-Allow-Methods': res.get('Access-Control-Allow-Methods') || 'Not set',
+      'Access-Control-Allow-Headers': res.get('Access-Control-Allow-Headers') || 'Not set'
     },
     timestamp: new Date().toISOString()
   });
@@ -453,10 +491,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION with CORS fix v3)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with CORS fix v4)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-analytics-cors-fix-v3'
+    version: 'enhanced-analytics-cors-fix-v4'
   }));
 });
 
