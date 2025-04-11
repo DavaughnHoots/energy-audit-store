@@ -106,7 +106,10 @@ backend/src/migrations/*_test_*.sql
 .prettierrc*
 energy_audit_calculation_implementation.txt
 energy_audit_tool_implementation_plan.txt
-deploy_rollback_march19.ps1
+*deploy*
+*fix*
+*backup*
+
 # Ignore large files that exceed GitHub's limits
 processed_weather_data/weather_energy_data.db
 WeatherEvents_Jan2016-Dec2022.csv

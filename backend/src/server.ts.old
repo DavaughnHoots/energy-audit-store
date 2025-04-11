@@ -1,5 +1,3 @@
-
-// DIRECT DEPLOYMENT MARKER (v4): 2025-04-11T21:19:08.940Z
 // Add this at the top of the file
 declare global {
   namespace Express {
@@ -325,32 +323,9 @@ app.use('/api/survey', surveyRoutes);
 // the /api/auth-token/token-info endpoint directly above.
 // This ensures our direct handler takes precedence
 
-// Health check endpoint with enhanced emergency diagnostics
+// Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
-  console.log('Emergency health check endpoint hit');
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    emergency_restart: true,
-    cors_fix_version: 'v4-emergency',
-    server_info: {
-      node_env: process.env.NODE_ENV,
-      port: PORT,
-      uptime_seconds: process.uptime()
-    }
-  });
-});
-
-// Emergency ping endpoint for basic connectivity testing
-app.get('/api/ping', (req: Request, res: Response) => {
-  console.log('Emergency ping endpoint hit');
-  setCorsHeaders(req, res);
-  res.json({ 
-    status: 'ok', 
-    message: 'Server is running with CORS fix v4 emergency mode',
-    timestamp: new Date().toISOString(),
-    allowed_origins: getAllowedOrigins()
-  });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Debug endpoint to verify enhanced services are being used
@@ -515,18 +490,11 @@ app.get('*', (req: Request, res: Response) => {
 
 const PORT = process.env.PORT || 5000;
 
-// EMERGENCY SERVER FIX: 2025-04-11T21:28:50Z
 const server = app.listen(PORT, () => {
-  console.log('================================================');
-  console.log('EMERGENCY SERVER RESTART: ' + new Date().toISOString());
-  console.log('CORS FIX V4 DIRECT DEPLOYMENT: CHECK TOKENS ENDPOINT');
-  console.log('================================================');
-  
   appLogger.info('Server started (ENHANCED VERSION with CORS fix v4)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-analytics-cors-fix-v4-emergency-restart',
-    timestamp: new Date().toISOString()
+    version: 'enhanced-analytics-cors-fix-v4'
   }));
 });
 
