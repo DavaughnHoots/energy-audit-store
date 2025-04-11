@@ -147,13 +147,47 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(loggerContextMiddleware);
 
 // Security middleware
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? [process.env.FRONTEND_URL || 'https://energy-audit-store-e66479ed4f2b.herokuapp.com']
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+// UPDATED: Enhanced allowed origins to include both domains in production
+const getAllowedOrigins = () => {
+  // Development environments
+  if (process.env.NODE_ENV !== 'production') {
+    return ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+  }
+  
+  // Production environments - include both domains
+  const origins = [
+    'https://energy-audit-store.herokuapp.com',
+    'https://energy-audit-store-e66479ed4f2b.herokuapp.com'
+  ];
+  
+  // Add custom frontend URL if specified
+  if (process.env.FRONTEND_URL && !origins.includes(process.env.FRONTEND_URL)) {
+    origins.push(process.env.FRONTEND_URL);
+  }
+  
+  return origins;
+};
 
+// UPDATED: Better CORS configuration with dynamic origin handling
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
+  origin: (origin, callback) => {
+    const allowedOrigins = getAllowedOrigins();
+    
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Check if the origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      // Log the blocked origin for debugging
+      appLogger.warn(`CORS blocked request from origin: ${origin}`);
+      return callback(null, false);
+    }
+  },
+  credentials: true, // Allow credentials (cookies, auth headers)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Content-Type',
@@ -259,6 +293,17 @@ app.get('/api/debug/config', (req: Request, res: Response) => {
       auditHistory: 'Enhanced',
       reportData: 'Enhanced'
     }
+  });
+});
+
+// CORS test endpoint to verify CORS configuration
+app.get('/api/debug/cors', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    origin: req.get('origin') || 'No origin',
+    message: 'CORS is configured correctly',
+    allowedOrigins: getAllowedOrigins(),
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -389,10 +434,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with CORS fixes)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-analytics'
+    version: 'enhanced-analytics-cors-fix'
   }));
 });
 

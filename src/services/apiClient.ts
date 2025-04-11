@@ -1,25 +1,48 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { getCookie, syncAuthTokens } from '../utils/cookieUtils';
 
-// Default API URL based on environment - can be overridden in environment variables
-const API_URL = import.meta.env.VITE_API_URL || 
-                process.env.VITE_API_URL || 
-                'https://energy-audit-store.herokuapp.com/api';
+/**
+ * Enhanced apiClient with improved cross-domain support
+ * This implementation:
+ * 1. Dynamically determines the API URL based on the current domain
+ * 2. Properly handles authorization tokens across domains
+ * 3. Provides improved error handling and retry mechanisms
+ */
 
-// Check if the cookieUtils module is available
-let syncAuthTokens: (() => void) | undefined;
-let getCookie: ((name: string) => string | null) | undefined;
+// Determine the appropriate API URL based on the current environment
+const determineApiUrl = (): string => {
+  // If URL is specified in environment variables, use that (highest priority)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // If running in browser, try to determine API URL based on current domain
+  if (typeof window !== 'undefined') {
+    const currentDomain = window.location.hostname;
+    
+    // If we're already on the API domain, use relative URLs
+    if (currentDomain === 'energy-audit-store.herokuapp.com') {
+      return '/api';
+    }
+    
+    // If we're on the frontend domain, use the full API URL
+    if (currentDomain === 'energy-audit-store-e66479ed4f2b.herokuapp.com') {
+      return 'https://energy-audit-store.herokuapp.com/api';
+    }
+    
+    // If running on localhost, default to local API
+    if (currentDomain === 'localhost') {
+      return 'http://localhost:5000/api';
+    }
+  }
+  
+  // Default fallback (lowest priority)
+  return 'https://energy-audit-store.herokuapp.com/api';
+};
 
-try {
-  // Try to dynamically import cookieUtils functions if they exist
-  const cookieUtils = require('../utils/cookieUtils');
-  syncAuthTokens = cookieUtils.syncAuthTokens;
-  getCookie = cookieUtils.getCookie;
-} catch (e) {
-  // If cookieUtils is not available, provide fallback implementations
-  console.log('Cookie utils not available, using fallbacks');
-  syncAuthTokens = () => {};
-  getCookie = () => null;
-}
+// Get the API URL
+const API_URL = determineApiUrl();
+console.log(`Using API URL: ${API_URL}`);
 
 /**
  * Axios instance configured for API requests
@@ -37,19 +60,26 @@ const axiosInstance = axios.create({
 // Request interceptor to add auth token if available
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Sync tokens from cookies if that functionality exists
-    if (syncAuthTokens) {
+    try {
+      // Synchronize tokens between cookies and localStorage
       syncAuthTokens();
+    } catch (error) {
+      console.error('Error syncing auth tokens:', error);
     }
     
     // Get token from localStorage if available
     let token = localStorage.getItem('accessToken');
     
-    // If no token in localStorage but getCookie is available, try cookies
-    if (!token && getCookie) {
-      token = getCookie('accessToken');
-      if (token) {
-        localStorage.setItem('accessToken', token);
+    // If no token in localStorage, try cookies
+    if (!token) {
+      try {
+        token = getCookie('accessToken');
+        if (token) {
+          localStorage.setItem('accessToken', token);
+          console.log('Retrieved access token from cookies and saved to localStorage');
+        }
+      } catch (error) {
+        console.error('Error accessing cookies:', error);
       }
     }
     
@@ -63,11 +93,27 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Implement exponential backoff for requests
+const getRetryDelay = (retryCount: number): number => {
+  return Math.min(100 * Math.pow(2, retryCount), 5000); // Max 5 seconds delay
+};
+
 // Handle 401 Unauthorized errors by refreshing token or redirecting to login
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    
+    // Network errors (e.g., CORS issues) should be handled specially
+    if (error.message === 'Network Error') {
+      console.error('Network error detected (possibly CORS):', error);
+      return Promise.reject({
+        ...error,
+        isNetworkError: true,
+        possibleCorsIssue: true,
+        userMessage: 'Unable to connect to the server. This may be due to a connection issue.'
+      });
+    }
     
     // If error is 401 and we haven't already tried to refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -106,9 +152,26 @@ axiosInstance.interceptors.response.use(
       // If refresh failed or no refresh token, redirect to login
       if (typeof window !== 'undefined') {
         console.log('Auth failed, redirecting to login');
-        // Optional: Store the current URL to redirect back after login
+        // Store the current URL to redirect back after login
         localStorage.setItem('authRedirect', window.location.pathname);
         window.location.href = '/sign-in';
+      }
+    }
+    
+    // For server errors (5xx), implement retry with exponential backoff
+    if (error.response?.status >= 500 && error.response?.status < 600) {
+      originalRequest._retryCount = originalRequest._retryCount || 0;
+      
+      if (originalRequest._retryCount < 3) { // Max 3 retries
+        originalRequest._retryCount++;
+        
+        // Wait with exponential backoff
+        const delay = getRetryDelay(originalRequest._retryCount);
+        console.log(`Retrying request after ${delay}ms (attempt ${originalRequest._retryCount})`);
+        
+        return new Promise(resolve => {
+          setTimeout(() => resolve(axiosInstance(originalRequest)), delay);
+        });
       }
     }
     
@@ -131,6 +194,26 @@ export const apiClient = {
    */
   get: async <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
     try {
+      // For requests that may be affected by CORS/caching issues
+      if (url.includes('/token-info')) {
+        // Add cache busting to prevent 304 responses
+        const cacheBustingConfig = {
+          ...config,
+          headers: {
+            ...config?.headers,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'If-None-Match': ''
+          },
+          params: {
+            ...config?.params,
+            _t: Date.now() // Add timestamp to bust cache
+          }
+        };
+        return await axiosInstance.get<T>(url, cacheBustingConfig);
+      }
+      
       return await axiosInstance.get<T>(url, config);
     } catch (error) {
       console.error(`GET request failed to ${url}:`, error);
@@ -182,6 +265,13 @@ export const apiClient = {
   },
   
   /**
+   * Check if the error might be related to CORS
+   */
+  isPossibleCorsError: (error: any): boolean => {
+    return error.message === 'Network Error' || error.possibleCorsIssue === true;
+  },
+  
+  /**
    * Check if the error is a 401 (Unauthorized) error
    */
   isUnauthorizedError: (error: any): boolean => {
@@ -192,6 +282,11 @@ export const apiClient = {
    * Get error message from error object (formatted for display)
    */
   getErrorMessage: (error: any): string => {
+    // Check for our enhanced network error
+    if (error.possibleCorsIssue) {
+      return 'Unable to connect to the server. This may be a CORS issue.';
+    }
+    
     if (axios.isAxiosError(error)) {
       if (!error.response) {
         return 'Network error. Please check your internet connection.';
