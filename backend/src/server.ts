@@ -21,6 +21,7 @@ import { authenticate } from './middleware/auth.js';
 import { optionalTokenValidation } from './middleware/optionalTokenValidation.js';
 import { authTokenCorsMiddleware } from './middleware/auth-token-cors.js';
 import { badgesCorsMiddleware } from './middleware/badges-cors.js';
+import { userProfileCorsMiddleware } from './middleware/user-profile-cors.js';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import educationRoutes from './routes/education.js';
@@ -272,6 +273,9 @@ app.use('/api/settings/property', authenticate, userPropertySettingsRoutes);
 app.use('/api/recommendations', authenticate, recommendationsRoutes);
 app.use('/api/recommendations/products', productRecommendationsRoutes);
 app.use('/api/comparisons', comparisonsRoutes);
+
+// Special CORS middleware for user profile routes
+app.use('/api/user-profile', userProfileCorsMiddleware);
 app.use('/api/user-profile', userProfileRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/visualization', visualizationRoutes);
