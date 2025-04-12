@@ -20,14 +20,9 @@ const determineApiUrl = (): string => {
   if (typeof window !== 'undefined') {
     const currentDomain = window.location.hostname;
     
-    // If we're already on the API domain, use relative URLs
-    if (currentDomain === 'energy-audit-store.herokuapp.com') {
-      return '/api';
-    }
-    
-    // If we're on the frontend domain, use the full API URL
+    // Use relative URLs when on Heroku domain to avoid CORS issues
     if (currentDomain === 'energy-audit-store-e66479ed4f2b.herokuapp.com') {
-      return 'https://energy-audit-store.herokuapp.com/api';
+      return '/api';
     }
     
     // If running on localhost, default to local API
@@ -37,7 +32,8 @@ const determineApiUrl = (): string => {
   }
   
   // Default fallback (lowest priority)
-  return 'https://energy-audit-store.herokuapp.com/api';
+  // Use the domain with the unique identifier
+  return 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/api';
 };
 
 // Get the API URL
