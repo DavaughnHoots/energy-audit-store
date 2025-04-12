@@ -1,5 +1,5 @@
 import React from 'react';
-import RealBadgesTabFixed from './RealBadgesTab.fixed';
+import RealBadgesTabIdFixed from './RealBadgesTab.id-fixed';
 
 /**
  * Main tab component that displays the user's badge collection and level progress
@@ -7,7 +7,7 @@ import RealBadgesTabFixed from './RealBadgesTab.fixed';
  */
 const BadgesTab: React.FC = () => {
   // Now using the fixed implementation that properly handles badge display
-  return <RealBadgesTabFixed />;
+  return <RealBadgesTabIdFixed />;;
 };
 
 export default BadgesTab;
