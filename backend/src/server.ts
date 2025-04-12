@@ -139,42 +139,51 @@ const app = express();
 app.set('trust proxy', 1);
 
 // =======================================
-// GLOBAL PREFLIGHT OPTIONS HANDLER - ENHANCED VERSION
+// GLOBAL PREFLIGHT OPTIONS HANDLER - ENHANCED VERSION WITH ADDITIONAL DEBUGGING
 // This must be before any other middleware
 // =======================================
 app.options('*', (req, res) => {
-  const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
+  const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com']
     : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
   
   const origin = req.headers.origin;
+  const isAuthTokenEndpoint = req.path.includes('/api/auth-token');
   
-  // Enhanced logging for preflight requests
+  // Enhanced logging for preflight requests with auth-token specific info
   appLogger.info('OPTIONS preflight request received', {
     path: req.path,
     origin: req.headers.origin,
     method: req.method,
-    headers: req.headers
+    headers: req.headers,
+    isAuthTokenEndpoint
   });
   
   // Set CORS headers with improved handling
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-    appLogger.info('Allowing specific origin', { origin });
+    appLogger.info('Allowing specific origin', { 
+      origin,
+      isAuthTokenEndpoint
+    });
   } else if (process.env.NODE_ENV !== 'production') {
     // In development, can use wildcard
     res.setHeader('Access-Control-Allow-Origin', '*');
-    appLogger.info('Using wildcard origin in development');
+    appLogger.info('Using wildcard origin in development', {
+      isAuthTokenEndpoint
+    });
   } else {
     // In production, if origin not in allowed list, use the first allowed origin
     // This is better than nothing but may still cause issues
     res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
     appLogger.warn('Using default origin - origin not in allowed list', { 
       receivedOrigin: origin,
-      usingDefault: allowedOrigins[0] 
+      usingDefault: allowedOrigins[0],
+      isAuthTokenEndpoint
     });
   }
   
+  // Set explicit headers list - NEVER use wildcard with credentials
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -185,8 +194,35 @@ app.options('*', (req, res) => {
     'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
     'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
     'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
-    'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+    'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials'),
+    isAuthTokenEndpoint
   });
+  
+  // Extra debug logging for auth-token endpoint OPTIONS requests
+  if (isAuthTokenEndpoint) {
+    appLogger.info('AUTH-TOKEN OPTIONS preflight response', {
+      path: req.path,
+      receivedOrigin: origin || 'none',
+      responseHeaders: {
+        'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+        'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+        'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+        'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+      },
+      requestTime: new Date().toISOString()
+    });
+    
+    // Attempt to force log output (if the logger implementation supports it)
+    try {
+      // Use type assertion to avoid TypeScript errors
+      const flushableLogger = appLogger as any;
+      if (typeof flushableLogger.flush === 'function') {
+        flushableLogger.flush();
+      }
+    } catch (error) {
+      // Ignore flush errors
+    }
+  }
   
   // End preflight request successfully
   res.status(200).end();

@@ -36,19 +36,57 @@ router.use((req, res, next) => {
     }
   });
   
-  // For debugging purposes, accept ANY origin
+  // Define allowed origins
+  const allowedOrigins = [
+    'https://energy-audit-store-e66479ed4f2b.herokuapp.com',
+    'https://energy-audit-store.herokuapp.com',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175'
+  ];
+  
+  // Handle origin properly based on CORS spec - cannot use wildcard with credentials
   if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    appLogger.info('AUTH-TOKEN-ROUTER using provided origin', { origin });
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      appLogger.info('AUTH-TOKEN-ROUTER using valid origin', { 
+        origin,
+        isAllowed: true 
+      });
+    } else if (process.env.NODE_ENV !== 'production') {
+      // In non-production, be more permissive
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      appLogger.info('AUTH-TOKEN-ROUTER using non-production origin', { 
+        origin,
+        isAllowed: true,
+        reason: 'development mode' 
+      });
+    } else {
+      // In production with unknown origin, use first allowed origin
+      res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
+      appLogger.warn('AUTH-TOKEN-ROUTER using default origin for unknown origin', {
+        requestOrigin: origin,
+        usingOrigin: allowedOrigins[0],
+        isAllowed: false
+      });
+    }
   } else {
     // No origin header
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    appLogger.info('AUTH-TOKEN-ROUTER using wildcard origin (no origin in request)');
+    if (process.env.NODE_ENV !== 'production') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      appLogger.info('AUTH-TOKEN-ROUTER using wildcard origin (no origin in request, development mode)');
+    } else {
+      // In production, never use wildcard with credentials
+      res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
+      appLogger.warn('AUTH-TOKEN-ROUTER using default origin (no origin in request)', {
+        usingOrigin: allowedOrigins[0]
+      });
+    }
   }
   
-  // Set extremely permissive CORS headers for debugging
+  // Set CORS headers with explicit headers list (not wildcard) to comply with CORS spec
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
   
