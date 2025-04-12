@@ -37,180 +37,9 @@ router.get('/csrf-token', generateCsrfToken, (req: Request, res: Response) => {
 // Register new user
 router.post('/register', authRateLimit, async (req: Request, res: Response) => {
   try {
-    const { email, password, fullName, phone, address, auditId } = req.body;
-
-    if (!email || !password || !fullName) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const result = await authService.registerUser(
-      email, 
-      password, 
-      fullName, 
-      req.ip || '127.0.0.1', 
-      phone, 
-      address,
-      auditId
-    );
-    
-    // Set cookies
-    res.cookie('accessToken', result.token, {
-      ...COOKIE_CONFIG,
-      maxAge: ACCESS_TOKEN_EXPIRY
-    });
-
-    res.cookie('refreshToken', result.refreshToken, {
-      ...COOKIE_CONFIG,
-      maxAge: REFRESH_TOKEN_EXPIRY
-    });
-
-    // Send user data without tokens
-    const { token, refreshToken, ...userData } = result;
-    res.status(201).json({ user: userData });
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      res.status(400).json({ error: error.message });
-    } else if (error instanceof AuthError) {
-      res.status(401).json({ error: error.message });
-    } else {
-      console.error('Registration error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-});
-
-// Login user
-router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-    console.log('Login attempt:', { email });
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Missing email or password' });
-    }
-
-    // Cleanup expired tokens
-    await authService.cleanupExpiredTokens();
-
-    const result = await authService.loginUser(email, password, req.ip || '127.0.0.1');
-    console.log('Login successful, setting cookies');
-
-    // Set cookies
-    res.cookie('accessToken', result.token, {
-      ...COOKIE_CONFIG,
-      maxAge: ACCESS_TOKEN_EXPIRY
-    });
-
-    res.cookie('refreshToken', result.refreshToken, {
-      ...COOKIE_CONFIG,
-      maxAge: REFRESH_TOKEN_EXPIRY
-    });
-
-    // Generate CSRF token after successful login
-    generateCsrfToken(req, res, () => {});
-
-    // Send user data without tokens
-    const { token, refreshToken, ...userData } = result;
-    console.log('Sending response with user data');
-    res.json({ user: userData });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      console.error('Auth error during login:', error.message);
-      res.status(401).json({ error: error.message });
-    } else {
-      console.error('Login error:', error instanceof Error ? error.message : String(error));
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-});
-
-// Logout user
-router.post('/logout', authenticate, async (req: Request, res: Response) => {
-  try {
-    const accessToken = req.cookies.accessToken;
-    const refreshToken = req.cookies.refreshToken;
-
-    if (accessToken && refreshToken) {
-      await authService.logout(accessToken, refreshToken);
-    }
-
-    res.clearCookie('accessToken', COOKIE_CONFIG);
-    res.clearCookie('refreshToken', COOKIE_CONFIG);
-    res.clearCookie('XSRF-TOKEN', COOKIE_CONFIG);
-    res.json({ message: 'Logged out successfully' });
-  } catch (error) {
-    console.error('Logout error:', error instanceof Error ? error.message : String(error));
-    // Still clear cookies even if blacklisting failed
-    res.clearCookie('accessToken', COOKIE_CONFIG);
-    res.clearCookie('refreshToken', COOKIE_CONFIG);
-    res.clearCookie('XSRF-TOKEN', COOKIE_CONFIG);
-    res.status(500).json({ error: 'Logout failed, but cookies have been cleared' });
-  }
-});
-
-// Refresh token
-router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      return res.status(401).json({ error: 'No refresh token provided' });
-    }
-
-    const result = await authService.refreshToken(refreshToken);
-
-    // Set new cookies
-    res.cookie('accessToken', result.token, {
-      ...COOKIE_CONFIG,
-      maxAge: ACCESS_TOKEN_EXPIRY
-    });
-
-    res.cookie('refreshToken', result.refreshToken, {
-      ...COOKIE_CONFIG,
-      maxAge: REFRESH_TOKEN_EXPIRY
-    });
-
-    // Generate a new CSRF token with token refresh
-    generateCsrfToken(req, res, () => {});
-
-    res.json({ message: 'Tokens refreshed successfully' });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      res.status(401).json({ error: error.message });
-    } else {
-      console.error('Token refresh error:', error instanceof Error ? error.message : String(error));
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-});
-
-// Get current user profile
-router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    try {
-      
-      // Set cache control headers to prevent 304 responses
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
-      console.log('Processing profile request with no-cache headers');
-      
-      const result = await pool.query(
-        'SELECT id, email, full_name, phone, address, role FROM users WHERE id = $1',
-        [userId]
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({ 
-          error: 'User not found',
-          message: 'The requested user profile could not be found'
-        });
-      }
+          console.log('Executing database query for user profile...');
+          const result = await pool.query(
+            'SELECT id, email, full_name, phone, address, role FROM users WHERE id = 
 
       // Generate CSRF token when getting profile
       generateCsrfToken(req, res, () => {});
@@ -220,14 +49,47 @@ router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => 
       
       // Always return a 200 with fresh data
       res.json(result.rows[0]);
-    } catch (dbError) {
+    ',
+            [userId]
+          );
+          
+          console.log('Database query completed. Row count:', result.rows.length);
+          
+          if (result.rows.length === 0) {
+            console.error('User not found in database for ID:', userId);
+            return res.status(404).json({ 
+              error: 'User not found',
+              message: 'The requested user profile could not be found'
+            });
+          }
+          
+          // Format the user data consistently
+          const userData = {
+            id: result.rows[0].id,
+            email: result.rows[0].email,
+            fullName: result.rows[0].full_name,
+            phone: result.rows[0].phone || '',
+            address: result.rows[0].address || '',
+            role: result.rows[0].role || 'user'
+          };
+          
+          // Generate CSRF token when getting profile
+          generateCsrfToken(req, res, () => {});
+
+          // Log the response data for debugging
+          console.log('Sending profile data:', JSON.stringify(userData));
+          
+          // Always return a 200 with fresh data
+          return res.json(userData);
+        } catch (dbError) {
       console.error('Database error in profile fetch:', dbError instanceof Error ? dbError.message : String(dbError));
       return res.status(500).json({ 
         error: 'Database error',
         message: 'Failed to fetch user profile from database'
       });
     }
-  } catch (error) {
+  }
+      catch (error) {
     console.error('Profile fetch error:', error instanceof Error ? error.message : String(error));
     res.status(500).json({ 
       error: 'Internal server error',

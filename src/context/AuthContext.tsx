@@ -1,4 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+// Add global window property for auth check locking
+declare global {
+  interface Window {
+    checkingAuthStatus?: boolean;
+    authCheckCounter?: number;
+  }
+}
 import { useNavigate, useLocation } from 'react-router-dom';
 import { API_ENDPOINTS, getApiUrl } from '@/config/api';
 import { User } from '@/types/auth';
@@ -88,152 +96,18 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
         return response;
       } catch (error) {
-        lastError = error as Error;
-        if (retryCount === maxRetries - 1) throw error;
-        
-        const delay = Math.pow(2, retryCount) * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        retryCount++;
+        console.error('Auth check failed:', error);
+        setAuthState({
+          isAuthenticated: false,
+          isLoading: false,
+          lastVerified: Date.now(),
+          user: null,
+          initialCheckDone: true
+        });
+      } finally {
+        // Release the lock
+        window.checkingAuthStatus = false;
       }
-    }
-
-    throw lastError || new Error('Max retries exceeded');
-  };
-
-  const refreshToken = async () => {
-    if (isRefreshing) return false;
-    isRefreshing = true;
-
-    try {
-      console.log('Attempting token refresh');
-      const refreshResponse = await fetchWithRetry(
-        API_ENDPOINTS.AUTH.REFRESH,
-        {
-          method: 'POST',
-        }
-      );
-
-      if (!refreshResponse.ok) {
-        throw new Error('Token refresh failed');
-      }
-
-      console.log('Token refresh successful');
-      return true;
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      return false;
-    } finally {
-      isRefreshing = false;
-    }
-  };
-
-  const checkAuthStatus = useCallback(async (force: boolean = false) => {
-    console.log('Checking auth status:', {
-      force,
-      currentState: {
-        isLoading: authState.isLoading,
-        lastVerified: authState.lastVerified,
-        initialCheckDone: authState.initialCheckDone,
-        timeSinceLastVerification: authState.lastVerified ? Date.now() - authState.lastVerified : null
-      }
-    });
-
-    // Skip check if recently verified (within last 5 minutes) unless forced
-    if (!force && authState.lastVerified && Date.now() - authState.lastVerified < AUTH_CHECK_INTERVAL) {
-      console.log('Skipping auth check - recently verified');
-      return;
-    }
-
-    // Don't set loading state if this is a periodic check
-    if (!authState.initialCheckDone || force) {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
-    }
-
-    console.log('Starting auth check');
-
-    try {
-      const response = await fetchWithRetry(
-        API_ENDPOINTS.AUTH.PROFILE,
-        {
-          method: 'GET',
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          console.log('Profile fetch failed with 401, attempting token refresh');
-          const refreshed = await refreshToken();
-          if (refreshed) {
-            console.log('Token refreshed, retrying profile fetch');
-            const retryResponse = await fetchWithRetry(
-              API_ENDPOINTS.AUTH.PROFILE,
-              {
-                method: 'GET',
-              }
-            );
-
-            if (retryResponse.ok) {
-              const userData = await retryResponse.json();
-              console.log('Profile fetch successful after token refresh');
-              setAuthState({
-                isAuthenticated: true,
-                isLoading: false,
-                lastVerified: Date.now(),
-                user: userData,
-                initialCheckDone: true
-              });
-              return;
-            }
-          }
-        }
-        throw new Error('Failed to fetch user profile');
-      }
-
-      try {
-            // Try to extract the data in multiple ways to ensure compatibility
-            let userData;
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-              const responseText = await response.text();
-              console.log('Raw profile response text:', responseText);
-              
-              // Attempt to parse JSON even for 304 responses
-              if (responseText && responseText.trim()) {
-                try {
-                  userData = JSON.parse(responseText);
-                  console.log('Successfully parsed profile JSON');
-                } catch (e) {
-                  console.error('Error parsing profile JSON:', e);
-                }
-              } else {
-                console.warn('Empty response body from profile endpoint');
-              }
-            } else {
-              console.warn('Unexpected content-type from profile endpoint:', contentType);
-            }
-            
-            if (!userData) {
-              throw new Error('Failed to parse profile data from response');
-            }
-            
-            console.log('Profile fetch successful with data:', userData);
-      setAuthState({
-        isAuthenticated: true,
-        isLoading: false,
-        lastVerified: Date.now(),
-        user: userData,
-        initialCheckDone: true
-      });
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setAuthState({
-        isAuthenticated: false,
-        isLoading: false,
-        lastVerified: Date.now(),
-        user: null,
-        initialCheckDone: true
-      });
-    }
   }, [authState.isLoading, authState.lastVerified, authState.initialCheckDone]);
 
   // Persist auth state to localStorage whenever it changes
