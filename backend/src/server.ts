@@ -311,6 +311,8 @@ app.use('/api/badges', badgesCorsMiddleware);
 app.use('/api/users/:userId/badges', badgesCorsMiddleware);
 // Apply badge routes after CORS middleware
 app.use('/api/badges', badgesRoutes);
+// Ensure user badge routes are properly registered
+app.use('/api/users/:userId/badges', badgesRoutes);
 
 // Special CORS middleware for auth-token routes is now redundant with the global cors middleware
 // But we'll keep it for backwards compatibility and in case there are specialized needs
@@ -325,15 +327,49 @@ app.get('/health', (req: Request, res: Response) => {
 // Debug endpoint to verify enhanced services are being used
 app.get('/api/debug/config', (req: Request, res: Response) => {
   res.json({ 
-    message: 'Using enhanced configuration with improved CORS',
+    message: 'Using enhanced configuration with improved CORS and route handling',
     timestamp: new Date().toISOString(),
     routes: {
       admin: 'Enhanced',
       analytics: 'Standard with enhanced service',
       auditHistory: 'Enhanced',
       reportData: 'Enhanced',
-      authToken: 'Enhanced with CORS fix v6'
+      authToken: 'Enhanced with CORS fix v8',
+      badges: 'Enhanced with proper route handling'
     }
+  });
+});
+
+// Debug endpoint to show all registered routes
+app.get('/api/debug/routes', (req: Request, res: Response) => {
+  const routes: {path: string, methods: string[]}[] = [];
+  
+  // Function to recursively gather routes from the Express app
+  function print(path: string, layer: any) {
+    if (layer.route) {
+      const methods = Object.keys(layer.route.methods).filter(method => layer.route.methods[method]);
+      routes.push({
+        path: path + layer.route.path,
+        methods: methods.map(m => m.toUpperCase())
+      });
+    } else if (layer.name === 'router' && layer.handle.stack) {
+      layer.handle.stack.forEach((stackItem: any) => {
+        print(path + layer.regexp.toString().replace('/^\\', '').replace('\\/?(?=\\/|$)/i', ''), stackItem);
+      });
+    }
+  }
+  
+  // Iterate through all registered routes
+  app._router.stack.forEach((layer: any) => {
+    print('', layer);
+  });
+  
+  // Only return API routes for clarity
+  const apiRoutes = routes.filter(route => route.path.includes('/api/'));
+  
+  res.json({
+    count: apiRoutes.length,
+    routes: apiRoutes.sort((a, b) => a.path.localeCompare(b.path))
   });
 });
 
@@ -455,11 +491,38 @@ app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
   res.status(status).json(responseBody);
 });
 
+// API 404 handler - must come BEFORE the catchall for frontend routes
+app.all('/api/*', (req: Request, res: Response) => {
+  appLogger.warn(`API route not found: ${req.method} ${req.path}`, {
+    method: req.method,
+    path: req.path,
+    query: req.query,
+    params: req.params,
+    ip: req.ip,
+    userAgent: req.get('user-agent')
+  });
+  
+  res.status(404).json({
+    error: 'Not Found',
+    message: `API endpoint not found: ${req.method} ${req.path}`,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
-app.get('*', (req: Request, res: Response) => {
+// This ONLY handles non-API routes now
+app.get('*', (req: Request, res: Response, next: NextFunction) => {
+  // Skip API routes - they should be handled by the API 404 handler above
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  
   const indexPath = path.join(staticPath, 'index.html');
-  console.log('Trying to serve index.html from:', indexPath);
-  console.log('File exists check:', fs.existsSync(indexPath));
+  appLogger.info(`Serving index.html for frontend route: ${req.path}`, {
+    path: req.path,
+    indexPath,
+    exists: fs.existsSync(indexPath)
+  });
   
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
@@ -476,10 +539,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION with CORS fix v7 - badge system fix)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with CORS fix v8 - route handling fix)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-cors-fix-v7-badge-system-fix'
+    version: 'enhanced-cors-fix-v8-route-handling-fix'
   }));
 });
 
