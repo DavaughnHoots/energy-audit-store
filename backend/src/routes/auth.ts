@@ -197,7 +197,8 @@ router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => 
       
       // Format the user data consistently
       const userData = {
-        userId: result.rows[0].id, // Changed from "id" to "userId" to match frontend expectations
+        id: result.rows[0].id, // Add id field to match frontend expectations
+        userId: result.rows[0].id, // Keep userId for backward compatibility
         email: result.rows[0].email,
         fullName: result.rows[0].full_name,
         phone: result.rows[0].phone || '',
