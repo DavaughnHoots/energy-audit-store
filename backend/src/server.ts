@@ -138,134 +138,65 @@ const app = express();
 // Trust proxy - required for Heroku
 app.set('trust proxy', 1);
 
-// =======================================
-// GLOBAL PREFLIGHT OPTIONS HANDLER - ENHANCED VERSION WITH ADDITIONAL DEBUGGING
-// This must be before any other middleware
-// =======================================
+// -----------------------------------
+// 1) Define allowed origins in one place
+// -----------------------------------
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      'https://energy-audit-store-e66479ed4f2b.herokuapp.com',
+      'https://energy-audit-store.herokuapp.com'
+    ]
+  : [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175'
+    ];
+
+// -----------------------------------
+// 2) Use the cors middleware at the top
+//    before other middleware/routes
+// -----------------------------------
+app.use(cors({
+  origin: function (origin, callback) {
+    // No origin (e.g. same domain / server-to-server) or whitelisted → allow
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // For development, allow all origins
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    // Otherwise, block
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  credentials: true // Enable if you need cookies, Authorization headers, etc.
+}));
+
+// -----------------------------------
+// 3) (Optional) Logger for OPTIONS requests
+//    for better debugging capabilities
+// -----------------------------------
 app.options('*', (req, res) => {
-  const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com']
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
-  
-  const origin = req.headers.origin;
-  const isAuthTokenEndpoint = req.path.includes('/api/auth-token');
-  
-  // Enhanced logging for preflight requests with auth-token specific info
+  // Enhanced logging for preflight requests
   appLogger.info('OPTIONS preflight request received', {
     path: req.path,
     origin: req.headers.origin,
     method: req.method,
-    headers: req.headers,
-    isAuthTokenEndpoint
+    isAuthTokenEndpoint: req.path.includes('/api/auth-token')
   });
   
-  // Set CORS headers with improved handling
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    appLogger.info('Allowing specific origin', { 
-      origin,
-      isAuthTokenEndpoint
-    });
-  } else if (process.env.NODE_ENV !== 'production') {
-    // In development, can use wildcard
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    appLogger.info('Using wildcard origin in development', {
-      isAuthTokenEndpoint
-    });
-  } else {
-    // In production, if origin not in allowed list, use the first allowed origin
-    // This is better than nothing but may still cause issues
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
-    appLogger.warn('Using default origin - origin not in allowed list', { 
-      receivedOrigin: origin,
-      usingDefault: allowedOrigins[0],
-      isAuthTokenEndpoint
-    });
-  }
-  
-  // Set explicit headers list - NEVER use wildcard with credentials
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
-  
-  // Log the response headers we're setting
-  appLogger.info('OPTIONS response headers set', {
-    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
-    'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
-    'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
-    'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials'),
-    isAuthTokenEndpoint
-  });
-  
-  // Extra debug logging for auth-token endpoint OPTIONS requests
-  if (isAuthTokenEndpoint) {
-    appLogger.info('AUTH-TOKEN OPTIONS preflight response', {
-      path: req.path,
-      receivedOrigin: origin || 'none',
-      responseHeaders: {
-        'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
-        'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
-        'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
-        'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
-      },
-      requestTime: new Date().toISOString()
-    });
-    
-    // Attempt to force log output (if the logger implementation supports it)
-    try {
-      // Use type assertion to avoid TypeScript errors
-      const flushableLogger = appLogger as any;
-      if (typeof flushableLogger.flush === 'function') {
-        flushableLogger.flush();
-      }
-    } catch (error) {
-      // Ignore flush errors
-    }
-  }
-  
-  // End preflight request successfully
-  res.status(200).end();
-});
-
-// Enhanced CORS middleware with improved configuration and logging
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
-  
-  const origin = req.headers.origin;
-  
-  // Enhanced CORS debug logging
-  if (req.path.includes('/api/auth-token') || req.method === 'OPTIONS') {
-    appLogger.info('CORS request received', {
-      path: req.path,
-      origin: req.headers.origin,
-      method: req.method,
-      headers: req.headers
-    });
-  }
-  
-  // Set CORS headers for all responses
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (process.env.NODE_ENV !== 'production') {
-    // In dev environment, can use wildcard
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  
-  // Always set these headers regardless of origin match in production
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  // If this is a preflight OPTIONS request, respond immediately
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
-    return res.status(200).end();
-  }
-  
-  next();
+  // Then let cors() middleware handle the rest
+  res.sendStatus(200);
 });
 
 // Request ID middleware
@@ -350,8 +281,8 @@ app.use('/api/direct-admin', authenticate, directAdminRoutes);
 app.use('/api/badges', badgesRoutes);
 app.use('/api/survey', surveyRoutes);
 
-// Special CORS middleware specifically for auth-token routes
-// This must be applied before mounting the routes
+// Special CORS middleware for auth-token routes is now redundant with the global cors middleware
+// But we'll keep it for backwards compatibility and in case there are specialized needs
 app.use('/api/auth-token', authTokenCorsMiddleware);
 app.use('/api/auth-token', authTokenRoutes);
 
@@ -363,47 +294,26 @@ app.get('/health', (req: Request, res: Response) => {
 // Debug endpoint to verify enhanced services are being used
 app.get('/api/debug/config', (req: Request, res: Response) => {
   res.json({ 
-    message: 'Using enhanced configuration',
+    message: 'Using enhanced configuration with improved CORS',
     timestamp: new Date().toISOString(),
     routes: {
       admin: 'Enhanced',
       analytics: 'Standard with enhanced service',
       auditHistory: 'Enhanced',
       reportData: 'Enhanced',
-      authToken: 'Enhanced with CORS fix'
+      authToken: 'Enhanced with CORS fix v6'
     }
   });
 });
 
 // CORS test endpoint to verify CORS configuration
 app.get('/api/debug/cors', (req: Request, res: Response) => {
-  // Ensure CORS headers are set for this endpoint
-  const origin = req.headers.origin;
-  const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? ['https://energy-audit-store-e66479ed4f2b.herokuapp.com', 'https://energy-audit-store.herokuapp.com'] 
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
-  
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
   res.json({
     success: true,
     origin: req.get('origin') || 'No origin',
-    message: 'CORS is configured correctly',
+    message: 'CORS is configured correctly with cors middleware',
     allowedOrigins: allowedOrigins,
     corsEnabled: true,
-    headers: {
-      'Access-Control-Allow-Origin': res.get('Access-Control-Allow-Origin') || 'Not set',
-      'Access-Control-Allow-Credentials': res.get('Access-Control-Allow-Credentials') || 'Not set',
-      'Access-Control-Allow-Methods': res.get('Access-Control-Allow-Methods') || 'Not set'
-    },
     timestamp: new Date().toISOString()
   });
 });
@@ -535,10 +445,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION with CORS fix v5 for auth-token)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with CORS fix v6 - using cors middleware)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-cors-fix-v5-auth-token'
+    version: 'enhanced-cors-fix-v6-cors-middleware'
   }));
 });
 

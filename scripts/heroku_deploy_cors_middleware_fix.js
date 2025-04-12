@@ -1,88 +1,99 @@
 /**
- * CORS Middleware Fix Deployment Script
+ * Deploy script for CORS middleware fix
  * 
- * This script directly deploys fixes for the CORS middleware issue
- * where a JavaScript file wasn't being properly compiled by TypeScript.
+ * This script deploys an improved CORS configuration using the cors middleware
+ * to fix issues with cross-origin requests, particularly for the auth-token endpoints.
  */
 
-import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
-// Configuration
-const HEROKU_APP_NAME = 'energy-audit-store';
-const BRANCH_NAME = 'cors-middleware-fix';
+// Current directory where script is running
+const currentDir = process.cwd();
 
-// Utility functions
-function executeCommand(command) {
-  console.log(`\n> ${command}\n`);
-  try {
-    const output = execSync(command, { encoding: 'utf8' });
-    console.log(output);
-    return output;
-  } catch (error) {
-    console.error(`Error executing command: ${command}`);
-    console.error(error.stdout);
-    console.error(error.stderr);
-    throw error;
-  }
-}
+// Files that have been modified
+const modifiedFiles = [
+  'backend/src/server.ts'
+  // Note: We're keeping auth-token-cors.js as-is for backward compatibility
+];
 
-// Create a backup of server.ts
-function createBackup(filePath) {
-  const backupPath = `${filePath}.backup-${Date.now()}`;
-  fs.copyFileSync(filePath, backupPath);
-  console.log(`Created backup at ${backupPath}`);
-}
+// Branch name for this deployment
+const branchName = 'fix-cors-middleware-implementation';
 
-// Check if all required files exist
-function checkFilesExist() {
-  const requiredFiles = [
-    'backend/src/middleware/auth-token-cors.ts', // The new TypeScript version
-    'backend/src/server.ts'
-  ];
+try {
+  console.log('\n=== STARTING DEPLOYMENT OF CORS MIDDLEWARE FIX ===\n');
   
-  for (const file of requiredFiles) {
-    if (!fs.existsSync(file)) {
-      throw new Error(`Required file ${file} does not exist`);
+  // Check that all modified files exist
+  for (const file of modifiedFiles) {
+    if (!fs.existsSync(path.join(currentDir, file))) {
+      console.error(`Error: File ${file} does not exist, aborting deployment`);
+      process.exit(1);
     }
   }
-  console.log('All required files exist.');
-}
-
-// Main deployment function
-async function deploy() {
+  
+  // Create or checkout deployment branch
   try {
-    console.log('=== Starting CORS middleware fix deployment ===');
-    
-    // Check if all required files exist
-    checkFilesExist();
-    
-    // Create backup of server.ts
-    createBackup('backend/src/server.ts');
-    
-    // Create a new branch for the deployment
-    executeCommand(`git checkout -b ${BRANCH_NAME}`);
-    
-    // Stage the modified files
-    executeCommand('git add backend/src/middleware/auth-token-cors.ts');
-    executeCommand('git add backend/src/server.ts');
-    
-    // Commit the changes
-    executeCommand('git commit -m "Fix: Convert auth-token-cors middleware to TypeScript"');
-    
-    // Push directly to Heroku
-    console.log('\nPushing to Heroku...');
-    executeCommand(`git push heroku ${BRANCH_NAME}:main -f`);
-    
-    console.log('\n=== CORS middleware fix deployment completed successfully ===');
-    console.log('\nView logs with: heroku logs --tail --app energy-audit-store');
-    
+    console.log(`Creating branch ${branchName}...`);
+    execSync(`git checkout -b ${branchName}`, { stdio: 'inherit' });
   } catch (error) {
-    console.error('Deployment failed:', error.message);
-    process.exit(1);
+    console.log(`Branch ${branchName} may already exist, trying to check it out...`);
+    execSync(`git checkout ${branchName}`, { stdio: 'inherit' });
   }
+  
+  // Stage modified files
+  console.log('Staging modified files...');
+  execSync(`git add ${modifiedFiles.join(' ')}`, { stdio: 'inherit' });
+  
+  // Try to add documentation files
+  try {
+    execSync('git add energy-audit-vault/operations/bug-fixes/achievements-tab-cors-fix-plan.md', { stdio: 'inherit' });
+    execSync('git add energy-audit-vault/operations/deployment/achievements-tab-cors-fix-deployment.md', { stdio: 'inherit' });
+    console.log('Added documentation files to commit');
+  } catch (error) {
+    console.log('Note: Could not add some documentation files (they may not exist or already be staged)');
+  }
+  
+  // Commit changes
+  console.log('Committing changes...');
+  execSync('git commit -m "Implement improved CORS handling with cors middleware"', { stdio: 'inherit' });
+  
+  // Push to GitHub
+  console.log('Pushing to GitHub...');
+  try {
+    execSync(`git push -u origin ${branchName}`, { stdio: 'inherit' });
+    console.log('Successfully pushed to GitHub');
+  } catch (error) {
+    console.error('Failed to push to GitHub. You may need to push manually.');
+    console.error(`Error: ${error.message}`);
+  }
+  
+  // Deploy to Heroku
+  console.log('\n=== DEPLOYING TO HEROKU ===\n');
+  try {
+    execSync(`git push heroku ${branchName}:main -f`, { stdio: 'inherit' });
+    console.log('\n=== DEPLOYMENT SUCCESSFUL ===\n');
+    console.log('The CORS middleware fix has been deployed to Heroku.');
+    console.log('The achievements tab should now work correctly with proper CORS handling.');
+  } catch (error) {
+    console.error('\n=== DEPLOYMENT FAILED ===\n');
+    console.error('Failed to deploy to Heroku. Error:');
+    console.error(error.message);
+    console.error('\nYou may need to deploy manually using:');
+    console.error(`git push heroku ${branchName}:main -f`);
+  }
+  
+  // Deployment verification instructions
+  console.log('\n=== VERIFICATION STEPS ===\n');
+  console.log('1. Open the application in your browser');
+  console.log('2. Navigate to the achievements tab');
+  console.log('3. Check browser console (F12) for any CORS errors');
+  console.log('4. Check the network tab to verify auth-token/token-info requests are successful');
+  console.log('5. Verify the achievements tab loads correctly\n');
+  
+} catch (error) {
+  console.error('\n=== DEPLOYMENT FAILED ===\n');
+  console.error('An error occurred during deployment:');
+  console.error(error.message);
+  process.exit(1);
 }
-
-// Run the deployment
-deploy();
