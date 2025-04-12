@@ -353,7 +353,7 @@ class BadgeService {
           const dateA = a.earnedDate ? new Date(a.earnedDate).getTime() : 0;
           const dateB = b.earnedDate ? new Date(b.earnedDate).getTime() : 0;
           return dateB - dateA; // Sort by most recent first
-        });
+        }) : [];
       
       // Map to full badge details
       const recentBadges = earnedBadges
@@ -376,7 +376,7 @@ class BadgeService {
             const dateA = a.earnedDate ? new Date(a.earnedDate).getTime() : 0;
             const dateB = b.earnedDate ? new Date(b.earnedDate).getTime() : 0;
             return dateB - dateA; // Sort by most recent first
-          });
+          }) : [];
         
         // Get badge details for each earned badge
         const recentBadges = earnedBadges
