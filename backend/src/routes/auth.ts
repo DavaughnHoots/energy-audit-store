@@ -131,7 +131,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
     }
 
     try {
-      const result = await authService.refreshTokens(refreshToken);
+      const result = await authService.refreshToken(refreshToken);
 
       // Set HTTP-only cookies
       res.cookie('accessToken', result.accessToken, {
