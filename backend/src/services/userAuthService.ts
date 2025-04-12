@@ -393,12 +393,18 @@ export class UserAuthService {
         [newRefreshToken, user.id]
       );
 
-      // Store new access token in sessions table
-      await client.query(
-        `INSERT INTO sessions (token, user_id, expires_at)
-         VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
-        [newToken, user.id]
-      );
+      // Delete any existing sessions for this user to avoid primary key conflicts
+    await client.query(
+      'DELETE FROM sessions WHERE user_id = $1',
+      [user.id]
+    );
+
+    // Store new access token in sessions table
+    await client.query(
+      `INSERT INTO sessions (token, user_id, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
+      [newToken, user.id]
+    );
 
       await client.query('COMMIT');
 
