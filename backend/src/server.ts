@@ -146,8 +146,8 @@ app.set('trust proxy', 1);
 // -----------------------------------
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
-      'https://energy-audit-store-e66479ed4f2b.herokuapp.com'
-      // Removed non-existent domain 'https://energy-audit-store.herokuapp.com'
+      'https://energy-audit-store-e66479ed4f2b.herokuapp.com',
+      'https://energy-audit-store.herokuapp.com' // Re-added to fix CORS issues
     ]
   : [
       'http://localhost:5173',
@@ -180,9 +180,17 @@ app.use(cors({
     'Accept',
     'Origin',
     'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
+    'Access-Control-Request-Headers',
+    'Cache-Control',
+    'Pragma',
+    'Expires'
   ],
-  credentials: true // Enable if you need cookies, Authorization headers, etc.
+  exposedHeaders: [
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Credentials'
+  ],
+  credentials: true, // Enable cookies, Authorization headers, etc.
+  maxAge: 86400 // Cache preflight requests for 24 hours
 }));
 
 // -----------------------------------
@@ -288,6 +296,15 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/direct-admin', authenticate, directAdminRoutes);
 // Apply survey routes
 app.use('/api/survey', surveyRoutes);
+
+// Enhanced CORS handling for badge routes
+app.use('/api/*', (req, res, next) => {
+  // Add cache-control headers to prevent 304 responses
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 
 // Special CORS middleware for badge routes
 app.use('/api/badges', badgesCorsMiddleware);
@@ -459,10 +476,10 @@ app.get('*', (req: Request, res: Response) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION with CORS fix v6 - using cors middleware)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with CORS fix v7 - badge system fix)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-cors-fix-v6-cors-middleware'
+    version: 'enhanced-cors-fix-v7-badge-system-fix'
   }));
 });
 
