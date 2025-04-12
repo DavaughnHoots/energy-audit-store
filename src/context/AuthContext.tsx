@@ -189,8 +189,34 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         throw new Error('Failed to fetch user profile');
       }
 
-      const userData = await response.json();
-      console.log('Profile fetch successful');
+      try {
+            // Try to extract the data in multiple ways to ensure compatibility
+            let userData;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              const responseText = await response.text();
+              console.log('Raw profile response text:', responseText);
+              
+              // Attempt to parse JSON even for 304 responses
+              if (responseText && responseText.trim()) {
+                try {
+                  userData = JSON.parse(responseText);
+                  console.log('Successfully parsed profile JSON');
+                } catch (e) {
+                  console.error('Error parsing profile JSON:', e);
+                }
+              } else {
+                console.warn('Empty response body from profile endpoint');
+              }
+            } else {
+              console.warn('Unexpected content-type from profile endpoint:', contentType);
+            }
+            
+            if (!userData) {
+              throw new Error('Failed to parse profile data from response');
+            }
+            
+            console.log('Profile fetch successful with data:', userData);
       setAuthState({
         isAuthenticated: true,
         isLoading: false,
