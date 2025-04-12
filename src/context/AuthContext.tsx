@@ -128,6 +128,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   };
 
   const checkAuthStatus = useCallback(async (force: boolean = false) => {
+    // Add a debug counter to track how often this is called
+    console.log('Auth check call count:', (window as any).authCheckCounter = ((window as any).authCheckCounter || 0) + 1);
+    
     console.log('Checking auth status:', {
       force,
       currentState: {
@@ -259,11 +262,15 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }
   }, [authState]);
 
-  // Initial auth check on mount
+  // Initial auth check on mount - IMPORTANT: No dependencies to prevent infinite loop
   useEffect(() => {
     console.log('Initial auth check on mount');
-    checkAuthStatus(true);
-  }, [checkAuthStatus]);
+    // Using a setTimeout to break potential render cycles
+    setTimeout(() => {
+      checkAuthStatus(true);
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty to run only once on mount
 
   // Periodic auth check
   useEffect(() => {
