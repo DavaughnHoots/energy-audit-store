@@ -37,59 +37,192 @@ router.get('/csrf-token', generateCsrfToken, (req: Request, res: Response) => {
 // Register new user
 router.post('/register', authRateLimit, async (req: Request, res: Response) => {
   try {
-          console.log('Executing database query for user profile...');
-          const result = await pool.query(
-            'SELECT id, email, full_name, phone, address, role FROM users WHERE id = 
+    const { email, password, fullName } = req.body;
 
+    // Validate inputs
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    try {
+      const result = await authService.registerUser(email, password, fullName);
+      res.status(201).json({ message: 'User registered successfully', userId: result.userId });
+    } catch (authError) {
+      if (authError instanceof ValidationError) {
+        return res.status(400).json({ error: authError.message });
+      }
+      if (authError instanceof AuthError) {
+        return res.status(409).json({ error: authError.message });
+      }
+      throw authError;
+    }
+  } catch (error) {
+    console.error('Registration error:', error instanceof Error ? error.message : String(error));
+    res.status(500).json({ error: 'Failed to register user' });
+  }
+});
+
+// Login user
+router.post('/login', authRateLimit, async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    try {
+      const result = await authService.loginUser(email, password);
+
+      // Set HTTP-only cookies
+      res.cookie('accessToken', result.accessToken, {
+        ...COOKIE_CONFIG,
+        maxAge: ACCESS_TOKEN_EXPIRY
+      });
+
+      res.cookie('refreshToken', result.refreshToken, {
+        ...COOKIE_CONFIG,
+        maxAge: REFRESH_TOKEN_EXPIRY
+      });
+
+      // Generate CSRF token
+      generateCsrfToken(req, res, () => {});
+
+      // Return user info (but not tokens)
+      res.json({
+        message: 'Login successful',
+        user: {
+          id: result.userId,
+          email: result.email,
+          fullName: result.fullName,
+          role: result.role
+        }
+      });
+    } catch (authError) {
+      if (authError instanceof AuthError) {
+        return res.status(401).json({ error: authError.message });
+      }
+      throw authError;
+    }
+  } catch (error) {
+    console.error('Login error:', error instanceof Error ? error.message : String(error));
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Logout user
+router.post('/logout', (req: Request, res: Response) => {
+  res.clearCookie('accessToken', COOKIE_CONFIG);
+  res.clearCookie('refreshToken', COOKIE_CONFIG);
+  res.json({ message: 'Logout successful' });
+});
+
+// Refresh tokens
+router.post('/refresh-token', async (req: Request, res: Response) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ error: 'No refresh token provided' });
+    }
+
+    try {
+      const result = await authService.refreshTokens(refreshToken);
+
+      // Set HTTP-only cookies
+      res.cookie('accessToken', result.accessToken, {
+        ...COOKIE_CONFIG,
+        maxAge: ACCESS_TOKEN_EXPIRY
+      });
+
+      res.cookie('refreshToken', result.refreshToken, {
+        ...COOKIE_CONFIG,
+        maxAge: REFRESH_TOKEN_EXPIRY
+      });
+
+      // Generate CSRF token
+      generateCsrfToken(req, res, () => {});
+
+      res.json({ message: 'Tokens refreshed successfully' });
+    } catch (authError) {
+      if (authError instanceof AuthError) {
+        res.clearCookie('accessToken', COOKIE_CONFIG);
+        res.clearCookie('refreshToken', COOKIE_CONFIG);
+        return res.status(401).json({ error: authError.message });
+      }
+      throw authError;
+    }
+  } catch (error) {
+    console.error('Token refresh error:', error instanceof Error ? error.message : String(error));
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get current user profile
+router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    console.log('
+Profile request received, user ID from request:', userId);
+    console.log('Complete user object from request:', JSON.stringify(req.user));
+    
+    if (!userId) {
+      console.error('No user ID found in authenticated request');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    try {
+      console.log('Executing database query for user profile...');
+      const result = await pool.query(
+        'SELECT id, email, full_name, phone, address, role FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      console.log('Database query completed. Row count:', result.rows.length);
+      
+      if (result.rows.length === 0) {
+        console.error('User not found in database for ID:', userId);
+        return res.status(404).json({ 
+          error: 'User not found',
+          message: 'The requested user profile could not be found'
+        });
+      }
+      
+      // Set cache control headers to prevent 304 responses
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Format the user data consistently
+      const userData = {
+        id: result.rows[0].id,
+        email: result.rows[0].email,
+        fullName: result.rows[0].full_name,
+        phone: result.rows[0].phone || '',
+        address: result.rows[0].address || '',
+        role: result.rows[0].role || 'user'
+      };
+      
       // Generate CSRF token when getting profile
       generateCsrfToken(req, res, () => {});
 
       // Log the response data for debugging
-      console.log('Sending profile data:', JSON.stringify(result.rows[0]));
+      console.log('Sending profile data:', JSON.stringify(userData));
       
       // Always return a 200 with fresh data
-      res.json(result.rows[0]);
-    ',
-            [userId]
-          );
-          
-          console.log('Database query completed. Row count:', result.rows.length);
-          
-          if (result.rows.length === 0) {
-            console.error('User not found in database for ID:', userId);
-            return res.status(404).json({ 
-              error: 'User not found',
-              message: 'The requested user profile could not be found'
-            });
-          }
-          
-          // Format the user data consistently
-          const userData = {
-            id: result.rows[0].id,
-            email: result.rows[0].email,
-            fullName: result.rows[0].full_name,
-            phone: result.rows[0].phone || '',
-            address: result.rows[0].address || '',
-            role: result.rows[0].role || 'user'
-          };
-          
-          // Generate CSRF token when getting profile
-          generateCsrfToken(req, res, () => {});
-
-          // Log the response data for debugging
-          console.log('Sending profile data:', JSON.stringify(userData));
-          
-          // Always return a 200 with fresh data
-          return res.json(userData);
-        } catch (dbError) {
+      return res.json(userData);
+    } catch (dbError) {
       console.error('Database error in profile fetch:', dbError instanceof Error ? dbError.message : String(dbError));
       return res.status(500).json({ 
         error: 'Database error',
         message: 'Failed to fetch user profile from database'
       });
     }
-  }
-      catch (error) {
+  } catch (error) {
     console.error('Profile fetch error:', error instanceof Error ? error.message : String(error));
     res.status(500).json({ 
       error: 'Internal server error',
