@@ -143,8 +143,8 @@ app.set('trust proxy', 1);
 // -----------------------------------
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
-      'https://energy-audit-store-e66479ed4f2b.herokuapp.com',
-      'https://energy-audit-store.herokuapp.com'
+      'https://energy-audit-store-e66479ed4f2b.herokuapp.com'
+      // Removed non-existent domain 'https://energy-audit-store.herokuapp.com'
     ]
   : [
       'http://localhost:5173',
