@@ -7,6 +7,7 @@ declare global {
     authCheckCounter?: number;
   }
 }
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { API_ENDPOINTS, getApiUrl } from '@/config/api';
 import { User } from '@/types/auth';
@@ -96,19 +97,210 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
         return response;
       } catch (error) {
-        console.error('Auth check failed:', error);
-        setAuthState({
-          isAuthenticated: false,
-          isLoading: false,
-          lastVerified: Date.now(),
-          user: null,
-          initialCheckDone: true
-        });
-      } finally {
-        // Release the lock
-        window.checkingAuthStatus = false;
+        lastError = error as Error;
+        if (retryCount === maxRetries - 1) throw error;
+        
+        const delay = Math.pow(2, retryCount) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        retryCount++;
       }
-  }, [authState.isLoading, authState.lastVerified, authState.initialCheckDone]);
+    }
+
+    throw lastError || new Error('Max retries exceeded');
+  };
+
+  const refreshToken = async () => {
+    if (isRefreshing) return false;
+    isRefreshing = true;
+
+    try {
+      console.log('Attempting token refresh');
+      const refreshResponse = await fetchWithRetry(
+        API_ENDPOINTS.AUTH.REFRESH,
+        {
+          method: 'POST',
+        }
+      );
+
+      if (!refreshResponse.ok) {
+        throw new Error('Token refresh failed');
+      }
+
+      console.log('Token refresh successful');
+      return true;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      return false;
+    } finally {
+      isRefreshing = false;
+    }
+  };
+
+  const checkAuthStatus = async (force: boolean = false) => {
+    // Prevent check if already in progress
+    if (window.checkingAuthStatus) {
+      console.log('Auth check already in progress, skipping');
+      return;
+    }
+    
+    window.checkingAuthStatus = true;
+    
+    // Add a debug counter to track how often this is called
+    console.log('Auth check call count:', (window as any).authCheckCounter = ((window as any).authCheckCounter || 0) + 1);
+    
+    console.log('Checking auth status:', {
+      force,
+      currentState: {
+        isLoading: authState.isLoading,
+        lastVerified: authState.lastVerified,
+        initialCheckDone: authState.initialCheckDone,
+        timeSinceLastVerification: authState.lastVerified ? Date.now() - authState.lastVerified : null
+      }
+    });
+
+    // Skip check if recently verified (within last 5 minutes) unless forced
+    if (!force && authState.lastVerified && Date.now() - authState.lastVerified < AUTH_CHECK_INTERVAL) {
+      console.log('Skipping auth check - recently verified');
+      window.checkingAuthStatus = false;
+      return;
+    }
+
+    // Don't set loading state if this is a periodic check
+    if (!authState.initialCheckDone || force) {
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+    }
+
+    console.log('Starting auth check');
+
+    try {
+      const response = await fetchWithRetry(
+        API_ENDPOINTS.AUTH.PROFILE,
+        {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('Profile fetch failed with 401, attempting token refresh');
+          const refreshed = await refreshToken();
+          if (refreshed) {
+            console.log('Token refreshed, retrying profile fetch');
+            const retryResponse = await fetchWithRetry(
+              API_ENDPOINTS.AUTH.PROFILE,
+              {
+                method: 'GET',
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+                }
+              }
+            );
+
+            if (retryResponse.ok) {
+              const responseText = await retryResponse.text();
+              console.log('Raw profile response after refresh:', responseText);
+              
+              if (responseText && responseText.trim()) {
+                try {
+                  // Parse the response text
+                  const userData = JSON.parse(responseText);
+                  console.log('Profile data after refresh:', userData);
+                  
+                  // Ensure we have a valid user object with fallbacks
+                  const validatedUserData = {
+                    id: userData.id || userData.userId || null,
+                    email: userData.email || '',
+                    fullName: userData.fullName || userData.full_name || '',
+                    role: userData.role || 'user',
+                  };
+                  
+                  // Only proceed with authentication if we have at least id and email
+                  if (validatedUserData.id && validatedUserData.email) {
+                    console.log('Valid user data extracted:', validatedUserData);
+                    
+                    setAuthState({
+                      isAuthenticated: true,
+                      isLoading: false,
+                      lastVerified: Date.now(),
+                      user: validatedUserData,
+                      initialCheckDone: true
+                    });
+                    window.checkingAuthStatus = false;
+                    return;
+                  }
+                } catch (parseError) {
+                  console.error('Error parsing retry profile response:', parseError);
+                }
+              }
+            }
+          }
+        }
+        throw new Error('Failed to fetch user profile');
+      }
+
+      // Get the raw text first, then parse it
+      const responseText = await response.text();
+      console.log('Raw profile response:', responseText);
+      
+      if (responseText && responseText.trim()) {
+        try {
+          // Parse the response text
+          const userData = JSON.parse(responseText);
+          console.log('Profile data:', userData);
+          
+          // Ensure we have a valid user object with fallbacks
+          const validatedUserData = {
+            id: userData.id || userData.userId || null,
+            email: userData.email || '',
+            fullName: userData.fullName || userData.full_name || '',
+            role: userData.role || 'user',
+          };
+          
+          // Only proceed with authentication if we have at least id and email
+          if (validatedUserData.id && validatedUserData.email) {
+            console.log('Valid user data extracted:', validatedUserData);
+            
+            setAuthState({
+              isAuthenticated: true,
+              isLoading: false,
+              lastVerified: Date.now(),
+              user: validatedUserData,
+              initialCheckDone: true
+            });
+          } else {
+            console.error('User data missing required fields:', validatedUserData);
+            throw new Error('Invalid user data structure');
+          }
+        } catch (parseError) {
+          console.error('Error parsing profile JSON:', parseError);
+          console.error('Raw response that failed parsing:', responseText);
+          throw new Error('Failed to parse profile data');
+        }
+      } else {
+        console.warn('Empty profile response');
+        throw new Error('Empty profile response');
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      setAuthState({
+        isAuthenticated: false,
+        isLoading: false,
+        lastVerified: Date.now(),
+        user: null,
+        initialCheckDone: true
+      });
+    } finally {
+      // Release the lock
+      window.checkingAuthStatus = false;
+    }
+  };
 
   // Persist auth state to localStorage whenever it changes
   useEffect(() => {
@@ -127,8 +319,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   // Initial auth check on mount
   useEffect(() => {
     console.log('Initial auth check on mount');
-    checkAuthStatus(true);
-  }, []);
+    // Using a setTimeout to break potential render cycles
+    setTimeout(() => {
+      checkAuthStatus(true);
+    }, 500); // Add significant delay to break render cycles
+  }, []); // Intentionally empty to run only once on mount
 
   // Periodic auth check
   useEffect(() => {
@@ -143,7 +338,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       console.log('Cleaning up periodic auth check');
       clearInterval(interval);
     };
-  }, [checkAuthStatus, authState.initialCheckDone]);
+  }, [authState.initialCheckDone]);
 
   const login = async (userData: User) => {
     console.log('Login called with user data:', userData);
