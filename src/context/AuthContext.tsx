@@ -156,6 +156,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         API_ENDPOINTS.AUTH.PROFILE,
         {
           method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
         }
       );
 
@@ -169,61 +174,65 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               API_ENDPOINTS.AUTH.PROFILE,
               {
                 method: 'GET',
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+                }
               }
             );
 
             if (retryResponse.ok) {
-              const userData = await retryResponse.json();
-              console.log('Profile fetch successful after token refresh');
-              setAuthState({
-                isAuthenticated: true,
-                isLoading: false,
-                lastVerified: Date.now(),
-                user: userData,
-                initialCheckDone: true
-              });
-              return;
+              try {
+                const responseText = await retryResponse.text();
+                console.log('Raw profile response after refresh:', responseText);
+                
+                if (responseText && responseText.trim()) {
+                  const userData = JSON.parse(responseText);
+                  console.log('Profile data after refresh:', userData);
+                  
+                  setAuthState({
+                    isAuthenticated: true,
+                    isLoading: false,
+                    lastVerified: Date.now(),
+                    user: userData,
+                    initialCheckDone: true
+                  });
+                  return;
+                }
+              } catch (parseError) {
+                console.error('Error parsing profile response:', parseError);
+              }
             }
           }
         }
         throw new Error('Failed to fetch user profile');
       }
 
-      try {
-            // Try to extract the data in multiple ways to ensure compatibility
-            let userData;
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-              const responseText = await response.text();
-              console.log('Raw profile response text:', responseText);
-              
-              // Attempt to parse JSON even for 304 responses
-              if (responseText && responseText.trim()) {
-                try {
-                  userData = JSON.parse(responseText);
-                  console.log('Successfully parsed profile JSON');
-                } catch (e) {
-                  console.error('Error parsing profile JSON:', e);
-                }
-              } else {
-                console.warn('Empty response body from profile endpoint');
-              }
-            } else {
-              console.warn('Unexpected content-type from profile endpoint:', contentType);
-            }
-            
-            if (!userData) {
-              throw new Error('Failed to parse profile data from response');
-            }
-            
-            console.log('Profile fetch successful with data:', userData);
-      setAuthState({
-        isAuthenticated: true,
-        isLoading: false,
-        lastVerified: Date.now(),
-        user: userData,
-        initialCheckDone: true
-      });
+      // Get the raw text first, then parse it
+      const responseText = await response.text();
+      console.log('Raw profile response:', responseText);
+      
+      if (responseText && responseText.trim()) {
+        try {
+          const userData = JSON.parse(responseText);
+          console.log('Profile data:', userData);
+          
+          setAuthState({
+            isAuthenticated: true,
+            isLoading: false,
+            lastVerified: Date.now(),
+            user: userData,
+            initialCheckDone: true
+          });
+        } catch (parseError) {
+          console.error('Error parsing profile JSON:', parseError);
+          throw new Error('Failed to parse profile data');
+        }
+      } else {
+        console.warn('Empty profile response');
+        throw new Error('Empty profile response');
+      }
     } catch (error) {
       console.error('Auth check failed:', error);
       setAuthState({
@@ -254,7 +263,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   useEffect(() => {
     console.log('Initial auth check on mount');
     checkAuthStatus(true);
-  }, []);
+  }, [checkAuthStatus]);
 
   // Periodic auth check
   useEffect(() => {
