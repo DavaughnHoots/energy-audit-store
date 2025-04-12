@@ -3,11 +3,11 @@ import RealBadgesTabEnhanced from './RealBadgesTab.enhanced';
 
 /**
  * Main tab component that displays the user's badge collection and level progress
- * This component now uses the enhanced implementation with robust data handling
+ * This enhanced version uses more robust data handling
  */
-const BadgesTab: React.FC = () => {
+const BadgesTabEnhanced: React.FC = () => {
   // Now using the enhanced implementation that handles data format differences
   return <RealBadgesTabEnhanced />;
 };
 
-export default BadgesTab;
+export default BadgesTabEnhanced;

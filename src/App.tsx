@@ -13,6 +13,7 @@ import UserDashboardPage from './pages/UserDashboardPage';
 import NewUserDashboardPage from './pages/NewUserDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import BadgesDiagnosticPage from './pages/BadgesDiagnosticPage';
+import BadgeDiagnostics from './components/badges/BadgeDiagnostics';
 import AdminBadgeDiagnosticsPage from './pages/AdminBadgeDiagnosticsPage';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -212,6 +213,14 @@ const App: React.FC = () => {
                     element={
                       <ProtectedRoute>
                         <BadgesDiagnosticPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/badge-data-diagnostics"
+                    element={
+                      <ProtectedRoute>
+                        <BadgeDiagnostics />
                       </ProtectedRoute>
                     }
                   />
