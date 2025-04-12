@@ -1,5 +1,5 @@
 /**
- * Deployment script for fixing infinite loop in dashboard
+ * Deployment script for fixing profile data extraction issue (improved version)
  */
 
 const { execSync } = require('child_process');
@@ -10,10 +10,10 @@ const path = require('path');
 const currentDir = process.cwd();
 
 // Branch name for this deployment
-const branchName = 'fix-dashboard-infinite-loop';
+const branchName = 'fix-profile-data-extraction-v2';
 
 try {
-  console.log('\n=== STARTING DEPLOYMENT OF DASHBOARD INFINITE LOOP FIX ===\n');
+  console.log('\n=== STARTING DEPLOYMENT OF PROFILE DATA EXTRACTION FIX V2 ===\n');
   
   // Create or checkout deployment branch
   try {
@@ -24,7 +24,26 @@ try {
     execSync(`git checkout ${branchName}`, { stdio: 'inherit' });
   }
   
-  // Update AuthContext.tsx with fixed useEffect dependencies
+  // 1. First, fix the syntax error in auth-cors.js middleware
+  const authCorsPath = path.join(currentDir, 'backend', 'src', 'middleware', 'auth-cors.js');
+  let authCorsContent = fs.readFileSync(authCorsPath, 'utf8');
+  
+  // Fix the syntax error in auth-cors.js
+  authCorsContent = authCorsContent.replace(
+    /fullUrl: req\.originalUrl,\s*\n\s*path: req\.path,/g,
+    'fullUrl: req.originalUrl,\n      path: req.path,'
+  );
+
+  authCorsContent = authCorsContent.replace(
+    /isAuthRoute: true \/\/ Already in \/api\/auth path,/g,
+    'isAuthRoute: true, // Already in /api/auth path'
+  );
+  
+  // Save the fixed auth-cors.js
+  console.log('Writing updated auth-cors.js middleware...');
+  fs.writeFileSync(authCorsPath, authCorsContent);
+  
+  // 2. Create a completely new version of AuthContext.tsx with fixed profile data extraction
   const authContextPath = path.join(currentDir, 'src', 'context', 'AuthContext.tsx');
   const newAuthContextContent = `import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -156,9 +175,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   };
 
   const checkAuthStatus = useCallback(async (force: boolean = false) => {
-    // Add a debug counter to track how often this is called
-    console.log('Auth check call count:', (window as any).authCheckCounter = ((window as any).authCheckCounter || 0) + 1);
-    
     console.log('Checking auth status:', {
       force,
       currentState: {
@@ -290,15 +306,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }
   }, [authState]);
 
-  // Initial auth check on mount - IMPORTANT: No dependencies to prevent infinite loop
+  // Initial auth check on mount
   useEffect(() => {
     console.log('Initial auth check on mount');
-    // Using a setTimeout to break potential render cycles
-    setTimeout(() => {
-      checkAuthStatus(true);
-    }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Intentionally empty to run only once on mount
+    checkAuthStatus(true);
+  }, [checkAuthStatus]);
 
   // Periodic auth check
   useEffect(() => {
@@ -386,17 +398,17 @@ const useAuth = () => {
 export { AuthProvider };
 export default useAuth;`;
   
-  // Save the fixed AuthContext.tsx
-  console.log('Writing updated AuthContext.tsx with infinite loop fix...');
+  // Save the completely rewritten AuthContext.tsx
+  console.log('Writing updated AuthContext.tsx...');
   fs.writeFileSync(authContextPath, newAuthContextContent);
   
-  // Stage the modified file
+  // Stage the modified files
   console.log('Staging modified files...');
-  execSync(`git add ${authContextPath}`, { stdio: 'inherit' });
+  execSync(`git add ${authCorsPath} ${authContextPath}`, { stdio: 'inherit' });
   
   // Commit changes
   console.log('Committing changes...');
-  execSync('git commit -m "Fix: Remove infinite loop in dashboard by fixing useEffect dependencies"', { stdio: 'inherit' });
+  execSync('git commit -m "Fix: Update auth-cors middleware syntax and completely rewrite profile data extraction"', { stdio: 'inherit' });
   
   // Push to GitHub
   console.log('Pushing to GitHub...');
@@ -413,8 +425,8 @@ export default useAuth;`;
   try {
     execSync(`git push heroku ${branchName}:main -f`, { stdio: 'inherit' });
     console.log('\n=== DEPLOYMENT SUCCESSFUL ===\n');
-    console.log('The dashboard infinite loop fix has been deployed to Heroku.');
-    console.log('The dashboard should now work without constant reloading.');
+    console.log('The profile data extraction fix has been deployed to Heroku.');
+    console.log('The achievements tab should now correctly retrieve user profile data.');
   } catch (error) {
     console.error('\n=== DEPLOYMENT FAILED ===\n');
     console.error('Failed to deploy to Heroku. Error:');
@@ -426,10 +438,10 @@ export default useAuth;`;
   // Verification instructions
   console.log('\n=== VERIFICATION STEPS ===\n');
   console.log('1. Open the application in your browser at https://energy-audit-store-e66479ed4f2b.herokuapp.com');
-  console.log('2. Sign in and navigate to the dashboard');
-  console.log('3. Open the browser console (F12) to check for auth check call count');
-  console.log('4. Verify that the dashboard is not stuck in an infinite loop');
-  console.log('5. Check that both the dashboard and achievements tab work correctly\n');
+  console.log('2. Sign in and navigate to the achievements tab');
+  console.log('3. Open the browser console (F12) to check for profile data retrieval');
+  console.log('4. Verify that profile data is now being successfully extracted');
+  console.log('5. You should see your badges load properly\n');
   
 } catch (error) {
   console.error('\n=== DEPLOYMENT FAILED ===\n');

@@ -31,33 +31,12 @@ export function useAuth() {
   const recoverUserProfileFromToken = async (token: string) => {
     console.log('Found access token but no user data, attempting profile recovery');
     try {
-      const response = await apiClient.get<{ user: User } | User>('/auth/profile');
-      
-      // Handle both response formats: { user: User } OR User directly
-      let userData: User | null = null;
-      
-      if (response.data) {
-        // Check if response has a user property (old format)
-        if ('user' in response.data && response.data.user) {
-          userData = response.data.user;
-        } 
-        // Check if response has direct user data (id, email properties - new format)
-        else if ('id' in response.data || 'userId' in response.data) {
-          // If response has userId but not id, map userId to id
-          userData = {
-            ...response.data,
-            id: response.data.id || response.data.userId
-          } as User;
-        }
-      }
-      
-      if (userData) {
+      const response = await apiClient.get<{ user: User }>('/auth/profile');
+      if (response.data.user) {
         // Save the recovered user data
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
         console.log('User profile recovered successfully');
-      } else {
-        console.warn('Profile endpoint returned success but data format unexpected:', response.data);
       }
     } catch (profileError) {
       console.error('Error recovering user profile:', profileError);
@@ -104,33 +83,14 @@ export function useAuth() {
           if (tokenInfo.hasAccessToken) {
             console.log('Found HttpOnly cookie token but no user data, attempting profile recovery');
             try {
-              const response = await apiClient.get<{ user: User } | User>('/auth/profile');
-              
-              // Handle both response formats: { user: User } OR User directly
-              let userData: User | null = null;
-              
-              if (response.data) {
-                // Check if response has a user property (old format)
-                if ('user' in response.data && response.data.user) {
-                  userData = response.data.user;
-                } 
-                // Check if response has direct user data (id, email properties - new format)
-                else if ('id' in response.data || 'userId' in response.data) {
-                  // If response has userId but not id, map userId to id
-                  userData = {
-                    ...response.data,
-                    id: response.data.id || response.data.userId
-                  } as User;
-                }
-              }
-              
-              if (userData) {
+              const response = await apiClient.get<{ user: User }>('/auth/profile');
+              if (response.data.user) {
                 // Save the recovered user data
-                localStorage.setItem('user', JSON.stringify(userData));
-                setUser(userData);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                setUser(response.data.user);
                 console.log('User profile recovered successfully from HttpOnly cookies');
               } else {
-                console.warn('Profile endpoint returned success but data format unexpected:', response.data);
+                console.warn('Profile endpoint returned success but no user data');
               }
             } catch (profileError) {
               console.error('Error recovering user profile from HttpOnly cookies:', profileError);
