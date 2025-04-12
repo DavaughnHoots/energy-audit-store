@@ -22,6 +22,7 @@ import { optionalTokenValidation } from './middleware/optionalTokenValidation.js
 import { authTokenCorsMiddleware } from './middleware/auth-token-cors.js';
 import { badgesCorsMiddleware } from './middleware/badges-cors.js';
 import { userProfileCorsMiddleware } from './middleware/user-profile-cors.js';
+import { authCorsMiddleware } from './middleware/auth-cors.js';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import educationRoutes from './routes/education.js';
@@ -260,6 +261,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // API Routes
+// Special CORS middleware for auth routes
+app.use('/api/auth', authCorsMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/education', educationRoutes);
