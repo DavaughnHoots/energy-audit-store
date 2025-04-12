@@ -192,6 +192,14 @@ router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => 
     }
 
     try {
+      
+      // Set cache control headers to prevent 304 responses
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      console.log('Processing profile request with no-cache headers');
+      
       const result = await pool.query(
         'SELECT id, email, full_name, phone, address, role FROM users WHERE id = $1',
         [userId]
@@ -207,6 +215,10 @@ router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => 
       // Generate CSRF token when getting profile
       generateCsrfToken(req, res, () => {});
 
+      // Log the response data for debugging
+      console.log('Sending profile data:', JSON.stringify(result.rows[0]));
+      
+      // Always return a 200 with fresh data
       res.json(result.rows[0]);
     } catch (dbError) {
       console.error('Database error in profile fetch:', dbError instanceof Error ? dbError.message : String(dbError));
