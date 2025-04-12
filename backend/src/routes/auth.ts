@@ -166,9 +166,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
 router.get('/profile', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    console.log('
-Profile request received, user ID from request:', userId);
-    console.log('Complete user object from request:', JSON.stringify(req.user));
+    console.log('Profile request received, user ID from request:', userId);
     
     if (!userId) {
       console.error('No user ID found in authenticated request');
