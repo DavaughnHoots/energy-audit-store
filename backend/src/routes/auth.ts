@@ -66,8 +66,8 @@ router.post('/register', authRateLimit, async (req: Request, res: Response) => {
   }
 });
 
-// Login user
-router.post('/login', authRateLimit, async (req: Request, res: Response) => {
+// Login user - with alias support for both /login and /signin
+router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
