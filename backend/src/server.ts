@@ -45,7 +45,9 @@ import energyConsumptionRoutes from './routes/energyConsumption.js';
 // Using analytics routes
 import analyticsRoutes from './routes/analytics.js';
 import directAdminRoutes from './routes/direct-admin.js';
-import badgesRoutes from './routes/badges.js';
+// Import enhanced badge routes
+import badgesRoutes from './routes/badges.enhanced.js';
+import userBadgesRoutes from './routes/user-badges.enhanced.js';
 import surveyRoutes from './routes/survey.js';
 // Use enhanced auth-token routes with CORS handling
 import authTokenRoutes from './routes/auth-token.enhanced.js';
@@ -306,13 +308,30 @@ app.use('/api/*', (req, res, next) => {
   next();
 });
 
-// Special CORS middleware for badge routes
+// Special CORS middleware for badge routes with improved path handling
 app.use('/api/badges', badgesCorsMiddleware);
-app.use('/api/users/:userId/badges', badgesCorsMiddleware);
-// Apply badge routes after CORS middleware
+app.use('/api/users/:userId', badgesCorsMiddleware);
+
+// Apply enhanced badge routes with proper path handling
 app.use('/api/badges', badgesRoutes);
-// Ensure user badge routes are properly registered
-app.use('/api/users/:userId/badges', badgesRoutes);
+// User badge routes registered at the user level to capture all badge-related endpoints
+app.use('/api/users/:userId', userBadgesRoutes);
+
+// Add debug endpoint to help with badge route diagnostics
+app.get('/api/debug/badges', (req: Request, res: Response) => {
+  res.json({
+    status: 'active',
+    version: 'badges-path-fix-v1',
+    endpoints: [
+      { route: '/api/badges', method: 'GET', description: 'Get all badges' },
+      { route: '/api/badges/:badgeId', method: 'GET', description: 'Get specific badge' },
+      { route: '/api/users/:userId/badges', method: 'GET', description: 'Get user badges' },
+      { route: '/api/users/:userId/points', method: 'GET', description: 'Get user points' },
+      { route: '/api/users/:userId/badges/refresh', method: 'POST', description: 'Refresh badge cache' }
+    ],
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Special CORS middleware for auth-token routes is now redundant with the global cors middleware
 // But we'll keep it for backwards compatibility and in case there are specialized needs
@@ -539,10 +558,10 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  appLogger.info('Server started (ENHANCED VERSION with CORS fix v8 - route handling fix)', createLogMetadata(undefined, {
+  appLogger.info('Server started (ENHANCED VERSION with badge routes fix)', createLogMetadata(undefined, {
     port: PORT,
     nodeEnv: process.env.NODE_ENV,
-    version: 'enhanced-cors-fix-v8-route-handling-fix'
+    version: 'badge-routes-path-fix-v1'
   }));
 });
 
