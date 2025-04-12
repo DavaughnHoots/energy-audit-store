@@ -31,66 +31,33 @@ export function useAuth() {
   const recoverUserProfileFromToken = async (token: string) => {
     console.log('Found access token but no user data, attempting profile recovery');
     try {
-      const response = await apiClient.get<{ user: User }>('/auth/profile');
-      if (response.data.user) {
-        // Save the recovered user data
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        setUser(response.data.user);
-        console.log('User profile recovered successfully');
-      }
-    } catch (profileError) {
-      console.error('Error recovering user profile:', profileError);
-      // If profile fetch fails, tokens might be invalid - clean up
-      if (apiClient.isUnauthorizedError(profileError)) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-      }
-    }
-  };
-  
-  // Track profile recovery attempts to prevent infinite loops
-  const [recoveryAttempted, setRecoveryAttempted] = useState(false);
-  
-  // Load user from localStorage or try to retrieve from API if tokens exist
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        console.log('Starting auth check with recovery attempted:', recoveryAttempted);
-        
-        // Sync cookies to localStorage if needed
-        syncAuthTokens();
-        
-        // First try to load from localStorage
-        const userJson = localStorage.getItem('user');
-        const accessToken = localStorage.getItem('accessToken');
-        
-        if (userJson) {
-          setUser(JSON.parse(userJson));
-          console.log('User loaded from localStorage successfully');
-        } 
-        // If we have a token but no user, try to retrieve the profile from API
-        else if (accessToken) {
-          await recoverUserProfileFromToken(accessToken);
-        } 
-        // Check if we have HttpOnly cookies with tokens (only if we haven't already tried recovery)
-        else if (!recoveryAttempted) {
-          setRecoveryAttempted(true); // Mark that we've attempted recovery to prevent loops
-          console.log('Checking for HttpOnly cookie tokens');
-          
-          const tokenInfo = await getTokenInfo();
-          console.log('Token info retrieved:', tokenInfo);
-          
-          if (tokenInfo.hasAccessToken) {
-            console.log('Found HttpOnly cookie token but no user data, attempting profile recovery');
-            try {
-              const response = await apiClient.get<{ user: User }>('/auth/profile');
-              if (response.data.user) {
+              const response = await apiClient.get<{ user: User } | User>('/auth/profile');
+              
+              // Handle both response formats: { user: User } OR User directly
+              let userData: User | null = null;
+              
+              if (response.data) {
+                // Check if response has a user property (old format)
+                if ('user' in response.data && response.data.user) {
+                  userData = response.data.user;
+                } 
+                // Check if response has direct user data (id, email properties - new format)
+                else if ('id' in response.data || 'userId' in response.data) {
+                  // If response has userId but not id, map userId to id
+                  userData = {
+                    ...response.data,
+                    id: response.data.id || response.data.userId
+                  } as User;
+                }
+              }
+              
+              if (userData) {
                 // Save the recovered user data
-                localStorage.setItem('user', JSON.stringify(response.data.user));
-                setUser(response.data.user);
+                localStorage.setItem('user', JSON.stringify(userData));
+                setUser(userData);
                 console.log('User profile recovered successfully from HttpOnly cookies');
               } else {
-                console.warn('Profile endpoint returned success but no user data');
+                console.warn('Profile endpoint returned success but data format unexpected:', response.data);
               }
             } catch (profileError) {
               console.error('Error recovering user profile from HttpOnly cookies:', profileError);
