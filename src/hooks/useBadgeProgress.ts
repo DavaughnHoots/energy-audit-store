@@ -11,7 +11,7 @@ export function useUserBadges() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userBadges, setUserBadges] = useState<Record<string, UserBadge>>({});
+  const [userBadges, setUserBadges] = useState<Record<string, UserBadge> | null>({});
   const [points, setPoints] = useState<UserLevel | null>(null);
   const [allBadges, setAllBadges] = useState<Badge[]>([]);
   
@@ -53,16 +53,16 @@ export function useUserBadges() {
     userBadges,
     points,
     allBadges,
-    earnedBadges: Object.values(userBadges).filter(badge => badge.earned),
-    inProgressBadges: Object.values(userBadges).filter(badge => !badge.earned && badge.progress > 0),
-    lockedBadges: Object.values(userBadges).filter(badge => !badge.earned && badge.progress === 0),
+    earnedBadges: userBadges ? Object.values(userBadges).filter(badge => badge.earned) : [],
+    inProgressBadges: userBadges ? Object.values(userBadges).filter(badge => !badge.earned && badge.progress > 0) : [],
+    lockedBadges: userBadges ? Object.values(userBadges).filter(badge => !badge.earned && badge.progress === 0) : [],
     refreshBadges: async () => {
       if (user?.id) {
         setLoading(true);
         try {
-          badgeService.invalidateUserCache(user.id);
-          const badges = await badgeService.getUserBadges(user.id);
-          const userPoints = await badgeService.getUserPoints(user.id);
+          badgeService.invalidateUserCache(user?.id);
+          const badges = await badgeService.getUserBadges(user?.id || '');
+          const userPoints = await badgeService.getUserPoints(user?.id || '');
           setUserBadges(badges);
           setPoints(userPoints);
         } catch (err) {
@@ -155,7 +155,7 @@ export function useRecentAchievements(limit: number = 3) {
         setLoading(true);
         setError(null);
         
-        const recentAchievements = await badgeService.getRecentAchievements(user.id, limit);
+        const recentAchievements = await badgeService.getRecentAchievements(user?.id || '', limit);
         setAchievements(recentAchievements);
       } catch (err) {
         console.error('Error fetching recent achievements:', err);

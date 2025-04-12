@@ -68,7 +68,7 @@ class BadgeService {
     } catch (error) {
       console.error('Error fetching badges:', error);
       // Fallback to local data if API fails
-      return Object.values(BADGES);
+      return BADGES ? Object.values(BADGES) : [];
     }
   }
   
@@ -233,7 +233,7 @@ class BadgeService {
         const badges = await this.getUserBadges(userId);
         
         // Count earned badges to estimate points
-        const earnedBadgeCount = Object.values(badges).filter(b => b.earned).length;
+        const earnedBadgeCount = badges ? Object.values(badges).filter(b => b.earned).length : 0;
         const estimatedPoints = earnedBadgeCount * 25; // Rough estimate: 25 points per badge
         
         return this.calculateUserLevel(estimatedPoints);
@@ -347,9 +347,9 @@ class BadgeService {
       }, {} as Record<string, Badge>);
       
       // Filter earned badges and sort by date
-      const earnedBadges = Object.values(userBadges)
-        .filter(badge => badge.earned && badge.earnedDate)
-        .sort((a, b) => {
+      const earnedBadges = userBadges ? Object.values(userBadges)
+        .filter((badge: UserBadge) => badge.earned && badge.earnedDate)
+        .sort((a: UserBadge, b: UserBadge) => {
           const dateA = a.earnedDate ? new Date(a.earnedDate).getTime() : 0;
           const dateB = b.earnedDate ? new Date(b.earnedDate).getTime() : 0;
           return dateB - dateA; // Sort by most recent first
@@ -358,8 +358,8 @@ class BadgeService {
       // Map to full badge details
       const recentBadges = earnedBadges
         .slice(0, limit)
-        .map(userBadge => badgeMap[userBadge.badgeId])
-        .filter(badge => !!badge); // Filter out undefined badges
+        .map((userBadge: UserBadge) => badgeMap[userBadge.badgeId])
+        .filter((badge: Badge | undefined) => !!badge); // Filter out undefined badges
       
       return recentBadges;
     } catch (error) {
@@ -370,9 +370,9 @@ class BadgeService {
         const badges = await this.getUserBadges(userId);
         
         // Filter earned badges and sort by date
-        const earnedBadges = Object.values(badges)
-          .filter(badge => badge.earned && badge.earnedDate)
-          .sort((a, b) => {
+        const earnedBadges = badges ? Object.values(badges)
+          .filter((badge: UserBadge) => badge.earned && badge.earnedDate)
+          .sort((a: UserBadge, b: UserBadge) => {
             const dateA = a.earnedDate ? new Date(a.earnedDate).getTime() : 0;
             const dateB = b.earnedDate ? new Date(b.earnedDate).getTime() : 0;
             return dateB - dateA; // Sort by most recent first
@@ -381,7 +381,7 @@ class BadgeService {
         // Get badge details for each earned badge
         const recentBadges = earnedBadges
           .slice(0, limit)
-          .map(userBadge => getBadgeById(userBadge.badgeId))
+          .map((userBadge: UserBadge) => getBadgeById(userBadge.badgeId))
           .filter((badge): badge is Badge => !!badge); // Filter out undefined badges
         
         return recentBadges;
