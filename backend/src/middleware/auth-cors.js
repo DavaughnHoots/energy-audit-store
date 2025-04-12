@@ -9,10 +9,12 @@ export function authCorsMiddleware(req, res, next) {
   try {
     // Log every request to auth endpoints for debugging
     appLogger.info('Auth CORS middleware executing', {
+      fullUrl: req.originalUrl,
+
       path: req.path,
       method: req.method,
       origin: req.headers.origin,
-      isAuthRoute: req.path.includes('/auth'),
+      isAuthRoute: true // Already in /api/auth path,
       requestId: req.id || 'no-request-id'
     });
 
