@@ -20,6 +20,7 @@ import { standardLimiter, authLimiter, apiLimiter, productsLimiter, productDetai
 import { authenticate } from './middleware/auth.js';
 import { optionalTokenValidation } from './middleware/optionalTokenValidation.js';
 import { authTokenCorsMiddleware } from './middleware/auth-token-cors.js';
+import { badgesCorsMiddleware } from './middleware/badges-cors.js';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import educationRoutes from './routes/education.js';
@@ -278,8 +279,14 @@ app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/direct-admin', authenticate, directAdminRoutes);
-app.use('/api/badges', badgesRoutes);
+// Apply survey routes
 app.use('/api/survey', surveyRoutes);
+
+// Special CORS middleware for badge routes
+app.use('/api/badges', badgesCorsMiddleware);
+app.use('/api/users/:userId/badges', badgesCorsMiddleware);
+// Apply badge routes after CORS middleware
+app.use('/api/badges', badgesRoutes);
 
 // Special CORS middleware for auth-token routes is now redundant with the global cors middleware
 // But we'll keep it for backwards compatibility and in case there are specialized needs
