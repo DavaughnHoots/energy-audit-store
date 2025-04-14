@@ -3,6 +3,7 @@ import { UserBadge, UserLevel, Badge } from '../types/badges';
 import { badgeService } from '../services/badgeService';
 import { useAuth } from './useAuth';
 import { useUserBadges } from './useBadgeProgress.badge-fix';
+import { fetchAuditHistory } from '../services/reportService';
 
 /**
  * Enhanced hook for fetching and synchronizing badges with dashboard metrics
@@ -26,7 +27,7 @@ export function useBadgeDashboardSync() {
     refreshBadges
   } = useUserBadges();
   
-  // Fetch dashboard data separately
+  // Fetch dashboard data separately - with graceful fallback
   useEffect(() => {
     async function fetchDashboardData() {
       if (!user?.id) {
@@ -40,26 +41,46 @@ export function useBadgeDashboardSync() {
       try {
         console.log('Fetching dashboard data for user:', user.id);
         
-        // Fetch audit history to get the total count
-        const response = await fetch(`/api/audits?userId=${user.id}&page=1&limit=1`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch dashboard data: ${response.status}`);
-        }
+        // Use the fetchAuditHistory function from reportService instead of direct fetch
+        // Since we only need the count, request just 1 item to minimize data transfer
+        const auditHistoryData = await fetchAuditHistory(1, 1);
         
-        const data = await response.json();
-        console.log('📊 Dashboard data retrieved:', data);
+        // Create a simplified dashboard data structure with just what we need
+        const simplifiedData = {
+          pagination: {
+            totalRecords: auditHistoryData.pagination.totalRecords || 0
+          }
+        };
         
-        setDashboardData(data);
+        console.log('📊 Dashboard data retrieved:', simplifiedData);
+        setDashboardData(simplifiedData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        setDashboardError('Failed to load dashboard data. Badge progress may be inaccurate.');
+        // Don't set error state to prevent blocking the UI - just log it
+        console.log('Continuing without dashboard data - using badge defaults');
+        // Set a minimal dashboard data object with estimated values
+        // This ensures UI can still progress even without actual data
+        setDashboardData({ 
+          pagination: { totalRecords: estimateAuditCountFromBadges(userBadges) },
+          estimated: true
+        });
       } finally {
         setDashboardLoading(false);
       }
     }
     
-    fetchDashboardData();
-  }, [user?.id]);
+    // Only fetch dashboard data if we have badge data
+    if (userBadges) {
+      fetchDashboardData();
+    }
+  }, [user?.id, userBadges]);
+  
+  // Unblock loading state when badge data is ready, regardless of dashboard
+  useEffect(() => {
+    if (userBadges && !loading) {
+      setLoading(false);
+    }
+  }, [userBadges, loading]);
   
   // Synchronize badges with dashboard metrics
   const syncedBadges = userBadges ? syncBadgeProgressWithDashboard(userBadges, dashboardData) : null;
@@ -68,7 +89,8 @@ export function useBadgeDashboardSync() {
   const { earnedBadges, inProgressBadges, lockedBadges } = processBadgesWithoutDuplication(syncedBadges);
   
   return {
-    loading: loading || dashboardLoading,
+    // Only depend on badge loading state, not dashboard loading state
+    loading: loading,
     error: error || dashboardError,
     userBadges: syncedBadges,
     originalBadges: userBadges,
@@ -82,7 +104,8 @@ export function useBadgeDashboardSync() {
       ...debugInfo,
       dashboardData: dashboardData ? {
         auditCount: getDashboardMetric('audits', dashboardData),
-        hasDashboardData: !!dashboardData
+        hasDashboardData: !!dashboardData,
+        isEstimated: dashboardData?.estimated || false
       } : null
     },
     refreshBadges: async () => {
@@ -92,20 +115,25 @@ export function useBadgeDashboardSync() {
         setDashboardLoading(true);
         
         try {
-          // Refresh both sets of data in parallel
-          await Promise.all([
-            refreshBadges(),
-            (async () => {
-              const response = await fetch(`/api/audits?userId=${user.id}&page=1&limit=1`);
-              if (!response.ok) {
-                throw new Error(`Failed to refresh dashboard data: ${response.status}`);
+          // Refresh badge data
+          await refreshBadges();
+          
+          // Try to refresh dashboard data, but don't block on failure
+          try {
+            const auditHistoryData = await fetchAuditHistory(1, 1);
+            const simplifiedData = {
+              pagination: {
+                totalRecords: auditHistoryData.pagination.totalRecords || 0
               }
-              const data = await response.json();
-              setDashboardData(data);
-            })()
-          ]);
+            };
+            setDashboardData(simplifiedData);
+          } catch (dashErr) {
+            console.error('Error refreshing dashboard data:', dashErr);
+            // No need to block the UI on dashboard data refresh failure
+          }
         } catch (err) {
-          console.error('Error refreshing data:', err);
+          console.error('Error refreshing badge data:', err);
+          setError('Failed to refresh badge data');
         } finally {
           setLoading(false);
           setDashboardLoading(false);
@@ -113,6 +141,42 @@ export function useBadgeDashboardSync() {
       }
     }
   };
+}
+
+/**
+ * Estimate the user's audit count based on their badge progress
+ * This is a fallback when actual audit count can't be retrieved
+ * @param badges User badges object
+ * @returns Estimated audit count
+ */
+function estimateAuditCountFromBadges(badges: Record<string, UserBadge> | null): number {
+  if (!badges) return 0;
+  
+  // Default to a low number if we can't estimate
+  let estimatedCount = 1;
+  
+  // Check if any audit badges are earned
+  const auditBadges = Object.entries(badges)
+    .filter(([badgeId, badge]) => 
+      (badgeId.startsWith('audit-') || badgeId.startsWith('audits-')) && 
+      badge.progress > 0
+    )
+    .sort((a, b) => b[1].progress - a[1].progress); // Sort by highest progress first
+  
+  if (auditBadges.length > 0) {
+    // Get the highest tier badge with progress
+    const [badgeId, badge] = auditBadges[0];
+    // Get the requirement for this badge
+    const requirement = getRequirementFromBadgeId(badgeId);
+    
+    if (requirement > 0) {
+      // Estimate based on progress percentage
+      estimatedCount = Math.max(1, Math.floor((badge.progress / 100) * requirement));
+    }
+  }
+  
+  console.log(`📊 Estimated audit count: ${estimatedCount} (based on badge progress)`); 
+  return estimatedCount;
 }
 
 /**

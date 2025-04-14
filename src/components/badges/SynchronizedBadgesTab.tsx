@@ -3,7 +3,7 @@ import { useBadgeDashboardSync } from '../../hooks/useBadgeDashboardSync';
 import { Badge, UserBadge } from '../../types/badges';
 import BadgeCollection from './BadgeCollection';
 import LevelProgressBar from './LevelProgressBar';
-import { Loader2, AlertCircle, Bug, RefreshCw, Info } from 'lucide-react';
+import { Loader2, AlertCircle, Bug, RefreshCw, Info, AlertTriangle } from 'lucide-react';
 
 /**
  * Enhanced BadgesTab component with dashboard data synchronization
@@ -28,6 +28,7 @@ const SynchronizedBadgesTab: React.FC = () => {
     points,
     userBadges,
     dashboardData,
+    dashboardError,
     debugInfo,
     refreshBadges
   } = useBadgeDashboardSync();
@@ -40,7 +41,8 @@ const SynchronizedBadgesTab: React.FC = () => {
         earnedBadgesCount: earnedBadges?.length || 0,
         inProgressBadgesCount: inProgressBadges?.length || 0,
         lockedBadgesCount: lockedBadges?.length || 0,
-        dashboardData: dashboardData ? 'available' : 'not available'
+        dashboardData: dashboardData ? 'available' : 'not available',
+        dashboardEstimated: dashboardData?.estimated || false
       });
       setReadyToRender(true);
     }
@@ -110,11 +112,6 @@ const SynchronizedBadgesTab: React.FC = () => {
         <div className="flex flex-col items-center">
           <Loader2 className="h-12 w-12 animate-spin text-green-600 mb-4" />
           <p className="text-gray-600">Loading achievements...</p>
-          {dashboardData ? (
-            <p className="text-sm text-gray-400 mt-2">Dashboard data loaded</p>
-          ) : (
-            <p className="text-sm text-gray-400 mt-2">Loading dashboard data...</p>
-          )}
         </div>
       </div>
     );
@@ -168,6 +165,9 @@ const SynchronizedBadgesTab: React.FC = () => {
   // Check if level is at maximum or not
   const isAtMaxLevel = points ? isMaxLevel(points) : false;
 
+  // Check if we're using estimated dashboard data
+  const isEstimatedData = dashboardData?.estimated || false;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="flex flex-row justify-between items-center">
@@ -190,13 +190,35 @@ const SynchronizedBadgesTab: React.FC = () => {
         </div>
       </div>
       
-      {/* Dashboard data banner */}
+      {/* Dashboard data banner - updated to handle estimated data */}
       {dashboardData && (
-        <div className="mb-6 p-3 bg-green-50 rounded-lg text-sm flex items-center">
-          <Info className="h-5 w-5 text-green-600 mr-2" />
+        <div className={`mb-6 p-3 rounded-lg text-sm flex items-center ${isEstimatedData ? 'bg-yellow-50' : 'bg-green-50'}`}>
+          {isEstimatedData ? (
+            <>
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+              <div>
+                <span className="font-semibold">Using estimated metrics:</span> Achievement progress is based on
+                <span className="font-semibold"> estimated {dashboardData.pagination.totalRecords} audits</span>.
+              </div>
+            </>
+          ) : (
+            <>
+              <Info className="h-5 w-5 text-green-600 mr-2" />
+              <div>
+                <span className="font-semibold">Dashboard synchronized:</span> Displaying achievements based on 
+                <span className="font-semibold"> {dashboardData.pagination.totalRecords} audits</span> and latest metrics.
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      
+      {/* Dashboard error message if needed */}
+      {dashboardError && (
+        <div className="mb-6 p-3 bg-yellow-50 rounded-lg text-sm flex items-center">
+          <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
           <div>
-            <span className="font-semibold">Dashboard synchronized:</span> Displaying achievements based on 
-            <span className="font-semibold"> {dashboardData.pagination.totalRecords} audits</span> and latest metrics.
+            <span className="font-semibold">Dashboard sync warning:</span> {dashboardError}
           </div>
         </div>
       )}
@@ -222,6 +244,7 @@ const SynchronizedBadgesTab: React.FC = () => {
               <p><strong>Total In Progress:</strong> {totalInProgress}</p>
               <p><strong>Total Locked:</strong> {totalLocked}</p>
               <p><strong>Dashboard Data:</strong> {dashboardData ? 'Available' : 'Not Available'}</p>
+              {dashboardData && <p><strong>Estimated Data:</strong> {isEstimatedData ? 'Yes' : 'No'}</p>}
             </div>
             <div>
               <p><strong>Total Badge Definitions:</strong> {totalBadges}</p>
