@@ -1,13 +1,12 @@
 import React from 'react';
-import RealBadgesTabBadgeEvalFix from './RealBadgesTab.badge-eval-fix';
+import SynchronizedBadgesTab from './SynchronizedBadgesTab';
 
 /**
- * Main tab component that displays the user's badge collection and level progress
- * This component now uses the fixed implementation with advanced badge evaluation logic
+ * BadgesTab component using the enhanced implementation
+ * with dashboard data synchronization and badge deduplication
  */
 const BadgesTab: React.FC = () => {
-  // Now using the evaluation-fixed implementation that properly handles badge statuses
-  return <RealBadgesTabBadgeEvalFix />;
+  return <SynchronizedBadgesTab />;
 };
 
 export default BadgesTab;
