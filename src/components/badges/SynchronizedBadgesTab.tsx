@@ -252,9 +252,9 @@ const SynchronizedBadgesTab: React.FC = () => {
             <div>
               <p><strong>User Badges Type:</strong> {typeof userBadges}</p>
               <p><strong>Is Array:</strong> {Array.isArray(userBadges) ? 'Yes' : 'No'}</p>
-              <p><strong>Total Earned:</strong> {totalEarned}</p>
-              <p><strong>Total In Progress:</strong> {totalInProgress}</p>
-              <p><strong>Total Locked:</strong> {totalLocked}</p>
+              <p><strong>Total Earned:</strong> {totalEarned} (Displayed: {earnedBadgeDefinitions.length})</p>
+              <p><strong>Total In Progress:</strong> {totalInProgress} (Displayed: {inProgressBadgeDefinitions.length})</p>
+              <p><strong>Total Locked:</strong> {totalLocked} (Displayed: {lockedBadgeDefinitions.length})</p>
               <p><strong>Dashboard Data:</strong> {dashboardData ? 'Available' : 'Not Available'}</p>
               {dashboardData && <p><strong>Estimated Data:</strong> {isEstimatedData ? 'Yes' : 'No'}</p>}
               <p><strong>Force Render:</strong> {forceRender ? 'Yes' : 'No'}</p>
@@ -344,7 +344,7 @@ const SynchronizedBadgesTab: React.FC = () => {
             onChange={() => setShowEarned(!showEarned)}
             className="mr-2"
           />
-          Show Earned ({totalEarned})
+          Show Earned ({earnedBadgeDefinitions.length})
         </label>
         <label className="flex items-center">
           <input
@@ -353,7 +353,7 @@ const SynchronizedBadgesTab: React.FC = () => {
             onChange={() => setShowLocked(!showLocked)}
             className="mr-2"
           />
-          Show Locked ({totalLocked + totalInProgress})
+          Show Locked ({inProgressBadgeDefinitions.length + lockedBadgeDefinitions.length})
         </label>
       </div>
 
