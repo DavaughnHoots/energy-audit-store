@@ -10,167 +10,78 @@ const PilotStudyFAQPage: React.FC = () => {
       
       <div className="bg-white shadow overflow-hidden rounded-lg mb-8">
         <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Objectives of the Pilot Study</h2>
+          <h3 className="text-lg font-medium text-gray-900 mb-3">What is the Pilot Study?</h3>
           <p className="mb-4 text-gray-700">
-            The primary objectives of this pilot study are to evaluate the functionality, usability, and effectiveness 
-            of our "One-Stop Shop for Energy-Efficient Products" platform before its full release.
-          </p>
-          
-          <h3 className="text-lg font-medium text-gray-900 mt-6 mb-2">Specifically, we aim to test:</h3>
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li>The usability and intuitiveness of the user interface across different user types</li>
-            <li>The effectiveness of the DIY energy audit tool in providing accurate and helpful recommendations</li>
-            <li>The relevance and usefulness of product recommendations based on energy audit results</li>
-            <li>The system's performance, reliability, and responsiveness under real-world usage conditions</li>
-          </ul>
-          
-          <h3 className="text-lg font-medium text-gray-900 mt-6 mb-2">Expected outcomes include:</h3>
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li>Identification of any usability issues or barriers that may impede user adoption</li>
-            <li>Validation that the DIY energy audit tool provides actionable and personalized recommendations</li>
-            <li>Verification that the platform performs reliably under typical usage patterns</li>
-            <li>Collection of user feedback for further refinement before full launch</li>
-          </ul>
-        </div>
-      </div>
-      
-      <div className="bg-white shadow overflow-hidden rounded-lg mb-8">
-        <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Data Collection Methods</h2>
-          <p className="mb-4 text-gray-700">
-            We will employ multiple data collection methods to gather comprehensive feedback:
-          </p>
-          
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li><strong>System Usage Analytics:</strong> Tracking user interactions, feature usage patterns, time spent on various sections, and task completion rates</li>
-            <li><strong>Post-usage Survey:</strong> Measuring user satisfaction, perceived usefulness, and likelihood to recommend using a 5-point Likert scale</li>
-            <li><strong>Task Completion Metrics:</strong> Recording success rates, time taken, and error counts for specific predefined tasks (e.g., completing an energy audit, finding recommended products)</li>
-            <li><strong>System Performance Logs:</strong> Monitoring technical performance indicators like response times and error rates</li>
-          </ul>
-        </div>
-      </div>
-      
-      <div className="bg-white shadow overflow-hidden rounded-lg mb-8">
-        <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Administration and Access</h2>
-          <p className="mb-4 text-gray-700">
-            The pilot study will be conducted as follows:
-          </p>
-          
-          <p className="mb-4 text-gray-700">
-            Participants will receive an email with:
-          </p>
-          
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li>Clear instructions on expected participation and timeline</li>
-            <li>A list of suggested tasks to complete during the testing period</li>
-            <li>Contact email for technical support</li>
-          </ul>
-          
-          <p className="text-gray-700">
-            After the testing period, participants can take the survey on the website itself via the Survey tab on the user dashboard.
+            Our pilot study is a short-term test of our Energy-Efficient Products Platform. We're looking for real-user feedback to fine-tune the features, usability, and overall experience before we launch the full version.
           </p>
         </div>
       </div>
       
       <div className="bg-white shadow overflow-hidden rounded-lg mb-8">
         <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Sample Size and Target Audience</h2>
-          <p className="mb-4 text-gray-700">
-            The pilot study will include 30 participants, representing our key user segments:
-          </p>
-          
-          <p className="mb-2 text-gray-700">
-            <strong>20 Homeowners/Renters:</strong>
-          </p>
-          
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Why Participate?</h3>
           <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li>5 energy-conscious homeowners who have previously invested in energy efficiency</li>
-            <li>5 homeowners who are considering energy efficiency upgrades but have limited knowledge</li>
-            <li>5 homeowners with technical backgrounds</li>
-            <li>5 homeowners with non-technical backgrounds</li>
-          </ul>
-          
-          <p className="mb-2 text-gray-700">
-            Participants will be recruited through:
-          </p>
-          
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li>Montclair's Energy Department & any connections they have</li>
-            <li>Professional or Personal networks of the team members</li>
-            <li>Social media advertising</li>
+            <li><strong>Direct Impact:</strong> Your insights will guide our improvements.</li>
+            <li><strong>Early Access:</strong> Enjoy a first look at our innovative tools, including the DIY Energy Audit, Product Recommendations, Community Forum, and Educational Resources.</li>
+            <li><strong>Quick & Easy:</strong> The study runs for just 2 weeks with a simple survey at the end, taking only about 5 minutes.</li>
           </ul>
         </div>
       </div>
       
       <div className="bg-white shadow overflow-hidden rounded-lg mb-8">
         <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Duration of the Pilot Study</h2>
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Who Can Join?</h3>
           <p className="mb-4 text-gray-700">
-            The pilot study will run for 2 weeks, structured as follows:
-          </p>
-          
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li><strong>Week 1:</strong> Initial access, platform exploration, and completion of the DIY energy audit</li>
-            <li><strong>Week 2:</strong> Engagement with product recommendations, community features, and implementation of suggested energy-saving measures</li>
-          </ul>
-          
-          <p className="text-gray-700">
-            This timeframe provides sufficient opportunity for participants to explore all platform features while also allowing 
-            users to return to the platform multiple times, simulating real-world usage patterns.
+            We welcome everyone interested in energy efficiency—homeowners, renters, or professionals. We particularly appreciate diverse perspectives, from energy novices to experts.
           </p>
         </div>
       </div>
       
       <div className="bg-white shadow overflow-hidden rounded-lg mb-8">
         <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Organization and Reporting of Findings</h2>
-          
+          <h3 className="text-lg font-medium text-gray-900 mb-3">How Do I Get Started?</h3>
+          <ol className="list-decimal pl-5 mb-4 text-gray-700 space-y-2">
+            <li>
+              <strong>Sign Up:</strong><br/>
+              Create your account via our <a href="https://energy-audit-store-e66479ed4f2b.herokuapp.com/sign-up" className="text-blue-600 hover:underline">Sign-Up Page</a>.
+            </li>
+            <li>
+              <strong>Explore the Platform:</strong><br/>
+              Navigate through the Products, Energy Audit, Community, and Education sections.
+            </li>
+          </ol>
+        </div>
+      </div>
+      
+      <div className="bg-white shadow overflow-hidden rounded-lg mb-8">
+        <div className="px-4 py-5 sm:p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">What Will I Be Doing?</h3>
+          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
+            <li>
+              <strong>Test Key Features:</strong><br/>
+              Use our DIY Energy Audit tool, browse our Product Recommendations, participate in the Community Forum, and review our Educational Resources.
+            </li>
+            <li>
+              <strong>Share Your Feedback:</strong><br/>
+              Complete a short survey to tell us about your experience with the platform.
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div className="bg-white shadow overflow-hidden rounded-lg mb-8">
+        <div className="px-4 py-5 sm:p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Is My Feedback Confidential?</h3>
           <p className="mb-4 text-gray-700">
-            The data collected will be organized and analyzed as follows:
+            Yes. Your responses are completely anonymous unless you choose to provide your email for follow-up. All data collected is solely for improving the platform.
           </p>
-          
-          <h3 className="text-lg font-medium text-gray-900 mt-6 mb-2">Quantitative Analysis:</h3>
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li>Statistical analysis of survey responses</li>
-            <li>Aggregation of system usage metrics and task completion rates</li>
-            <li>Performance data analysis, including response times and error rates</li>
-            <li>Generation of visual representations (graphs, charts) to illustrate key findings</li>
-          </ul>
-          
-          <h3 className="text-lg font-medium text-gray-900 mt-6 mb-2">Qualitative Analysis:</h3>
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li>Thematic analysis of interview responses and open-ended survey questions</li>
-            <li>Identification of recurring patterns or issues in user feedback</li>
-            <li>Documentation of specific user suggestions and feature requests</li>
-          </ul>
-          
-          <p className="mb-2 text-gray-700">
-            The final report will include:
-          </p>
-          
-          <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
-            <li>Executive summary highlighting key findings and recommendations</li>
-            <li>Detailed analysis of quantitative and qualitative data</li>
-            <li>Specific usability issues identified, categorized by severity and frequency</li>
-            <li>Performance analysis and technical considerations</li>
-            <li>User satisfaction metrics across different user segments</li>
-            <li>Prioritized list of recommended improvements for implementation before full release</li>
-            <li>Appendices containing raw data and complete survey responses</li>
-          </ul>
         </div>
       </div>
       
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-blue-800 mb-2">How to Participate</h2>
-        <p className="text-blue-700 mb-4">
-          If you're interested in participating in our pilot study, simply continue to use the site as normal. 
-          Your usage will help us gather valuable data on how people interact with our platform.
-        </p>
+        <h2 className="text-lg font-semibold text-blue-800 mb-2">Need Help?</h2>
         <p className="text-blue-700">
-          To provide feedback about your experience, please create an account and visit the 
-          <span className="font-medium"> Survey tab </span> 
-          on the user dashboard, where you can fill out our feedback survey.
+          If you have any questions or need assistance during the study, please reach out to our support team at <a href="mailto:Hootsd1@montclair.edu" className="text-blue-700 font-medium hover:underline">Hootsd1@montclair.edu</a>.
         </p>
       </div>
     </div>

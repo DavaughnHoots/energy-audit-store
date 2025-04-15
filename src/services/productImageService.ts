@@ -1,0 +1,252 @@
+/**
+ * Product Image Service
+ * 
+ * This service handles fetching and caching product images from Unsplash API.
+ * It provides a consistent way to retrieve images based on product categories and names,
+ * with fallbacks for when the API fails or is unavailable.
+ */
+
+// Image response interface with attribution data
+interface UnsplashImageResponse {
+  url: string;
+  id: string;
+  photographer: string;
+  photographerUsername: string;
+  photographerUrl: string;
+}
+
+// In-memory cache to store image data by category and product name
+interface ImageCache {
+  [key: string]: {
+    data: UnsplashImageResponse;
+    expires: number;
+  };
+}
+
+const imageCache: ImageCache = {};
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+// Keywords to use for each product category to improve image search relevance
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  'HVAC': ['air conditioner', 'heating system', 'energy efficient hvac'],
+  'Lighting': ['led light bulb', 'energy efficient lighting', 'modern lamp'],
+  'Appliances': ['energy star appliance', 'efficient refrigerator', 'smart appliance'],
+  'Insulation': ['home insulation', 'insulation material', 'thermal insulation'],
+  'Windows': ['energy efficient window', 'double pane window', 'window installation'],
+  'Solar': ['solar panel', 'solar energy', 'rooftop solar'],
+  'WaterHeating': ['water heater', 'tankless water heater', 'efficient water heating']
+};
+
+// Default fallback images if API fails or is unavailable
+const DEFAULT_IMAGES: Record<string, string> = {
+  'HVAC': 'https://images.unsplash.com/photo-1617104551722-3b2d51366400?auto=format&fit=crop&w=600&q=80',
+  'Lighting': 'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?auto=format&fit=crop&w=600&q=80',
+  'Appliances': 'https://images.unsplash.com/photo-1556911220-6bfac35a0d68?auto=format&fit=crop&w=600&q=80',
+  'Insulation': 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=600&q=80',
+  'Windows': 'https://images.unsplash.com/photo-1503708928676-1cb796a0891e?auto=format&fit=crop&w=600&q=80',
+  'Solar': 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=600&q=80',
+  'WaterHeating': 'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?auto=format&fit=crop&w=600&q=80'
+};
+
+// Ultimate fallback image if nothing else is available
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1556911220-6bfac35a0d68?auto=format&fit=crop&w=600&q=80';
+
+// Unsplash API key
+const UNSPLASH_ACCESS_KEY = 'qQWIia8U-dBGBdvr8N3SDAqLld78JkfAAme86bf-36U';
+
+/**
+ * Track a download event for an Unsplash image
+ * This is required by Unsplash's API terms when a user views an image
+ */
+export async function trackImageDownload(imageId: string): Promise<void> {
+  if (!imageId) return;
+  
+  try {
+    await fetch(`https://api.unsplash.com/photos/${imageId}/download`, {
+      headers: {
+        Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`
+      }
+    });
+    console.log(`Tracked download for image ID: ${imageId}`);
+  } catch (error) {
+    console.error('Failed to track Unsplash download:', error);
+  }
+}
+
+/**
+ * Gets image data for a product based on its name and category
+ * First checks the cache, then tries the Unsplash API, and falls back to default images if needed
+ */
+export async function getProductImageData(
+  productName: string,
+  category: string,
+  subCategory?: string
+): Promise<UnsplashImageResponse> {
+  const cacheKey = `${category.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
+  
+  // Check cache first to avoid unnecessary API calls
+  if (imageCache[cacheKey] && imageCache[cacheKey].expires > Date.now()) {
+    return imageCache[cacheKey].data;
+  }
+  
+  try {
+    // Build search query based on product details
+    let query = `${productName} energy efficient`;
+    
+    // Add category keyword if available
+    if (CATEGORY_KEYWORDS[category] && CATEGORY_KEYWORDS[category].length > 0) {
+      query += ` ${CATEGORY_KEYWORDS[category][0]}`;
+    }
+    
+    if (subCategory) {
+      query += ` ${subCategory}`;
+    }
+    
+    // Make request to Unsplash API
+    const response = await fetch(
+      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape`,
+      {
+        headers: {
+          Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch image from Unsplash');
+    }
+    
+    const data = await response.json();
+    
+    // Safely access nested properties
+    if (!data || !data.urls || typeof data.urls.regular !== 'string') {
+      throw new Error('Invalid response format from Unsplash API');
+    }
+    
+    // Extract relevant data
+    const imageData: UnsplashImageResponse = {
+      url: data.urls.regular as string,
+      id: data.id as string,
+      photographer: data.user?.name || 'Unsplash Photographer',
+      photographerUsername: data.user?.username || '',
+      photographerUrl: data.user?.links?.html || 'https://unsplash.com'
+    };
+    
+    // Cache the result
+    imageCache[cacheKey] = {
+      data: imageData,
+      expires: Date.now() + CACHE_DURATION
+    };
+    
+    return imageData;
+  } catch (error) {
+    console.error('Error fetching product image:', error);
+    
+    // Return default image for the category or a general fallback
+    let fallbackUrl = FALLBACK_IMAGE;
+    if (DEFAULT_IMAGES[category]) {
+      fallbackUrl = DEFAULT_IMAGES[category];
+    } else if (DEFAULT_IMAGES['Appliances']) {
+      fallbackUrl = DEFAULT_IMAGES['Appliances'];
+    }
+    
+    // Create a fallback image data object
+    const fallbackImageData: UnsplashImageResponse = {
+      url: fallbackUrl,
+      id: '',
+      photographer: 'Unsplash',
+      photographerUsername: '',
+      photographerUrl: 'https://unsplash.com'
+    };
+    
+    return fallbackImageData;
+  }
+}
+
+/**
+ * Gets an appropriate image URL for a product based on its name and category
+ * Simplified version of getProductImageData that returns just the URL
+ */
+export async function getProductImage(
+  productName: string,
+  category: string,
+  subCategory?: string
+): Promise<string> {
+  const imageData = await getProductImageData(productName, category, subCategory);
+  return imageData.url;
+}
+
+/**
+ * For development and testing purposes
+ * Returns a default image without making API calls
+ */
+export function getProductImageFallback(
+  productName: string,
+  category: string
+): string {
+  if (DEFAULT_IMAGES[category]) {
+    return DEFAULT_IMAGES[category];
+  } else if (DEFAULT_IMAGES['Appliances']) {
+    return DEFAULT_IMAGES['Appliances'];
+  } else {
+    return FALLBACK_IMAGE;
+  }
+}
+
+/**
+ * Manually invalidates the cache for a specific product or category
+ */
+export function invalidateImageCache(
+  category?: string,
+  productName?: string
+): void {
+  if (category && productName) {
+    // Invalidate specific product
+    const cacheKey = `${category.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
+    delete imageCache[cacheKey];
+  } else if (category) {
+    // Invalidate entire category
+    const categoryPrefix = category.toLowerCase() + '_';
+    const keysToInvalidate = Object.keys(imageCache).filter(key => 
+      key.startsWith(categoryPrefix)
+    );
+    
+    keysToInvalidate.forEach(key => delete imageCache[key]);
+  } else {
+    // Invalidate all cache
+    Object.keys(imageCache).forEach(key => delete imageCache[key]);
+  }
+}
+
+/**
+ * Refreshes expired cache entries
+ * Could be run on a schedule or when the app initializes
+ */
+export async function refreshImageCache(): Promise<void> {
+  const expiredCacheEntries = Object.entries(imageCache)
+    .filter(([_, data]) => data.expires < Date.now());
+    
+  for (const [key, _] of expiredCacheEntries) {
+    // Parse key to get category and product name
+    const parts = key.split('_');
+    if (parts.length < 2) {
+      console.error(`Invalid cache key format: ${key}`);
+      continue;
+    }
+    
+    const category = parts[0];
+    const productName = parts.slice(1).join('_').replace(/_/g, ' ');
+    
+    if (!category) {
+      console.error(`Invalid category in cache key: ${key}`);
+      continue;
+    }
+    
+    try {
+      await getProductImageData(productName, category);
+      console.log(`Refreshed cache for ${key}`);
+    } catch (error) {
+      console.error(`Failed to refresh cache for ${key}:`, error);
+    }
+  }
+}

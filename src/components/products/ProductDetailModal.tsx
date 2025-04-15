@@ -9,10 +9,54 @@ import {
   Home, 
   X, 
   ArrowRight,
-  Check 
+  Check,
+  Image,
+  ExternalLink
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-import { DetailedProduct } from '@/types/product';
+import { Product } from '@/types/product';
+import { getProductImageData, trackImageDownload } from '@/services/productImageService';
+
+// Interface for image data with attribution
+interface ProductImageData {
+  url: string;
+  id: string;
+  photographer: string;
+  photographerUsername: string;
+  photographerUrl: string;
+}
+
+// Extend the base Product type with additional fields needed for detailed view
+interface DetailedProduct extends Product {
+  enhancedMetrics: {
+    monthlySavings: number;
+    fiveYearSavings: number;
+    tenYearSavings: number;
+    percentageReduction: number;
+    co2Reduction: {
+      annual: number;
+      fiveYear: number;
+      tenYear: number;
+      equivalentTrees: number;
+      equivalentMilesDriven: number;
+    };
+  };
+  auditContext: {
+    energyInfo: {
+      electricityCost: number;
+      gasCost: number;
+    };
+    propertyInfo: {
+      propertySize?: number;
+      propertyType?: string;
+      buildingAge?: number;
+      occupants?: number;
+    };
+  };
+  isSample?: boolean;
+  audit_id?: string;
+  audit_date?: string;
+}
 
 interface ProductDetailModalProps {
   productId: string;
@@ -29,13 +73,78 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
-  
+  const [productImage, setProductImage] = useState<ProductImageData | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageDownloadTracked, setImageDownloadTracked] = useState(false);
+
   useEffect(() => {
     if (isOpen && productId) {
       fetchProductDetails();
+      // Reset image state when modal reopens
+      setProductImage(null);
+      setImageLoading(false);
+      setImageDownloadTracked(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, productId]); // Adding fetchProductDetails to deps would cause an infinite loop
+  
+  // Effect to fetch product image when product details are loaded
+  useEffect(() => {
+    const fetchImage = async () => {
+      if (product) {
+        // If product already has an image URL, use it
+        if (product.imageUrl) {
+          setProductImage({
+            url: product.imageUrl,
+            id: '',
+            photographer: '',
+            photographerUsername: '',
+            photographerUrl: ''
+          });
+          return;
+        }
+        
+        // Otherwise fetch an image based on product details
+        try {
+          setImageLoading(true);
+          const imageData = await getProductImageData(
+            product.name,
+            product.category,
+            product.subCategory
+          );
+          setProductImage(imageData);
+        } catch (err) {
+          console.error('Failed to load product image:', err);
+          setProductImage(null);
+        } finally {
+          setImageLoading(false);
+        }
+      }
+    };
+    
+    fetchImage();
+  }, [product]);
+  
+  // Effect to track image downloads when an image is displayed
+  useEffect(() => {
+    const trackDownload = async () => {
+      if (
+        productImage && 
+        productImage.id && 
+        !imageDownloadTracked && 
+        !loading
+      ) {
+        try {
+          await trackImageDownload(productImage.id);
+          setImageDownloadTracked(true);
+        } catch (error) {
+          console.error('Failed to track image download:', error);
+        }
+      }
+    };
+    
+    trackDownload();
+  }, [productImage, loading, imageDownloadTracked]);
   
   const fetchProductDetails = async () => {
     try {
@@ -140,7 +249,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 </button>
                 <button
                   className={`py-2 px-1 border-b-2 transition-colors whitespace-nowrap ${
-                    activeTab === 'specifications' 
+                    activeTab === 'specifications'
                       ? 'border-green-500 text-green-600 font-medium'
                       : 'border-transparent text-gray-600 hover:text-gray-800'
                   }`}
@@ -160,10 +269,15 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     {/* Product Image */}
                     <div className="w-full md:w-1/3 flex-shrink-0">
                       <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center h-64">
-                        {product.imageUrl ? (
-                          <img 
-                            src={product.imageUrl} 
-                            alt={product.name} 
+                        {imageLoading ? (
+                          <div className="animate-pulse flex flex-col items-center justify-center">
+                            <Image className="h-20 w-20 text-gray-300 mb-2" />
+                            <span className="text-gray-400 text-sm">Loading image...</span>
+                          </div>
+                        ) : productImage?.url ? (
+                          <img
+                            src={productImage.url}
+                            alt={product.name}
                             className="max-h-full max-w-full object-contain"
                           />
                         ) : (
@@ -173,6 +287,45 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           </div>
                         )}
                       </div>
+                      {/* Unsplash Attribution */}
+                      {productImage?.url && !product.imageUrl && (
+                        <div className="mt-2 text-xs text-gray-500 text-center">
+                          {productImage.photographer ? (
+                            <span>
+                              Photo by{' '}
+                              <a 
+                                href={productImage.photographerUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                {productImage.photographer}
+                              </a>{' '}
+                              on{' '}
+                              <a 
+                                href="https://unsplash.com" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Unsplash
+                              </a>
+                            </span>
+                          ) : (
+                            <span>
+                              Image from{' '}
+                              <a 
+                                href="https://unsplash.com" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Unsplash
+                              </a>
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {product.isSample && (
                         <div className="mt-2 text-xs text-gray-500 text-center">
                           * Sample product based on recommendation data
@@ -229,7 +382,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   <div className="mt-8">
                     <h3 className="text-lg font-medium text-gray-900 mb-3">Key Features</h3>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-                      {product.features.map((feature, index) => (
+                      {product.features.map((feature: string, index: number) => (
                         <li key={index} className="flex items-start">
                           <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
                           <span>{feature}</span>
