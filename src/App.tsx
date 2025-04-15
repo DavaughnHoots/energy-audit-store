@@ -3,6 +3,7 @@ import AdvancedInsulationPage from './pages/AdvancedInsulationPage';
 import ResidentialSolarPage from './pages/ResidentialSolarPage';
 import PilotStudyFAQPage from './pages/PilotStudyFAQPage';
 import PilotStudyBanner from './components/PilotStudyBanner';
+import Products2Page from './pages/Products2Page';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AnalyticsProvider } from './context/AnalyticsContext';
@@ -143,6 +144,7 @@ const App: React.FC = () => {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products2" element={<Products2Page />} />
                   <Route path="/products/:id" element={<ProductDetailPage />} />
                   <Route path="/energy-audit" element={<EnergyAuditPage />} />
                   <Route path="/energy-audit/:auditId/report" element={<InteractiveReportPage />} />

@@ -15,6 +15,12 @@ interface UnsplashImageResponse {
   photographerUrl: string;
 }
 
+export type ProductImageData = {
+  url: string;
+  photographer: string;
+  photographerUrl: string;
+};
+
 // In-memory cache to store image data by category and product name
 interface ImageCache {
   [key: string]: {
@@ -70,6 +76,96 @@ export async function trackImageDownload(imageId: string): Promise<void> {
     console.log(`Tracked download for image ID: ${imageId}`);
   } catch (error) {
     console.error('Failed to track Unsplash download:', error);
+  }
+}
+
+/**
+ * Gets category-specific image data optimized for category browsing
+ * Uses a specialized cache and query construction for better category images
+ */
+export async function getCategoryImage(
+  category: string,
+  additionalKeyword?: string,
+  forceFresh = false
+): Promise<ProductImageData> {
+  const cacheKey = `category_${category.toLowerCase()}_${additionalKeyword || ''}`;
+  
+  // Check cache first unless forceFresh is true
+  if (!forceFresh && imageCache[cacheKey] && imageCache[cacheKey].expires > Date.now()) {
+    const cachedData = imageCache[cacheKey].data;
+    return {
+      url: cachedData.url,
+      photographer: cachedData.photographer,
+      photographerUrl: cachedData.photographerUrl
+    };
+  }
+  
+  try {
+    // Build optimized search query for categories
+    let query = `${category} energy efficient`;
+    
+    // Add category-specific keywords for better results
+    if (CATEGORY_KEYWORDS[category] && CATEGORY_KEYWORDS[category].length > 0) {
+      // Use random keyword from the array for variety
+      const randomIndex = Math.floor(Math.random() * CATEGORY_KEYWORDS[category].length);
+      query += ` ${CATEGORY_KEYWORDS[category][randomIndex]}`;
+    }
+    
+    if (additionalKeyword) {
+      query += ` ${additionalKeyword}`;
+    }
+    
+    // Request a high-quality landscape image that works well for category tiles
+    const response = await fetch(
+      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape&content_filter=high`,
+      {
+        headers: {
+          Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch category image: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data || !data.urls || typeof data.urls.regular !== 'string') {
+      throw new Error('Invalid response format from Unsplash API');
+    }
+    
+    // Extract relevant data
+    const imageData: UnsplashImageResponse = {
+      url: data.urls.regular as string,
+      id: data.id as string,
+      photographer: data.user?.name || 'Unsplash Photographer',
+      photographerUsername: data.user?.username || '',
+      photographerUrl: data.user?.links?.html || 'https://unsplash.com'
+    };
+    
+    // Cache the result
+    imageCache[cacheKey] = {
+      data: imageData,
+      expires: Date.now() + CACHE_DURATION
+    };
+    
+    return {
+      url: imageData.url,
+      photographer: imageData.photographer,
+      photographerUrl: imageData.photographerUrl
+    };
+  } catch (error) {
+    console.error(`Error fetching image for category ${category}:`, error);
+    
+    // Return default image for the category or fallback
+    const fallbackUrl = DEFAULT_IMAGES[category] || FALLBACK_IMAGE;
+    
+    return {
+      url: fallbackUrl,
+      photographer: 'Unsplash',
+      photographerUrl: 'https://unsplash.com'
+    };
   }
 }
 
