@@ -1,0 +1,146 @@
+{
+  "Appliances": [
+    {
+      "url": "https://images.unsplash.com/photo-1617104551722-3b2d51366400?w=800",
+      "photographer": "Tim Vandenhoydonck",
+      "photographerUrl": "https://unsplash.com/@tim_vandenhoydonck"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=800",
+      "photographer": "Jonas Leupe",
+      "photographerUrl": "https://unsplash.com/@jonasleupe"
+    }
+  ],
+  "Building Products": [
+    {
+      "url": "https://images.unsplash.com/photo-1573599852326-2a1bd9a5fc82?w=800",
+      "photographer": "Roman Kraft",
+      "photographerUrl": "https://unsplash.com/@romankraft"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1577493340887-b7bfff550145?w=800",
+      "photographer": "Pavel Nekoranec",
+      "photographerUrl": "https://unsplash.com/@nekoranec"
+    }
+  ],
+  "Commercial Appliances": [
+    {
+      "url": "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800",
+      "photographer": "Fab Lentz",
+      "photographerUrl": "https://unsplash.com/@fossi_"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1574269252556-89926e7c5805?w=800",
+      "photographer": "Mika Baumeister",
+      "photographerUrl": "https://unsplash.com/@mbaumi"
+    }
+  ],
+  "Commercial Food Service Equipment": [
+    {
+      "url": "https://images.unsplash.com/photo-1579620586767-8f6b2422f605?w=800",
+      "photographer": "WikiSleep App",
+      "photographerUrl": "https://unsplash.com/@wikisleepapp"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1572715376701-98568319fd0b?w=800",
+      "photographer": "Ello",
+      "photographerUrl": "https://unsplash.com/@ello"
+    }
+  ],
+  "Data Center Equipment": [
+    {
+      "url": "https://images.unsplash.com/photo-1581092583537-20d51b4024ec?w=800",
+      "photographer": "Aleksei Shabailin",
+      "photographerUrl": "https://unsplash.com/@shabalinaleksei"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800",
+      "photographer": "Taylor Vick",
+      "photographerUrl": "https://unsplash.com/@tvick"
+    }
+  ],
+  "Electronics": [
+    {
+      "url": "https://images.unsplash.com/photo-1648423980346-5c71dd08ad6d?w=800",
+      "photographer": "Surface",
+      "photographerUrl": "https://unsplash.com/@surface"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=800",
+      "photographer": "Fabian Albert",
+      "photographerUrl": "https://unsplash.com/@fabianalbert"
+    }
+  ],
+  "Heating & Cooling": [
+    {
+      "url": "https://images.unsplash.com/photo-1629948618343-0d33f80d1da6?w=800",
+      "photographer": "Zoltan Tasi",
+      "photographerUrl": "https://unsplash.com/@zoltantasi"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1603768705826-cf10294510e7?w=800",
+      "photographer": "KWON JUNHO",
+      "photographerUrl": "https://unsplash.com/@junhokwon"
+    }
+  ],
+  "HVAC": [
+    {
+      "url": "https://images.unsplash.com/photo-1641126694608-11697d9e8edb?w=800",
+      "photographer": "Sigmund",
+      "photographerUrl": "https://unsplash.com/@sigmund"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1504597421483-797f981c0adb?w=800",
+      "photographer": "Micaela Parente",
+      "photographerUrl": "https://unsplash.com/@micalessi"
+    }
+  ],
+  "Lighting & Fans": [
+    {
+      "url": "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800",
+      "photographer": "Andreas Gücklhorn",
+      "photographerUrl": "https://unsplash.com/@draufsicht"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1533743060125-9338cda16f02?w=800",
+      "photographer": "Lucas Gouveia",
+      "photographerUrl": "https://unsplash.com/@lucasgouvea"
+    }
+  ],
+  "Office Equipment": [
+    {
+      "url": "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800",
+      "photographer": "Christin Hume",
+      "photographerUrl": "https://unsplash.com/@christinhumephoto"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=800",
+      "photographer": "Carl Heyerdahl",
+      "photographerUrl": "https://unsplash.com/@carlheyerdahl"
+    }
+  ],
+  "Solar": [
+    {
+      "url": "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800",
+      "photographer": "American Public Power Association",
+      "photographerUrl": "https://unsplash.com/@publicpowerorg"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=800",
+      "photographer": "Vivint Solar",
+      "photographerUrl": "https://unsplash.com/@vivintsolar"
+    }
+  ],
+  "Windows": [
+    {
+      "url": "https://images.unsplash.com/photo-1503708928676-1cb796a0891e?w=800",
+      "photographer": "Hugo Sousa",
+      "photographerUrl": "https://unsplash.com/@hmiguelsousa"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1608236567899-25c3f4e98220?w=800",
+      "photographer": "Nick Nice",
+      "photographerUrl": "https://unsplash.com/@nicknice"
+    }
+  ]
+}

@@ -6,6 +6,8 @@
  * with fallbacks for when the API fails or is unavailable.
  */
 
+import predefinedCategoryImages from '../../public/data/category-images.json';
+
 // Image response interface with attribution data
 interface UnsplashImageResponse {
   url: string;
@@ -15,6 +17,7 @@ interface UnsplashImageResponse {
   photographerUrl: string;
 }
 
+// Export type for product image data with attribution
 export type ProductImageData = {
   url: string;
   photographer: string;
@@ -79,27 +82,73 @@ export async function trackImageDownload(imageId: string): Promise<void> {
   }
 }
 
+// Add localStorage helpers
+const getLocalStorageCache = (key: string) => {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return null;
+    const parsedItem = JSON.parse(item);
+    if (parsedItem.expires < Date.now()) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return parsedItem.data;
+  } catch (e) {
+    console.error('Error reading from localStorage:', e);
+    return null;
+  }
+};
+
+const setLocalStorageCache = (key: string, data: any, duration: number) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      data,
+      expires: Date.now() + duration
+    }));
+  } catch (e) {
+    console.error('Error writing to localStorage:', e);
+  }
+};
+
 /**
  * Gets category-specific image data optimized for category browsing
- * Uses a specialized cache and query construction for better category images
+ * Uses specialized cache and predefined images for better category representation
  */
 export async function getCategoryImage(
   category: string,
   additionalKeyword?: string,
   forceFresh = false
 ): Promise<ProductImageData> {
-  const cacheKey = `category_${category.toLowerCase()}_${additionalKeyword || ''}`;
+  const cacheKey = `category_image_${category.toLowerCase()}_${additionalKeyword || ''}`;
   
-  // Check cache first unless forceFresh is true
-  if (!forceFresh && imageCache[cacheKey] && imageCache[cacheKey].expires > Date.now()) {
-    const cachedData = imageCache[cacheKey].data;
-    return {
-      url: cachedData.url,
-      photographer: cachedData.photographer,
-      photographerUrl: cachedData.photographerUrl
-    };
+  // Check localStorage cache first (unless forceFresh is true)
+  if (!forceFresh) {
+    const cachedData = getLocalStorageCache(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
   }
   
+  // Next, try to use predefined images
+  const normalizedCategory = category.replace(/&/g, 'and').trim();
+  if (
+    // @ts-ignore - JSON import type handling
+    predefinedCategoryImages[normalizedCategory] && 
+    // @ts-ignore - JSON import type handling
+    predefinedCategoryImages[normalizedCategory].length > 0
+  ) {  
+    // Randomly select one of the predefined images
+    // @ts-ignore - JSON import type handling
+    const imagePool = predefinedCategoryImages[normalizedCategory];
+    const randomIndex = Math.floor(Math.random() * imagePool.length);
+    const selectedImage = imagePool[randomIndex];
+    
+    // Cache the selected image
+    setLocalStorageCache(cacheKey, selectedImage, CACHE_DURATION);
+    return selectedImage;
+  }
+  
+  // If no predefined image, proceed with API call logic
   try {
     // Build optimized search query for categories
     let query = `${category} energy efficient`;
@@ -144,11 +193,18 @@ export async function getCategoryImage(
       photographerUrl: data.user?.links?.html || 'https://unsplash.com'
     };
     
-    // Cache the result
+    // Cache the result in memory
     imageCache[cacheKey] = {
       data: imageData,
       expires: Date.now() + CACHE_DURATION
     };
+    
+    // Also cache in localStorage for persistence between page refreshes
+    setLocalStorageCache(cacheKey, {
+      url: imageData.url,
+      photographer: imageData.photographer,
+      photographerUrl: imageData.photographerUrl
+    }, CACHE_DURATION);
     
     return {
       url: imageData.url,
@@ -170,6 +226,25 @@ export async function getCategoryImage(
 }
 
 /**
+ * Rate-limiting functions for image refreshing
+ */
+export function canRefreshCategoryImage(category: string): boolean {
+  const refreshKey = `last_refresh_${category.toLowerCase()}`;
+  const lastRefresh = localStorage.getItem(refreshKey);
+  
+  if (!lastRefresh) return true;
+  
+  // Allow refresh once per hour
+  const ONE_HOUR = 60 * 60 * 1000;
+  return (Date.now() - parseInt(lastRefresh, 10)) > ONE_HOUR;
+}
+
+export function markCategoryImageRefreshed(category: string): void {
+  const refreshKey = `last_refresh_${category.toLowerCase()}`;
+  localStorage.setItem(refreshKey, Date.now().toString());
+}
+
+/**
  * Gets image data for a product based on its name and category
  * First checks the cache, then tries the Unsplash API, and falls back to default images if needed
  */
@@ -180,7 +255,20 @@ export async function getProductImageData(
 ): Promise<UnsplashImageResponse> {
   const cacheKey = `${category.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
   
-  // Check cache first to avoid unnecessary API calls
+  // Check localStorage cache first
+  const localStorageData = getLocalStorageCache(cacheKey);
+  if (localStorageData) {
+    // Convert from ProductImageData to UnsplashImageResponse format
+    return {
+      url: localStorageData.url,
+      id: '',  // IDs aren't stored in localStorage cache
+      photographer: localStorageData.photographer,
+      photographerUsername: '',
+      photographerUrl: localStorageData.photographerUrl
+    };
+  }
+  
+  // Then check memory cache
   if (imageCache[cacheKey] && imageCache[cacheKey].expires > Date.now()) {
     return imageCache[cacheKey].data;
   }
@@ -228,11 +316,18 @@ export async function getProductImageData(
       photographerUrl: data.user?.links?.html || 'https://unsplash.com'
     };
     
-    // Cache the result
+    // Cache the result in memory
     imageCache[cacheKey] = {
       data: imageData,
       expires: Date.now() + CACHE_DURATION
     };
+    
+    // Also cache in localStorage
+    setLocalStorageCache(cacheKey, {
+      url: imageData.url,
+      photographer: imageData.photographer,
+      photographerUrl: imageData.photographerUrl
+    }, CACHE_DURATION);
     
     return imageData;
   } catch (error) {
@@ -300,17 +395,29 @@ export function invalidateImageCache(
     // Invalidate specific product
     const cacheKey = `${category.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
     delete imageCache[cacheKey];
+    localStorage.removeItem(cacheKey);
   } else if (category) {
     // Invalidate entire category
     const categoryPrefix = category.toLowerCase() + '_';
+    
+    // Clear memory cache
     const keysToInvalidate = Object.keys(imageCache).filter(key => 
       key.startsWith(categoryPrefix)
     );
-    
     keysToInvalidate.forEach(key => delete imageCache[key]);
+    
+    // Clear localStorage cache
+    Object.keys(localStorage).filter(key => 
+      key.startsWith(categoryPrefix) || key.startsWith(`category_image_${category.toLowerCase()}`)
+    ).forEach(key => localStorage.removeItem(key));
   } else {
     // Invalidate all cache
     Object.keys(imageCache).forEach(key => delete imageCache[key]);
+    
+    // Clear all image-related localStorage items
+    Object.keys(localStorage).filter(key => 
+      key.includes('_image_') || key.startsWith('last_refresh_')
+    ).forEach(key => localStorage.removeItem(key));
   }
 }
 

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useComponentTracking } from '../../hooks/analytics/useComponentTracking';
 import { AnalyticsArea } from '../../context/AnalyticsContext';
-import { getCategoryImage } from '../../services/productImageService';
+import { RefreshCw } from 'lucide-react';
+import { getCategoryImage, canRefreshCategoryImage, markCategoryImageRefreshed } from '../../services/productImageService';
+import { ProductImageData } from '../../services/productImageService';
 
 interface CategoryGalleryProps {
   categories: string[];
@@ -14,9 +16,10 @@ interface CategoryTileProps {
 }
 
 const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
-  const [imageData, setImageData] = useState<{ url: string; photographer: string; photographerUrl: string } | null>(null);
+  const [imageData, setImageData] = useState<ProductImageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [canRefresh, setCanRefresh] = useState(() => canRefreshCategoryImage(category));
   
   useEffect(() => {
     const fetchCategoryImage = async () => {
@@ -24,8 +27,6 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
         setIsLoading(true);
         setError(null);
         
-        // Placeholder: In the future we'll implement a getCategoryImage function
-        // that specializes in fetching category-specific images
         const data = await getCategoryImage(category, category);
         setImageData(data);
       } catch (err) {
@@ -38,6 +39,29 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
     
     fetchCategoryImage();
   }, [category]);
+  
+  // Handle refresh button click
+  const handleRefresh = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the tile selection
+    
+    if (!canRefresh) return;
+    
+    try {
+      setIsLoading(true);
+      const data = await getCategoryImage(category, category, true); // Force fresh
+      setImageData(data);
+      markCategoryImageRefreshed(category);
+      setCanRefresh(false);
+      
+      // Update status after cooldown
+      setTimeout(() => setCanRefresh(canRefreshCategoryImage(category)), 1000);
+    } catch (err) {
+      console.error(`Error refreshing image for ${category}:`, err);
+      setError('Failed to refresh image');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   return (
     <div 
@@ -72,6 +96,17 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
           <h3 className="text-white text-xl font-semibold">{category}</h3>
         </div>
       </div>
+      
+      {/* Refresh button */}
+      <button
+        className={`absolute top-2 right-2 p-1 rounded-full ${canRefresh ? 'bg-black/30 hover:bg-black/50' : 'bg-black/20 cursor-not-allowed'} transition-colors`}
+        onClick={handleRefresh}
+        disabled={!canRefresh}
+        title={canRefresh ? "Refresh image" : "Image refresh on cooldown"}
+        aria-label={canRefresh ? "Refresh image" : "Image refresh on cooldown"}
+      >
+        <RefreshCw className={`h-4 w-4 ${canRefresh ? 'text-white' : 'text-white/60'}`} />
+      </button>
       
       {/* Image attribution */}
       {imageData && imageData.photographer && (
