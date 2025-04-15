@@ -16,6 +16,7 @@ const SynchronizedBadgesTab: React.FC = () => {
   const [showLocked, setShowLocked] = useState<boolean>(true);
   const [showDebug, setShowDebug] = useState<boolean>(false);
   const [readyToRender, setReadyToRender] = useState<boolean>(false);
+  const [forceRender, setForceRender] = useState<boolean>(false);
 
   // Use the enhanced badge-dashboard sync hook
   const { 
@@ -35,15 +36,39 @@ const SynchronizedBadgesTab: React.FC = () => {
 
   // Prepare the badge data for display after loading is done
   useEffect(() => {
-    if (!loading && allBadges && allBadges.length > 0) {
-      console.log("🔄 Ready to render badges", {
-        allBadgesCount: allBadges?.length || 0,
+    if (!loading && userBadges) {
+      console.log("🔄 Ready to render badges - data check:", {
+        allBadgesExists: !!allBadges,
+        allBadgesIsArray: Array.isArray(allBadges),
+        allBadgesCount: Array.isArray(allBadges) ? allBadges.length : 0,
         earnedBadgesCount: earnedBadges?.length || 0,
         inProgressBadgesCount: inProgressBadges?.length || 0,
         lockedBadgesCount: lockedBadges?.length || 0,
         dashboardData: dashboardData ? 'available' : 'not available',
-        dashboardEstimated: dashboardData?.estimated || false
+        dashboardEstimated: dashboardData?.estimated || false,
+        userBadgesType: typeof userBadges
       });
+  // Force render after 5 seconds to avoid infinite loading state
+  useEffect(() => {
+    console.log("⚠️ Setting up force render timeout");
+    const timer = setTimeout(() => {
+      if (!readyToRender && !forceRender) {
+        console.log("⚠️ Force rendering after timeout - current state:", {
+          loading,
+          allBadgesExists: !!allBadges,
+          allBadgesIsArray: Array.isArray(allBadges),
+          allBadgesLength: Array.isArray(allBadges) ? allBadges.length : 'N/A',
+          earnedBadgesExists: !!earnedBadges,
+          dashboardDataExists: !!dashboardData,
+          readyToRender
+        });
+        setForceRender(true);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [loading, allBadges, earnedBadges, readyToRender]);
+
       setReadyToRender(true);
     }
   }, [loading, allBadges, earnedBadges, inProgressBadges, lockedBadges, dashboardData]);
@@ -106,7 +131,7 @@ const SynchronizedBadgesTab: React.FC = () => {
     getNormalizedBadgeDefinition(safeAllBadges, firstBadgeId) : null;
 
   // If we're loading, show a loading state
-  if (loading) {
+  if (loading && !forceRender) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-6 flex justify-center items-center min-h-[300px]">
         <div className="flex flex-col items-center">
@@ -167,6 +192,22 @@ const SynchronizedBadgesTab: React.FC = () => {
 
   // Check if we're using estimated dashboard data
   const isEstimatedData = dashboardData?.estimated || false;
+  // If we're forcing render, show a banner warning
+  const renderingMode = forceRender && !readyToRender ? (
+    <div className="mb-6 p-3 bg-amber-50 rounded-lg text-sm flex items-center">
+      <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
+      <div>
+        <span className="font-semibold">Partial data mode:</span> Some achievement data may be incomplete. 
+        <button 
+          onClick={() => refreshBadges()} 
+          className="ml-2 text-blue-600 underline"
+        >
+          Refresh
+        </button>
+      </div>
+    </div>
+  ) : null;
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -189,6 +230,9 @@ const SynchronizedBadgesTab: React.FC = () => {
           </button>
         </div>
       </div>
+      
+      {/* Force rendering banner if needed */}
+      {renderingMode}
       
       {/* Dashboard data banner - updated to handle estimated data */}
       {dashboardData && (
@@ -245,6 +289,7 @@ const SynchronizedBadgesTab: React.FC = () => {
               <p><strong>Total Locked:</strong> {totalLocked}</p>
               <p><strong>Dashboard Data:</strong> {dashboardData ? 'Available' : 'Not Available'}</p>
               {dashboardData && <p><strong>Estimated Data:</strong> {isEstimatedData ? 'Yes' : 'No'}</p>}
+              <p><strong>Force Render:</strong> {forceRender ? 'Yes' : 'No'}</p>
             </div>
             <div>
               <p><strong>Total Badge Definitions:</strong> {totalBadges}</p>
@@ -253,6 +298,7 @@ const SynchronizedBadgesTab: React.FC = () => {
               <p><strong>At Max Level:</strong> {isAtMaxLevel ? 'Yes' : 'No'}</p>
               <p><strong>Audit Count:</strong> {dashboardData?.pagination?.totalRecords || 'Unknown'}</p>
               {earnedBadges && earnedBadges.length > 0 && <p><strong>Sample Badge ID:</strong> {earnedBadges[0]?.badgeId}</p>}
+              <p><strong>Ready to Render:</strong> {readyToRender ? 'Yes' : 'No'}</p>
             </div>
           </div>
         </div>
