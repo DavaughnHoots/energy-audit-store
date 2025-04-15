@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePageTracking } from '../hooks/analytics/usePageTracking';
+import { Link } from 'react-router-dom';
 
 const PilotStudyFAQPage: React.FC = () => {
   usePageTracking('education', { subPage: 'pilot-study-faq' });
@@ -63,7 +64,10 @@ const PilotStudyFAQPage: React.FC = () => {
             </li>
             <li>
               <strong>Share Your Feedback:</strong><br/>
-              Complete a short survey to tell us about your experience with the platform.
+              Complete a short survey to tell us about your experience with the platform. 
+              <Link to="/dashboard?tab=survey" className="ml-1 text-blue-600 hover:underline font-medium">
+                Access the survey here
+              </Link>.
             </li>
           </ul>
         </div>
@@ -80,9 +84,17 @@ const PilotStudyFAQPage: React.FC = () => {
       
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-blue-800 mb-2">Need Help?</h2>
-        <p className="text-blue-700">
+        <p className="text-blue-700 mb-4">
           If you have any questions or need assistance during the study, please reach out to our support team at <a href="mailto:Hootsd1@montclair.edu" className="text-blue-700 font-medium hover:underline">Hootsd1@montclair.edu</a>.
         </p>
+        <div className="mt-4">
+          <Link 
+            to="/dashboard?tab=survey" 
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Take the Pilot Study Survey
+          </Link>
+        </div>
       </div>
     </div>
   );
