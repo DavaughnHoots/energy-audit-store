@@ -48,6 +48,11 @@ const SynchronizedBadgesTab: React.FC = () => {
         dashboardEstimated: dashboardData?.estimated || false,
         userBadgesType: typeof userBadges
       });
+      
+      setReadyToRender(true);
+    }
+  }, [loading, allBadges, earnedBadges, inProgressBadges, lockedBadges, dashboardData, userBadges]);
+
   // Force render after 5 seconds to avoid infinite loading state
   useEffect(() => {
     console.log("⚠️ Setting up force render timeout");
@@ -67,11 +72,7 @@ const SynchronizedBadgesTab: React.FC = () => {
     }, 5000);
     
     return () => clearTimeout(timer);
-  }, [loading, allBadges, earnedBadges, readyToRender]);
-
-      setReadyToRender(true);
-    }
-  }, [loading, allBadges, earnedBadges, inProgressBadges, lockedBadges, dashboardData]);
+  }, [loading, allBadges, earnedBadges, readyToRender, forceRender]);
 
   // Safely check that data exists
   const safeAllBadges = Array.isArray(allBadges) ? allBadges : [];
@@ -149,7 +150,7 @@ const SynchronizedBadgesTab: React.FC = () => {
         <div className="p-6 bg-red-50 rounded-lg text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-red-700 mb-2">Error Loading Achievements</h2>
-          <p className="text-gray-700">{error}</p>
+          <p className="text-gray-700">{getErrorMessage(error)}</p>
           <div className="flex justify-center space-x-3 mt-4">
             <button 
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
@@ -171,7 +172,7 @@ const SynchronizedBadgesTab: React.FC = () => {
   }
 
   // If we're not ready to render yet, show a loading state
-  if (!readyToRender) {
+  if (!readyToRender && !forceRender) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-6 flex justify-center items-center min-h-[300px]">
         <div className="flex flex-col items-center">
@@ -193,6 +194,13 @@ const SynchronizedBadgesTab: React.FC = () => {
   // Check if we're using estimated dashboard data
   const isEstimatedData = dashboardData?.estimated || false;
   // If we're forcing render, show a banner warning
+  
+  // Helper function to extract UI-friendly error message from API errors
+  const getErrorMessage = (err: any): string => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    return err.message || 'Unknown error';
+  };
   const renderingMode = forceRender && !readyToRender ? (
     <div className="mb-6 p-3 bg-amber-50 rounded-lg text-sm flex items-center">
       <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
@@ -258,11 +266,12 @@ const SynchronizedBadgesTab: React.FC = () => {
       )}
       
       {/* Dashboard error message if needed */}
-      {dashboardError && (
+      {/* Only use dashboardError if it exists */}
+      {typeof dashboardError === 'string' && dashboardError && (
         <div className="mb-6 p-3 bg-yellow-50 rounded-lg text-sm flex items-center">
           <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
           <div>
-            <span className="font-semibold">Dashboard sync warning:</span> {dashboardError}
+            <span className="font-semibold">Dashboard sync warning:</span> {error}
           </div>
         </div>
       )}
@@ -306,7 +315,11 @@ const SynchronizedBadgesTab: React.FC = () => {
       
       {/* Level progress bar */}
       <div className="mb-8">
-        {points && <LevelProgressBar userLevel={{...points, isMaxLevel: isAtMaxLevel}} />}
+        {points && <LevelProgressBar userLevel={{
+          ...points, 
+          // Pass isMaxLevel as a separate prop to avoid type errors
+          title: points.title || 'Energy User'
+        }} isMaxLevel={isAtMaxLevel} />}
       </div>
 
       {/* Category and filter tabs */}

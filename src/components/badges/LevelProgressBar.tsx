@@ -1,14 +1,15 @@
 import React from 'react';
 import { UserLevel } from '../../types/badges';
 
-interface LevelProgressBarProps {
+export interface LevelProgressBarProps {
   userLevel: UserLevel;
+  isMaxLevel?: boolean;
 }
 
 /**
  * Displays the user's current level and progress toward the next level
  */
-const LevelProgressBar: React.FC<LevelProgressBarProps> = ({ userLevel }) => {
+const LevelProgressBar: React.FC<LevelProgressBarProps> = ({ userLevel, isMaxLevel = false }) => {
   const { level, points, nextLevelPoints, title } = userLevel;
   
   // Calculate progress percentage
@@ -26,7 +27,7 @@ const LevelProgressBar: React.FC<LevelProgressBarProps> = ({ userLevel }) => {
           <span className="text-gray-600 ml-2">{title}</span>
         </div>
         <div className="text-sm text-gray-500">
-          {pointsNeeded > 0 ? (
+          {!isMaxLevel && pointsNeeded > 0 ? (
             <span>{pointsNeeded} points to Level {level + 1}</span>
           ) : (
             <span>Maximum level reached</span>
@@ -45,7 +46,7 @@ const LevelProgressBar: React.FC<LevelProgressBarProps> = ({ userLevel }) => {
       {/* Progress details */}
       <div className="flex justify-between mt-1 text-xs text-gray-500">
         <span>{points} points earned</span>
-        {pointsNeeded > 0 && <span>{nextLevelPoints} points needed</span>}
+        {!isMaxLevel && pointsNeeded > 0 && <span>{nextLevelPoints} points needed</span>}
       </div>
     </div>
   );

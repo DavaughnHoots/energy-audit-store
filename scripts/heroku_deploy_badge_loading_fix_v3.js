@@ -1,12 +1,11 @@
 /**
- * Deployment script for badge system CORS fix
+ * Badge Loading Fix Deployment Script v3
  * 
- * This script deploys the fixes for badge display issues:
- * 1. Fixed CORS configuration to support multiple domains
- * 2. Added cache-busting to prevent 304 Not Modified responses
- * 3. Updated badge API client with improved error handling
- * 
- * IMPORTANT: This must be deployed manually (no deployment automation)
+ * This script deploys fixes for:
+ * 1. Component getting stuck in loading state
+ * 2. Force-render fallback after 5 seconds
+ * 3. TypeScript errors in badge components
+ * 4. CORS issues with auth token verification
  */
 
 const { execSync } = require('child_process');
@@ -14,8 +13,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const BRANCH_NAME = 'fix/badge-cors-improvements';
-const COMMIT_MESSAGE = 'Fix badge display issues with CORS and caching improvements';
+const BRANCH_NAME = 'fix/badge-loading-timeout-v3';
+const COMMIT_MESSAGE = 'Fix badge loading timeout and TypeScript errors';
 
 // Utility function for colored console output
 const colors = {
@@ -48,20 +47,36 @@ function executeCommand(command, description) {
   }
 }
 
-function checkFileExists(filePath) {
-  const fullPath = path.resolve(filePath);
-  if (!fs.existsSync(fullPath)) {
-    throw new Error(`File not found: ${fullPath}`);
+async function applyFixes() {
+  try {
+    // Run the badge loading fix script
+    log('\nStep 1: Running badge loading fix script...', 'blue');
+    if (fs.existsSync('./scripts/fix_badge_loading_render.js')) {
+      executeCommand('node scripts/fix_badge_loading_render.js', 'Applying badge loading fix');
+    } else {
+      log('✗ Badge loading fix script not found', 'red');
+      log('Skipping this step.', 'yellow');
+    }
+    
+    // Run the TypeScript errors fix script
+    log('\nStep 2: Running TypeScript errors fix script...', 'blue');
+    if (fs.existsSync('./scripts/fix_badge_errors.js')) {
+      executeCommand('node scripts/fix_badge_errors.js', 'Fixing TypeScript errors');
+    } else {
+      log('✗ TypeScript errors fix script not found', 'red');
+      log('Skipping this step.', 'yellow');
+    }
+    
+    return true;
+  } catch (error) {
+    log('✗ Failed to apply fixes:', 'red');
+    log(error.message, 'red');
+    return false;
   }
-  return fullPath;
 }
 
 async function deploy() {
   try {
-    // Verify required files exist
-    checkFileExists('src/services/badgeApiClient.ts');
-    checkFileExists('backend/src/server.ts');
-    
     // Check git status
     log('Checking git status...', 'blue');
     const gitStatus = execSync('git status --porcelain', { encoding: 'utf8' });
@@ -81,8 +96,14 @@ async function deploy() {
       executeCommand(`git checkout ${BRANCH_NAME}`, 'Switching to existing branch');
     }
     
-    // Stage all changes
-    executeCommand('git add src/services/badgeApiClient.ts backend/src/server.ts', 'Staging changes');
+    // Apply all fixes
+    const fixesApplied = await applyFixes();
+    if (!fixesApplied) {
+      throw new Error('Failed to apply fixes');
+    }
+    
+    // Stage the changed files
+    executeCommand('git add src/components/badges/SynchronizedBadgesTab.tsx src/components/badges/LevelProgressBar.tsx', 'Staging changes');
     
     // Commit changes
     executeCommand(`git commit -m "${COMMIT_MESSAGE}"`, 'Committing changes');
@@ -95,7 +116,9 @@ async function deploy() {
     log(`   git push heroku ${BRANCH_NAME}:main`, 'cyan');
     log('2. Verify the deployment with:', 'blue');
     log('   heroku logs --tail', 'cyan');
-    log('3. Check application functionality', 'blue');
+    log('3. Test the achievements tab:', 'blue');
+    log('   - Verify the tab loads within 5 seconds', 'cyan');
+    log('   - Check for the fallback warning if data is incomplete', 'cyan');
     log('=================================================', 'magenta');
     
     log('\nGitHub branch has been created and pushed.', 'green');

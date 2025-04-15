@@ -1,12 +1,12 @@
 /**
- * Deployment script for badge system CORS fix
+ * Deployment script for badge route handling fix
  * 
- * This script deploys the fixes for badge display issues:
- * 1. Fixed CORS configuration to support multiple domains
- * 2. Added cache-busting to prevent 304 Not Modified responses
- * 3. Updated badge API client with improved error handling
+ * This script addresses the badge path handling issue where API endpoints were
+ * returning 404 errors due to incorrect route registration. The fix includes:
  * 
- * IMPORTANT: This must be deployed manually (no deployment automation)
+ * 1. Enhanced badge route handlers that properly handle all paths
+ * 2. Improved route registration in server.ts
+ * 3. Better error handling and logging for badge-related routes
  */
 
 const { execSync } = require('child_process');
@@ -14,8 +14,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const BRANCH_NAME = 'fix/badge-cors-improvements';
-const COMMIT_MESSAGE = 'Fix badge display issues with CORS and caching improvements';
+const BRANCH_NAME = 'fix/badge-route-paths';
+const COMMIT_MESSAGE = 'Fix badge route handling to properly handle all badge endpoints';
 
 // Utility function for colored console output
 const colors = {
@@ -59,8 +59,9 @@ function checkFileExists(filePath) {
 async function deploy() {
   try {
     // Verify required files exist
-    checkFileExists('src/services/badgeApiClient.ts');
     checkFileExists('backend/src/server.ts');
+    checkFileExists('backend/src/routes/badges.enhanced.ts');
+    checkFileExists('backend/src/routes/user-badges.enhanced.ts');
     
     // Check git status
     log('Checking git status...', 'blue');
@@ -81,8 +82,11 @@ async function deploy() {
       executeCommand(`git checkout ${BRANCH_NAME}`, 'Switching to existing branch');
     }
     
-    // Stage all changes
-    executeCommand('git add src/services/badgeApiClient.ts backend/src/server.ts', 'Staging changes');
+    // Stage changed files
+    executeCommand(
+      'git add backend/src/server.ts backend/src/routes/badges.enhanced.ts backend/src/routes/user-badges.enhanced.ts', 
+      'Staging changes'
+    );
     
     // Commit changes
     executeCommand(`git commit -m "${COMMIT_MESSAGE}"`, 'Committing changes');
@@ -95,7 +99,12 @@ async function deploy() {
     log(`   git push heroku ${BRANCH_NAME}:main`, 'cyan');
     log('2. Verify the deployment with:', 'blue');
     log('   heroku logs --tail', 'cyan');
-    log('3. Check application functionality', 'blue');
+    log('3. Check the debug endpoints:', 'blue');
+    log('   - GET /api/debug/badges', 'cyan');
+    log('   - GET /api/debug/routes', 'cyan');
+    log('4. Verify the badge system:', 'blue');
+    log('   - Navigate to the Achievements tab in the dashboard', 'cyan');
+    log('   - Check the network tab for requests to the badge endpoints', 'cyan');
     log('=================================================', 'magenta');
     
     log('\nGitHub branch has been created and pushed.', 'green');

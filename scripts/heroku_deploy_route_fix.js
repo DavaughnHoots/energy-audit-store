@@ -1,10 +1,8 @@
 /**
- * Deployment script for badge system CORS fix
+ * Deployment script for API route handling fix
  * 
- * This script deploys the fixes for badge display issues:
- * 1. Fixed CORS configuration to support multiple domains
- * 2. Added cache-busting to prevent 304 Not Modified responses
- * 3. Updated badge API client with improved error handling
+ * This script deploys fixes for the route handling issue that caused HTML to be returned
+ * for badge API endpoints instead of JSON data.
  * 
  * IMPORTANT: This must be deployed manually (no deployment automation)
  */
@@ -14,8 +12,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const BRANCH_NAME = 'fix/badge-cors-improvements';
-const COMMIT_MESSAGE = 'Fix badge display issues with CORS and caching improvements';
+const BRANCH_NAME = 'fix/api-route-handling';
+const COMMIT_MESSAGE = 'Fix API route handling to prevent HTML responses for badge endpoints';
 
 // Utility function for colored console output
 const colors = {
@@ -58,8 +56,7 @@ function checkFileExists(filePath) {
 
 async function deploy() {
   try {
-    // Verify required files exist
-    checkFileExists('src/services/badgeApiClient.ts');
+    // Verify server file exists
     checkFileExists('backend/src/server.ts');
     
     // Check git status
@@ -82,7 +79,7 @@ async function deploy() {
     }
     
     // Stage all changes
-    executeCommand('git add src/services/badgeApiClient.ts backend/src/server.ts', 'Staging changes');
+    executeCommand('git add backend/src/server.ts', 'Staging changes');
     
     // Commit changes
     executeCommand(`git commit -m "${COMMIT_MESSAGE}"`, 'Committing changes');
@@ -95,7 +92,10 @@ async function deploy() {
     log(`   git push heroku ${BRANCH_NAME}:main`, 'cyan');
     log('2. Verify the deployment with:', 'blue');
     log('   heroku logs --tail', 'cyan');
-    log('3. Check application functionality', 'blue');
+    log('3. Test the fix by:', 'blue');
+    log('   - Opening the dashboard achievements tab', 'cyan');
+    log('   - Checking the network tab for 200 responses (not HTML)', 'cyan');
+    log('   - Verifying badges display correctly', 'cyan');
     log('=================================================', 'magenta');
     
     log('\nGitHub branch has been created and pushed.', 'green');

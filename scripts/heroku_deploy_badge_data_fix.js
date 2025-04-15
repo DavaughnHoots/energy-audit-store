@@ -1,12 +1,13 @@
 /**
- * Deployment script for badge system CORS fix
+ * Badge Data Format Fix Deployment Script
  * 
- * This script deploys the fixes for badge display issues:
- * 1. Fixed CORS configuration to support multiple domains
- * 2. Added cache-busting to prevent 304 Not Modified responses
- * 3. Updated badge API client with improved error handling
+ * This script addresses a data structure issue where badges are not displaying correctly
+ * on the Achievements tab for some users despite the API routes working correctly.
  * 
- * IMPORTANT: This must be deployed manually (no deployment automation)
+ * The fix includes:
+ * 1. Enhanced diagnostic tools for investigating badge data format issues
+ * 2. Robust error handling in the badge display components
+ * 3. Data structure normalization to ensure consistent format across users
  */
 
 const { execSync } = require('child_process');
@@ -14,8 +15,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const BRANCH_NAME = 'fix/badge-cors-improvements';
-const COMMIT_MESSAGE = 'Fix badge display issues with CORS and caching improvements';
+const BRANCH_NAME = 'fix/badge-data-format';
+const COMMIT_MESSAGE = 'Fix badge data format issues with enhanced diagnostics';
 
 // Utility function for colored console output
 const colors = {
@@ -59,8 +60,10 @@ function checkFileExists(filePath) {
 async function deploy() {
   try {
     // Verify required files exist
-    checkFileExists('src/services/badgeApiClient.ts');
-    checkFileExists('backend/src/server.ts');
+    checkFileExists('src/components/badges/BadgeDiagnostics.tsx');
+    checkFileExists('src/components/badges/RealBadgesTab.tsx');
+    checkFileExists('src/hooks/useBadgeProgress.ts');
+    checkFileExists('src/pages/BadgesDiagnosticPage.tsx');
     
     // Check git status
     log('Checking git status...', 'blue');
@@ -81,8 +84,11 @@ async function deploy() {
       executeCommand(`git checkout ${BRANCH_NAME}`, 'Switching to existing branch');
     }
     
-    // Stage all changes
-    executeCommand('git add src/services/badgeApiClient.ts backend/src/server.ts', 'Staging changes');
+    // Stage changed files
+    executeCommand(
+      'git add src/components/badges/BadgeDiagnostics.tsx src/components/badges/RealBadgesTab.tsx src/hooks/useBadgeProgress.ts src/pages/BadgesDiagnosticPage.tsx', 
+      'Staging changes'
+    );
     
     // Commit changes
     executeCommand(`git commit -m "${COMMIT_MESSAGE}"`, 'Committing changes');
@@ -95,7 +101,9 @@ async function deploy() {
     log(`   git push heroku ${BRANCH_NAME}:main`, 'cyan');
     log('2. Verify the deployment with:', 'blue');
     log('   heroku logs --tail', 'cyan');
-    log('3. Check application functionality', 'blue');
+    log('3. Check the badges functionality with both users:', 'blue');
+    log('   - Navigate to /badge-diagnostics to see detailed badge info', 'cyan');
+    log('   - Access the regular dashboard Achievements tab to verify fixes', 'cyan');
     log('=================================================', 'magenta');
     
     log('\nGitHub branch has been created and pushed.', 'green');

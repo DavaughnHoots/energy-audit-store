@@ -1,12 +1,10 @@
 /**
- * Deployment script for badge system CORS fix
+ * Badge Evaluation Fix Deployment Script
  * 
- * This script deploys the fixes for badge display issues:
- * 1. Fixed CORS configuration to support multiple domains
- * 2. Added cache-busting to prevent 304 Not Modified responses
- * 3. Updated badge API client with improved error handling
- * 
- * IMPORTANT: This must be deployed manually (no deployment automation)
+ * This script deploys a fix for the badge evaluation issues causing:
+ * 1. Incorrectly categorizing badges as earned despite 0% progress
+ * 2. Audit badges showing incorrect requirements (e.g., platinum badge for users with only 18 audits)
+ * 3. Level progress incorrectly showing "Maximum level reached" for all users
  */
 
 const { execSync } = require('child_process');
@@ -14,8 +12,15 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const BRANCH_NAME = 'fix/badge-cors-improvements';
-const COMMIT_MESSAGE = 'Fix badge display issues with CORS and caching improvements';
+const BRANCH_NAME = 'fix/badge-evaluation-issues';
+const COMMIT_MESSAGE = 'Fix badge evaluation issues with progress verification and level calculation';
+
+// Files that have been modified
+const FILES_TO_STAGE = [
+  'src/hooks/useBadgeProgress.badge-fix.ts',
+  'src/components/badges/RealBadgesTab.badge-eval-fix.tsx',
+  'src/components/badges/BadgesTab.tsx'
+];
 
 // Utility function for colored console output
 const colors = {
@@ -48,20 +53,8 @@ function executeCommand(command, description) {
   }
 }
 
-function checkFileExists(filePath) {
-  const fullPath = path.resolve(filePath);
-  if (!fs.existsSync(fullPath)) {
-    throw new Error(`File not found: ${fullPath}`);
-  }
-  return fullPath;
-}
-
 async function deploy() {
   try {
-    // Verify required files exist
-    checkFileExists('src/services/badgeApiClient.ts');
-    checkFileExists('backend/src/server.ts');
-    
     // Check git status
     log('Checking git status...', 'blue');
     const gitStatus = execSync('git status --porcelain', { encoding: 'utf8' });
@@ -73,6 +66,13 @@ async function deploy() {
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
     
+    // Verify required files exist
+    for (const file of FILES_TO_STAGE) {
+      if (!fs.existsSync(file)) {
+        log(`Warning: File ${file} does not exist. Skipping verification.`, 'yellow');
+      }
+    }
+    
     // Create and switch to new branch
     try {
       executeCommand(`git checkout -b ${BRANCH_NAME}`, 'Creating new branch');
@@ -81,8 +81,13 @@ async function deploy() {
       executeCommand(`git checkout ${BRANCH_NAME}`, 'Switching to existing branch');
     }
     
-    // Stage all changes
-    executeCommand('git add src/services/badgeApiClient.ts backend/src/server.ts', 'Staging changes');
+    // Stage the changed files
+    const filesToStage = FILES_TO_STAGE.filter(file => fs.existsSync(file));
+    if (filesToStage.length === 0) {
+      throw new Error('No files to stage, aborting deployment');
+    }
+    
+    executeCommand(`git add ${filesToStage.join(' ')}`, 'Staging changes');
     
     // Commit changes
     executeCommand(`git commit -m "${COMMIT_MESSAGE}"`, 'Committing changes');
@@ -95,7 +100,10 @@ async function deploy() {
     log(`   git push heroku ${BRANCH_NAME}:main`, 'cyan');
     log('2. Verify the deployment with:', 'blue');
     log('   heroku logs --tail', 'cyan');
-    log('3. Check application functionality', 'blue');
+    log('3. Check the badges display with user accounts:', 'blue');
+    log('   - Verify badges are now correctly categorized as earned/locked', 'cyan');
+    log('   - Check that progress reflects actual user metrics (audits, etc.)', 'cyan');
+    log('   - Verify level progress bar shows correct status', 'cyan');
     log('=================================================', 'magenta');
     
     log('\nGitHub branch has been created and pushed.', 'green');
