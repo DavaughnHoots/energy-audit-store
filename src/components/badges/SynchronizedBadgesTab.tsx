@@ -44,12 +44,22 @@ const SynchronizedBadgesTab: React.FC = () => {
   console.log('Points data from useBadgeDashboardSync:', points);
   
   // Create a fixed points object if API data is available but not being passed through
-  const fixedPoints = points || {
+  // Also handle field name mapping between API response and component expectations
+  const fixedPoints = points ? {
+    // Map API field names to component field names if they exist
+    points: points.totalPoints || points.points || 1275,
+    level: points.currentLevel || points.level || 5,
+    nextLevelPoints: points.nextLevelThreshold || points.nextLevelPoints || 1375,
+    title: points.currentTitle || points.title || 'Energy Master'
+  } : {
+    // Default fallback values
     points: 1275,
     level: 5,
     nextLevelPoints: 1375,
     title: 'Energy Master'
   };
+  
+  console.log('Fixed level data after API field mapping:', fixedPoints);
 
   // Prepare the badge data for display after loading is done
   useEffect(() => {
@@ -290,8 +300,10 @@ const SynchronizedBadgesTab: React.FC = () => {
       <div className="mb-8">
         <LevelProgressBar 
           userLevel={{
-            ...fixedPoints, 
-            // Always use the title from the API, no fallback needed
+            // Only pass the mapped field names to match component expectations
+            points: fixedPoints.points,
+            level: fixedPoints.level,
+            nextLevelPoints: fixedPoints.nextLevelPoints,
             title: fixedPoints.title || 'Energy User'
           }} 
           isMaxLevel={false} 

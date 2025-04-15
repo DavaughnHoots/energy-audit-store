@@ -10,16 +10,18 @@ export interface LevelProgressBarProps {
  * Displays the user's current level and progress toward the next level
  */
 const LevelProgressBar: React.FC<LevelProgressBarProps> = ({ userLevel, isMaxLevel = false }) => {
-  // Add fallback values to handle potential missing data
-  const { 
-    level = 1, 
-    points = 0, 
-    nextLevelPoints = 100, 
-    title = 'Energy User' 
-  } = userLevel || {};
+  // Add fallback values and field name normalization
+  const userLevelData = userLevel || {};
+  
+  // Handle both API and component field naming conventions
+  const level = userLevelData.currentLevel || userLevelData.level || 1;
+  const points = userLevelData.totalPoints || userLevelData.points || 0;
+  const nextLevelPoints = userLevelData.nextLevelThreshold || userLevelData.nextLevelPoints || 100;
+  const title = userLevelData.currentTitle || userLevelData.title || 'Energy User';
   
   // Log the user level data for debugging
   console.log('LevelProgressBar received userLevel:', userLevel);
+  console.log('Normalized level data in component:', { level, points, nextLevelPoints, title });
   
   // Calculate progress percentage
   const pointsNeeded = nextLevelPoints - points;
