@@ -199,21 +199,8 @@ const SynchronizedBadgesTab: React.FC = () => {
 
   // Check if we're using estimated dashboard data
   const isEstimatedData = dashboardData?.estimated || false;
-  // If we're forcing render, show a banner warning
-  const renderingMode = forceRender && !readyToRender ? (
-    <div className="mb-6 p-3 bg-amber-50 rounded-lg text-sm flex items-center">
-      <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
-      <div>
-        <span className="font-semibold">Partial data mode:</span> Some achievement data may be incomplete.
-        <a
-          href="/badge-data-diagnostics"
-          className="ml-2 text-blue-600 underline"
-        >
-          View Diagnostics
-        </a>
-      </div>
-    </div>
-  ) : null;
+  // Remove partial data mode banner as requested
+  const renderingMode = null;
 
 
   return (
@@ -235,28 +222,7 @@ const SynchronizedBadgesTab: React.FC = () => {
       {/* Force rendering banner if needed */}
       {renderingMode}
       
-      {/* Dashboard data banner - updated to handle estimated data */}
-      {dashboardData && (
-        <div className={`mb-6 p-3 rounded-lg text-sm flex items-center ${isEstimatedData ? 'bg-yellow-50' : 'bg-green-50'}`}>
-          {isEstimatedData ? (
-            <>
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
-              <div>
-                <span className="font-semibold">Using estimated metrics:</span> Achievement progress is based on
-                <span className="font-semibold"> estimated {dashboardData.pagination.totalRecords} audits</span>.
-              </div>
-            </>
-          ) : (
-            <>
-              <Info className="h-5 w-5 text-green-600 mr-2" />
-              <div>
-                <span className="font-semibold">Dashboard synchronized:</span> Displaying achievements based on 
-                <span className="font-semibold"> {dashboardData.pagination.totalRecords} audits</span> and latest metrics.
-              </div>
-            </>
-          )}
-        </div>
-      )}
+      {/* Dashboard data banner removed as requested */}
       
       {/* Dashboard error message if needed */}
       {/* Only show error message if it exists and is related to dashboard */}
@@ -396,7 +362,7 @@ const SynchronizedBadgesTab: React.FC = () => {
         {/* Earned badges section */}
         {showEarned && (
           <div>
-            <h2 className="text-xl font-semibold mb-3">Earned Badges ({filteredEarnedBadges.length})</h2>
+            <h2 className="text-xl font-semibold mb-3">Earned Badges ({earnedBadgeDefinitions.length})</h2>
             {filteredEarnedBadges.length > 0 && earnedBadgeDefinitions.length > 0 ? (
               <BadgeCollection
                 badges={earnedBadgeDefinitions}
@@ -415,7 +381,7 @@ const SynchronizedBadgesTab: React.FC = () => {
         {/* In-progress badges section */}
         {showLocked && filteredInProgressBadges.length > 0 && (
           <div>
-            <h2 className="text-xl font-semibold mb-3">In Progress ({filteredInProgressBadges.length})</h2>
+            <h2 className="text-xl font-semibold mb-3">In Progress ({inProgressBadgeDefinitions.length})</h2>
             {inProgressBadgeDefinitions.length > 0 ? (
               <BadgeCollection
                 badges={inProgressBadgeDefinitions}
@@ -434,7 +400,7 @@ const SynchronizedBadgesTab: React.FC = () => {
         {/* Locked badges section */}
         {showLocked && filteredLockedBadges.length > 0 && (
           <div>
-            <h2 className="text-xl font-semibold mb-3">Locked ({filteredLockedBadges.length})</h2>
+            <h2 className="text-xl font-semibold mb-3">Locked ({lockedBadgeDefinitions.length})</h2>
             {lockedBadgeDefinitions.length > 0 ? (
               <BadgeCollection
                 badges={lockedBadgeDefinitions}
