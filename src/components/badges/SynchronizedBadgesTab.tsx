@@ -18,6 +18,13 @@ const SynchronizedBadgesTab: React.FC = () => {
   const [readyToRender, setReadyToRender] = useState<boolean>(false);
   const [forceRender, setForceRender] = useState<boolean>(false);
 
+  // Helper function to extract UI-friendly error message from API errors
+  const getErrorMessage = (err: any): string => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    return err.message || 'Unknown error';
+  };
+
   // Use the enhanced badge-dashboard sync hook
   const { 
     loading, 
@@ -29,7 +36,6 @@ const SynchronizedBadgesTab: React.FC = () => {
     points,
     userBadges,
     dashboardData,
-    dashboardError,
     debugInfo,
     refreshBadges
   } = useBadgeDashboardSync();
@@ -53,7 +59,7 @@ const SynchronizedBadgesTab: React.FC = () => {
     }
   }, [loading, allBadges, earnedBadges, inProgressBadges, lockedBadges, dashboardData, userBadges]);
 
-  // Force render after 5 seconds to avoid infinite loading state
+  // Force render after 3 seconds to avoid infinite loading state
   useEffect(() => {
     console.log("⚠️ Setting up force render timeout");
     const timer = setTimeout(() => {
@@ -69,7 +75,7 @@ const SynchronizedBadgesTab: React.FC = () => {
         });
         setForceRender(true);
       }
-    }, 5000);
+    }, 3000); // Reduced from 5000ms to 3000ms for faster display
     
     return () => clearTimeout(timer);
   }, [loading, allBadges, earnedBadges, readyToRender, forceRender]);
@@ -194,24 +200,17 @@ const SynchronizedBadgesTab: React.FC = () => {
   // Check if we're using estimated dashboard data
   const isEstimatedData = dashboardData?.estimated || false;
   // If we're forcing render, show a banner warning
-  
-  // Helper function to extract UI-friendly error message from API errors
-  const getErrorMessage = (err: any): string => {
-    if (!err) return '';
-    if (typeof err === 'string') return err;
-    return err.message || 'Unknown error';
-  };
   const renderingMode = forceRender && !readyToRender ? (
     <div className="mb-6 p-3 bg-amber-50 rounded-lg text-sm flex items-center">
       <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
       <div>
-        <span className="font-semibold">Partial data mode:</span> Some achievement data may be incomplete. 
-        <button 
-          onClick={() => refreshBadges()} 
+        <span className="font-semibold">Partial data mode:</span> Some achievement data may be incomplete.
+        <a
+          href="/badge-data-diagnostics"
           className="ml-2 text-blue-600 underline"
         >
-          Refresh
-        </button>
+          View Diagnostics
+        </a>
       </div>
     </div>
   ) : null;
@@ -221,6 +220,7 @@ const SynchronizedBadgesTab: React.FC = () => {
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="flex flex-row justify-between items-center">
         <h1 className="text-2xl font-bold mb-6">My Achievements</h1>
+        {/* For developers only - debug view toggle */}
         <div className="mb-6 flex items-center gap-2">
           <button
             onClick={() => setShowDebug(!showDebug)}
@@ -228,13 +228,6 @@ const SynchronizedBadgesTab: React.FC = () => {
           >
             <Bug className="h-3 w-3" />
             {showDebug ? 'Hide' : 'Show'} Debug
-          </button>
-          <button
-            onClick={() => refreshBadges()}
-            className="flex items-center gap-1 text-sm text-green-600 hover:text-green-800"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
           </button>
         </div>
       </div>
@@ -266,8 +259,8 @@ const SynchronizedBadgesTab: React.FC = () => {
       )}
       
       {/* Dashboard error message if needed */}
-      {/* Only use dashboardError if it exists */}
-      {typeof dashboardError === 'string' && dashboardError && (
+      {/* Only show error message if it exists and is related to dashboard */}
+      {typeof error === 'string' && error && error.includes('dashboard') && (
         <div className="mb-6 p-3 bg-yellow-50 rounded-lg text-sm flex items-center">
           <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
           <div>
@@ -499,15 +492,15 @@ const SynchronizedBadgesTab: React.FC = () => {
         </div>
       )}
 
-      {/* Refresh button */}
+      {/* Advanced diagnostics link for administrators */}
       <div className="mt-6 text-center">
-        <button
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2 mx-auto"
-          onClick={() => refreshBadges()}
+        <a
+          href="/badge-data-diagnostics"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2 mx-auto inline-flex"
         >
-          <RefreshCw className="h-5 w-5" />
-          Refresh Badges
-        </button>
+          <Bug className="h-5 w-5" />
+          Advanced Badge Diagnostics
+        </a>
       </div>
     </div>
   );
