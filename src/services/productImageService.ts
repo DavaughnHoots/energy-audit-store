@@ -43,7 +43,15 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   'Insulation': ['home insulation', 'insulation material', 'thermal insulation'],
   'Windows': ['energy efficient window', 'double pane window', 'window installation'],
   'Solar': ['solar panel', 'solar energy', 'rooftop solar'],
-  'WaterHeating': ['water heater', 'tankless water heater', 'efficient water heating']
+  'WaterHeating': ['water heater', 'tankless water heater', 'efficient water heating'],
+  'Building Products': ['construction material', 'building insulation', 'eco building'],
+  'Commercial Appliances': ['commercial refrigerator', 'commercial kitchen', 'industrial appliance'],
+  'Commercial Food Service Equipment': ['restaurant equipment', 'commercial oven', 'industrial kitchen'],
+  'Data Center Equipment': ['server rack', 'data center cooling', 'server room'],
+  'Electronics': ['energy efficient electronics', 'eco computer', 'green electronics'],
+  'Heating & Cooling': ['hvac system', 'efficient heating', 'home climate control'],
+  'Lighting & Fans': ['led lighting', 'ceiling fan', 'energy efficient bulb'],
+  'Office Equipment': ['efficient printer', 'office electronics', 'energy star office']
 };
 
 // Default fallback images if API fails or is unavailable
@@ -54,7 +62,15 @@ const DEFAULT_IMAGES: Record<string, string> = {
   'Insulation': 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=600&q=80',
   'Windows': 'https://images.unsplash.com/photo-1503708928676-1cb796a0891e?auto=format&fit=crop&w=600&q=80',
   'Solar': 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=600&q=80',
-  'WaterHeating': 'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?auto=format&fit=crop&w=600&q=80'
+  'WaterHeating': 'https://images.unsplash.com/photo-1585751119414-ef2636f8aede?auto=format&fit=crop&w=600&q=80',
+  'Building Products': 'https://images.unsplash.com/photo-1573599852326-2a1bd9a5fc82?auto=format&fit=crop&w=600&q=80',
+  'Commercial Appliances': 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=600&q=80',
+  'Commercial Food Service Equipment': 'https://images.unsplash.com/photo-1579620586767-8f6b2422f605?auto=format&fit=crop&w=600&q=80',
+  'Data Center Equipment': 'https://images.unsplash.com/photo-1581092583537-20d51b4024ec?auto=format&fit=crop&w=600&q=80',
+  'Electronics': 'https://images.unsplash.com/photo-1648423980346-5c71dd08ad6d?auto=format&fit=crop&w=600&q=80',
+  'Heating & Cooling': 'https://images.unsplash.com/photo-1629948618343-0d33f80d1da6?auto=format&fit=crop&w=600&q=80',
+  'Lighting & Fans': 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=600&q=80',
+  'Office Equipment': 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=80'
 };
 
 // Ultimate fallback image if nothing else is available
@@ -62,6 +78,21 @@ const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1556911220-6bfac35a0d6
 
 // Unsplash API key
 const UNSPLASH_ACCESS_KEY = 'qQWIia8U-dBGBdvr8N3SDAqLld78JkfAAme86bf-36U';
+
+/**
+ * Helper to normalize category names for consistent lookup
+ * This helps match displayed category names with JSON keys
+ */
+const normalizeCategory = (category: string): string => {
+  // Strip special characters, standardize ampersands, and trim whitespace
+  const normalized = category
+    .replace(/&\s*/g, '& ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  
+  console.log(`Normalized category: "${category}" -> "${normalized}"`);
+  return normalized;
+};
 
 /**
  * Track a download event for an Unsplash image
@@ -119,33 +150,40 @@ export async function getCategoryImage(
   additionalKeyword?: string,
   forceFresh = false
 ): Promise<ProductImageData> {
-  const cacheKey = `category_image_${category.toLowerCase()}_${additionalKeyword || ''}`;
+  const normalizedCategory = normalizeCategory(category);
+  const cacheKey = `category_image_${normalizedCategory.toLowerCase()}_${additionalKeyword || ''}`;
+  
+  console.log(`Getting image for category: "${category}", normalized: "${normalizedCategory}"`);
   
   // Check localStorage cache first (unless forceFresh is true)
   if (!forceFresh) {
     const cachedData = getLocalStorageCache(cacheKey);
     if (cachedData) {
+      console.log(`Using cached image for ${normalizedCategory}`);
       return cachedData;
     }
   }
   
   // Next, try to use predefined images
-  const normalizedCategory = category.replace(/&/g, 'and').trim();
-  if (
+  try {
     // @ts-ignore - JSON import type handling
-    predefinedCategoryImages[normalizedCategory] && 
-    // @ts-ignore - JSON import type handling
-    predefinedCategoryImages[normalizedCategory].length > 0
-  ) {  
-    // Randomly select one of the predefined images
-    // @ts-ignore - JSON import type handling
-    const imagePool = predefinedCategoryImages[normalizedCategory];
-    const randomIndex = Math.floor(Math.random() * imagePool.length);
-    const selectedImage = imagePool[randomIndex];
-    
-    // Cache the selected image
-    setLocalStorageCache(cacheKey, selectedImage, CACHE_DURATION);
-    return selectedImage;
+    if (predefinedCategoryImages[normalizedCategory] && predefinedCategoryImages[normalizedCategory].length > 0) {
+      // Randomly select one of the predefined images
+      // @ts-ignore - JSON import type handling
+      const imagePool = predefinedCategoryImages[normalizedCategory];
+      console.log(`Found ${imagePool.length} predefined images for ${normalizedCategory}`);
+      
+      const randomIndex = Math.floor(Math.random() * imagePool.length);
+      const selectedImage = imagePool[randomIndex];
+      
+      // Cache the selected image
+      setLocalStorageCache(cacheKey, selectedImage, CACHE_DURATION);
+      return selectedImage;
+    } else {
+      console.log(`No predefined images found for ${normalizedCategory}`);
+    }
+  } catch (error) {
+    console.error(`Error accessing predefined images for ${normalizedCategory}:`, error);
   }
   
   // If no predefined image, proceed with API call logic
@@ -154,15 +192,17 @@ export async function getCategoryImage(
     let query = `${category} energy efficient`;
     
     // Add category-specific keywords for better results
-    if (CATEGORY_KEYWORDS[category] && CATEGORY_KEYWORDS[category].length > 0) {
+    if (CATEGORY_KEYWORDS[normalizedCategory] && CATEGORY_KEYWORDS[normalizedCategory].length > 0) {
       // Use random keyword from the array for variety
-      const randomIndex = Math.floor(Math.random() * CATEGORY_KEYWORDS[category].length);
-      query += ` ${CATEGORY_KEYWORDS[category][randomIndex]}`;
+      const randomIndex = Math.floor(Math.random() * CATEGORY_KEYWORDS[normalizedCategory].length);
+      query += ` ${CATEGORY_KEYWORDS[normalizedCategory][randomIndex]}`;
     }
     
     if (additionalKeyword) {
       query += ` ${additionalKeyword}`;
     }
+    
+    console.log(`Fetching from Unsplash with query: "${query}"`);
     
     // Request a high-quality landscape image that works well for category tiles
     const response = await fetch(
@@ -214,11 +254,30 @@ export async function getCategoryImage(
   } catch (error) {
     console.error(`Error fetching image for category ${category}:`, error);
     
-    // Return default image for the category or fallback
-    const fallbackUrl = DEFAULT_IMAGES[category] || FALLBACK_IMAGE;
+    // First try category-specific fallback
+    if (DEFAULT_IMAGES[normalizedCategory]) {
+      console.log(`Using default image for ${normalizedCategory}`);
+      return {
+        url: DEFAULT_IMAGES[normalizedCategory],
+        photographer: 'Unsplash',
+        photographerUrl: 'https://unsplash.com'
+      };
+    }
     
+    // Then try generic 'Appliances' fallback
+    if (DEFAULT_IMAGES['Appliances']) {
+      console.log(`Using Appliances fallback image for ${normalizedCategory}`);
+      return {
+        url: DEFAULT_IMAGES['Appliances'],
+        photographer: 'Unsplash',
+        photographerUrl: 'https://unsplash.com'
+      };
+    }
+    
+    // Ultimate fallback
+    console.log(`Using ultimate fallback image for ${normalizedCategory}`);
     return {
-      url: fallbackUrl,
+      url: FALLBACK_IMAGE,
       photographer: 'Unsplash',
       photographerUrl: 'https://unsplash.com'
     };
@@ -229,7 +288,8 @@ export async function getCategoryImage(
  * Rate-limiting functions for image refreshing
  */
 export function canRefreshCategoryImage(category: string): boolean {
-  const refreshKey = `last_refresh_${category.toLowerCase()}`;
+  const normalizedCategory = normalizeCategory(category);
+  const refreshKey = `last_refresh_${normalizedCategory.toLowerCase()}`;
   const lastRefresh = localStorage.getItem(refreshKey);
   
   if (!lastRefresh) return true;
@@ -240,7 +300,8 @@ export function canRefreshCategoryImage(category: string): boolean {
 }
 
 export function markCategoryImageRefreshed(category: string): void {
-  const refreshKey = `last_refresh_${category.toLowerCase()}`;
+  const normalizedCategory = normalizeCategory(category);
+  const refreshKey = `last_refresh_${normalizedCategory.toLowerCase()}`;
   localStorage.setItem(refreshKey, Date.now().toString());
 }
 
@@ -253,7 +314,8 @@ export async function getProductImageData(
   category: string,
   subCategory?: string
 ): Promise<UnsplashImageResponse> {
-  const cacheKey = `${category.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
+  const normalizedCategory = normalizeCategory(category);
+  const cacheKey = `${normalizedCategory.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
   
   // Check localStorage cache first
   const localStorageData = getLocalStorageCache(cacheKey);
@@ -278,8 +340,8 @@ export async function getProductImageData(
     let query = `${productName} energy efficient`;
     
     // Add category keyword if available
-    if (CATEGORY_KEYWORDS[category] && CATEGORY_KEYWORDS[category].length > 0) {
-      query += ` ${CATEGORY_KEYWORDS[category][0]}`;
+    if (CATEGORY_KEYWORDS[normalizedCategory] && CATEGORY_KEYWORDS[normalizedCategory].length > 0) {
+      query += ` ${CATEGORY_KEYWORDS[normalizedCategory][0]}`;
     }
     
     if (subCategory) {
@@ -335,8 +397,9 @@ export async function getProductImageData(
     
     // Return default image for the category or a general fallback
     let fallbackUrl = FALLBACK_IMAGE;
-    if (DEFAULT_IMAGES[category]) {
-      fallbackUrl = DEFAULT_IMAGES[category];
+    
+    if (DEFAULT_IMAGES[normalizedCategory]) {
+      fallbackUrl = DEFAULT_IMAGES[normalizedCategory];
     } else if (DEFAULT_IMAGES['Appliances']) {
       fallbackUrl = DEFAULT_IMAGES['Appliances'];
     }
@@ -375,8 +438,10 @@ export function getProductImageFallback(
   productName: string,
   category: string
 ): string {
-  if (DEFAULT_IMAGES[category]) {
-    return DEFAULT_IMAGES[category];
+  const normalizedCategory = normalizeCategory(category);
+  
+  if (DEFAULT_IMAGES[normalizedCategory]) {
+    return DEFAULT_IMAGES[normalizedCategory];
   } else if (DEFAULT_IMAGES['Appliances']) {
     return DEFAULT_IMAGES['Appliances'];
   } else {
@@ -393,12 +458,14 @@ export function invalidateImageCache(
 ): void {
   if (category && productName) {
     // Invalidate specific product
-    const cacheKey = `${category.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
+    const normalizedCategory = normalizeCategory(category);
+    const cacheKey = `${normalizedCategory.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
     delete imageCache[cacheKey];
     localStorage.removeItem(cacheKey);
   } else if (category) {
     // Invalidate entire category
-    const categoryPrefix = category.toLowerCase() + '_';
+    const normalizedCategory = normalizeCategory(category);
+    const categoryPrefix = normalizedCategory.toLowerCase() + '_';
     
     // Clear memory cache
     const keysToInvalidate = Object.keys(imageCache).filter(key => 
@@ -408,7 +475,7 @@ export function invalidateImageCache(
     
     // Clear localStorage cache
     Object.keys(localStorage).filter(key => 
-      key.startsWith(categoryPrefix) || key.startsWith(`category_image_${category.toLowerCase()}`)
+      key.startsWith(categoryPrefix) || key.startsWith(`category_image_${normalizedCategory.toLowerCase()}`)
     ).forEach(key => localStorage.removeItem(key));
   } else {
     // Invalidate all cache

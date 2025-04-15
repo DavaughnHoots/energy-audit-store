@@ -27,7 +27,11 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
         setIsLoading(true);
         setError(null);
         
+        // Log the exact category name to help with debugging
+        console.log(`Fetching image for category: "${category}"`);
+        
         const data = await getCategoryImage(category, category);
+        console.log(`Image data received for ${category}:`, data ? 'success' : 'null');
         setImageData(data);
       } catch (err) {
         console.error(`Error fetching image for ${category}:`, err);
@@ -70,8 +74,8 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
       role="button"
       aria-label={`Select ${category} category`}
     >
-      {/* Image with overlay */}
-      <div className="aspect-w-16 aspect-h-9 group">
+      {/* Fixed aspect ratio container */}
+      <div className="relative w-full pb-[56.25%]"> {/* 16:9 aspect ratio */}
         {isLoading ? (
           <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
             <span className="text-gray-400">Loading...</span>
@@ -85,7 +89,11 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
             <img 
               src={imageData?.url} 
               alt={`${category} category`}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
+              onError={(e) => {
+                console.error(`Image failed to load for ${category}`);
+                setError('Image failed to load');
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
           </>
@@ -95,25 +103,25 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <h3 className="text-white text-xl font-semibold">{category}</h3>
         </div>
+        
+        {/* Refresh button */}
+        <button
+          className={`absolute top-2 right-2 p-1 rounded-full ${canRefresh ? 'bg-black/30 hover:bg-black/50' : 'bg-black/20 cursor-not-allowed'} transition-colors`}
+          onClick={handleRefresh}
+          disabled={!canRefresh}
+          title={canRefresh ? "Refresh image" : "Image refresh on cooldown"}
+          aria-label={canRefresh ? "Refresh image" : "Image refresh on cooldown"}
+        >
+          <RefreshCw className={`h-4 w-4 ${canRefresh ? 'text-white' : 'text-white/60'}`} />
+        </button>
+        
+        {/* Image attribution */}
+        {imageData && imageData.photographer && (
+          <div className="absolute bottom-0 right-0 p-1 text-xs text-white/70 bg-black/30 rounded-tl-md">
+            Photo: {imageData.photographer}
+          </div>
+        )}
       </div>
-      
-      {/* Refresh button */}
-      <button
-        className={`absolute top-2 right-2 p-1 rounded-full ${canRefresh ? 'bg-black/30 hover:bg-black/50' : 'bg-black/20 cursor-not-allowed'} transition-colors`}
-        onClick={handleRefresh}
-        disabled={!canRefresh}
-        title={canRefresh ? "Refresh image" : "Image refresh on cooldown"}
-        aria-label={canRefresh ? "Refresh image" : "Image refresh on cooldown"}
-      >
-        <RefreshCw className={`h-4 w-4 ${canRefresh ? 'text-white' : 'text-white/60'}`} />
-      </button>
-      
-      {/* Image attribution */}
-      {imageData && imageData.photographer && (
-        <div className="absolute bottom-0 right-0 p-1 text-xs text-white/70 bg-black/30 rounded-tl-md">
-          Photo: {imageData.photographer}
-        </div>
-      )}
     </div>
   );
 };
