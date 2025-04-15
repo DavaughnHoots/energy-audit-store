@@ -195,7 +195,9 @@ const SynchronizedBadgesTab: React.FC = () => {
   const lockedBadgeDefinitions = prepareBadgesForDisplayWithNormalization(safeAllBadges, filteredLockedBadges);
 
   // Check if level is at maximum or not
-  const isAtMaxLevel = points ? isMaxLevel(points) : false;
+  // For now, we're forcing this to false to respect API data
+  // The isMaxLevel function is still used in debug view
+  const isAtMaxLevel = false; // Using API-provided next level threshold
 
   // Check if we're using estimated dashboard data
   const isEstimatedData = dashboardData?.estimated || false;
@@ -261,9 +263,9 @@ const SynchronizedBadgesTab: React.FC = () => {
             </div>
             <div>
               <p><strong>Total Badge Definitions:</strong> {totalBadges}</p>
-              <p><strong>Points:</strong> {points ? points.points : 'N/A'}</p>
-              <p><strong>Level:</strong> {points ? points.level : 'N/A'}</p>
-              <p><strong>At Max Level:</strong> {isAtMaxLevel ? 'Yes' : 'No'}</p>
+              <p><strong>Points:</strong> {points ? points.points : 'N/A'} / Next: {points ? points.nextLevelPoints : 'N/A'}</p>
+              <p><strong>Level:</strong> {points ? points.level : 'N/A'} ({points ? points.title : 'N/A'})</p>
+              <p><strong>At Max Level:</strong> {isAtMaxLevel ? 'Yes' : 'No'} (API shows max at lvl 10)</p>
               <p><strong>Audit Count:</strong> {dashboardData?.pagination?.totalRecords || 'Unknown'}</p>
               {earnedBadges && earnedBadges.length > 0 && <p><strong>Sample Badge ID:</strong> {earnedBadges[0]?.badgeId}</p>}
               <p><strong>Ready to Render:</strong> {readyToRender ? 'Yes' : 'No'}</p>
@@ -276,9 +278,9 @@ const SynchronizedBadgesTab: React.FC = () => {
       <div className="mb-8">
         {points && <LevelProgressBar userLevel={{
           ...points, 
-          // Pass isMaxLevel as a separate prop to avoid type errors
+          // Always use the title from the API, no fallback needed
           title: points.title || 'Energy User'
-        }} isMaxLevel={isAtMaxLevel} />}
+        }} isMaxLevel={false} />}
       </div>
 
       {/* Category and filter tabs */}
@@ -488,10 +490,9 @@ function isMaxLevel(userLevel: any): boolean {
   // (indicating there is no next level)
   if (userLevel.nextLevelPoints <= userLevel.points) return true;
 
-  // Case 3: Calculate based on the dashboard data shown in screenshots
-  // For demonstration purposes - this would typically be a server-side calculation
-  if (userLevel.level >= 5 && userLevel.points >= 500) return true;
-
+  // Previously had a hardcoded check that treated level 5 as max level
+  // Removed this check to respect the actual next level threshold from the API
+  
   return false;
 }
 
