@@ -7,6 +7,7 @@
  */
 
 import predefinedCategoryImages from '../../public/data/category-images.json';
+import customImages from '../../public/data/custom-category-images.json';
 
 // Image response interface with attribution data
 interface UnsplashImageResponse {
@@ -95,6 +96,67 @@ const normalizeCategory = (category: string): string => {
 };
 
 /**
+ * Helper function to format the Unsplash image URL with proper parameters
+ */
+const formatImageUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // If URL already has query parameters, add to them
+  if (url.includes('?')) {
+    // If it doesn't already have these params
+    if (!url.includes('auto=format')) {
+      url += '&auto=format&fit=crop&w=800&q=80';
+    }
+  } else {
+    // Add query parameters
+    url += '?auto=format&fit=crop&w=800&q=80';
+  }
+  
+  return url;
+};
+
+/**
+ * Gets the custom image for a category if available
+ */
+const getCustomImage = (category: string): ProductImageData | null => {
+  const normalizedCategory = normalizeCategory(category);
+  
+  try {
+    // First check if it's a subcategory
+    // @ts-ignore - JSON import type handling
+    if (customImages.subCategories && customImages.subCategories[normalizedCategory]) {
+      // @ts-ignore - JSON import type handling
+      const image = customImages.subCategories[normalizedCategory];
+      console.log(`Found custom subcategory image for ${normalizedCategory}`);
+      
+      return {
+        url: formatImageUrl(image.url),
+        photographer: image.photographer || 'Unsplash',
+        photographerUrl: image.photographerUrl || 'https://unsplash.com'
+      };
+    }
+    
+    // Then check main categories
+    // @ts-ignore - JSON import type handling
+    if (customImages.mainCategories && customImages.mainCategories[normalizedCategory]) {
+      // @ts-ignore - JSON import type handling
+      const image = customImages.mainCategories[normalizedCategory];
+      console.log(`Found custom main category image for ${normalizedCategory}`);
+      
+      return {
+        url: formatImageUrl(image.url),
+        photographer: image.photographer || 'Unsplash',
+        photographerUrl: image.photographerUrl || 'https://unsplash.com'
+      };
+    }
+  } catch (error) {
+    console.error(`Error accessing custom images for ${normalizedCategory}:`, error);
+  }
+  
+  return null;
+};
+
+/**
  * Track a download event for an Unsplash image
  * This is required by Unsplash's API terms when a user views an image
  */
@@ -162,6 +224,14 @@ export async function getCategoryImage(
       console.log(`Using cached image for ${normalizedCategory}`);
       return cachedData;
     }
+  }
+  
+  // First, check for custom images from our curated collection
+  const customImage = getCustomImage(normalizedCategory);
+  if (customImage) {
+    // Cache the custom image
+    setLocalStorageCache(cacheKey, customImage, CACHE_DURATION);
+    return customImage;
   }
   
   // Next, try to use predefined images
@@ -281,242 +351,5 @@ export async function getCategoryImage(
       photographer: 'Unsplash',
       photographerUrl: 'https://unsplash.com'
     };
-  }
-}
-
-/**
- * Rate-limiting functions for image refreshing
- */
-export function canRefreshCategoryImage(category: string): boolean {
-  const normalizedCategory = normalizeCategory(category);
-  const refreshKey = `last_refresh_${normalizedCategory.toLowerCase()}`;
-  const lastRefresh = localStorage.getItem(refreshKey);
-  
-  if (!lastRefresh) return true;
-  
-  // Allow refresh once per hour
-  const ONE_HOUR = 60 * 60 * 1000;
-  return (Date.now() - parseInt(lastRefresh, 10)) > ONE_HOUR;
-}
-
-export function markCategoryImageRefreshed(category: string): void {
-  const normalizedCategory = normalizeCategory(category);
-  const refreshKey = `last_refresh_${normalizedCategory.toLowerCase()}`;
-  localStorage.setItem(refreshKey, Date.now().toString());
-}
-
-/**
- * Gets image data for a product based on its name and category
- * First checks the cache, then tries the Unsplash API, and falls back to default images if needed
- */
-export async function getProductImageData(
-  productName: string,
-  category: string,
-  subCategory?: string
-): Promise<UnsplashImageResponse> {
-  const normalizedCategory = normalizeCategory(category);
-  const cacheKey = `${normalizedCategory.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
-  
-  // Check localStorage cache first
-  const localStorageData = getLocalStorageCache(cacheKey);
-  if (localStorageData) {
-    // Convert from ProductImageData to UnsplashImageResponse format
-    return {
-      url: localStorageData.url,
-      id: '',  // IDs aren't stored in localStorage cache
-      photographer: localStorageData.photographer,
-      photographerUsername: '',
-      photographerUrl: localStorageData.photographerUrl
-    };
-  }
-  
-  // Then check memory cache
-  if (imageCache[cacheKey] && imageCache[cacheKey].expires > Date.now()) {
-    return imageCache[cacheKey].data;
-  }
-  
-  try {
-    // Build search query based on product details
-    let query = `${productName} energy efficient`;
-    
-    // Add category keyword if available
-    if (CATEGORY_KEYWORDS[normalizedCategory] && CATEGORY_KEYWORDS[normalizedCategory].length > 0) {
-      query += ` ${CATEGORY_KEYWORDS[normalizedCategory][0]}`;
-    }
-    
-    if (subCategory) {
-      query += ` ${subCategory}`;
-    }
-    
-    // Make request to Unsplash API
-    const response = await fetch(
-      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape`,
-      {
-        headers: {
-          Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`
-        }
-      }
-    );
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch image from Unsplash');
-    }
-    
-    const data = await response.json();
-    
-    // Safely access nested properties
-    if (!data || !data.urls || typeof data.urls.regular !== 'string') {
-      throw new Error('Invalid response format from Unsplash API');
-    }
-    
-    // Extract relevant data
-    const imageData: UnsplashImageResponse = {
-      url: data.urls.regular as string,
-      id: data.id as string,
-      photographer: data.user?.name || 'Unsplash Photographer',
-      photographerUsername: data.user?.username || '',
-      photographerUrl: data.user?.links?.html || 'https://unsplash.com'
-    };
-    
-    // Cache the result in memory
-    imageCache[cacheKey] = {
-      data: imageData,
-      expires: Date.now() + CACHE_DURATION
-    };
-    
-    // Also cache in localStorage
-    setLocalStorageCache(cacheKey, {
-      url: imageData.url,
-      photographer: imageData.photographer,
-      photographerUrl: imageData.photographerUrl
-    }, CACHE_DURATION);
-    
-    return imageData;
-  } catch (error) {
-    console.error('Error fetching product image:', error);
-    
-    // Return default image for the category or a general fallback
-    let fallbackUrl = FALLBACK_IMAGE;
-    
-    if (DEFAULT_IMAGES[normalizedCategory]) {
-      fallbackUrl = DEFAULT_IMAGES[normalizedCategory];
-    } else if (DEFAULT_IMAGES['Appliances']) {
-      fallbackUrl = DEFAULT_IMAGES['Appliances'];
-    }
-    
-    // Create a fallback image data object
-    const fallbackImageData: UnsplashImageResponse = {
-      url: fallbackUrl,
-      id: '',
-      photographer: 'Unsplash',
-      photographerUsername: '',
-      photographerUrl: 'https://unsplash.com'
-    };
-    
-    return fallbackImageData;
-  }
-}
-
-/**
- * Gets an appropriate image URL for a product based on its name and category
- * Simplified version of getProductImageData that returns just the URL
- */
-export async function getProductImage(
-  productName: string,
-  category: string,
-  subCategory?: string
-): Promise<string> {
-  const imageData = await getProductImageData(productName, category, subCategory);
-  return imageData.url;
-}
-
-/**
- * For development and testing purposes
- * Returns a default image without making API calls
- */
-export function getProductImageFallback(
-  productName: string,
-  category: string
-): string {
-  const normalizedCategory = normalizeCategory(category);
-  
-  if (DEFAULT_IMAGES[normalizedCategory]) {
-    return DEFAULT_IMAGES[normalizedCategory];
-  } else if (DEFAULT_IMAGES['Appliances']) {
-    return DEFAULT_IMAGES['Appliances'];
-  } else {
-    return FALLBACK_IMAGE;
-  }
-}
-
-/**
- * Manually invalidates the cache for a specific product or category
- */
-export function invalidateImageCache(
-  category?: string,
-  productName?: string
-): void {
-  if (category && productName) {
-    // Invalidate specific product
-    const normalizedCategory = normalizeCategory(category);
-    const cacheKey = `${normalizedCategory.toLowerCase()}_${productName.toLowerCase().replace(/\s+/g, '_')}`;
-    delete imageCache[cacheKey];
-    localStorage.removeItem(cacheKey);
-  } else if (category) {
-    // Invalidate entire category
-    const normalizedCategory = normalizeCategory(category);
-    const categoryPrefix = normalizedCategory.toLowerCase() + '_';
-    
-    // Clear memory cache
-    const keysToInvalidate = Object.keys(imageCache).filter(key => 
-      key.startsWith(categoryPrefix)
-    );
-    keysToInvalidate.forEach(key => delete imageCache[key]);
-    
-    // Clear localStorage cache
-    Object.keys(localStorage).filter(key => 
-      key.startsWith(categoryPrefix) || key.startsWith(`category_image_${normalizedCategory.toLowerCase()}`)
-    ).forEach(key => localStorage.removeItem(key));
-  } else {
-    // Invalidate all cache
-    Object.keys(imageCache).forEach(key => delete imageCache[key]);
-    
-    // Clear all image-related localStorage items
-    Object.keys(localStorage).filter(key => 
-      key.includes('_image_') || key.startsWith('last_refresh_')
-    ).forEach(key => localStorage.removeItem(key));
-  }
-}
-
-/**
- * Refreshes expired cache entries
- * Could be run on a schedule or when the app initializes
- */
-export async function refreshImageCache(): Promise<void> {
-  const expiredCacheEntries = Object.entries(imageCache)
-    .filter(([_, data]) => data.expires < Date.now());
-    
-  for (const [key, _] of expiredCacheEntries) {
-    // Parse key to get category and product name
-    const parts = key.split('_');
-    if (parts.length < 2) {
-      console.error(`Invalid cache key format: ${key}`);
-      continue;
-    }
-    
-    const category = parts[0];
-    const productName = parts.slice(1).join('_').replace(/_/g, ' ');
-    
-    if (!category) {
-      console.error(`Invalid category in cache key: ${key}`);
-      continue;
-    }
-    
-    try {
-      await getProductImageData(productName, category);
-      console.log(`Refreshed cache for ${key}`);
-    } catch (error) {
-      console.error(`Failed to refresh cache for ${key}:`, error);
-    }
   }
 }

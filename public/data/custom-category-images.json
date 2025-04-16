@@ -1,0 +1,296 @@
+{
+  "mainCategories": {
+    "Appliances": {
+      "url": "https://images.unsplash.com/photo-1556911220-6bfac35a0d68",
+      "photographer": "Naomi Hébert",
+      "photographerUrl": "https://unsplash.com/@naomish"
+    },
+    "Building Products": {
+      "url": "https://images.unsplash.com/photo-1541976590-713941681591",
+      "photographer": "TxusM",
+      "photographerUrl": "https://unsplash.com/@txus111m"
+    },
+    "Commercial Appliances": {
+      "url": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7",
+      "photographer": "Brian Miller",
+      "photographerUrl": "https://unsplash.com/@braintax"
+    },
+    "Commercial Food Service Equipment": {
+      "url": "https://images.unsplash.com/photo-1572715376701-98568319fd0b",
+      "photographer": "Galeria RGaleria",
+      "photographerUrl": "https://unsplash.com/@rgaleriacom"
+    },
+    "Data Center Equipment": {
+      "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31",
+      "photographer": "Kirill Kirill",
+      "photographerUrl": "https://unsplash.com/@kirill2020"
+    },
+    "Electronics": {
+      "url": "https://images.unsplash.com/photo-1648423980346-5c71dd08ad6d",
+      "photographer": "Stephanie Berbec",
+      "photographerUrl": "https://unsplash.com/@stephanieberbec"
+    },
+    "Heating & Cooling": {
+      "url": "https://images.unsplash.com/photo-1573599852326-2a1bd9a5fc82",
+      "photographer": "Kharaoke",
+      "photographerUrl": "https://unsplash.com/@kharaoke"
+    },
+    "Lighting & Fans": {
+      "url": "https://images.unsplash.com/photo-1533743060125-9338cda16f02",
+      "photographer": "Mariola Grobelska",
+      "photographerUrl": "https://unsplash.com/@dark_wolf183"
+    },
+    "Office Equipment": {
+      "url": "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d",
+      "photographer": "Domenico Loia",
+      "photographerUrl": "https://unsplash.com/@domenicoloia"
+    },
+    "Other": {
+      "url": "https://images.unsplash.com/photo-1506477331477-33d5d8b3dc85",
+      "photographer": "J.K.", 
+      "photographerUrl": "https://unsplash.com/@jkorpa" 
+    },
+    "Water Heaters": {
+      "url": "https://images.unsplash.com/photo-1566356948017-0e0084583bc1",
+      "photographer": "Tim Marshall",
+      "photographerUrl": "https://unsplash.com/@timmarshall"
+    }
+  },
+  "subCategories": {
+    "Dehumidifiers": {
+      "url": "https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b",
+      "photographer": "NOAA",
+      "photographerUrl": "https://unsplash.com/@noaa"
+    },
+    "Residential Clothes Dryers": {
+      "url": "https://images.unsplash.com/photo-1613190419837-3773788271ed",
+      "photographer": "3D Ottawa",
+      "photographerUrl": "https://unsplash.com/@3dottawa"
+    },
+    "Residential Clothes Washers": {
+      "url": "https://images.unsplash.com/photo-1591369822096-ffd140ec948f",
+      "photographer": "Engin Akyurt",
+      "photographerUrl": "https://unsplash.com/@enginakyurt"
+    },
+    "Residential Dishwashers": {
+      "url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a",
+      "photographer": "Mohammad Esmaili",
+      "photographerUrl": "https://unsplash.com/@mohammadesmaili"
+    },
+    "Residential Electric Cooking Products": {
+      "url": "https://images.unsplash.com/photo-1654157925394-4b7809721775",
+      "photographer": "Zoshua Colah",
+      "photographerUrl": "https://unsplash.com/@zoshuacolah"
+    },
+    "Residential Freezers": {
+      "url": "https://images.unsplash.com/photo-1639415047550-29d80b6b0fcc",
+      "photographer": "Alex Petrov",
+      "photographerUrl": "https://unsplash.com/@petit_prince_alex"
+    },
+    "Residential Refrigerators": {
+      "url": "https://images.unsplash.com/photo-1609780447631-05b93e5a88ea",
+      "photographer": "Dhilip Antony",
+      "photographerUrl": "https://unsplash.com/@dhilipantony"
+    },
+    "Room Air Cleaners": {
+      "url": "https://images.unsplash.com/photo-1593101304164-fce24b3ea860",
+      "photographer": "Fujiphilm",
+      "photographerUrl": "https://unsplash.com/@fujiphilm"
+    },
+    "Storm Windows": {
+      "url": "https://images.unsplash.com/photo-1583495841086-5d73c15c7a10",
+      "photographer": "Arya Jalali",
+      "photographerUrl": "https://unsplash.com/@aryajal1907"
+    },
+    "Commercial Clothes Washers": {
+      "url": "https://images.unsplash.com/photo-1604335399105-a0c585fd81a1",
+      "photographer": "Saxon White",
+      "photographerUrl": "https://unsplash.com/@saxon_white"
+    },
+    "Commercial Coffee Brewers": {
+      "url": "https://images.unsplash.com/photo-1558550912-5cf874b2db2d",
+      "photographer": "Calyton",
+      "photographerUrl": "https://unsplash.com/@cal_q_l8r"
+    },
+    "Commercial Dishwashers": {
+      "url": "https://images.unsplash.com/photo-1597734888050-56213c6e9994",
+      "photographer": "Didi Paul",
+      "photographerUrl": "https://unsplash.com/@didipaul"
+    },
+    "Commercial Electric Cooktops": {
+      "url": "https://images.unsplash.com/photo-1600489000022-c2086d79f9d4",
+      "photographer": "Cooper",
+      "photographerUrl": "https://unsplash.com/@coopery"
+    },
+    "Commercial Fryers": {
+      "url": "https://images.unsplash.com/photo-1590080875815-2059dcd0a33e",
+      "photographer": "Getty Images",
+      "photographerUrl": "https://unsplash.com/@gettyimages"
+    },
+    "Commercial Griddles": {
+      "url": "https://images.unsplash.com/photo-1621328406196-e416bf03c9bb",
+      "photographer": "Carrier Lost",
+      "photographerUrl": "https://unsplash.com/@carrier_lost"
+    },
+    "Commercial Hot Food Holding Cabinets": {
+      "url": "https://images.unsplash.com/photo-1520387294843-fd994fd872e7",
+      "photographer": "The Designecologist",
+      "photographerUrl": "https://unsplash.com/@designecologist"
+    },
+    "Commercial Ice Machines": {
+      "url": "https://images.unsplash.com/photo-1573167710781-1ef2867b635e",
+      "photographer": "Ice Family",
+      "photographerUrl": "https://unsplash.com/@ice_family"
+    },
+    "Commercial Ovens": {
+      "url": "https://images.unsplash.com/photo-1578738288760-05ce9be719d3",
+      "photographer": "Nini From Paris",
+      "photographerUrl": "https://unsplash.com/@ninifromparis"
+    },
+    "Commercial Refrigerators and Freezers": {
+      "url": "https://images.unsplash.com/photo-1621091211034-53136cc1eb32",
+      "photographer": "Eduardo Soares",
+      "photographerUrl": "https://unsplash.com/@eduschadesoares"
+    },
+    "Commercial Steam Cookers": {
+      "url": "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445",
+      "photographer": "Hailey Tong",
+      "photographerUrl": "https://unsplash.com/@haileytong"
+    },
+    "Data Center Storage": {
+      "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31",
+      "photographer": "Ismail Sayhan",
+      "photographerUrl": "https://unsplash.com/@ismailenesayhan"
+    },
+    "Enterprise Servers": {
+      "url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31",
+      "photographer": "Kevin Ache",
+      "photographerUrl": "https://unsplash.com/@kevinache"
+    },
+    "Large Network Equipment": {
+      "url": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8",
+      "photographer": "I_M_Polo",
+      "photographerUrl": "https://unsplash.com/@i_m_polo"
+    },
+    "Uninterruptible Power Supplies": {
+      "url": "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e",
+      "photographer": "ZeLebb",
+      "photographerUrl": "https://unsplash.com/@zelebb"
+    },
+    "Audio/Video": {
+      "url": "https://images.unsplash.com/photo-1588508065123-287b28e013da",
+      "photographer": "DLX Media",
+      "photographerUrl": "https://unsplash.com/@dlxmedia"
+    },
+    "Telephones": {
+      "url": "https://images.unsplash.com/photo-1587212639073-3e8cd3591186",
+      "photographer": "Shawn Rain",
+      "photographerUrl": "https://unsplash.com/@shawn_rain"
+    },
+    "Televisions": {
+      "url": "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1",
+      "photographer": "Oscar Nord",
+      "photographerUrl": "https://unsplash.com/@oscnord"
+    },
+    "Boilers": {
+      "url": "https://images.unsplash.com/photo-1637146786112-a9a169df5caa",
+      "photographer": "Getty Images",
+      "photographerUrl": "https://unsplash.com/@gettyimages"
+    },
+    "Commercial Boilers": {
+      "url": "https://images.unsplash.com/photo-1580037637620-5bebcb96bf49",
+      "photographer": "Shofukan",
+      "photographerUrl": "https://unsplash.com/@shofukan"
+    },
+    "Furnaces": {
+      "url": "https://images.unsplash.com/photo-1585421514738-01798e348b17",
+      "photographer": "CDC",
+      "photographerUrl": "https://unsplash.com/@cdc"
+    },
+    "Geothermal Heat Pumps": {
+      "url": "https://images.unsplash.com/photo-1566296324705-7fc6df84504f",
+      "photographer": "Vaker BV",
+      "photographerUrl": "https://unsplash.com/@vakerbv"
+    },
+    "Light Commercial HVAC": {
+      "url": "https://images.unsplash.com/photo-1655720035861-ba4fd1c31acb",
+      "photographer": "AM Tinky",
+      "photographerUrl": "https://unsplash.com/@amtinky"
+    },
+    "Room Air Conditioners": {
+      "url": "https://images.unsplash.com/photo-1639720711603-4c44aa67f1a3",
+      "photographer": "Introspective DSG",
+      "photographerUrl": "https://unsplash.com/@introspectivedsgn"
+    },
+    "Smart Thermostats": {
+      "url": "https://images.unsplash.com/photo-1563121628-897e7b9872b2",
+      "photographer": "Ardian Pranomo",
+      "photographerUrl": "https://unsplash.com/@ardianpranomo"
+    },
+    "Ventilating Fans": {
+      "url": "https://images.unsplash.com/photo-1591964605208-5dc10836131b",
+      "photographer": "V Bychkov",
+      "photographerUrl": "https://unsplash.com/@vlbychkov"
+    },
+    "Ceiling Fans": {
+      "url": "https://images.unsplash.com/photo-1633662602897-949291507299",
+      "photographer": "Dark Wolf",
+      "photographerUrl": "https://unsplash.com/@dark_wolf183"
+    },
+    "Light Bulbs": {
+      "url": "https://images.unsplash.com/photo-1529310399831-ed472b81d589",
+      "photographer": "Daniele Franchi",
+      "photographerUrl": "https://unsplash.com/@daniele_franchi"
+    },
+    "Light Fixtures": {
+      "url": "https://images.unsplash.com/photo-1565814329452-e1efa11c5b89",
+      "photographer": "Etienne Girardet",
+      "photographerUrl": "https://unsplash.com/@etiennegirardet"
+    },
+    "Computers": {
+      "url": "https://images.unsplash.com/photo-1603481546238-80219456db5f",
+      "photographer": "SqurlSM",
+      "photographerUrl": "https://unsplash.com/@sqrlsm"
+    },
+    "Displays": {
+      "url": "https://images.unsplash.com/photo-1562408590-e32931084e23",
+      "photographer": "MR Alidoost",
+      "photographerUrl": "https://unsplash.com/@mralidoost"
+    },
+    "Imaging Equipment": {
+      "url": "https://images.unsplash.com/photo-1516961642265-531546e84af2",
+      "photographer": "Markos Mant",
+      "photographerUrl": "https://unsplash.com/@markos_mant"
+    },
+    "Electric Vehicle Chargers (AC-Output)": {
+      "url": "https://images.unsplash.com/photo-1657699078991-071c16e14637",
+      "photographer": "MyEnergi",
+      "photographerUrl": "https://unsplash.com/@myenergi"
+    },
+    "Electric Vehicle Chargers (DC-Output)": {
+      "url": "https://images.unsplash.com/photo-1633400304319-8f5139133315",
+      "photographer": "Sophie Jonas",
+      "photographerUrl": "https://unsplash.com/@sophiejonas"
+    },
+    "Lab Grade Refrigerators and Freezers": {
+      "url": "https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c",
+      "photographer": "Trnavska Uni",
+      "photographerUrl": "https://unsplash.com/@trnavskauni"
+    },
+    "Pool Pumps": {
+      "url": "https://images.unsplash.com/photo-1679924129818-68aff301d8ed",
+      "photographer": "Aiper Official",
+      "photographerUrl": "https://unsplash.com/@aiper_official"
+    },
+    "Vending Machines": {
+      "url": "https://images.unsplash.com/photo-1553341888-975c4fd08d29",
+      "photographer": "Neon Brand",
+      "photographerUrl": "https://unsplash.com/@neonbrand"
+    },
+    "Water Coolers": {
+      "url": "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c",
+      "photographer": "Use IEEE",
+      "photographerUrl": "https://unsplash.com/@usefieee"
+    }
+  }
+}
