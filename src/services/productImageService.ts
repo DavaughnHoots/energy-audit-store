@@ -353,3 +353,24 @@ export async function getCategoryImage(
     };
   }
 }
+
+/**
+ * Rate-limiting functions for image refreshing
+ */
+export function canRefreshCategoryImage(category: string): boolean {
+  const normalizedCategory = normalizeCategory(category);
+  const refreshKey = `last_refresh_${normalizedCategory.toLowerCase()}`;
+  const lastRefresh = localStorage.getItem(refreshKey);
+  
+  if (!lastRefresh) return true;
+  
+  // Allow refresh once per hour
+  const ONE_HOUR = 60 * 60 * 1000;
+  return (Date.now() - parseInt(lastRefresh, 10)) > ONE_HOUR;
+}
+
+export function markCategoryImageRefreshed(category: string): void {
+  const normalizedCategory = normalizeCategory(category);
+  const refreshKey = `last_refresh_${normalizedCategory.toLowerCase()}`;
+  localStorage.setItem(refreshKey, Date.now().toString());
+}
