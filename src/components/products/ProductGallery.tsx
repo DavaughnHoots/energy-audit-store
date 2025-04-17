@@ -24,6 +24,9 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
   const [totalProducts, setTotalProducts] = useState(0);
   const productsPerPage = 12;
   
+  // Default placeholder image as base64 - gray background with product icon
+  const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNFRUVFRUUiLz48cGF0aCBkPSJNODAgNjBIMTIwVjE0MEg4MFY2MFoiIHN0cm9rZT0iIzY2NjY2NiIgc3Ryb2tlLXdpZHRoPSI0IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTcwIDgwSDE0MCIgc3Ryb2tlPSIjNjY2NjY2IiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNNzAgMTIwSDE0MCIgc3Ryb2tlPSIjNjY2NjY2IiBzdHJva2Utd2lkdGg9IjQiLz48dGV4dCB4PSIxMDAiIHk9IjE2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNjY2NjY2Ij5Qcm9kdWN0IEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+  
   // Memoize filters to prevent unnecessary re-renders
   const filters = useMemo(() => ({
     mainCategory: category,
@@ -37,8 +40,8 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
       return product.imageUrl;
     }
     
-    // Use a default placeholder image
-    return '/data/images/category-default.jpg';
+    // Use the base64 placeholder image
+    return placeholderImage;
   }, []);
   
   // Load products when category, subcategory, or page changes
@@ -201,10 +204,10 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
                 alt={product.name}
                 className="h-48 w-full object-cover object-center"
                 onError={(e) => {
-                  // Fallback to category image if product image fails
+                  // Fallback to placeholder image if product image fails
                   const target = e.target as HTMLImageElement;
                   target.onerror = null;
-                  target.src = '/data/images/category-default.jpg';
+                  target.src = placeholderImage;
                 }}
               />
             </div>
