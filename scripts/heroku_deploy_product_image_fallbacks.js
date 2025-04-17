@@ -16,8 +16,23 @@ const buildTriggerPath = path.join(__dirname, '../.build-trigger');
 fs.writeFileSync(buildTriggerPath, new Date().toISOString(), 'utf8');
 console.log('Updated build trigger for Heroku deployment');
 
+// Get current branch name
+const getCurrentBranch = () => {
+  try {
+    const branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+    return branch;
+  } catch (error) {
+    console.error('Error getting current branch:', error);
+    return 'main'; // Fallback to main if we can't determine the branch
+  }
+};
+
 const deployChanges = () => {
   try {
+    // Get current branch
+    const currentBranch = getCurrentBranch();
+    console.log(`Current branch: ${currentBranch}`);
+    
     // Add changes to git
     console.log('Adding files to git...');
     execSync('git add src/utils/svgImageGenerator.ts', { stdio: 'inherit' });
@@ -29,18 +44,28 @@ const deployChanges = () => {
     console.log('Committing changes...');
     execSync('git commit -m "Add SVG generator and subcategory image fallbacks for products"', { stdio: 'inherit' });
     
-    // Push to GitHub
+    // Push to GitHub with upstream tracking
     console.log('Pushing to GitHub...');
-    execSync('git push', { stdio: 'inherit' });
+    try {
+      // First try normal push in case upstream is already set
+      execSync('git push', { stdio: 'inherit' });
+    } catch (error) {
+      // If that fails, try setting the upstream
+      console.log('Setting upstream branch and pushing...');
+      execSync(`git push --set-upstream origin ${currentBranch}`, { stdio: 'inherit' });
+    }
     
-    // Push to Heroku
+    // Push to Heroku - make sure we're pushing the current branch to Heroku main
     console.log('\nDeploying to Heroku...');
-    execSync('git push heroku main', { stdio: 'inherit' });
+    execSync(`git push heroku ${currentBranch}:main`, { stdio: 'inherit' });
     
     console.log('\n✅ Successfully deployed product image fallbacks to Heroku!');
     return true;
   } catch (error) {
     console.error('\n❌ Error deploying changes:', error);
+    console.log('\nManual deployment instructions:');
+    console.log('1. To push to GitHub: git push --set-upstream origin $(git rev-parse --abbrev-ref HEAD)');
+    console.log('2. To deploy to Heroku: git push heroku $(git rev-parse --abbrev-ref HEAD):main');
     return false;
   }
 };
