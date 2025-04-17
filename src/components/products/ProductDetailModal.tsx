@@ -78,15 +78,25 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [imageDownloadTracked, setImageDownloadTracked] = useState(false);
 
   useEffect(() => {
-    if (isOpen && productId) {
-      fetchProductDetails();
-      // Reset image state when modal reopens
-      setProductImage(null);
-      setImageLoading(false);
-      setImageDownloadTracked(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, productId]); // Adding fetchProductDetails to deps would cause an infinite loop
+  // Only fetch if the modal is open and we have a productId
+  if (isOpen && productId) {
+    // Add debouncing with timeout
+    const timeoutId = setTimeout(() => {
+      fetchProductDetailsRef.current();
+    }, 50); // 50ms debounce
+    
+    // Return cleanup function
+    return () => {
+      // Clear timeout to prevent execution after unmount
+      clearTimeout(timeoutId);
+      
+      // Abort any in-flight requests for this product
+      requestCache.abortRequest(
+        API_ENDPOINTS.RECOMMENDATIONS.GET_PRODUCT_DETAIL(productId)
+      );
+    };
+  }
+}, [isOpen, productId]); // Keep dependencies minimal and correct // Keep dependencies minimal and correct // Adding fetchProductDetails to deps would cause an infinite loop
   
   // Effect to fetch product image when product details are loaded
   useEffect(() => {
@@ -145,30 +155,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     
     trackDownload();
   }, [productImage, loading, imageDownloadTracked]);
-  
-  const fetchProductDetails = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(API_ENDPOINTS.RECOMMENDATIONS.GET_PRODUCT_DETAIL(productId));
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch product details');
-      }
-      
-      const data = await response.json();
-      if (data.success && data.product) {
-        setProduct(data.product);
-      } else {
-        throw new Error(data.message || 'Failed to retrieve product details');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
   
   if (!isOpen) return null;
   
