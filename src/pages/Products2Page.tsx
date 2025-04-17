@@ -8,7 +8,7 @@ import { useProducts } from '../hooks/useProducts';
 import CategoryGallery from '../components/products/CategoryGallery';
 // Import components we'll create later
 // import SubCategoryGallery from '../components/products/SubCategoryGallery';
-// import ProductGallery from '../components/products/ProductGallery';
+import ProductGallery from '../components/products/ProductGallery';
 // import GalleryBreadcrumb from '../components/products/GalleryBreadcrumb';
 // import SearchOverlay from '../components/products/SearchOverlay';
 
@@ -158,15 +158,11 @@ const Products2Page: React.FC = () => {
       )}
       
       {viewState === ViewState.PRODUCTS && (
-        <div className="bg-gray-100 rounded-lg p-8 text-center">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            {`${selectedCategory} > ${selectedSubCategory}`}
-          </h2>
-          <p className="text-gray-500">
-            This is a placeholder for the Product Gallery that will be implemented in the next phase.
-          </p>
-        </div>
-      )}
+    <ProductGallery 
+      category={selectedCategory} 
+      subcategory={selectedSubCategory} 
+    />
+  )}
       
       {viewState === ViewState.SEARCH && (
         <div className="bg-gray-100 rounded-lg p-8 text-center">
