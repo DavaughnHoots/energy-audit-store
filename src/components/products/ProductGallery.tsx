@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useProducts } from '../../hooks/useProducts';
 import { Product } from '../../../backend/src/types/product';
 import { getCategoryImage } from '../../services/productImageService';
+import { generateProductImage } from '../../utils/svgImageGenerator';
 
 interface ProductGalleryProps {
   category: string;
@@ -13,6 +14,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subcategoryImageUrl, setSubcategoryImageUrl] = useState<string | null>(null);
   
   // Prevent multiple fetches
   const fetchingRef = useRef(false);
@@ -25,7 +27,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
   const productsPerPage = 12;
   
   // Default placeholder image as base64 - gray background with product icon
-  const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNFRUVFRUUiLz48cGF0aCBkPSJNODAgNjBIMTIwVjE0MEg4MFY2MFoiIHN0cm9rZT0iIzY2NjY2NiIgc3Ryb2tlLXdpZHRoPSI0IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTcwIDgwSDE0MCIgc3Ryb2tlPSIjNjY2NjY2IiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNNzAgMTIwSDE0MCIgc3Ryb2tlPSIjNjY2NjY2IiBzdHJva2Utd2lkdGg9IjQiLz48dGV4dCB4PSIxMDAiIHk9IjE2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNjY2NjY2Ij5Qcm9kdWN0IEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+  const placeholderImage = generateProductImage('Product Image');
   
   // Memoize filters to prevent unnecessary re-renders
   const filters = useMemo(() => ({
@@ -33,16 +35,45 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
     subCategory: subcategory
   }), [category, subcategory]);
   
-  // Get product image helper function
+  // Fetch subcategory image for fallback
+  useEffect(() => {
+    const fetchSubcategoryImage = async () => {
+      try {
+        // Try to get image for the specific subcategory
+        const imageData = await getCategoryImage(subcategory, category);
+        if (imageData && imageData.url) {
+          setSubcategoryImageUrl(imageData.url);
+        }
+      } catch (err) {
+        console.error(`Error fetching subcategory image for ${subcategory}:`, err);
+        setSubcategoryImageUrl(null);
+      }
+    };
+    
+    if (subcategory) {
+      fetchSubcategoryImage();
+    }
+  }, [category, subcategory]);
+  
+  // Get product image helper function with multiple fallbacks
   const getProductImage = useCallback((product: Product): string => {
-    // Use product's own image if available
+    // First try: Use product's own image if available
     if (product.imageUrl && product.imageUrl.trim() !== '') {
       return product.imageUrl;
     }
     
-    // Use the base64 placeholder image
-    return placeholderImage;
-  }, []);
+    // Second try: Use subcategory image as fallback if available
+    if (subcategoryImageUrl) {
+      return subcategoryImageUrl;
+    }
+    
+    // Third try: Generate an SVG image based on product properties
+    return generateProductImage(
+      product.name, 
+      category,
+      product.energyEfficiency
+    );
+  }, [category, subcategoryImageUrl]);
   
   // Load products when category, subcategory, or page changes
   useEffect(() => {
@@ -204,10 +235,10 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
                 alt={product.name}
                 className="h-48 w-full object-cover object-center"
                 onError={(e) => {
-                  // Fallback to placeholder image if product image fails
+                  // Fallback to generated SVG image if all other image sources fail
                   const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = placeholderImage;
+                  target.onerror = null; // Prevent infinite error loops
+                  target.src = generateProductImage(product.name, category, product.energyEfficiency);
                 }}
               />
             </div>
