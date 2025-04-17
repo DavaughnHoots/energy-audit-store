@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { usePageTracking } from '../hooks/analytics/usePageTracking';
 import { AnalyticsArea } from '../context/AnalyticsContext';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, Info } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
 
 // Import components
 import CategoryGallery from '../components/products/CategoryGallery';
 import SubCategoryGallery from '../components/products/SubCategoryGallery';
 import ProductGallery from '../components/products/ProductGallery';
+import EnhancedProductGallery from '../components/products/EnhancedProductGallery';
+import ProductDetailModal from '../components/products/ProductDetailModal';
 
 enum ViewState {
   CATEGORIES = 'categories',
@@ -29,6 +31,10 @@ const Products2Page: React.FC = () => {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
+  // Product detail modal state
+  const [isProductDetailOpen, setIsProductDetailOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
+  
   // Handle category selection
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
@@ -39,6 +45,12 @@ const Products2Page: React.FC = () => {
   const handleSubCategorySelect = (subCategory: string) => {
     setSelectedSubCategory(subCategory);
     setViewState(ViewState.PRODUCTS);
+  };
+  
+  // Handle product selection for detail view
+  const handleProductSelect = (productId: string) => {
+    setSelectedProductId(productId);
+    setIsProductDetailOpen(true);
   };
   
   // Handle search
@@ -149,9 +161,10 @@ const Products2Page: React.FC = () => {
       )}
       
       {viewState === ViewState.PRODUCTS && (
-        <ProductGallery 
+        <EnhancedProductGallery 
           category={selectedCategory} 
-          subcategory={selectedSubCategory} 
+          subcategory={selectedSubCategory}
+          onProductSelect={handleProductSelect}
         />
       )}
       
@@ -164,6 +177,15 @@ const Products2Page: React.FC = () => {
             This is a placeholder for the Search Results that will be implemented in the next phase.
           </p>
         </div>
+      )}
+      
+      {/* Product Detail Modal */}
+      {isProductDetailOpen && (
+        <ProductDetailModal
+          productId={selectedProductId}
+          isOpen={isProductDetailOpen}
+          onClose={() => setIsProductDetailOpen(false)}
+        />
       )}
     </div>
   );
