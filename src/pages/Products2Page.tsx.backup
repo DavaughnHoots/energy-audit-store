@@ -4,10 +4,13 @@ import { AnalyticsArea } from '../context/AnalyticsContext';
 import { ArrowLeft, Search } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
 
-// Import components
+// Import implemented components
 import CategoryGallery from '../components/products/CategoryGallery';
-import SubCategoryGallery from '../components/products/SubCategoryGallery';
+// Import components we'll create later
+// import SubCategoryGallery from '../components/products/SubCategoryGallery';
 import ProductGallery from '../components/products/ProductGallery';
+// import GalleryBreadcrumb from '../components/products/GalleryBreadcrumb';
+// import SearchOverlay from '../components/products/SearchOverlay';
 
 enum ViewState {
   CATEGORIES = 'categories',
@@ -115,7 +118,7 @@ const Products2Page: React.FC = () => {
         </div>
       </div>
       
-      {/* Navigation */}
+      {/* Navigation - will be replaced with GalleryBreadcrumb component */}
       {viewState !== ViewState.CATEGORIES && (
         <div className="mb-4">
           <button 
@@ -141,19 +144,25 @@ const Products2Page: React.FC = () => {
       )}
       
       {viewState === ViewState.SUBCATEGORIES && selectedCategory && (
-        <SubCategoryGallery
-          mainCategory={selectedCategory}
-          subCategories={categories.sub[selectedCategory] || []}
-          onSubCategorySelect={handleSubCategorySelect}
-        />
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+          {categories.sub[selectedCategory]?.map((subCategory) => (
+            <button
+              key={subCategory}
+              onClick={() => handleSubCategorySelect(subCategory)}
+              className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-center"
+            >
+              {subCategory}
+            </button>
+          ))}
+        </div>
       )}
       
       {viewState === ViewState.PRODUCTS && (
-        <ProductGallery 
-          category={selectedCategory} 
-          subcategory={selectedSubCategory} 
-        />
-      )}
+    <ProductGallery 
+      category={selectedCategory} 
+      subcategory={selectedSubCategory} 
+    />
+  )}
       
       {viewState === ViewState.SEARCH && (
         <div className="bg-gray-100 rounded-lg p-8 text-center">

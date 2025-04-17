@@ -112,3 +112,17 @@ processed_weather_data/weather_energy_data.db
 WeatherEvents_Jan2016-Dec2022.csv
 53ab1c8a-5b4e-4962-bcce-7152cebcf8dd.png
 f372cc6d-4cb5-449d-acfa-f4b16597a9e3.png
+scripts/fix_product_api_crash.js
+scripts/fix_product_async_await.js
+scripts/fix_product_modal_duplicate_requests.js
+scripts/fix_product_typescript_errors_simple.js
+scripts/fix_product_typescript_errors.js
+scripts/heroku_deploy_image_refresh_fix.js
+scripts/heroku_deploy_infinite_loading_fix.js
+scripts/heroku_deploy_product_api_debouncing_fix.js
+scripts/heroku_deploy_product_api_enhanced_optimization_fixed.js
+scripts/heroku_deploy_product_api_enhanced_optimization.js
+scripts/heroku_deploy_product_api_optimization.js
+scripts/heroku_deploy_product_filtering_fix.js
+scripts/heroku_deploy_product_gallery.js
+scripts/heroku_deploy_subcategory_images.js
