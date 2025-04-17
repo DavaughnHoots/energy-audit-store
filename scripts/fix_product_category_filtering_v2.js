@@ -1,4 +1,15 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Script to fix product category filtering (Version 2 - with image function fixes)
+ * This script implements the ProductGallery component and updates Products2Page
+ */
+const fs = require('fs');
+const path = require('path');
+
+console.log('Starting product category filtering fix (v2)');
+
+// Create ProductGallery component
+const productGalleryPath = path.join(__dirname, '../src/components/products/ProductGallery.tsx');
+const productGalleryContent = `import React, { useState, useEffect } from 'react';
 import { useProducts } from '../../hooks/useProducts';
 import { Product } from '../../../backend/src/types/product';
 
@@ -31,7 +42,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
     const productSubCategory = product.subCategory || subcategory;
     
     // Try to use the product's own subcategory if available, otherwise use the current subcategory
-    return `/data/images/category-${productCategory.toLowerCase().replace(/\s+/g, '-')}-${productSubCategory.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+    return \`/data/images/category-\${productCategory.toLowerCase().replace(/\\s+/g, '-')}-\${productSubCategory.toLowerCase().replace(/\\s+/g, '-')}.jpg\`;
   };
   
   // Load products when category, subcategory, or page changes
@@ -39,7 +50,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
     const loadProducts = async () => {
       setLoading(true);
       try {
-        console.log(`Loading products for category: ${category}, subcategory: ${subcategory}, page: ${currentPage}`);
+        console.log(\`Loading products for category: \${category}, subcategory: \${subcategory}, page: \${currentPage}\`);
         
         // Create filter with mainCategory (for backward compatibility)
         const filters = {
@@ -116,11 +127,11 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
             <button
               key={number}
               onClick={() => handlePageChange(number)}
-              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+              className={\`relative inline-flex items-center px-4 py-2 border text-sm font-medium \${
                 currentPage === number
                   ? 'z-10 bg-green-50 border-green-500 text-green-600'
                   : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-              }`}
+              }\`}
             >
               {number}
             </button>
@@ -186,14 +197,14 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
             {/* Image */}
             <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-100 mb-4">
               <img
-                src={getProductImage(product) || `/data/images/category-${category.toLowerCase().replace(/\s+/g, '-')}.jpg`}
+                src={getProductImage(product) || \`/data/images/category-\${category.toLowerCase().replace(/\\s+/g, '-')}.jpg\`}
                 alt={product.name}
                 className="h-48 w-full object-cover object-center"
                 onError={(e) => {
                   // Fallback to category image if product image fails
                   const target = e.target as HTMLImageElement;
                   target.onerror = null;
-                  target.src = `/data/images/category-default.jpg`;
+                  target.src = \`/data/images/category-default.jpg\`;
                 }}
               />
             </div>
@@ -204,7 +215,7 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
             
             {/* Price if available */}
             {product.price > 0 && (
-              <p className="mt-2 font-medium text-gray-900">${product.price.toFixed(2)}</p>
+              <p className="mt-2 font-medium text-gray-900">\${product.price.toFixed(2)}</p>
             )}
             
             {/* Energy efficiency badge */}
@@ -231,3 +242,48 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
 };
 
 export default ProductGallery;
+`;
+
+// Write ProductGallery component
+fs.mkdirSync(path.dirname(productGalleryPath), { recursive: true });
+fs.writeFileSync(productGalleryPath, productGalleryContent, 'utf8');
+console.log(`Created ProductGallery component at ${productGalleryPath}`);
+
+// Update Products2Page.tsx
+const products2PagePath = path.join(__dirname, '../src/pages/Products2Page.tsx');
+
+// Make sure file exists
+if (!fs.existsSync(products2PagePath)) {
+  console.error(`Error: Products2Page.tsx not found at ${products2PagePath}`);
+  process.exit(1);
+}
+
+// Read the file content
+let products2PageContent = fs.readFileSync(products2PagePath, 'utf8');
+
+// Create backup
+fs.writeFileSync(`${products2PagePath}.backup`, products2PageContent, 'utf8');
+console.log(`Created backup at ${products2PagePath}.backup`);
+
+// Update imports - uncomment ProductGallery import
+products2PageContent = products2PageContent.replace(
+  /\/\/ import ProductGallery from '\.\.\/components\/products\/ProductGallery';/,
+  "import ProductGallery from '../components/products/ProductGallery';"
+);
+
+// Replace placeholder with ProductGallery component
+products2PageContent = products2PageContent.replace(
+  /{viewState === ViewState\.PRODUCTS && \((\s|.)*?\)}/,
+  `{viewState === ViewState.PRODUCTS && (\n    <ProductGallery \n      category={selectedCategory} \n      subcategory={selectedSubCategory} \n    />\n  )}`
+);
+
+// Write updated Products2Page.tsx
+fs.writeFileSync(products2PagePath, products2PageContent, 'utf8');
+console.log(`Updated Products2Page.tsx at ${products2PagePath}`);
+
+// Update build trigger for Heroku
+const buildTriggerPath = path.join(__dirname, '../.build-trigger');
+fs.writeFileSync(buildTriggerPath, new Date().toISOString(), 'utf8');
+console.log('Updated .build-trigger for Heroku deployment');
+
+console.log('Product category filtering fix completed successfully!');
