@@ -452,12 +452,12 @@ const EnhancedProductGallery: React.FC<EnhancedProductGalleryProps> = ({
                 {/* Financial details */}
                 <div className="flex justify-between items-center">
                   <div className="text-gray-900 font-bold">
-                    ${product.price.toLocaleString()}
+                    ${(product.price || 0).toLocaleString()}
                   </div>
                   
                   <div className="flex items-center text-green-600 text-sm">
                     <DollarSign className="h-3.5 w-3.5 mr-0.5" />
-                    <span>Save ${product.annualSavings.toLocaleString()}/yr</span>
+                    <span>Save ${(product.annualSavings || 0).toLocaleString()}/yr</span>
                   </div>
                 </div>
                 
@@ -465,11 +465,11 @@ const EnhancedProductGallery: React.FC<EnhancedProductGalleryProps> = ({
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-gray-50 p-1.5 rounded">
                     <div className="text-gray-500">ROI</div>
-                    <div className="font-medium">{(product.roi * 100).toFixed(1)}%</div>
+                    <div className="font-medium">{((product.roi || 0) * 100).toFixed(1)}%</div>
                   </div>
                   <div className="bg-gray-50 p-1.5 rounded">
                     <div className="text-gray-500">Payback</div>
-                    <div className="font-medium">{product.paybackPeriod.toFixed(1)} years</div>
+                    <div className="font-medium">{(product.paybackPeriod || 0).toFixed(1)} years</div>
                   </div>
                 </div>
               </div>
