@@ -20,9 +20,8 @@ import { getProductImageData, trackImageDownload } from '@/services/productImage
 // Interface for image data with attribution
 interface ProductImageData {
   url: string;
-  id: string;
+  id?: string;
   photographer: string;
-  photographerUsername: string;
   photographerUrl: string;
 }
 
@@ -117,7 +116,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         // Otherwise fetch an image based on product details
         try {
           setImageLoading(true);
-          const imageData = await getProductImageData(
+          const imageData = await getCategoryImage(
             product.name,
             product.category,
             product.subCategory
