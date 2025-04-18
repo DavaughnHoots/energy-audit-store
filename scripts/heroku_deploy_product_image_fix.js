@@ -1,67 +1,95 @@
 /**
- * Heroku deployment script for ProductGallery image display fix
- * This script will:
- * 1. Run the fix_product_image_display.js script to replace external image refs with inline base64
- * 2. Create a git branch and commit changes
- * 3. Deploy the changes to Heroku
+ * Deploy Product Image Display Fixes
+ * 
+ * This script deploys all the product image display fixes to Heroku:
+ * 1. SVG image generator for fallback images
+ * 2. Enhanced product gallery with image fallbacks
+ * 3. Fixed ProductDetailModal imports
+ * 4. Updated Products2Page to use EnhancedProductGallery
  */
 
-const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
-console.log('Starting deployment for ProductGallery image display fix');
+console.log('Starting deployment of product image display fixes...');
 
-// Ensure we're in the project root
-const rootDir = path.resolve(__dirname, '..');
-process.chdir(rootDir);
-console.log(`Working directory: ${process.cwd()}`);
+// Update build trigger for Heroku
+const buildTriggerPath = path.join(__dirname, '../.build-trigger');
+fs.writeFileSync(buildTriggerPath, new Date().toISOString(), 'utf8');
+console.log('Updated build trigger for Heroku deployment');
 
-try {
-  // Run the product image fix script first 
-  console.log('\n1. Running fix script...');
-  require('./fix_product_image_display.js');
-  
-  // Create a new branch for the fix
-  console.log('\n2. Creating git branch...');
+// Get current branch name
+const getCurrentBranch = () => {
   try {
-    execSync('git checkout -b fix/product-image-display', { stdio: 'inherit' });
+    const branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+    return branch;
   } catch (error) {
-    console.log('Branch may already exist, continuing...');
+    console.error('Error getting current branch:', error);
+    return 'main'; // Fallback to main if we can't determine the branch
   }
-  
-  // Add the changed files
-  console.log('\n3. Adding files to git...');
-  execSync('git add src/components/products/ProductGallery.tsx', { stdio: 'inherit' });
-  execSync('git add scripts/fix_product_image_display.js', { stdio: 'inherit' });
-  execSync('git add .build-trigger', { stdio: 'inherit' });
-  
-  // Commit the changes
-  console.log('\n4. Committing changes...');
-  execSync('git commit -m "Fix ProductGallery image display with embedded base64 images"', { stdio: 'inherit' });
-  
-  // Push to GitHub (optional)
-  console.log('\n5. Pushing to GitHub...');
-  const pushToGithub = false; // Set to true if you want to push to GitHub
-  if (pushToGithub) {
-    execSync('git push origin fix/product-image-display', { stdio: 'inherit' });
-  } else {
-    console.log('Skipping push to GitHub (set pushToGithub = true to enable)');
+};
+
+const deployChanges = () => {
+  try {
+    // Get current branch
+    const currentBranch = getCurrentBranch();
+    console.log(`Current branch: ${currentBranch}`);
+    
+    // Add changes to git
+    console.log('Adding files to git...');
+    execSync('git add src/utils/svgImageGenerator.ts', { stdio: 'inherit' });
+    execSync('git add src/components/products/EnhancedProductGallery.tsx', { stdio: 'inherit' });
+    execSync('git add src/components/products/ProductDetailModal.tsx', { stdio: 'inherit' });
+    execSync('git add src/pages/Products2Page.tsx', { stdio: 'inherit' });
+    execSync('git add scripts/heroku_deploy_product_image_fix.js', { stdio: 'inherit' });
+    execSync('git add .build-trigger', { stdio: 'inherit' });
+    
+    // Commit the changes
+    console.log('Committing changes...');
+    execSync('git commit -m "Fix product image display issues with SVG generator and fallbacks"', { stdio: 'inherit' });
+    
+    // Push to GitHub with upstream tracking
+    console.log('Pushing to GitHub...');
+    try {
+      // First try normal push in case upstream is already set
+      execSync('git push', { stdio: 'inherit' });
+    } catch (error) {
+      // If that fails, try setting the upstream
+      console.log('Setting upstream branch and pushing...');
+      execSync(`git push --set-upstream origin ${currentBranch}`, { stdio: 'inherit' });
+    }
+    
+    // Push to Heroku - make sure we're pushing the current branch to Heroku main
+    console.log('\nDeploying to Heroku...');
+    execSync(`git push heroku ${currentBranch}:main`, { stdio: 'inherit' });
+    
+    console.log('\n✅ Successfully deployed product image fixes to Heroku!');
+    return true;
+  } catch (error) {
+    console.error('\n❌ Error deploying changes:', error);
+    console.log('\nManual deployment instructions:');
+    console.log('1. To push to GitHub: git push --set-upstream origin $(git rev-parse --abbrev-ref HEAD)');
+    console.log('2. To deploy to Heroku: git push heroku $(git rev-parse --abbrev-ref HEAD):main');
+    return false;
   }
-  
-  // Deploy to Heroku
-  console.log('\n6. Deploying to Heroku...');
-  execSync('git push heroku fix/product-image-display:main --force', { stdio: 'inherit' });
-  
-  console.log('\n✅ Deployment successful!');
-  console.log('\nImportant next steps:');
-  console.log('1. Verify product images display correctly on the live site');
-  console.log('2. Check Heroku logs to ensure there are no more 404 errors for category-default.jpg');
-  console.log('3. Verify infinite loading issue is also fixed');
-  console.log('4. Monitor Heroku logs for any errors: heroku logs --tail -a energy-audit-store');
-  
-} catch (error) {
-  console.error('\n❌ Deployment failed:', error.message);
-  console.log('\nTo rollback, run:');
-  console.log('heroku rollback');
+};
+
+// Summary of changes
+console.log('\n📋 Summary of Changes:');
+console.log('1. Added SVG Image Generator utility for dynamic fallback images');
+console.log('2. Enhanced product gallery with multi-tier fallback system');
+console.log('3. Fixed ProductDetailModal imports to use getCategoryImage');
+console.log('4. Updated Products2Page to use the enhanced gallery');
+
+// Instructions for deployment
+console.log('\n🚀 Ready to Deploy:');
+console.log('This script will add, commit, and push the changes to both GitHub and Heroku.');
+console.log('Type "node scripts/heroku_deploy_product_image_fix.js" to deploy.');
+
+// If this script is being executed directly (not imported), deploy changes
+if (require.main === module) {
+  deployChanges();
 }
+
+module.exports = { deployChanges };
