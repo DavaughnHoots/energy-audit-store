@@ -7,34 +7,59 @@
 
 // Function to clear all image-related localStorage entries
 function clearImageCache() {
-  let count = 0;
-  const keysToRemove = [];
-  
-  // Collect all keys related to image caching
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    
-    // Match all image cache entries
-    if (key && (
-      key.startsWith('category_image_') || 
-      key.startsWith('last_refresh_') ||
-      key.includes('_image_')
-    )) {
-      keysToRemove.push(key);
+  try {
+    // First try to use the productImageService's implementation if available
+    // This handles the case when this script is included in the main app
+    if (typeof window.productImageService !== 'undefined' && 
+        typeof window.productImageService.clearImageCache === 'function') {
+      console.log('Using productImageService implementation to clear cache');
+      const count = window.productImageService.clearImageCache();
+      return {
+        success: true,
+        clearedCount: count,
+        message: `Successfully cleared ${count} image cache entries from localStorage`
+      };
     }
+    
+    // Fallback implementation if the service isn't available
+    let count = 0;
+    const keysToRemove = [];
+    
+    // Collect all keys related to image caching
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      
+      // Match all image cache entries
+      if (key && (
+        key.startsWith('category_image_') || 
+        key.startsWith('last_refresh_') ||
+        key.includes('_image_')
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    // Remove all collected keys
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+      count++;
+      console.log(`Cleared image cache: ${key}`);
+    });
+    
+    console.log(`Cleared ${count} image cache entries from localStorage`);
+    return {
+      success: true,
+      clearedCount: count,
+      message: `Successfully cleared ${count} image cache entries from localStorage`
+    };
+  } catch (error) {
+    console.error('Error clearing image cache:', error);
+    return {
+      success: false,
+      clearedCount: 0,
+      message: `Error clearing cache: ${error.message || 'Unknown error'}`
+    };
   }
-  
-  // Remove all collected keys
-  keysToRemove.forEach(key => {
-    localStorage.removeItem(key);
-    count++;
-  });
-  
-  return {
-    success: true,
-    clearedCount: count,
-    message: `Successfully cleared ${count} image cache entries from localStorage`
-  };
 }
 
 // Run when page loads

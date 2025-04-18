@@ -217,21 +217,22 @@ export async function getCategoryImage(
   
   console.log(`Getting image for category: "${category}", normalized: "${normalizedCategory}"`);
   
-  // Check localStorage cache first (unless forceFresh is true)
+  // First, check for custom images from our curated collection regardless of cache status
+  const customImage = getCustomImage(normalizedCategory);
+  if (customImage) {
+    // Always cache the custom image on retrieval
+    console.log(`Using custom image for ${normalizedCategory}`);
+    setLocalStorageCache(cacheKey, customImage, CACHE_DURATION);
+    return customImage;
+  }
+  
+  // Check localStorage cache if not forcing fresh and no custom image was found
   if (!forceFresh) {
     const cachedData = getLocalStorageCache(cacheKey);
     if (cachedData) {
       console.log(`Using cached image for ${normalizedCategory}`);
       return cachedData;
     }
-  }
-  
-  // First, check for custom images from our curated collection
-  const customImage = getCustomImage(normalizedCategory);
-  if (customImage) {
-    // Cache the custom image
-    setLocalStorageCache(cacheKey, customImage, CACHE_DURATION);
-    return customImage;
   }
   
   // Next, try to use predefined images
@@ -373,4 +374,30 @@ export function markCategoryImageRefreshed(category: string): void {
   const normalizedCategory = normalizeCategory(category);
   const refreshKey = `last_refresh_${normalizedCategory.toLowerCase()}`;
   localStorage.setItem(refreshKey, Date.now().toString());
+}
+
+/**
+ * Force clears all image cache entries from localStorage
+ * Returns a count of cleared entries
+ */
+export function clearImageCache(): number {
+  let count = 0;
+  
+  // Collect all keys related to image caching
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    
+    if (key && (
+      key.startsWith('category_image_') || 
+      key.startsWith('last_refresh_') ||
+      key.includes('_image_')
+    )) {
+      localStorage.removeItem(key);
+      count++;
+      console.log(`Cleared image cache: ${key}`);
+    }
+  }
+  
+  console.log(`Cleared ${count} image cache entries from localStorage`);
+  return count;
 }
