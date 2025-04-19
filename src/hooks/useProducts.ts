@@ -1,5 +1,5 @@
 // src/hooks/useProducts.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Product, ProductFilters } from '../../backend/src/types/product';
 import ProductService from '../services/productService';
 
@@ -73,7 +73,7 @@ export function useProducts() {
   /**
    * Get filtered products with pagination support
    */
-  const getFilteredProducts = async (
+  const getFilteredProducts = useCallback(async (
     filters?: ProductFilters,
     page: number = 1,
     limit: number = 20,
@@ -127,16 +127,16 @@ export function useProducts() {
       console.log('Returning empty result due to error');
       return emptyResult;
     }
-  };
+  }, []);
 
-  const getProduct = async (id: string) => {
+  const getProduct = useCallback(async (id: string) => {
     try {
       return await productService.getProduct(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       return null;
     }
-  };
+  }, []);
 
   return {
     isLoading,
