@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { requestCache } from '../../utils/requestCache';
 import { 
   DollarSign, 
   Calendar, 
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { Product } from '@/types/product';
-import { getProductImageData, trackImageDownload } from '@/services/productImageService';
+import { trackImageDownload, getCategoryImage } from '@/services/productImageService';
 
 // Interface for image data with attribution
 interface ProductImageData {
@@ -75,6 +76,33 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [productImage, setProductImage] = useState<ProductImageData | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageDownloadTracked, setImageDownloadTracked] = useState(false);
+  
+  // Ref to track fetch operations and prevent duplicates
+  const fetchProductDetailsRef = useRef(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Simulated API call for now - replace with actual implementation
+      const response = await fetch(`/api/products/${productId}`);
+      if (!response.ok) {
+        throw new Error('Failed to load product details');
+      }
+      
+      const productData = await response.json();
+      setProduct(productData);
+    } catch (err) {
+      console.error('Error loading product details:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load product details');
+    } finally {
+      setLoading(false);
+    }
+  });
+  
+  // Function to manually trigger product details fetch
+  const fetchProductDetails = () => {
+    fetchProductDetailsRef.current();
+  };
 
   useEffect(() => {
   // Only fetch if the modal is open and we have a productId
@@ -107,7 +135,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             url: product.imageUrl,
             id: '',
             photographer: '',
-            photographerUsername: '',
             photographerUrl: ''
           });
           return;
@@ -119,7 +146,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           const imageData = await getCategoryImage(
             product.name,
             product.category,
-            product.subCategory
+            false
           );
           setProductImage(imageData);
         } catch (err) {
