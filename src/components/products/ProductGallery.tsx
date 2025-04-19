@@ -9,6 +9,15 @@ interface ProductGalleryProps {
   subcategory: string;
 }
 
+// Interface for request fingerprint to prevent duplicate requests
+interface RequestFingerprint {
+  category: string;
+  subcategory: string;
+  page: number;
+  sortBy: string;
+  sortOrder: string;
+}
+
 const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }) => {
   const { getFilteredProducts } = useProducts();
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,6 +28,12 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
   // Prevent multiple fetches
   const fetchingRef = useRef(false);
   const loadedOnceRef = useRef(false);
+  
+  // Request tracking to prevent duplicate requests
+  const requestFingerprintRef = useRef<RequestFingerprint | null>(null);
+  
+  // Abort controller for cancelling in-flight requests
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,6 +49,44 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
     mainCategory: category,
     subCategory: subcategory
   }), [category, subcategory]);
+  
+  // Debug flag - set to true to enable detailed logging
+  const DEBUG = true;
+  
+  // Helper function for debug logging
+  const debugLog = useCallback((message: string, data?: any) => {
+    if (DEBUG) {
+      if (data) {
+        console.log(`[ProductGallery Debug] ${message}`, data);
+      } else {
+        console.log(`[ProductGallery Debug] ${message}`);
+      }
+    }
+  }, []);
+  
+  // Create request fingerprint for comparing requests
+  const createRequestFingerprint = useCallback((filters: any, page: number, sortBy: string, sortOrder: string): RequestFingerprint => {
+    return {
+      category: filters.mainCategory || '',
+      subcategory: filters.subCategory || '',
+      page,
+      sortBy,
+      sortOrder
+    };
+  }, []);
+  
+  // Check if two fingerprints are equal
+  const isSameRequest = useCallback((fp1: RequestFingerprint | null, fp2: RequestFingerprint | null): boolean => {
+    if (!fp1 || !fp2) return false;
+    
+    return (
+      fp1.category === fp2.category &&
+      fp1.subcategory === fp2.subcategory &&
+      fp1.page === fp2.page &&
+      fp1.sortBy === fp2.sortBy &&
+      fp1.sortOrder === fp2.sortOrder
+    );
+  }, []);
   
   // Fetch subcategory image for fallback
   useEffect(() => {
@@ -78,44 +131,101 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ category, subcategory }
   // Load products when category, subcategory, or page changes
   useEffect(() => {
     const loadProducts = async () => {
-      // Prevent multiple simultaneous fetches
-      if (fetchingRef.current) return;
+      // Create current request fingerprint
+      const currentFingerprint = createRequestFingerprint(
+        filters, 
+        currentPage, 
+        'relevance', 
+        'desc'
+      );
       
+      // Check if this is the same as the previous request
+      if (isSameRequest(requestFingerprintRef.current, currentFingerprint)) {
+        debugLog('Skipping duplicate request:', currentFingerprint);
+        return;
+      }
+      
+      // Don't fetch if we're already fetching
+      if (fetchingRef.current) {
+        debugLog('Already fetching data, aborting previous request');
+        
+        // Abort previous request if it exists
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
+      }
+      
+      // Update the request fingerprint
+      requestFingerprintRef.current = currentFingerprint;
+      
+      // Set fetching flag
       fetchingRef.current = true;
       setLoading(true);
       
+      // Create a new abort controller for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+      
+      debugLog('Loading products with fingerprint:', currentFingerprint);
+      
       try {
-        console.log(`Loading products for category: ${category}, subcategory: ${subcategory}, page: ${currentPage}`);
-        
         // Get paginated products with filters
         const result = await getFilteredProducts(
           filters, 
           currentPage, 
           productsPerPage, 
           'relevance', 
-          'desc'
+          'desc',
+          signal
         );
         
-        setProducts(result.items);
-        setTotalPages(result.totalPages);
-        setTotalProducts(result.total);
-        setError(null);
-        loadedOnceRef.current = true;
+        // Only update state if this request wasn't aborted
+        if (!signal.aborted) {
+          debugLog('Products loaded successfully', { count: result.items.length });
+          setProducts(result.items);
+          setTotalPages(result.totalPages);
+          setTotalProducts(result.total);
+          setError(null);
+          loadedOnceRef.current = true;
+        } else {
+          debugLog('Request was aborted, ignoring results');
+        }
       } catch (err) {
-        console.error('Error loading filtered products:', err);
-        setError('Failed to load products. Please try again.');
-        setProducts([]);
+        // Only update error state if this request wasn't aborted
+        if (!signal.aborted) {
+          if (err.name !== 'AbortError') {
+            console.error('Error loading filtered products:', err);
+            setError('Failed to load products. Please try again.');
+            setProducts([]);
+          } else {
+            debugLog('Request was aborted intentionally');
+          }
+        }
       } finally {
-        setLoading(false);
-        fetchingRef.current = false;
+        // Clear fetching flag and abort controller (if not already aborted)
+        if (!signal.aborted) {
+          fetchingRef.current = false;
+          setLoading(false);
+          abortControllerRef.current = null;
+        }
       }
     };
     
-    // Only load products if we haven't loaded yet or if the filters/page has changed
-    if (!loadedOnceRef.current || currentPage > 1) {
+    // Only load products if the category and subcategory are valid
+    if (category && subcategory) {
       loadProducts();
     }
-  }, [category, subcategory, currentPage, filters, getFilteredProducts]);
+    
+    // Cleanup function to abort any in-flight requests on unmount
+    return () => {
+      if (abortControllerRef.current) {
+        debugLog('Aborting request due to component unmount or dependency change');
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, [category, subcategory, currentPage, filters, getFilteredProducts, createRequestFingerprint, isSameRequest, debugLog]);
   
   // Handle page change
   const handlePageChange = (page: number) => {
