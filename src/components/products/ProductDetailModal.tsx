@@ -17,6 +17,7 @@ import {
 import { API_ENDPOINTS } from '@/config/api';
 import { Product } from '@/types/product';
 import { trackImageDownload, getCategoryImage } from '@/services/productImageService';
+import { enhanceProductWithEstimates } from '@/services/productEstimationService';
 
 // Interface for image data with attribution
 interface ProductImageData {
@@ -56,6 +57,18 @@ interface DetailedProduct extends Product {
   isSample?: boolean;
   audit_id?: string;
   audit_date?: string;
+  // Added fields from product estimation service
+  confidenceLevel?: 'low' | 'medium' | 'high';
+  additionalMetrics?: {
+    annualKwh?: number;
+    lifetimeEnergyCost?: number;
+    formattedLifetimeEnergyCost?: string;
+    capacityTier?: string;
+    iefValue?: number;
+    dailyRunHours?: number;
+    annualRunDays?: number;
+    [key: string]: any;
+  };
 }
 
 interface ProductDetailModalProps {
@@ -91,7 +104,6 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     return fallback;
   };
 
-  
   // Ref to track fetch operations and prevent duplicates
   const fetchProductDetailsRef = useRef(async () => {
     try {
@@ -105,7 +117,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       }
       
       const productData = await response.json();
-      setProduct(productData);
+      
+      // Add estimated values if missing (price, savings, etc)
+      const enhancedProduct = await enhanceProductWithEstimates(productData);
+      setProduct(enhancedProduct);
     } catch (err) {
       console.error('Error loading product details:', err);
       setError(err instanceof Error ? err.message : 'Failed to load product details');
@@ -381,6 +396,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           <span className="text-gray-700">
                             ROI: <span className="font-semibold">{safeToFixed(product?.roi * 100, 1)}%</span>
                           </span>
+                          {product?.confidenceLevel && (
+                            <span className="ml-2 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                              {product.confidenceLevel.charAt(0).toUpperCase() + product.confidenceLevel.slice(1)} confidence
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center">
                           <Clock className="h-5 w-5 text-green-600 mr-2" />
@@ -394,6 +414,14 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             Energy Efficiency: <span className="font-semibold">{product.energyEfficiency}</span>
                           </span>
                         </div>
+                        {product?.additionalMetrics?.lifetimeEnergyCost && (
+                          <div className="flex items-center">
+                            <Calendar className="h-5 w-5 text-green-600 mr-2" />
+                            <span className="text-gray-700">
+                              Lifetime Energy Cost: <span className="font-semibold">{product.additionalMetrics.formattedLifetimeEnergyCost}</span>
+                            </span>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="mt-6">
