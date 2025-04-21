@@ -22,9 +22,7 @@ export async function loadEstimationsConfig(): Promise<ProductEstimationsConfig>
 
   try {
     // Fetch configuration from server
-    const response = await fetch('/product-estimations.json', {
-      signal: requestCache.createSignal('estimations-config')
-    });
+    const response = await fetch('/product-estimations.json');
     
     console.log("[DEBUG] Estimations config fetch response:", response.status, response.statusText);
     if (!response.ok) {
@@ -43,7 +41,59 @@ export async function loadEstimationsConfig(): Promise<ProductEstimationsConfig>
     return validConfig;
   } catch (error) {
     console.error('Error loading estimations config:', error);
-    throw new Error('Failed to load product estimation configuration. Please try again later.');
+    console.warn('Returning default configuration due to error');
+    // Return default configuration values as fallback
+    return {
+      version: "1.0.0",
+      products: {
+        dehumidifiers: {
+          defaults: {
+            price: 249.99,
+            annualSavings: 35.00,
+            roi: 0.14,
+            paybackPeriod: 7.1,
+            energyEfficiency: "ENERGY STAR Certified",
+            confidenceLevel: "medium",
+            additionalMetrics: {
+              annualKwh: 350,
+              lifetimeEnergyCost: 630,
+              dailyRunHours: 12,
+              annualRunDays: 180
+            }
+          },
+          capacityTiers: {
+            small: {
+              range: [0, 25],
+              price: 179.99,
+              annualSavings: 25.00,
+              roi: 0.139,
+              paybackPeriod: 7.2
+            },
+            medium: {
+              range: [25, 45],
+              price: 249.99,
+              annualSavings: 35.00,
+              roi: 0.14,
+              paybackPeriod: 7.1
+            },
+            large: {
+              range: [45, 70],
+              price: 329.99,
+              annualSavings: 46.00,
+              roi: 0.139,
+              paybackPeriod: 7.2
+            }
+          },
+          energyStarMultiplier: 1.15
+        }
+      },
+      estimators: {
+        dehumidifiers: {
+          capacityPintsPerDayField: "capacityPintsPerDay",
+          isEnergyStarField: "isEnergyStar"
+        }
+      }
+    };
   }
 }
 
@@ -114,7 +164,7 @@ export function extractDehumidifierAttributes(product: any): Dehumidifier {
     (product.features?.some((f: string) => f.toLowerCase().includes('most efficient')))
   ) || false;
   
-  console.log("[DEBUG] Generated estimates:", estimates);
+  // // console.log("[DEBUG] Generated estimates:", estimates);
       return {
     capacityPintsPerDay,
     isEnergyStar,
