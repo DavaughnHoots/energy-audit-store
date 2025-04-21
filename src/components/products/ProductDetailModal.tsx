@@ -76,6 +76,21 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [productImage, setProductImage] = useState<ProductImageData | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageDownloadTracked, setImageDownloadTracked] = useState(false);
+
+  // Safe formatting utility functions
+  const safeToLocaleString = (value: any, fallback: string = '0'): string => {
+    if (value === undefined || value === null) return fallback;
+    if (typeof value.toLocaleString === 'function') return value.toLocaleString();
+    return String(value);
+  };
+
+  const safeToFixed = (value: any, decimals: number = 0, fallback: string = '0'): string => {
+    if (value === undefined || value === null) return fallback;
+    if (typeof value === 'number') return value.toFixed(decimals);
+    if (typeof value.toFixed === 'function') return value.toFixed(decimals);
+    return fallback;
+  };
+
   
   // Ref to track fetch operations and prevent duplicates
   const fetchProductDetailsRef = useRef(async () => {
@@ -351,26 +366,26 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       <p className="text-gray-600 mt-1">{product.category}</p>
                       
                       <div className="mt-4 text-2xl font-bold text-gray-900">
-                        ${product.price.toLocaleString()}
+                        ${safeToLocaleString(product?.price)}
                       </div>
                       
                       <div className="mt-4 space-y-2">
                         <div className="flex items-center">
                           <DollarSign className="h-5 w-5 text-green-600 mr-2" />
                           <span className="text-gray-700">
-                            Annual Savings: <span className="font-semibold">${product.annualSavings.toLocaleString()}</span>
+                            Annual Savings: <span className="font-semibold">${safeToLocaleString(product?.annualSavings)}</span>
                           </span>
                         </div>
                         <div className="flex items-center">
                           <BarChart2 className="h-5 w-5 text-green-600 mr-2" />
                           <span className="text-gray-700">
-                            ROI: <span className="font-semibold">{(product.roi * 100).toFixed(1)}%</span>
+                            ROI: <span className="font-semibold">{safeToFixed(product?.roi * 100, 1)}%</span>
                           </span>
                         </div>
                         <div className="flex items-center">
                           <Clock className="h-5 w-5 text-green-600 mr-2" />
                           <span className="text-gray-700">
-                            Payback Period: <span className="font-semibold">{product.paybackPeriod.toFixed(1)} years</span>
+                            Payback Period: <span className="font-semibold">{safeToFixed(product?.paybackPeriod, 1)} years</span>
                           </span>
                         </div>
                         <div className="flex items-center">
@@ -414,19 +429,19 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm text-gray-500">Monthly Savings</div>
                         <div className="text-2xl font-bold text-green-600">
-                          ${product.enhancedMetrics.monthlySavings.toFixed(2)}
+                          ${safeToFixed(product?.enhancedMetrics?.monthlySavings, 2)}
                         </div>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm text-gray-500">5-Year Savings</div>
                         <div className="text-2xl font-bold text-green-600">
-                          ${product.enhancedMetrics.fiveYearSavings.toLocaleString()}
+                          ${safeToLocaleString(product?.enhancedMetrics?.fiveYearSavings)}
                         </div>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm text-gray-500">10-Year Savings</div>
                         <div className="text-2xl font-bold text-green-600">
-                          ${product.enhancedMetrics.tenYearSavings.toLocaleString()}
+                          ${safeToLocaleString(product?.enhancedMetrics?.tenYearSavings)}
                         </div>
                       </div>
                     </div>
@@ -438,7 +453,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="text-center">
                         <div className="text-4xl font-bold text-green-600">
-                          {product.enhancedMetrics.percentageReduction.toFixed(1)}%
+                          {safeToFixed(product?.enhancedMetrics?.percentageReduction, 1)}%
                         </div>
                         <div className="text-gray-600 mt-1">
                           Estimated reduction in your overall energy bills
@@ -470,9 +485,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         </div>
                         <div className="flex justify-between text-xs text-gray-500 mt-1">
                           <span>
-                            ${((product.auditContext.energyInfo.electricityCost || 0) + 
-                              (product.auditContext.energyInfo.gasCost || 0) - 
-                              product.annualSavings).toLocaleString()}
+                            ${safeToLocaleString(((product?.auditContext?.energyInfo?.electricityCost || 0) + (product?.auditContext?.energyInfo?.gasCost || 0) - (product?.annualSavings || 0)))}
                           </span>
                           <span>
                             ${((product.auditContext.energyInfo.electricityCost || 0) + 
@@ -494,7 +507,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                               <div className="text-center">
                                 <div className="text-lg font-semibold">Payback in</div>
                                 <div className="text-3xl font-bold text-green-600">
-                                  {product.paybackPeriod.toFixed(1)}
+                                  {safeToFixed(product?.paybackPeriod, 1)}
                                 </div>
                                 <div className="text-lg">years</div>
                               </div>
@@ -525,25 +538,25 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         
                         <div className="md:w-2/3">
                           <p className="text-gray-600 mb-4">
-                            The initial investment of ${product.price.toLocaleString()} will be recovered in {product.paybackPeriod.toFixed(1)} years through energy savings of ${product.annualSavings.toLocaleString()} per year.
+                            The initial investment of ${safeToLocaleString(product?.price)} will be recovered in {safeToFixed(product?.paybackPeriod, 1)} years through energy savings of ${safeToLocaleString(product?.annualSavings)} per year.
                           </p>
                           
                           <div className="mt-2 space-y-2">
                             <div className="flex justify-between">
                               <span className="text-gray-600">Initial Investment</span>
-                              <span className="font-semibold">${product.price.toLocaleString()}</span>
+                              <span className="font-semibold">${safeToLocaleString(product?.price)}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Annual Savings</span>
-                              <span className="font-semibold">${product.annualSavings.toLocaleString()}</span>
+                              <span className="font-semibold">${safeToLocaleString(product?.annualSavings)}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Annual Return (ROI)</span>
-                              <span className="font-semibold">{(product.roi * 100).toFixed(1)}%</span>
+                              <span className="font-semibold">{safeToFixed(product?.roi * 100, 1)}%</span>
                             </div>
                             <div className="pt-2 border-t border-gray-200 flex justify-between">
                               <span className="font-medium">Total 10-Year Return</span>
-                              <span className="font-semibold">${(product.annualSavings * 10 - product.price).toLocaleString()}</span>
+                              <span className="font-semibold">${safeToLocaleString((product?.annualSavings || 0) * 10 - (product?.price || 0))}</span>
                             </div>
                           </div>
                         </div>
@@ -563,17 +576,17 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-3 bg-white rounded-md text-center">
                         <div className="text-green-700 font-semibold">Annual</div>
-                        <div className="text-xl font-bold mt-1">{product.enhancedMetrics.co2Reduction.annual.toFixed(0)} kg</div>
+                        <div className="text-xl font-bold mt-1">{safeToFixed(product?.enhancedMetrics?.co2Reduction?.annual, 0)} kg</div>
                         <div className="text-xs text-gray-500 mt-1">CO2 per year</div>
                       </div>
                       <div className="p-3 bg-white rounded-md text-center">
                         <div className="text-green-700 font-semibold">5-Year Impact</div>
-                        <div className="text-xl font-bold mt-1">{product.enhancedMetrics.co2Reduction.fiveYear.toFixed(0)} kg</div>
+                        <div className="text-xl font-bold mt-1">{safeToFixed(product?.enhancedMetrics?.co2Reduction?.fiveYear, 0)} kg</div>
                         <div className="text-xs text-gray-500 mt-1">CO2 over 5 years</div>
                       </div>
                       <div className="p-3 bg-white rounded-md text-center">
                         <div className="text-green-700 font-semibold">10-Year Impact</div>
-                        <div className="text-xl font-bold mt-1">{product.enhancedMetrics.co2Reduction.tenYear.toFixed(0)} kg</div>
+                        <div className="text-xl font-bold mt-1">{safeToFixed(product?.enhancedMetrics?.co2Reduction?.tenYear, 0)} kg</div>
                         <div className="text-xs text-gray-500 mt-1">CO2 over 10 years</div>
                       </div>
                     </div>
@@ -588,7 +601,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           <Leaf className="h-6 w-6 text-green-600" />
                         </div>
                         <div>
-                          <div className="font-semibold">{product.enhancedMetrics.co2Reduction.equivalentTrees} Trees</div>
+                          <div className="font-semibold">{product?.enhancedMetrics?.co2Reduction?.equivalentTrees || 0} Trees</div>
                           <div className="text-sm text-gray-600">Annual carbon absorption</div>
                         </div>
                       </div>
@@ -599,7 +612,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           </svg>
                         </div>
                         <div>
-                          <div className="font-semibold">{product.enhancedMetrics.co2Reduction.equivalentMilesDriven.toLocaleString()} Miles</div>
+                          <div className="font-semibold">{safeToLocaleString(product?.enhancedMetrics?.co2Reduction?.equivalentMilesDriven)} Miles</div>
                           <div className="text-sm text-gray-600">Of driving avoided</div>
                         </div>
                       </div>
@@ -640,19 +653,19 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         </tr>
                         <tr>
                           <td className="px-6 py-3 bg-gray-50 text-sm font-medium text-gray-900">Price</td>
-                          <td className="px-6 py-3 text-sm text-gray-500">${product.price.toLocaleString()}</td>
+                          <td className="px-6 py-3 text-sm text-gray-500">${safeToLocaleString(product?.price)}</td>
                         </tr>
                         <tr>
                           <td className="px-6 py-3 bg-gray-50 text-sm font-medium text-gray-900">Annual Savings</td>
-                          <td className="px-6 py-3 text-sm text-gray-500">${product.annualSavings.toLocaleString()}</td>
+                          <td className="px-6 py-3 text-sm text-gray-500">${safeToLocaleString(product?.annualSavings)}</td>
                         </tr>
                         <tr>
                           <td className="px-6 py-3 bg-gray-50 text-sm font-medium text-gray-900">Return on Investment (ROI)</td>
-                          <td className="px-6 py-3 text-sm text-gray-500">{(product.roi * 100).toFixed(1)}%</td>
+                          <td className="px-6 py-3 text-sm text-gray-500">{safeToFixed(product?.roi * 100, 1)}%</td>
                         </tr>
                         <tr>
                           <td className="px-6 py-3 bg-gray-50 text-sm font-medium text-gray-900">Payback Period</td>
-                          <td className="px-6 py-3 text-sm text-gray-500">{product.paybackPeriod.toFixed(1)} years</td>
+                          <td className="px-6 py-3 text-sm text-gray-500">{safeToFixed(product?.paybackPeriod, 1)} years</td>
                         </tr>
                         {product.audit_id && (
                           <tr>
