@@ -1,6 +1,21 @@
 {
+  "schemaVersion": "1.0.0",
   "version": "1.0.0",
   "lastUpdated": "2025-04-21",
+  "regions": {
+    "US-avg": {
+      "electricityRatesUSDPerkWh": 0.13,
+      "name": "US Average"
+    },
+    "US-CA": {
+      "electricityRatesUSDPerkWh": 0.22,
+      "name": "California"
+    },
+    "US-TX": {
+      "electricityRatesUSDPerkWh": 0.12,
+      "name": "Texas"
+    }
+  },
   "products": {
     "dehumidifiers": {
       "defaults": {
