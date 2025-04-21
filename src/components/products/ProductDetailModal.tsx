@@ -120,6 +120,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       
       // Add estimated values if missing (price, savings, etc)
       const enhancedProduct = await enhanceProductWithEstimates(productData);
+      console.debug("Enhanced product:", { price: enhancedProduct?.price, annualSavings: enhancedProduct?.annualSavings, roi: enhancedProduct?.roi });
       setProduct(enhancedProduct);
     } catch (err) {
       console.error('Error loading product details:', err);
@@ -394,7 +395,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         <div className="flex items-center">
                           <BarChart2 className="h-5 w-5 text-green-600 mr-2" />
                           <span className="text-gray-700">
-                            ROI: <span className="font-semibold">{safeToFixed(product?.roi * 100, 1)}%</span>
+                            ROI: <span className="font-semibold">{safeToFixed((product?.roi || 0) * 100, 1)}%</span>
                           </span>
                           {product?.confidenceLevel && (
                             <span className="ml-2 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">

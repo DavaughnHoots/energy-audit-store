@@ -21,7 +21,7 @@ export async function loadEstimationsConfig(): Promise<ProductEstimationsConfig>
 
   try {
     // Fetch configuration from server
-    const response = await fetch('/data/product-estimations.json', {
+    const response = await fetch('/product-estimations.json', {
       signal: requestCache.createSignal('estimations-config')
     });
     
@@ -177,9 +177,16 @@ export async function generateProductEstimates(product: any): Promise<EstimateRe
  * @returns Promise resolving to the enhanced product object
  */
 export async function enhanceProductWithEstimates(product: any): Promise<any> {
+  // Log input for debugging
+  console.debug("Enhancing product:", { name: product?.name, price: product?.price, category: product?.category });
   try {
     // Only calculate if we're missing essential values
-    if (product && (product.price === 0 || product.annualSavings === 0 || product.roi === 0)) {
+    if (!product) {
+    console.warn("Product is null or undefined, returning as-is");
+    return product;
+  }
+
+  if (product && (product.price === undefined || product.price === null || product.price === 0 || product.annualSavings === 0 || isNaN(product.roi) || product.roi === 0)) {
       const estimates = await generateProductEstimates(product);
       
       // Merge the estimates with the product
