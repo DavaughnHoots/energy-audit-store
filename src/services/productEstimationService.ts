@@ -14,6 +14,7 @@ let configCache: ProductEstimationsConfig | null = null;
  * @returns Promise resolving to the validated configuration
  */
 export async function loadEstimationsConfig(): Promise<ProductEstimationsConfig> {
+  console.log("[DEBUG] Starting to load estimations config");
   // Return from cache if available
   if (configCache) {
     return configCache;
@@ -25,11 +26,13 @@ export async function loadEstimationsConfig(): Promise<ProductEstimationsConfig>
       signal: requestCache.createSignal('estimations-config')
     });
     
+    console.log("[DEBUG] Estimations config fetch response:", response.status, response.statusText);
     if (!response.ok) {
       throw new Error(`Failed to load estimations config: ${response.status} ${response.statusText}`);
     }
     
     const configData = await response.json();
+    console.log("[DEBUG] Loaded estimations config data:", configData.schemaVersion);
     
     // Validate configuration
     const validConfig = validateConfig(configData);
@@ -111,7 +114,8 @@ export function extractDehumidifierAttributes(product: any): Dehumidifier {
     (product.features?.some((f: string) => f.toLowerCase().includes('most efficient')))
   ) || false;
   
-  return {
+  console.log("[DEBUG] Generated estimates:", estimates);
+      return {
     capacityPintsPerDay,
     isEnergyStar,
     isMostEfficient
@@ -136,15 +140,19 @@ export function getUserRegion(): RegionCode {
  * @returns Promise resolving to the estimate result
  */
 export async function generateProductEstimates(product: any): Promise<EstimateResult> {
+  console.log("[DEBUG] generateProductEstimates starting");
   try {
     // Load configuration
+    console.log("[DEBUG] Loading configuration");
     const config = await loadEstimationsConfig();
     
     // Determine product category
     const category = determineProductCategory(product);
+    console.log("[DEBUG] Determined product category:", category);
     
     // Get region code
     const region = getUserRegion();
+    console.log("[DEBUG] User region:", region);
     
     // Get the appropriate estimator
     const estimator = getEstimator(category, config, region);
@@ -166,6 +174,7 @@ export async function generateProductEstimates(product: any): Promise<EstimateRe
     return estimates;
   } catch (error) {
     console.error('Error generating product estimates:', error);
+    console.error('Error details:', error instanceof Error ? error.stack : String(error));
     throw new Error('Failed to generate product estimates. Please try again later.');
   }
 }
@@ -179,6 +188,15 @@ export async function generateProductEstimates(product: any): Promise<EstimateRe
 export async function enhanceProductWithEstimates(product: any): Promise<any> {
   // Log input for debugging
   console.debug("Enhancing product:", { name: product?.name, price: product?.price, category: product?.category });
+  console.log("[DEBUG] enhanceProductWithEstimates called with:", {
+    name: product?.name,
+    price: product?.price,
+    annualSavings: product?.annualSavings,
+    roi: product?.roi,
+    category: product?.category
+  });
+  // Log input for debugging
+  console.debug("Enhancing product:", { name: product?.name, price: product?.price, category: product?.category });
   try {
     // Only calculate if we're missing essential values
     if (!product) {
@@ -187,6 +205,7 @@ export async function enhanceProductWithEstimates(product: any): Promise<any> {
   }
 
   if (product && (product.price === undefined || product.price === null || product.price === 0 || product.annualSavings === 0 || isNaN(product.roi) || product.roi === 0)) {
+      console.log("[DEBUG] Calling generateProductEstimates");
       const estimates = await generateProductEstimates(product);
       
       // Merge the estimates with the product

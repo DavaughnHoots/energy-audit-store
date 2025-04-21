@@ -117,9 +117,25 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       }
       
       const productData = await response.json();
+      console.log("[DEBUG] Fetched product data:", {
+        name: productData?.name,
+        price: productData?.price,
+        annualSavings: productData?.annualSavings,
+        roi: productData?.roi,
+        category: productData?.category
+      });
       
       // Add estimated values if missing (price, savings, etc)
+      console.log("[DEBUG] Calling enhanceProductWithEstimates");
       const enhancedProduct = await enhanceProductWithEstimates(productData);
+      console.log("[DEBUG] Received enhanced product:", {
+        name: enhancedProduct?.name,
+        price: enhancedProduct?.price,
+        annualSavings: enhancedProduct?.annualSavings,
+        roi: enhancedProduct?.roi,
+        category: enhancedProduct?.category,
+        confidenceLevel: enhancedProduct?.confidenceLevel
+      });
       console.debug("Enhanced product:", { price: enhancedProduct?.price, annualSavings: enhancedProduct?.annualSavings, roi: enhancedProduct?.roi });
       setProduct(enhancedProduct);
     } catch (err) {
@@ -581,7 +597,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Annual Return (ROI)</span>
-                              <span className="font-semibold">{safeToFixed(product?.roi * 100, 1)}%</span>
+                              <span className="font-semibold">{safeToFixed((product?.roi || 0) * 100, 1)}%</span>
                             </div>
                             <div className="pt-2 border-t border-gray-200 flex justify-between">
                               <span className="font-medium">Total 10-Year Return</span>
