@@ -31,7 +31,7 @@ export async function loadEstimationsConfig(): Promise<ProductEstimationsConfig>
     
     const configData = await response.json();
     
-    // Validate configuration before returning
+    // Validate configuration
     const validConfig = validateConfig(configData);
     
     // Cache the validated config
