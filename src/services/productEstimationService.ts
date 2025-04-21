@@ -188,6 +188,8 @@ export async function generateProductEstimates(product: any): Promise<EstimateRe
 export async function enhanceProductWithEstimates(product: any): Promise<any> {
   // Log input for debugging
   console.debug("Enhancing product:", { name: product?.name, price: product?.price, category: product?.category });
+  // Log input for debugging
+  console.debug("Enhancing product:", { name: product?.name, price: product?.price, category: product?.category });
   console.log("[DEBUG] enhanceProductWithEstimates called with:", {
     name: product?.name,
     price: product?.price,

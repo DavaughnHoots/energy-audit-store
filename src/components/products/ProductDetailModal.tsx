@@ -706,7 +706,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         </tr>
                         <tr>
                           <td className="px-6 py-3 bg-gray-50 text-sm font-medium text-gray-900">Return on Investment (ROI)</td>
-                          <td className="px-6 py-3 text-sm text-gray-500">{safeToFixed(product?.roi * 100, 1)}%</td>
+                          <td className="px-6 py-3 text-sm text-gray-500">{safeToFixed((product?.roi || 0) * 100, 1)}%</td>
                         </tr>
                         <tr>
                           <td className="px-6 py-3 bg-gray-50 text-sm font-medium text-gray-900">Payback Period</td>
