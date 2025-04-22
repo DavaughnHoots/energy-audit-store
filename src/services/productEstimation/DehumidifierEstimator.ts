@@ -93,8 +93,8 @@ export class DehumidifierEstimator implements ProductEstimator<Dehumidifier> {
     const ief = this.getIefValue(capacityTier, isEnergyStar, isMostEfficient);
     
     // Calculate energy consumption using IEF (L/kWh)
-    const dailyKwh = capacityLitersPerDay / ief;
-    const annualKwh = dailyKwh * this.config.defaults.dailyRunHours * this.config.defaults.annualRunDays;
+    const annualLiters = capacityLitersPerDay * this.config.defaults.annualRunDays;
+    const annualKwh = annualLiters / ief;
     
     // Get the standard IEF for comparison
     const standardIef = this.getIefValue(capacityTier, false, false);
@@ -102,8 +102,8 @@ export class DehumidifierEstimator implements ProductEstimator<Dehumidifier> {
     // Calculate standard model consumption for comparison (only if energy star or most efficient)
     let annualSavings = 0;
     if (isEnergyStar || isMostEfficient) {
-      const standardDailyKwh = capacityLitersPerDay / standardIef;
-      const standardAnnualKwh = standardDailyKwh * this.config.defaults.dailyRunHours * this.config.defaults.annualRunDays;
+      // Use consistent calculation method for standard model
+      const standardAnnualKwh = annualLiters / standardIef;
       
       // Calculate savings
       const kwhSaved = standardAnnualKwh - annualKwh;
@@ -138,7 +138,7 @@ export class DehumidifierEstimator implements ProductEstimator<Dehumidifier> {
     const lifetimeYears = 10; // Typical dehumidifier lifetime
     const lifetimeEnergyCost = annualKwh * this.electricityRate * lifetimeYears;
     
-    return {
+    console.log(`Product estimate: Capacity ${capacityPintsPerDay}, Price ${price}, Annual Savings ${annualSavings}, ROI ${roi}%`);    return {
       price,
       annualSavings,
       roi,
@@ -148,7 +148,7 @@ export class DehumidifierEstimator implements ProductEstimator<Dehumidifier> {
       
       formattedPrice: formatter.format(price),
       formattedAnnualSavings: formatter.format(annualSavings),
-      formattedRoi: percentFormatter.format(roi/100),
+      formattedRoi: percentFormatter.format(roi),
       formattedPaybackPeriod,
       
       // Additional metrics for expanded information

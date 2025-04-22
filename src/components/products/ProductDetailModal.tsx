@@ -411,7 +411,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         <div className="flex items-center">
                           <BarChart2 className="h-5 w-5 text-green-600 mr-2" />
                           <span className="text-gray-700">
-                            ROI: <span className="font-semibold">{safeToFixed((product?.roi || 0) * 100, 1)}%</span>
+                            ROI: <span className="font-semibold">{safeToFixed(product?.roi || 0, 1)}%</span>
                           </span>
                           {product?.confidenceLevel && (
                             <span className="ml-2 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
@@ -428,7 +428,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         <div className="flex items-center">
                           <Zap className="h-5 w-5 text-green-600 mr-2" />
                           <span className="text-gray-700">
-                            Energy Efficiency: <span className="font-semibold">{product.energyEfficiency}</span>
+                            Energy Efficiency: <span className="font-semibold">
+                              {product.isMostEfficient ? "ENERGY STAR Most Efficient" : 
+                               product.isEnergyStar ? "ENERGY STAR Certified" : 
+                               "Standard Efficiency"}
+                            </span>
                           </span>
                         </div>
                         {product?.additionalMetrics?.lifetimeEnergyCost && (
@@ -597,7 +601,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Annual Return (ROI)</span>
-                              <span className="font-semibold">{safeToFixed((product?.roi || 0) * 100, 1)}%</span>
+                              <span className="font-semibold">{safeToFixed(product?.roi || 0, 1)}%</span>
                             </div>
                             <div className="pt-2 border-t border-gray-200 flex justify-between">
                               <span className="font-medium">Total 10-Year Return</span>
@@ -706,7 +710,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         </tr>
                         <tr>
                           <td className="px-6 py-3 bg-gray-50 text-sm font-medium text-gray-900">Return on Investment (ROI)</td>
-                          <td className="px-6 py-3 text-sm text-gray-500">{safeToFixed((product?.roi || 0) * 100, 1)}%</td>
+                          <td className="px-6 py-3 text-sm text-gray-500">{safeToFixed(product?.roi || 0, 1)}%</td>
                         </tr>
                         <tr>
                           <td className="px-6 py-3 bg-gray-50 text-sm font-medium text-gray-900">Payback Period</td>
