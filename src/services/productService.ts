@@ -10,6 +10,7 @@ class ProductService {
   private mainCategoryToCategory = new Map<string, string>();
   private categoryToMainCategory = new Map<string, string>();
   private initialized = false;
+
   // Ensure products have financial metrics
   private ensureFinancialMetrics(products: Product[]): Product[] {
     return products.map(product => {
@@ -244,26 +245,6 @@ class ProductService {
   }
 
   async getProducts(filters?: ProductFilter): Promise<Product[]> {
-    // Ensure products have financial metrics
-    
-          
-          // Product-specific defaults based on type
-          if (product.subCategory === 'Dehumidifiers') {
-            return {
-              ...product,
-              price: 249.99,
-              annualSavings: 35.00,
-              roi: 0.14,
-              paybackPeriod: 7.14
-            };
-          }
-          
-          return { ...product, ...baseDefaults };
-        }
-        return product;
-      });
-    };
-    
     if (!this.initialized) {
       await this.loadProductsFromCSV(''); // Parameter is ignored now
     }
@@ -308,11 +289,12 @@ class ProductService {
           throw new Error(`API error! status: ${response.status}`);
         }
         
-        const data = await response.json(); return this.ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]))(Array.isArray(data) ? data : (data.items || [data]));
+        const data = await response.json();
+        return this.ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]));
       } catch (error) {
         console.error('Error fetching filtered products:', error);
         // Fall back to client-side filtering
-        return this.products.filter(p => {
+        return this.ensureFinancialMetrics(this.products.filter(p => {
           // Convert category to mainCategory for filtering
           const productMainCategory = this.categoryToMainCategory.get(p.category) || p.category;
           
@@ -325,11 +307,11 @@ class ProductService {
               (p.model ? p.model.toLowerCase().includes(searchLower) : false);
           }
           return true;
-        });
+        }));
       }
     }
 
-    return this.products;
+    return this.ensureFinancialMetrics(this.products);
   }
 
   /**
@@ -392,7 +374,13 @@ class ProductService {
         throw new Error(`API error! status: ${response.status}`);
       }
       
-      const data = await response.json(); return this.ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]))(Array.isArray(data) ? data : (data.items || [data]));
+      const data = await response.json();
+      // Ensure the products in the response have financial metrics
+      if (data.items && Array.isArray(data.items)) {
+        data.items = this.ensureFinancialMetrics(data.items);
+      }
+      
+      return data;
     } catch (error) {
       console.error('Error fetching paginated products:', error);
       // Fall back to client-side pagination
@@ -455,6 +443,9 @@ class ProductService {
       }
     }
     
+    // Apply financial metrics to products
+    filteredProducts = this.ensureFinancialMetrics(filteredProducts);
+    
     // Sort products
     filteredProducts.sort((a, b) => {
       let comparison = 0;
@@ -504,7 +495,8 @@ class ProductService {
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         console.warn(`API returned non-JSON response: ${contentType}`);
-        return this.products.find(p => p.id === id) || null;
+        const product = this.products.find(p => p.id === id);
+        return product ? this.ensureFinancialMetrics([product])[0] : null;
       }
       
       if (!response.ok) {
@@ -514,11 +506,13 @@ class ProductService {
         throw new Error(`API error! status: ${response.status}`);
       }
       
-      const data = await response.json(); return this.ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]))(Array.isArray(data) ? data : (data.items || [data]));
+      const data = await response.json();
+      return this.ensureFinancialMetrics([data])[0];
     } catch (error) {
       console.error(`Error fetching product ${id}:`, error);
       // Fall back to local products
-      return this.products.find(p => p.id === id) || null;
+      const product = this.products.find(p => p.id === id);
+      return product ? this.ensureFinancialMetrics([product])[0] : null;
     }
   }
 
