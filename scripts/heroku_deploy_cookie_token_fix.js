@@ -129,15 +129,32 @@ ${DEPLOYMENT_ID}
     runCommand(`git commit -m "Fix cookie & token handling issues [${DEPLOYMENT_ID}]"`);
     log('Changes committed to git');
     
-    // Push to Heroku
+    // Get current branch name
+    const getBranchResult = runCommand('git rev-parse --abbrev-ref HEAD');
+    if (!getBranchResult.success) throw new Error('Failed to get current branch name');
+    
+    // Extract the branch name from the command output
+    const currentBranch = getBranchResult.output ? getBranchResult.output.toString().trim() : 'main';
+    log(`Current branch: ${currentBranch}`);
+    
+    // Push to Heroku (use current branch to main)
     log('Pushing to Heroku...');
-    const pushResult = runCommand('git push heroku master');
+    const pushResult = runCommand(`git push heroku ${currentBranch}:main`);
     
     if (pushResult.success) {
       log('Deployment successful! 🎉');
       log('The cookie & token handling fix has been deployed.');
     } else {
-      throw new Error('Failed to push to Heroku');
+      // Try alternate command if the first one fails
+      log('First deployment attempt failed, trying alternate method...');
+      const altPushResult = runCommand('git push heroku HEAD:main');
+      
+      if (altPushResult.success) {
+        log('Deployment successful with alternate method! 🎉');
+        log('The cookie & token handling fix has been deployed.');
+      } else {
+        throw new Error('Failed to push to Heroku');
+      }
     }
     
   } catch (error) {
