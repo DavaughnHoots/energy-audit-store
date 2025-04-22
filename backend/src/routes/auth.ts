@@ -133,6 +133,12 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
     try {
       const result = await authService.refreshToken(refreshToken);
 
+      // Validate that we have an access token before proceeding
+      if (!result || !result.accessToken) {
+        console.error('Error: UserAuthService.refreshToken did not return a valid accessToken');
+        return res.status(500).json({ error: 'Failed to generate new access token' });
+      }
+
       // Set HTTP-only cookies
       res.cookie('accessToken', result.accessToken, {
         ...COOKIE_CONFIG,
@@ -147,14 +153,29 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       // Generate CSRF token
       generateCsrfToken(req, res, () => {});
 
+      // Log the response structure for debugging
+      console.log('Token refresh response structure:', { 
+        includesToken: Boolean(result.accessToken),
+        includesRefreshToken: Boolean(result.refreshToken)
+      });
+
       // Return tokens in response body along with message
       // This allows frontend to store tokens in localStorage as backup
-      res.json({ 
+      const responseBody = { 
         message: 'Tokens refreshed successfully',
         token: result.accessToken,
         refreshToken: result.refreshToken
-      });
+      };
+      
+      // Log the response keys for debugging
+      console.log('Token refresh response keys:', Object.keys(responseBody).join(', '));
+      
+      res.json(responseBody);
     } catch (authError) {
+      console.error('AuthError during token refresh:', 
+        authError instanceof Error ? authError.message : String(authError)
+      );
+      
       if (authError instanceof AuthError) {
         res.clearCookie('accessToken', COOKIE_CONFIG);
         res.clearCookie('refreshToken', COOKIE_CONFIG);
@@ -163,8 +184,14 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       throw authError;
     }
   } catch (error) {
-    console.error('Token refresh error:', error instanceof Error ? error.message : String(error));
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Token refresh error:', 
+      error instanceof Error ? `${error.name}: ${error.message}\n${error.stack}` : String(error)
+    );
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      type: error instanceof Error ? error.name : 'UnknownError'
+    });
   }
 });
 
