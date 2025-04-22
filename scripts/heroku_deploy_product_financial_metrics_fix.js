@@ -32,12 +32,18 @@ function execute(command) {
 }
 
 /**
- * Check for uncommitted changes
+ * Check for uncommitted changes (only staged or modified, ignore untracked)
  */
 function checkGitStatus() {
   const output = execute('git status --porcelain');
-  if (output.trim() !== '') {
-    console.error('⚠️ You have uncommitted changes. Please commit or stash them before running this script.');
+  // Check if there are any staged or modified files (not untracked)
+  // Untracked files start with ??, which we'll ignore
+  const modifiedFiles = output.split('\n')
+    .filter(line => line.trim() !== '' && !line.startsWith('??'));
+  
+  if (modifiedFiles.length > 0) {
+    console.error('⚠️ You have staged or modified changes. Please commit or stash them before running this script.');
+    modifiedFiles.forEach(file => console.error(`  - ${file}`));
     process.exit(1);
   }
 }
