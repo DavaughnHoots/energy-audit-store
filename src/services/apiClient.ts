@@ -135,10 +135,11 @@ axiosInstance.interceptors.response.use(
           });
           
           // If refresh successful, update tokens
-          if (response.data?.accessToken) {
+          if (response.data?.token) {
             // Update both localStorage and cookies
-            localStorage.setItem('accessToken', response.data.accessToken);
-            setCookie('accessToken', response.data.accessToken, { maxAge: 15 * 60 }); // 15 minutes
+            const newAccessToken = response.data.token;
+            localStorage.setItem('accessToken', newAccessToken);
+            setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 }); // 15 minutes
             
             if (response.data.refreshToken) {
               localStorage.setItem('refreshToken', response.data.refreshToken);
@@ -148,8 +149,8 @@ axiosInstance.interceptors.response.use(
             console.log('Updated tokens in both localStorage and cookies during refresh');
             
             // Update auth header with new token
-            axiosInstance.defaults.headers.common.Authorization = `Bearer ${response.data.accessToken}`;
-            originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
+            axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
             
             // Retry the original request
             return axiosInstance(originalRequest);

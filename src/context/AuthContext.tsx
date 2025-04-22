@@ -131,9 +131,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       const data = await refreshResponse.json();
 
       // Handle access token
-      if (data?.accessToken) {
-        setCookie('accessToken', data.accessToken, { maxAge: 15 * 60 }); // 15 minutes
-        localStorage.setItem('accessToken', data.accessToken);
+      if (data?.token) {
+        const newAccessToken = data.token;
+        setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 }); // 15 minutes
+        localStorage.setItem('accessToken', newAccessToken);
+        console.log('Updated access token from token field: ' + newAccessToken.substring(0, 10) + '...');
       } else {
         // If no access token, explicitly remove it
         removeCookie('accessToken');
