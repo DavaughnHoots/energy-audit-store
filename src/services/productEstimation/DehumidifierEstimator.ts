@@ -138,7 +138,7 @@ export class DehumidifierEstimator implements ProductEstimator<Dehumidifier> {
     const lifetimeYears = 10; // Typical dehumidifier lifetime
     const lifetimeEnergyCost = annualKwh * this.electricityRate * lifetimeYears;
     
-    console.log(`Product estimate: Capacity ${capacityPintsPerDay}, Price ${price}, Annual Savings ${annualSavings}, ROI ${roi}%`);    return {
+    console.log(`Product estimate: Capacity ${capacityPintsPerDay}, Price ${price}, Annual Savings ${annualSavings}, ROI ${roi}%`);    console.log(`Product estimate: Capacity ${capacityPintsPerDay}, Price ${price}, Annual Savings ${annualSavings}, ROI ${roi}%`);    return {
       price,
       annualSavings,
       roi,
