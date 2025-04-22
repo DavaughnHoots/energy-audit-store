@@ -147,7 +147,13 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       // Generate CSRF token
       generateCsrfToken(req, res, () => {});
 
-      res.json({ message: 'Tokens refreshed successfully' });
+      // Return tokens in response body along with message
+      // This allows frontend to store tokens in localStorage as backup
+      res.json({ 
+        message: 'Tokens refreshed successfully',
+        token: result.accessToken,
+        refreshToken: result.refreshToken
+      });
     } catch (authError) {
       if (authError instanceof AuthError) {
         res.clearCookie('accessToken', COOKIE_CONFIG);
