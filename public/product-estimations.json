@@ -2,66 +2,69 @@
   "schemaVersion": "1.0.0",
   "version": "1.0.0",
   "lastUpdated": "2025-04-21",
-  "regions": {
-    "US-avg": {
-      "electricityRatesUSDPerkWh": 0.13,
-      "name": "US Average"
+  "referenceData": {
+    "electricityRatesUSDPerkWh": {
+      "US-avg": 0.13,
+      "US-CA": 0.22,
+      "US-TX": 0.12
     },
-    "US-CA": {
-      "electricityRatesUSDPerkWh": 0.22,
-      "name": "California"
+    "iefThresholds": {
+      "dehumidifiers": {
+        "portable": {
+          "small": {
+            "standard": 1.2,
+            "energyStar": 1.8,
+            "mostEfficient": 2.5
+          },
+          "medium": {
+            "standard": 1.3,
+            "energyStar": 1.9,
+            "mostEfficient": 2.6
+          },
+          "large": {
+            "standard": 1.4,
+            "energyStar": 2.0,
+            "mostEfficient": 2.7
+          }
+        },
+        "wholehouse": {
+          "standard": 1.5,
+          "energyStar": 2.1,
+          "mostEfficient": 2.8
+        }
+      }
     },
-    "US-TX": {
-      "electricityRatesUSDPerkWh": 0.12,
-      "name": "Texas"
+    "confidenceThresholds": {
+      "medium": 0.5,
+      "high": 0.7
     }
   },
-  "products": {
-    "dehumidifiers": {
-      "defaults": {
-        "price": 249.99,
-        "annualSavings": 35.00,
-        "roi": 0.14,
-        "paybackPeriod": 7.1,
-        "energyEfficiency": "ENERGY STAR Certified",
-        "confidenceLevel": "medium",
-        "additionalMetrics": {
-          "annualKwh": 350,
-          "lifetimeEnergyCost": 630,
-          "dailyRunHours": 12,
-          "annualRunDays": 180
-        }
-      },
-      "capacityTiers": {
-        "small": {
-          "range": [0, 25],
-          "price": 179.99,
-          "annualSavings": 25.00,
-          "roi": 0.139,
-          "paybackPeriod": 7.2
-        },
-        "medium": {
-          "range": [25, 45],
-          "price": 249.99,
-          "annualSavings": 35.00,
-          "roi": 0.14,
-          "paybackPeriod": 7.1
-        },
-        "large": {
-          "range": [45, 70],
-          "price": 329.99,
-          "annualSavings": 46.00,
-          "roi": 0.139,
-          "paybackPeriod": 7.2
-        }
-      },
-      "energyStarMultiplier": 1.15
+  "dehumidifiers": {
+    "priceParameters": {
+      "basePrice": 249.99,
+      "capacityMultiplier": 2.5,
+      "energyStarPremium": 30,
+      "mostEfficientPremium": 50
+    },
+    "energyMetrics": {
+      "standardIEF": 1.3,
+      "energyStarIEF": 1.9,
+      "mostEfficientIEF": 2.6
+    },
+    "defaults": {
+      "annualRunDays": 180,
+      "dailyRunHours": 12
+    },
+    "efficiencyRatings": {
+      "standard": "Standard Efficiency",
+      "energyStar": "ENERGY STAR Certified",
+      "mostEfficient": "ENERGY STAR Most Efficient"
     }
   },
-  "estimators": {
-    "dehumidifiers": {
-      "capacityPintsPerDayField": "capacityPintsPerDay",
-      "isEnergyStarField": "isEnergyStar"
-    }
+  "refrigerators": {
+    "_placeholder": true
+  },
+  "hvac": {
+    "_placeholder": true
   }
 }
