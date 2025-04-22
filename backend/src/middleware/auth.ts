@@ -39,7 +39,21 @@ export const authenticate = async (
       host: req.headers.host
     });
     
-    const accessToken = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
+    // Parse the Authorization header only if it truly is "Bearer <token>"
+    let accessToken: string | undefined;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const parts = authHeader.split(' ');
+      if (parts.length === 2 && parts[1].trim()) {
+        accessToken = parts[1].trim();
+      }
+    }
+
+    // Fallback to cookie if header gave nothing
+    if (!accessToken && req.cookies.accessToken) {
+      accessToken = req.cookies.accessToken;
+    }
+    
     const refreshToken = req.cookies.refreshToken;
 
     console.log('Access Token:', accessToken ? 'Present' : 'Missing');
