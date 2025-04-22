@@ -1,0 +1,66 @@
+import { ProductEstimationsConfig } from '../../../schemas/productEstimationSchema';
+import { DehumidifierEstimator } from './DehumidifierEstimator';
+import { ProductEstimator, UnsupportedCategoryError } from './types';
+
+/**
+ * Product category types supported by the estimator factory
+ */
+export type ProductCategory = 'dehumidifier' | 'refrigerator' | 'hvac';
+
+/**
+ * Region code type for electricity rate lookup
+ * Matches keys in electricityRatesUSDPerkWh
+ */
+export type RegionCode = 'US-avg' | 'AL' | 'AK' | 'AZ' | 'AR' | 'CA' | 'CO' | 'CT' | 'DE' | 'FL' | 
+                     'GA' | 'HI' | 'ID' | 'IL' | 'IN' | 'IA' | 'KS' | 'KY' | 'LA' | 'ME' | 
+                     'MD' | 'MA' | 'MI' | 'MN' | 'MS' | 'MO' | 'MT' | 'NE' | 'NV' | 'NH' | 
+                     'NJ' | 'NM' | 'NY' | 'NC' | 'ND' | 'OH' | 'OK' | 'OR' | 'PA' | 'RI' | 
+                     'SC' | 'SD' | 'TN' | 'TX' | 'UT' | 'VT' | 'VA' | 'WA' | 'WV' | 'WI' | 'WY';
+
+// Cached rates to avoid repetitive lookups
+const rateCache = new Map<string, number>();
+
+/**
+ * Creates and returns the appropriate product estimator for the given category
+ * 
+ * @param category - The product category
+ * @param config - The complete product estimations configuration
+ * @param region - Optional region code for electricity rate (defaults to US average)
+ * @returns The appropriate estimator instance for the requested category
+ * @throws UnsupportedCategoryError if the category is not supported
+ */
+export function getEstimator<T>(
+  category: ProductCategory, 
+  config: ProductEstimationsConfig,
+  region: RegionCode = 'US-avg'
+): ProductEstimator<T> {
+  // Get the electricity rate for the requested region (with memoization)
+  const rateKey = `${region}-${config.schemaVersion}`;
+  let electricityRate = rateCache.get(rateKey);
+  
+  if (electricityRate === undefined) {
+    // If not in cache, look it up and store for future use
+    electricityRate = config.referenceData.electricityRatesUSDPerkWh[region] || 
+                      config.referenceData.electricityRatesUSDPerkWh['US-avg'];
+    rateCache.set(rateKey, electricityRate);
+  }
+  
+  switch (category) {
+    case 'dehumidifier':
+      return new DehumidifierEstimator(
+        config.dehumidifiers,
+        electricityRate
+      ) as unknown as ProductEstimator<T>;
+    
+    case 'refrigerator':
+      // Placeholder for future implementation
+      throw new UnsupportedCategoryError('refrigerator');
+    
+    case 'hvac':
+      // Placeholder for future implementation
+      throw new UnsupportedCategoryError('hvac');
+    
+    default:
+      throw new UnsupportedCategoryError(category as string);
+  }
+}

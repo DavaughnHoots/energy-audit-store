@@ -1,3 +1,4 @@
+import { serialize, CookieSerializeOptions } from 'cookie';
 /**
  * Utility functions for working with cookies
  * Used to synchronize authentication between cookies and localStorage
@@ -54,3 +55,22 @@ export function syncAuthTokens(): void {
   // This would require setting document.cookie and may be more complex due to 
   // domain/security requirements
 }
+
+/**
+ * Set a cookie with proper serialization and guards against falsy values
+ * @param name - Cookie name
+ * @param value - Cookie value (will be skipped if falsy)
+ * @param opts - Cookie options
+ */
+export const setCookie = (
+  name: string,
+  value: string | undefined | null,
+  opts: CookieSerializeOptions = {}
+) => {
+  if (!value) return;  // Skip falsy values (null, undefined, empty string)
+  document.cookie = serialize(name, value, {
+    path: '/',
+    sameSite: 'strict',
+    ...opts,
+  });
+};

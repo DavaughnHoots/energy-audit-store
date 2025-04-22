@@ -1,3 +1,5 @@
+let consecutive401 = 0; // Counter to prevent infinite refresh loops
+
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { getCookie, syncAuthTokens } from '../utils/cookieUtils';
 

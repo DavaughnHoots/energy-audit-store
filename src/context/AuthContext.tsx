@@ -125,6 +125,22 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       if (!refreshResponse.ok) {
         throw new Error('Token refresh failed');
       }
+      
+      // Parse the response to get the new tokens
+      const data = await refreshResponse.json();
+
+      // Update cookies with the new token if present
+      if (data?.accessToken) {
+        setCookie('accessToken', data.accessToken, { maxAge: 15 * 60 }); // 15 minutes
+        localStorage.setItem('accessToken', data.accessToken);
+        
+        if (data.refreshToken) {
+          setCookie('refreshToken', data.refreshToken, { maxAge: 7 * 24 * 60 * 60 }); // 7 days
+          localStorage.setItem('refreshToken', data.refreshToken);
+        }
+        
+        console.log('Updated tokens in both cookies and localStorage');
+      }
 
       console.log('Token refresh successful');
       return true;
