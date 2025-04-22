@@ -73,20 +73,30 @@ export function syncAuthTokens() {
     const accessToken = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
     
-    // Clean up invalid values
-    if (cookies.accessToken === 'undefined' || (cookies.accessToken && cookies.accessToken.trim() === '')) {
+    // Clean up invalid values - this is critical to prevent 'undefined' string from being used
+    const isInvalidToken = (token) => {
+      return !token || token === 'undefined' || token === 'null' || token.trim() === '';
+    };
+    
+    // Always check and clean cookie values first
+    if (cookies.accessToken && isInvalidToken(cookies.accessToken)) {
+      console.log('Removing invalid accessToken cookie:', cookies.accessToken);
       removeCookie('accessToken');
     }
     
-    if (cookies.refreshToken === 'undefined' || (cookies.refreshToken && cookies.refreshToken.trim() === '')) {
+    if (cookies.refreshToken && isInvalidToken(cookies.refreshToken)) {
+      console.log('Removing invalid refreshToken cookie:', cookies.refreshToken);
       removeCookie('refreshToken');
     }
     
-    if (accessToken === 'undefined' || (accessToken && accessToken.trim() === '')) {
+    // Then check localStorage values
+    if (accessToken && isInvalidToken(accessToken)) {
+      console.log('Removing invalid accessToken from localStorage:', accessToken);
       localStorage.removeItem('accessToken');
     }
     
-    if (refreshToken === 'undefined' || (refreshToken && refreshToken.trim() === '')) {
+    if (refreshToken && isInvalidToken(refreshToken)) {
+      console.log('Removing invalid refreshToken from localStorage:', refreshToken);
       localStorage.removeItem('refreshToken');
     }
     

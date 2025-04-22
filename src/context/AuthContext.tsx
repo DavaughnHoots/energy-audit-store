@@ -129,33 +129,50 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       
       // Parse the response to get the new tokens
       const data = await refreshResponse.json();
+      console.log('Token refresh response structure:', Object.keys(data).join(', '));
+      
+      // Helper function to check if token is valid
+      const isValidToken = (token) => {
+        return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+      };
 
-      // Handle access token
-      if (data?.token) {
+      // Handle access token - check if token field exists and is valid
+      if (data?.token && isValidToken(data.token)) {
         const newAccessToken = data.token;
         setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 }); // 15 minutes
         localStorage.setItem('accessToken', newAccessToken);
         console.log('Updated access token from token field: ' + newAccessToken.substring(0, 10) + '...');
       } else {
-        // If no access token, explicitly remove it
+        // Log what we received for debugging
+        console.warn('Invalid or missing token in refresh response:', data?.token);
+        // If no valid access token, explicitly remove it
         removeCookie('accessToken');
         localStorage.removeItem('accessToken');
       }
       
-      // Handle refresh token
-      if (data?.refreshToken) {
+      // Handle refresh token - similarly with strict validation
+      if (data?.refreshToken && isValidToken(data.refreshToken)) {
         setCookie('refreshToken', data.refreshToken, { maxAge: 7 * 24 * 60 * 60 }); // 7 days
         localStorage.setItem('refreshToken', data.refreshToken);
+        console.log('Updated refresh token');
       } else {
+        console.warn('Invalid or missing refreshToken in refresh response');
         // If no refresh token, explicitly remove it
         removeCookie('refreshToken');
         localStorage.removeItem('refreshToken');
       }
       
-      console.log('Updated tokens in both cookies and localStorage');
+      console.log('Token validation and storage completed');
 
-      console.log('Token refresh successful');
-      return true;
+      // Make sure we have valid tokens before returning success
+      const newAccessToken = getCookie('accessToken');
+      if (isValidToken(newAccessToken)) {
+        console.log('Token refresh successful');
+        return true;
+      } else {
+        console.error('Token refresh completed but resulting token is invalid');
+        return false;
+      }
     } catch (error) {
       console.error('Token refresh failed:', error);
       return false;

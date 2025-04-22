@@ -62,8 +62,15 @@ export const authenticate = async (
 
     // Fallback to cookie if header gave nothing
     if (!accessToken && req.cookies.accessToken) {
-      accessToken = req.cookies.accessToken;
-      console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Using token from cookie (first 10 chars): ${accessToken ? accessToken.substring(0, 10) : 'undefined'}...`);
+      // Make sure we don't use the string "undefined" as a token
+      if (req.cookies.accessToken !== 'undefined') {
+        accessToken = req.cookies.accessToken;
+        console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Using token from cookie (first 10 chars): ${accessToken ? accessToken.substring(0, 10) : 'null'}...`);
+      } else {
+        console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Found literal "undefined" string in accessToken cookie, ignoring it`);
+        // Clear the invalid cookie
+        res.clearCookie('accessToken', COOKIE_CONFIG);
+      }
     }
     
     const refreshToken = req.cookies.refreshToken;

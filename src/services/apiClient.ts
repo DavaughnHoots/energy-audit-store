@@ -134,23 +134,37 @@ axiosInstance.interceptors.response.use(
             refreshToken 
           });
           
+          // Helper function to check if token is valid
+          const isValidToken = (token) => {
+            return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+          };
+          
           // If refresh successful, update tokens
-          if (response.data?.token) {
+          if (response.data?.token && isValidToken(response.data.token)) {
             // Update both localStorage and cookies
             const newAccessToken = response.data.token;
             localStorage.setItem('accessToken', newAccessToken);
             setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 }); // 15 minutes
             
-            if (response.data.refreshToken) {
+            if (response.data.refreshToken && isValidToken(response.data.refreshToken)) {
               localStorage.setItem('refreshToken', response.data.refreshToken);
               setCookie('refreshToken', response.data.refreshToken, { maxAge: 7 * 24 * 60 * 60 }); // 7 days
+            } else {
+              console.warn('Invalid or missing refreshToken in refresh response');
             }
             
             console.log('Updated tokens in both localStorage and cookies during refresh');
             
-            // Update auth header with new token
-            axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            // Double check that token is valid before setting header
+            if (isValidToken(newAccessToken)) {
+              // Update auth header with new token
+              axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            } else {
+              console.error('Token refresh resulted in invalid token');
+              delete axiosInstance.defaults.headers.common.Authorization;
+              delete originalRequest.headers.Authorization;
+            }
             
             // Retry the original request
             return axiosInstance(originalRequest);
