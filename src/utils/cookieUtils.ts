@@ -1,4 +1,3 @@
-
 import { serialize, SerializeOptions } from 'cookie';
 
 /**
@@ -31,22 +30,61 @@ export function getCookie(name) {
 }
 
 /**
- * Set cookie with validation
+ * Check if a token value is valid
  */
-export function setCookie(name, value, opts = {}) {
+export function isValidToken(token) {
+  return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+}
+
+/**
+ * Set cookie with validation and retry mechanism
+ */
+export function setCookie(name, value, opts = {}, retryCount = 0) {
   // Never set cookies to undefined or empty values
-  if (!value || value === 'undefined' || value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
-    console.warn("Invalid cookie value for " + name + ", not setting");
-    return;
+  if (!isValidToken(value)) {
+    console.warn("⚠️ Invalid cookie value for " + name + ", not setting");
+    return false;
   }
 
-  document.cookie = serialize(name, value, {
-    path: '/',
-    sameSite: 'strict',
-    ...opts,
-  });
-  
-  console.log("Cookie set: " + name);
+  try {
+    document.cookie = serialize(name, value, {
+      path: '/',
+      sameSite: 'strict',
+      ...opts,
+    });
+    
+    // Verify the cookie was actually set
+    const cookies = parseCookies();
+    if (cookies[name] === value) {
+      console.log("✅ Cookie set successfully: " + name);
+      return true;
+    } else {
+      console.warn("⚠️ Cookie verification failed for " + name);
+      
+      // Retry up to 2 times if setting failed
+      if (retryCount < 2) {
+        console.log(`🔄 Retrying cookie set (attempt ${retryCount + 1})...`);
+        // Wait a bit and retry
+        setTimeout(() => {
+          setCookie(name, value, opts, retryCount + 1);
+        }, 100);
+      } else {
+        console.error(`❌ Failed to set cookie ${name} after ${retryCount} retries`);
+        
+        // As a fallback, at least try to store in localStorage
+        try {
+          localStorage.setItem(name, value);
+          console.log(`📦 Stored ${name} in localStorage as fallback`);
+        } catch (lsError) {
+          console.error('localStorage fallback failed:', lsError);
+        }
+      }
+      return false;
+    }
+  } catch (error) {
+    console.error(`❌ Error setting cookie ${name}:`, error);
+    return false;
+  }
 }
 
 /**
@@ -60,72 +98,129 @@ export function removeCookie(name, opts = {}) {
     ...opts,
   });
   
-  console.log("Cookie removed: " + name);
+  console.log("🗑️ Cookie removed: " + name);
 }
 
 /**
- * Sync tokens between localStorage and cookies
+ * Sync tokens between localStorage and cookies with enhanced reliability
  */
-export function syncAuthTokens() {
+export function syncAuthTokens(forceSync = false) {
   try {
+    console.log(`🔄 Syncing auth tokens${forceSync ? ' (forced)' : ''}...`);
+    
     // Get tokens from all sources
     const cookies = parseCookies();
     const accessToken = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
     
-    // Clean up invalid values - this is critical to prevent 'undefined' string from being used
-    const isInvalidToken = (token) => {
-      return !token || token === 'undefined' || token === 'null' || token.trim() === '';
-    };
-    
     // Always check and clean cookie values first
-    if (cookies.accessToken && isInvalidToken(cookies.accessToken)) {
-      console.log('Removing invalid accessToken cookie:', cookies.accessToken);
+    if (cookies.accessToken && !isValidToken(cookies.accessToken)) {
+      console.log('🧹 Removing invalid accessToken cookie:', cookies.accessToken);
       removeCookie('accessToken');
     }
     
-    if (cookies.refreshToken && isInvalidToken(cookies.refreshToken)) {
-      console.log('Removing invalid refreshToken cookie:', cookies.refreshToken);
+    if (cookies.refreshToken && !isValidToken(cookies.refreshToken)) {
+      console.log('🧹 Removing invalid refreshToken cookie:', cookies.refreshToken);
       removeCookie('refreshToken');
     }
     
     // Then check localStorage values
-    if (accessToken && isInvalidToken(accessToken)) {
-      console.log('Removing invalid accessToken from localStorage:', accessToken);
+    if (accessToken && !isValidToken(accessToken)) {
+      console.log('🧹 Removing invalid accessToken from localStorage:', accessToken);
       localStorage.removeItem('accessToken');
     }
     
-    if (refreshToken && isInvalidToken(refreshToken)) {
-      console.log('Removing invalid refreshToken from localStorage:', refreshToken);
+    if (refreshToken && !isValidToken(refreshToken)) {
+      console.log('🧹 Removing invalid refreshToken from localStorage:', refreshToken);
       localStorage.removeItem('refreshToken');
     }
     
-    // Sync valid tokens from cookies to localStorage
-    if (cookies.accessToken && cookies.accessToken !== 'undefined' && cookies.accessToken.trim() !== '') {
-      if (!accessToken || accessToken !== cookies.accessToken) {
-        localStorage.setItem('accessToken', cookies.accessToken);
-      }
+    // Re-read cookies after cleanup
+    const updatedCookies = parseCookies();
+    const hasValidAccessTokenInCookies = updatedCookies.accessToken && isValidToken(updatedCookies.accessToken);
+    const hasValidRefreshTokenInCookies = updatedCookies.refreshToken && isValidToken(updatedCookies.refreshToken);
+    
+    // Re-read localStorage after cleanup
+    const updatedAccessToken = localStorage.getItem('accessToken');
+    const updatedRefreshToken = localStorage.getItem('refreshToken');
+    const hasValidAccessTokenInLS = updatedAccessToken && isValidToken(updatedAccessToken);
+    const hasValidRefreshTokenInLS = updatedRefreshToken && isValidToken(updatedRefreshToken);
+    
+    // Priority logic for synchronization
+    let finalAccessToken = null;
+    let finalRefreshToken = null;
+    
+    // For each token type, choose the valid one with priority to localStorage
+    if (hasValidAccessTokenInLS) {
+      finalAccessToken = updatedAccessToken;
+    } else if (hasValidAccessTokenInCookies) {
+      finalAccessToken = updatedCookies.accessToken;
     }
     
-    if (cookies.refreshToken && cookies.refreshToken !== 'undefined' && cookies.refreshToken.trim() !== '') {
-      if (!refreshToken || refreshToken !== cookies.refreshToken) {
-        localStorage.setItem('refreshToken', cookies.refreshToken);
-      }
+    if (hasValidRefreshTokenInLS) {
+      finalRefreshToken = updatedRefreshToken;
+    } else if (hasValidRefreshTokenInCookies) {
+      finalRefreshToken = updatedCookies.refreshToken;
     }
     
-    // Sync valid tokens from localStorage to cookies
-    if (accessToken && accessToken !== 'undefined' && accessToken.trim() !== '') {
-      if (!cookies.accessToken || cookies.accessToken !== accessToken) {
-        setCookie('accessToken', accessToken, { maxAge: 15 * 60 });
-      }
+    // Apply the final tokens to both storage mechanisms
+    console.log('🔄 Synchronizing with final token values:',
+      finalAccessToken ? 'Access token present' : 'No valid access token',
+      finalRefreshToken ? 'Refresh token present' : 'No valid refresh token');
+    
+    // Always set (or clear) both storage mechanisms when doing a force sync
+    if (finalAccessToken) {
+      localStorage.setItem('accessToken', finalAccessToken);
+      setCookie('accessToken', finalAccessToken, { maxAge: 15 * 60 });
+    } else {
+      localStorage.removeItem('accessToken');
+      removeCookie('accessToken');
     }
     
-    if (refreshToken && refreshToken !== 'undefined' && refreshToken.trim() !== '') {
-      if (!cookies.refreshToken || cookies.refreshToken !== refreshToken) {
-        setCookie('refreshToken', refreshToken, { maxAge: 7 * 24 * 60 * 60 });
-      }
+    if (finalRefreshToken) {
+      localStorage.setItem('refreshToken', finalRefreshToken);
+      setCookie('refreshToken', finalRefreshToken, { maxAge: 7 * 24 * 60 * 60 });
+    } else {
+      localStorage.removeItem('refreshToken');
+      removeCookie('refreshToken');
     }
+    
+    // Final verification
+    const finalCookies = parseCookies();
+    console.log('✅ Token sync complete. Final state:', {
+      cookies: {
+        accessToken: finalCookies.accessToken ? '(present)' : '(missing)',
+        refreshToken: finalCookies.refreshToken ? '(present)' : '(missing)'
+      },
+      localStorage: {
+        accessToken: localStorage.getItem('accessToken') ? '(present)' : '(missing)',
+        refreshToken: localStorage.getItem('refreshToken') ? '(present)' : '(missing)'
+      }
+    });
+    
+    return true;
   } catch (error) {
-    console.error('Error syncing tokens:', error);
+    console.error('❌ Error syncing tokens:', error);
+    return false;
   }
+}
+
+/**
+ * Authentication reset - clears all auth state
+ */
+export function resetAuthState() {
+  console.log('🧹 Performing complete auth state reset...');
+  
+  // Clear cookies
+  removeCookie('accessToken');
+  removeCookie('refreshToken');
+  removeCookie('XSRF-TOKEN');
+  
+  // Clear localStorage
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('auth-state');
+  
+  console.log('✅ Auth state reset complete');
+  return true;
 }

@@ -162,6 +162,8 @@ const App: React.FC = () => {
                   <Route path="/community" element={<CommunityPage />} />
                   <Route path="/sign-in" element={<SignIn />} />
                   <Route path="/sign-up" element={<SignUp />} />
+                  {/* Auth reset helper redirect */}
+                  <Route path="/auth-reset" element={<Navigate to="/auth-reset.html" replace />} />
                   <Route
                     path="/dashboard"
                     element={
