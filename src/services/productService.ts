@@ -10,6 +10,34 @@ class ProductService {
   private mainCategoryToCategory = new Map<string, string>();
   private categoryToMainCategory = new Map<string, string>();
   private initialized = false;
+  // Ensure products have financial metrics
+  private ensureFinancialMetrics(products: Product[]): Product[] {
+    return products.map(product => {
+      // Only set defaults if these fields are missing or zero
+      if (!product.price || product.price === 0) {
+        const baseDefaults = {
+          price: 199.99,
+          annualSavings: 25.00,
+          roi: 0.125,
+          paybackPeriod: 8.0
+        };
+        
+        // Product-specific defaults based on type
+        if (product.subCategory === 'Dehumidifiers') {
+          return {
+            ...product,
+            price: 249.99,
+            annualSavings: 35.00,
+            roi: 0.14,
+            paybackPeriod: 7.14
+          };
+        }
+        
+        return { ...product, ...baseDefaults };
+      }
+      return product;
+    });
+  }
 
   // This method is kept for backward compatibility but now uses the API with CSV fallback
   async loadProductsFromCSV(file: string): Promise<boolean> {
@@ -217,16 +245,7 @@ class ProductService {
 
   async getProducts(filters?: ProductFilter): Promise<Product[]> {
     // Ensure products have financial metrics
-    const ensureFinancialMetrics = (products: Product[]): Product[] => {
-      return products.map(product => {
-        // Only set defaults if these fields are missing or zero
-        if (!product.price || product.price === 0) {
-          const baseDefaults = {
-            price: 199.99,
-            annualSavings: 25.00,
-            roi: 0.125,
-            paybackPeriod: 8.0
-          };
+    
           
           // Product-specific defaults based on type
           if (product.subCategory === 'Dehumidifiers') {
@@ -289,7 +308,7 @@ class ProductService {
           throw new Error(`API error! status: ${response.status}`);
         }
         
-        const data = await response.json(); return ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]));
+        const data = await response.json(); return this.ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]))(Array.isArray(data) ? data : (data.items || [data]));
       } catch (error) {
         console.error('Error fetching filtered products:', error);
         // Fall back to client-side filtering
@@ -373,7 +392,7 @@ class ProductService {
         throw new Error(`API error! status: ${response.status}`);
       }
       
-      const data = await response.json(); return ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]));
+      const data = await response.json(); return this.ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]))(Array.isArray(data) ? data : (data.items || [data]));
     } catch (error) {
       console.error('Error fetching paginated products:', error);
       // Fall back to client-side pagination
@@ -495,7 +514,7 @@ class ProductService {
         throw new Error(`API error! status: ${response.status}`);
       }
       
-      const data = await response.json(); return ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]));
+      const data = await response.json(); return this.ensureFinancialMetrics(Array.isArray(data) ? data : (data.items || [data]))(Array.isArray(data) ? data : (data.items || [data]));
     } catch (error) {
       console.error(`Error fetching product ${id}:`, error);
       // Fall back to local products
