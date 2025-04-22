@@ -81,9 +81,16 @@ axiosInstance.interceptors.request.use(
       }
     }
     
-    // Add authorization header if token exists
-    if (token) {
+    // Only add authorization header if token exists and is not "undefined"
+    if (token && token !== 'undefined' && token.trim() !== '') {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Added Authorization header with valid token');
+    } else {
+      // Remove Authorization header if it exists
+      if (config.headers.Authorization) {
+        delete config.headers.Authorization;
+        console.log('Removed invalid Authorization header');
+      }
     }
     
     return config;

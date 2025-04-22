@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getCookie, setCookie } from '@/utils/cookieUtils';
+import { getCookie, setCookie, removeCookie } from '@/utils/cookieUtils';
 
 // Add global window property for auth check locking
 declare global {
@@ -130,18 +130,27 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       // Parse the response to get the new tokens
       const data = await refreshResponse.json();
 
-      // Update cookies with the new token if present
+      // Handle access token
       if (data?.accessToken) {
         setCookie('accessToken', data.accessToken, { maxAge: 15 * 60 }); // 15 minutes
         localStorage.setItem('accessToken', data.accessToken);
-        
-        if (data.refreshToken) {
-          setCookie('refreshToken', data.refreshToken, { maxAge: 7 * 24 * 60 * 60 }); // 7 days
-          localStorage.setItem('refreshToken', data.refreshToken);
-        }
-        
-        console.log('Updated tokens in both cookies and localStorage');
+      } else {
+        // If no access token, explicitly remove it
+        removeCookie('accessToken');
+        localStorage.removeItem('accessToken');
       }
+      
+      // Handle refresh token
+      if (data?.refreshToken) {
+        setCookie('refreshToken', data.refreshToken, { maxAge: 7 * 24 * 60 * 60 }); // 7 days
+        localStorage.setItem('refreshToken', data.refreshToken);
+      } else {
+        // If no refresh token, explicitly remove it
+        removeCookie('refreshToken');
+        localStorage.removeItem('refreshToken');
+      }
+      
+      console.log('Updated tokens in both cookies and localStorage');
 
       console.log('Token refresh successful');
       return true;

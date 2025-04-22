@@ -32,23 +32,42 @@ export function getCookie(name: string): string | null {
 }
 
 /**
- * Set a cookie with proper serialization and guards against falsy values
+ * Set a cookie with proper serialization and guards against falsy or empty values
  * @param name - Cookie name
- * @param value - Cookie value (will be skipped if falsy)
+ * @param value - Cookie value (will be skipped if falsy or empty)
  * @param opts - Cookie options
  */
-export const setCookie = (
+export function setCookie(
   name: string,
   value: string | undefined | null,
   opts: SerializeOptions = {}
-) => {
-  if (!value) return;  // Skip falsy values (null, undefined, empty string)
+) {
+  // Only set when we have a non-empty string
+  if (typeof value !== 'string' || !value.trim()) return;
+
   document.cookie = serialize(name, value, {
     path: '/',
     sameSite: 'strict',
     ...opts,
   });
-};
+}
+
+/**
+ * Remove a cookie by setting it to expire in the past
+ * @param name - Cookie name to remove
+ * @param opts - Cookie options
+ */
+export function removeCookie(
+  name: string,
+  opts: SerializeOptions = {}
+) {
+  document.cookie = serialize(name, '', {
+    path: '/',
+    sameSite: 'strict',
+    expires: new Date(0), // Set expiration to the past
+    ...opts,
+  });
+}
 
 /**
  * Synchronize auth tokens between cookies and localStorage
