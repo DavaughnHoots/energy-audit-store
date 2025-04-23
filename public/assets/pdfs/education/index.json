@@ -1,0 +1,102 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-04-23",
+  "categories": {
+    "seasonal-guides": [
+      {
+        "id": "summer-cooling-guide",
+        "title": "Summer Cooling Guide",
+        "description": "Tips for efficient cooling during summer months",
+        "filename": "summer-cooling-guide.pdf",
+        "path": "/assets/pdfs/education/seasonal-guides/summer-cooling-guide.pdf",
+        "relatedComponent": "SummerCoolingEstimator"
+      },
+      {
+        "id": "winter-heating-guide",
+        "title": "Winter Heating Guide",
+        "description": "Strategies for efficient home heating in winter",
+        "filename": "winter-heating-guide.pdf",
+        "path": "/assets/pdfs/education/seasonal-guides/winter-heating-guide.pdf",
+        "relatedComponent": "WinterEnergyQuiz"
+      },
+      {
+        "id": "fall-weatherization-guide",
+        "title": "Fall Weatherization Guide",
+        "description": "Preparation and weatherization guide for fall",
+        "filename": "fall-weatherization-guide.pdf",
+        "path": "/assets/pdfs/education/seasonal-guides/fall-weatherization-guide.pdf",
+        "relatedComponent": "FallEnergyPrepTools"
+      },
+      {
+        "id": "spring-energy-guide",
+        "title": "Spring Energy Guide",
+        "description": "Energy preparation tips for spring",
+        "filename": "spring-energy-guide.pdf",
+        "path": "/assets/pdfs/education/seasonal-guides/spring-energy-guide.pdf",
+        "relatedComponent": "SpringEnergyTips"
+      }
+    ],
+    "checklists": [
+      {
+        "id": "seasonal-maintenance-checklist",
+        "title": "Seasonal Maintenance Checklist",
+        "description": "Year-round maintenance tasks organized by season",
+        "filename": "seasonal-maintenance-checklist.pdf",
+        "path": "/assets/pdfs/education/checklists/seasonal-maintenance-checklist.pdf"
+      },
+      {
+        "id": "home-energy-audit-checklist",
+        "title": "Home Energy Audit Checklist",
+        "description": "DIY energy audit steps for homeowners",
+        "filename": "home-energy-audit-checklist.pdf",
+        "path": "/assets/pdfs/education/checklists/home-energy-audit-checklist.pdf"
+      },
+      {
+        "id": "weatherization-checklist",
+        "title": "Weatherization Checklist",
+        "description": "Steps to improve home weatherization",
+        "filename": "weatherization-checklist.pdf",
+        "path": "/assets/pdfs/education/checklists/weatherization-checklist.pdf"
+      },
+      {
+        "id": "energy-saving-quick-wins",
+        "title": "Energy Saving Quick Wins",
+        "description": "Simple actions with significant energy-saving impact",
+        "filename": "energy-saving-quick-wins.pdf",
+        "path": "/assets/pdfs/education/checklists/energy-saving-quick-wins.pdf"
+      }
+    ],
+    "technical-guides": [
+      {
+        "id": "advanced-insulation-techniques",
+        "title": "Advanced Insulation Techniques",
+        "description": "Comprehensive guide on home insulation options, installation methods, and best practices",
+        "filename": "advanced-insulation-techniques.pdf",
+        "path": "/assets/pdfs/education/technical-guides/advanced-insulation-techniques.pdf",
+        "relatedPage": "HomeInsulationBasicsPage"
+      },
+      {
+        "id": "residential-solar-energy-systems",
+        "title": "Residential Solar Energy Systems",
+        "description": "Detailed guide on solar energy systems for residential properties",
+        "filename": "residential-solar-energy-systems.pdf",
+        "path": "/assets/pdfs/education/technical-guides/residential-solar-energy-systems.pdf",
+        "relatedPage": "SolarEnergyBasicsPage"
+      },
+      {
+        "id": "hvac-efficiency-guide",
+        "title": "HVAC Efficiency Guide",
+        "description": "Technical information on HVAC system optimization and energy-efficient options",
+        "filename": "hvac-efficiency-guide.pdf",
+        "path": "/assets/pdfs/education/technical-guides/hvac-efficiency-guide.pdf"
+      },
+      {
+        "id": "energy-efficient-lighting",
+        "title": "Energy Efficient Lighting",
+        "description": "Technical specifications and comparison of energy-efficient lighting technologies",
+        "filename": "energy-efficient-lighting.pdf",
+        "path": "/assets/pdfs/education/technical-guides/energy-efficient-lighting.pdf"
+      }
+    ]
+  }
+}

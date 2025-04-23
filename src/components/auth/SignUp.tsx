@@ -141,8 +141,12 @@ const SignUp: React.FC = () => {
       // Clear saved form data
       localStorage.removeItem('signupFormData');
 
-      // Redirect to verification page
-      window.location.href = '/verify-email';
+      // Redirect to energy audit page
+      if (auditId) {
+        window.location.href = `/energy-audit/${auditId}/report`;
+      } else {
+        window.location.href = '/energy-audit';
+      }
       
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');

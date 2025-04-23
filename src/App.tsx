@@ -3,6 +3,7 @@ import AdvancedInsulationPage from './pages/AdvancedInsulationPage';
 import ResidentialSolarPage from './pages/ResidentialSolarPage';
 import HomeEnergyEfficiencyPage from './pages/HomeEnergyEfficiencyPage';
 import HomeInsulationBasicsPage from './pages/HomeInsulationBasicsPage';
+import SeasonalEnergyTipsPage from './pages/SeasonalEnergyTipsPage';
 import PilotStudyFAQPage from './pages/PilotStudyFAQPage';
 import PilotStudyBanner from './components/PilotStudyBanner';
 import Products2Page from './pages/Products2Page';
@@ -177,6 +178,9 @@ const App: React.FC = () => {
                   <Route path="/education/resources/home-insulation-basics" element={<HomeInsulationBasicsPage />} />
                   {/* Special redirect for resource ID 4 to the home insulation basics page */}
                   <Route path="/education/4" element={<Navigate to="/education/resources/home-insulation-basics" replace />} />
+                  <Route path="/education/resources/seasonal-energy-tips" element={<SeasonalEnergyTipsPage />} />
+                  {/* Special redirect for resource ID 5 to the seasonal energy tips page */}
+                  <Route path="/education/5" element={<Navigate to="/education/resources/seasonal-energy-tips" replace />} />
                   <Route path="/education/:resourceId" element={<ResourceContentPage />} />
                   <Route path="/community" element={<CommunityPage />} />
                   <Route path="/sign-in" element={<SignIn />} />
