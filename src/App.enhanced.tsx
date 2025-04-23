@@ -1,13 +1,11 @@
 import React from 'react';
 import AdvancedInsulationPage from './pages/AdvancedInsulationPage';
 import ResidentialSolarPage from './pages/ResidentialSolarPage';
-import HomeEnergyEfficiencyPage from './pages/HomeEnergyEfficiencyPage';
-import HomeInsulationBasicsPage from './pages/HomeInsulationBasicsPage';
 import PilotStudyFAQPage from './pages/PilotStudyFAQPage';
 import PilotStudyBanner from './components/PilotStudyBanner';
 import Products2Page from './pages/Products2Page';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext.enhanced';
 import { AnalyticsProvider } from './context/AnalyticsContext';
 import { usePageTracking } from './hooks/analytics/usePageTracking';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -67,19 +65,10 @@ const Home: React.FC = () => {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       {/* Hero Section */}
       <Alert className="mb-4 sm:mb-8 mx-2 sm:mx-0">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <AlertTitle className="text-base sm:text-lg font-semibold">Welcome to Energy Efficient Shop!</AlertTitle>
-            <AlertDescription className="text-sm sm:text-base">
-              Where Efficiency meets Sustainability! It is your one-stop shop for energy-efficient products. Start with a DIY energy audit to get personalized recommendations.
-            </AlertDescription>
-          </div>
-          <Link to="/energy-audit">
-            <button className="bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-green-700 transition-colors duration-200">
-              Start Energy Audit
-            </button>
-          </Link>
-        </div>
+        <AlertTitle className="text-base sm:text-lg font-semibold">Welcome to Energy Efficient Shop!</AlertTitle>
+        <AlertDescription className="text-sm sm:text-base">
+          Where Efficiency meets Sustainability! It is your one-stop shop for energy-efficient products. Start with a DIY energy audit to get personalized recommendations.
+        </AlertDescription>
       </Alert>
 
       {/* Feature Cards */}
@@ -169,19 +158,10 @@ const App: React.FC = () => {
                   <Route path="/education/residential-solar" element={<Navigate to="/education/resources/residential-solar" replace />} />
                   {/* Special redirect for resource ID 3 to the residential solar page */}
                   <Route path="/education/3" element={<Navigate to="/education/resources/residential-solar" replace />} />
-                  <Route path="/education/resources/home-energy-efficiency" element={<HomeEnergyEfficiencyPage />} />
-                  {/* Special redirect for resource ID 1 to the home energy efficiency page */}
-                  <Route path="/education/1" element={<Navigate to="/education/resources/home-energy-efficiency" replace />} />
-                  {/* Special redirect for resource ID 16 to the home energy efficiency page */}
-                  <Route path="/education/16" element={<Navigate to="/education/resources/home-energy-efficiency" replace />} />
-                  <Route path="/education/resources/home-insulation-basics" element={<HomeInsulationBasicsPage />} />
-                  {/* Special redirect for resource ID 4 to the home insulation basics page */}
-                  <Route path="/education/4" element={<Navigate to="/education/resources/home-insulation-basics" replace />} />
                   <Route path="/education/:resourceId" element={<ResourceContentPage />} />
                   <Route path="/community" element={<CommunityPage />} />
                   <Route path="/sign-in" element={<SignIn />} />
                   <Route path="/sign-up" element={<SignUp />} />
-                  {/* Auth reset helper redirect */}
                   <Route path="/auth-reset" element={<Navigate to="/auth-reset.html" replace />} />
                   <Route
                     path="/dashboard"

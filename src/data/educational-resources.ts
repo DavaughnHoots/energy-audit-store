@@ -10,23 +10,44 @@ import {
 export const mockResources: EducationalResource[] = [
   // Featured Articles
   {
-    id: '1',
-    title: 'Understanding Home Energy Efficiency',
-    description: 'A comprehensive guide to making your home more energy efficient and reducing your carbon footprint.',
+    id: '3',
+    title: 'Home Insulation Basics',
+    description: 'Learn the fundamentals of home insulation to keep your home comfortable year-round while reducing energy costs.',
     type: 'article',
-    topic: 'home-appliances',
+    topic: 'insulation',
     level: 'beginner',
-    readTime: '5 min read',
-    thumbnail: 'https://placehold.co/400x250?text=Energy+Efficiency',
-    url: '/education/understanding-home-energy-efficiency',
-    datePublished: '2024-01-15',
+    readTime: '10 min read',
+    thumbnail: 'https://placehold.co/400x250?text=Insulation+Basics',
+    url: '/education/resources/home-insulation-basics',
+    datePublished: '2025-04-22',
     featured: true,
-    collectionIds: ['getting-started', 'seasonal-tips'],
-    tags: ['efficiency', 'basics', 'home', 'energy-saving'],
-    popularity: 1250,
+    collectionIds: ['getting-started', 'home-improvement', 'seasonal-tips', 'interactive-learning'],
+    tags: ['insulation', 'basics', 'home', 'energy-saving', 'interactive'],
+    popularity: 1350,
     rating: {
       average: 4.7,
-      count: 128
+      count: 175
+    }
+  },
+  // Home Energy Efficiency Fundamentals (NEW)
+  {
+    id: '16',
+    title: 'Home Energy Efficiency Fundamentals',
+    description: 'Comprehensive guide to understanding home energy efficiency with interactive features to help identify and prioritize energy-saving improvements.',
+    type: 'article',
+    topic: 'energy-management',
+    level: 'beginner',
+    readTime: '8 min read',
+    thumbnail: 'https://placehold.co/400x250?text=Energy+Efficiency+Fundamentals',
+    url: '/education/resources/home-energy-efficiency',
+    datePublished: '2025-04-22',
+    featured: true,
+    collectionIds: ['getting-started', 'home-improvement', 'seasonal-tips', 'interactive-learning'],
+    tags: ['efficiency', 'energy-loss', 'home', 'interactive', 'pyramid', 'energy-saving'],
+    popularity: 1400,
+    rating: {
+      average: 4.8,
+      count: 95
     }
   },
   {
@@ -73,17 +94,17 @@ export const mockResources: EducationalResource[] = [
   // Featured Videos
   {
     id: '4',
-    title: 'Solar Panel Installation Guide',
-    description: 'Step-by-step video guide to understanding solar panel installation for your home.',
+    title: 'Residential Solar Energy Systems',
+    description: 'Comprehensive guide to understanding and implementing residential solar energy systems.',
     type: 'video',
     topic: 'renewable-energy',
     level: 'intermediate',
     readTime: '12 min watch',
     thumbnail: 'https://placehold.co/400x250?text=Solar+Installation',
-    url: '/education/solar-panel-installation',
+    url: '/education/resources/residential-solar',
     datePublished: '2024-01-22',
     featured: true,
-    collectionIds: ['renewable-energy', 'home-improvement'],
+    collectionIds: ['home-improvement'],
     tags: ['solar', 'renewable', 'installation', 'DIY'],
     popularity: 2150,
     rating: {
@@ -325,14 +346,14 @@ export const mockCollections: ResourceCollection[] = [
     title: 'Getting Started with Energy Efficiency',
     description: 'Essential resources for beginners looking to understand energy efficiency concepts.',
     thumbnail: 'https://placehold.co/800x400?text=Getting+Started',
-    resourceIds: ['1', '5', '6', '9', '10']
+    resourceIds: ['4', '5', '6', '9', '10', '16']
   },
   {
     id: 'home-improvement',
     title: 'Home Improvement Projects',
     description: 'Practical guides for energy-efficient home improvement and renovation projects.',
     thumbnail: 'https://placehold.co/800x400?text=Home+Improvement',
-    resourceIds: ['2', '4', '11', '12', '13']
+    resourceIds: ['4', '2', '11', '12', '13', '16']
   },
   {
     id: 'smart-living',
@@ -346,14 +367,14 @@ export const mockCollections: ResourceCollection[] = [
     title: 'Seasonal Energy Saving Tips',
     description: 'Advice for optimizing your home energy efficiency during different seasons.',
     thumbnail: 'https://placehold.co/800x400?text=Seasonal+Tips',
-    resourceIds: ['1', '5', '12', '13']
+    resourceIds: ['4', '5', '12', '13', '16']
   },
   {
     id: 'interactive-learning',
     title: 'Interactive Tools & Calculators',
     description: 'Interactive resources to test your knowledge and plan your energy efficiency journey.',
     thumbnail: 'https://placehold.co/800x400?text=Interactive+Learning',
-    resourceIds: ['7', '8']
+    resourceIds: ['4', '7', '8', '16']
   },
   {
     id: 'tech-solutions',

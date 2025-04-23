@@ -143,6 +143,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         <div className="mt-4 pt-3 border-t border-gray-100">
           <ResourceRatingAndReview 
             resourceId={resource.id}
+            resourceUrl={resource.url}
             size="sm"
           />
         </div>

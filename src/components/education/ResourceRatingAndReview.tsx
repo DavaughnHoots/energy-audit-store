@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 
 interface ResourceRatingAndReviewProps {
   resourceId: string;
+  resourceUrl?: string;
   ratingInfo?: ResourceRatingInfo;
   showRatingStats?: boolean;
   showReviewButton?: boolean;
@@ -16,6 +17,7 @@ interface ResourceRatingAndReviewProps {
 
 const ResourceRatingAndReview: React.FC<ResourceRatingAndReviewProps> = ({
   resourceId,
+  resourceUrl,
   ratingInfo,
   showRatingStats = false,
   showReviewButton = true,
@@ -39,7 +41,7 @@ const ResourceRatingAndReview: React.FC<ResourceRatingAndReviewProps> = ({
   if (!ratingInfo) {
     return (
       <div className={cn('flex items-center gap-2', className)}>
-        <a href={`/education/${resourceId}`}>
+        <a href={resourceUrl || `/education/${resourceId}`}>
           <Button
             variant="outline"
             size="sm"
@@ -90,7 +92,7 @@ const ResourceRatingAndReview: React.FC<ResourceRatingAndReviewProps> = ({
       )}
       
       {showReviewButton && (
-        <a href={`/education/${resourceId}`}>
+        <a href={resourceUrl || `/education/${resourceId}`}>
           <Button
             variant="outline"
             size="sm"
