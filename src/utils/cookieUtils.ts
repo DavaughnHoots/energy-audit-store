@@ -1,4 +1,5 @@
 import { serialize, SerializeOptions } from 'cookie';
+import { isValidToken } from './tokenUtils';
 
 /**
  * Detect mobile devices based on user agent
@@ -173,10 +174,38 @@ export function syncAuthTokens(forceSync = false) {
     const hasValidAccessTokenInLS = updatedAccessToken && isValidToken(updatedAccessToken);
     const hasValidRefreshTokenInLS = updatedRefreshToken && isValidToken(updatedRefreshToken);
     
-    // Priority logic for mobile vs desktop
+    
+    // Priority logic for mobile vs desktop with console table logging
     const isMobile = isMobileDevice();
     let finalAccessToken = null;
     let finalRefreshToken = null;
+    
+    if (isMobile) {
+      // On mobile, STRONGLY prefer localStorage with cookie fallback
+      finalAccessToken = hasValidAccessTokenInLS ? updatedAccessToken : 
+                       (hasValidAccessTokenInCookies ? updatedCookies.accessToken : null);
+                       
+      finalRefreshToken = hasValidRefreshTokenInLS ? updatedRefreshToken : 
+                        (hasValidRefreshTokenInCookies ? updatedCookies.refreshToken : null);
+                        
+      console.log('📱 Mobile device - prioritizing localStorage tokens over cookies');
+    } else {
+      // On desktop, prefer cookies with localStorage fallback
+      finalAccessToken = hasValidAccessTokenInCookies ? updatedCookies.accessToken : 
+                       (hasValidAccessTokenInLS ? updatedAccessToken : null);
+                       
+      finalRefreshToken = hasValidRefreshTokenInCookies ? updatedCookies.refreshToken : 
+                        (hasValidRefreshTokenInLS ? updatedRefreshToken : null);
+                        
+      console.log('🖥️ Desktop device - prioritizing cookie tokens over localStorage');
+    }
+    
+    // Log token diagnostic info (helps with debugging)
+    console.table({
+      Source: ['cookie', 'localStorage'],
+      access: [!!updatedCookies.accessToken, !!updatedAccessToken],
+      refresh: [!!updatedCookies.refreshToken, !!updatedRefreshToken]
+    }); = null;
     
     if (isMobile) {
       // On mobile, prefer localStorage with cookie fallback

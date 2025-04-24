@@ -1,6 +1,14 @@
-let consecutive401 = 0; // Counter to prevent infinite refresh loops
+let consecutive401 = 0;
+
+// For tracking and diagnostics
+declare global {
+  interface Window {
+    __authBearerOnly?: number;
+  }
+} // Counter to prevent infinite refresh loops
 
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { isValidToken } from '../utils/tokenUtils';
 import { getCookie, setCookie, syncAuthTokens } from '../utils/cookieUtils';
 
 /**
@@ -89,16 +97,18 @@ axiosInstance.interceptors.request.use(
         console.error('Error accessing cookies:', error);
       }
     }
-    
-    // Only add authorization header if token exists and is not "undefined"
-    if (token && token !== 'undefined' && token.trim() !== '') {
+    // Enhanced token validation - only add header for valid JWT tokens
+    if (isValidToken(token)) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log(`Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
+      console.log(`[auth] ✅ Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
     } else {
-      // Remove Authorization header if it exists (prevents sending "Bearer " with no token)
-      if (config.headers.Authorization) {
-        delete config.headers.Authorization;
-        console.log('Removed invalid Authorization header');
+      // ALWAYS remove Authorization header in the invalid token case
+      delete config.headers.Authorization;
+      
+      // Track and log when we prevent a "Bearer" only header
+      if (token) {
+        console.warn(`[auth] ⛔ Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
+        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
       }
     }
     return config;
