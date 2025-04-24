@@ -3,6 +3,7 @@ import useAuth from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { getApiUrl } from '../config/api';
 import GranularAnalytics from '../components/analytics/GranularAnalytics';
+import RoadmapSection from '../components/admin/RoadmapSection';
 
 // Types for the metrics returned from the API
 interface AnalyticsDashboardData {
@@ -278,28 +279,8 @@ const AdminDashboardPage: React.FC = () => {
             Last updated: {new Date(metrics.lastUpdated).toLocaleString()}
           </div>
           
-          {/* Website Roadmap Section */}
-          <div className="border-t pt-6">
-            <h2 className="text-xl font-bold mb-4">Website Roadmap Builder</h2>
-            <p className="text-gray-600 mb-4">
-              Create a website roadmap based on the most used features and most visited pages data.
-            </p>
-            
-            {/* Import RoadmapFeature component */}
-            <React.Suspense fallback={<div className="p-4 border rounded-md">Loading roadmap builder...</div>}>
-              {(() => {
-      // Using dynamic import with error handling
-      const RoadmapFeatureComponent = React.lazy(() => 
-        import('../components/admin/RoadmapFeature')
-          .catch(err => {
-            console.error('Error loading RoadmapFeature:', err);
-            return { default: () => <div>Error loading roadmap builder. Please refresh the page.</div> };
-          })
-      );
-      return <RoadmapFeatureComponent />;
-    })()}
-            </React.Suspense>
-          </div>
+          {/* Website Roadmap Section - Using the new direct import approach */}
+          <RoadmapSection />
 
           {/* Debugging Tools */}
           <div className="border-t pt-6 mt-8">
