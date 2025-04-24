@@ -232,15 +232,15 @@ export class UserAuthService {
       await client.query('COMMIT');
 
       return {
-        user: {
-          id: user.id,
-          email: user.email,
-          fullName: user.full_name,
-          role: user.role
-        },
-        token,
-        refreshToken
-      };
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        role: user.role
+      },
+      accessToken: token,  // Changed 'token' to 'accessToken' for consistency
+      refreshToken
+    };
     } catch (error) {
       await client.query('ROLLBACK');
       if (error instanceof AuthError) {
