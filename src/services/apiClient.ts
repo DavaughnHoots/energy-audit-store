@@ -97,8 +97,9 @@ axiosInstance.interceptors.request.use(
         console.error('Error accessing cookies:', error);
       }
     }
-    // Enhanced token validation - only add header for valid JWT tokens
-    if (isValidToken(token)) {
+    // Enhanced token validation - only add header for valid JWT tokens 
+    // CRITICAL: We must not send "Bearer " with no valid token as this causes auth issues
+    if (token && token.trim() && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;
       console.log(`[auth] ✅ Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
     } else {

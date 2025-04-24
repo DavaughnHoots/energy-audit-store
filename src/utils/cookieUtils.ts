@@ -67,12 +67,15 @@ export function setCookie(name, value, opts = {}, retryCount = 0) {
     }
   }
   
-  // Set sameSite value based on device type
-  const sameSiteValue = isMobile ? 'none' : 'lax';
-  // Add secure flag for 'none' SameSite
-  const secureFlag = sameSiteValue === 'none';
+  // Detect iOS specifically (more restrictive than general mobile)
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   
-  console.log(`📱 Device is ${isMobile ? 'mobile' : 'desktop'}, using SameSite=${sameSiteValue}, secure=${secureFlag}`);
+  // Set sameSite value based on device type - iOS REQUIRES 'none' with secure
+  const sameSiteValue = isIOS ? 'none' : (isMobile ? 'none' : 'lax');
+  // Always use secure flag for iOS and when sameSite is 'none'
+  const secureFlag = isIOS || sameSiteValue === 'none';
+  
+  console.log(`📱 Device is ${isIOS ? 'iOS' : (isMobile ? 'mobile' : 'desktop')}, using SameSite=${sameSiteValue}, secure=${secureFlag}`);
 
   try {
     document.cookie = serialize(name, value, {

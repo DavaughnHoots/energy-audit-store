@@ -413,6 +413,28 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const login = async (userData: User) => {
     console.log('Login called with user data:', userData);
     
+    // Debug logs for iOS Chrome issue
+    console.log('[debug] signin response JSON →', JSON.stringify(userData).slice(0, 120));
+    console.log('[debug] document.cookie →', document.cookie);
+    console.log('[debug] LS access →', localStorage.getItem('accessToken'));
+    
+    // Use setTimeout to delay localStorage writes to bypass iOS ITP restrictions
+    setTimeout(() => {
+      try {
+        console.log('[debug] Delayed localStorage write attempt');
+        if (userData.accessToken) {
+          localStorage.setItem('accessToken', userData.accessToken);
+          console.log('[debug] accessToken written to localStorage');
+        }
+        if (userData.refreshToken) {
+          localStorage.setItem('refreshToken', userData.refreshToken);
+          console.log('[debug] refreshToken written to localStorage');
+        }
+      } catch (error) {
+        console.error('[debug] Failed delayed localStorage write:', error);
+      }
+    }, 100);
+    
     // Force token sync to ensure cookies and localStorage are in sync
     syncAuthTokens(true);
     
