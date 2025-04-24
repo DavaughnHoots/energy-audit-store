@@ -18,6 +18,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { standardLimiter, authLimiter, apiLimiter, productsLimiter, productDetailLimiter, productSearchLimiter } from './middleware/rateLimitMiddleware.js';
 import { authenticate } from './middleware/auth.js';
+import { requireRole } from './middleware/role.js';
 import { optionalTokenValidation } from './middleware/optionalTokenValidation.js';
 import { authTokenCorsMiddleware } from './middleware/auth-token-cors.js';
 import { badgesCorsMiddleware } from './middleware/badges-cors.js';
