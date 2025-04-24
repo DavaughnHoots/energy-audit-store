@@ -96,6 +96,7 @@ const SignIn: React.FC = () => {
       }
 
       const data = await response.json();
+      console.log('[debug] raw signin payload', data);
 
       // Handle successful sign in
       if (formData.rememberMe) {
@@ -104,8 +105,12 @@ const SignIn: React.FC = () => {
         localStorage.removeItem('savedEmail');
       }
 
-      // Use AuthContext login with user data (token is handled by cookies)
-      login(data.user);
+      // Enhanced login that combines user data with tokens for iOS compatibility
+      login({
+        ...data.user,
+        accessToken: data.token,
+        refreshToken: data.refreshToken
+      });
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
