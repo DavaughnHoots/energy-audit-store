@@ -92,7 +92,7 @@ router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
       // Generate CSRF token
       generateCsrfToken(req, res, () => {});
 
-      // Return user info (but not tokens)
+      // Return user info and tokens for iOS compatibility
       res.json({
         message: 'Login successful',
         user: {
@@ -100,7 +100,9 @@ router.post('/signin', authRateLimit, async (req: Request, res: Response) => {
           email: result.email,
           fullName: result.fullName,
           role: result.role
-        }
+        },
+        token: result.accessToken,       // Added for iOS compatibility
+        refreshToken: result.refreshToken  // Added for iOS compatibility
       });
     } catch (authError) {
       if (authError instanceof AuthError) {
