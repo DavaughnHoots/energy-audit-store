@@ -278,8 +278,24 @@ const AdminDashboardPage: React.FC = () => {
             Last updated: {new Date(metrics.lastUpdated).toLocaleString()}
           </div>
           
-          {/* Debugging Tools */}
+          {/* Website Roadmap Section */}
           <div className="border-t pt-6">
+            <h2 className="text-xl font-bold mb-4">Website Roadmap Builder</h2>
+            <p className="text-gray-600 mb-4">
+              Create a website roadmap based on the most used features and most visited pages data.
+            </p>
+            
+            {/* Import RoadmapFeature component */}
+            <React.Suspense fallback={<div className="p-4 border rounded-md">Loading roadmap builder...</div>}>
+              {(() => {
+                const RoadmapFeature = React.lazy(() => import('../components/admin/RoadmapFeature'));
+                return <RoadmapFeature />;
+              })()}
+            </React.Suspense>
+          </div>
+
+          {/* Debugging Tools */}
+          <div className="border-t pt-6 mt-8">
             <h2 className="text-xl font-bold mb-4">Debugging Tools</h2>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Analytics Tools</h3>
@@ -291,9 +307,9 @@ const AdminDashboardPage: React.FC = () => {
               </button>
             </div>
 
-          {/* Granular Analytics Section */}
-          <GranularAnalytics startDate={startDate} endDate={endDate} />
-        </div>
+            {/* Granular Analytics Section */}
+            <GranularAnalytics startDate={startDate} endDate={endDate} />
+          </div>
         
         {/* Pilot Study Survey Responses Section */}
         <div className="border-t pt-6 mt-8">
