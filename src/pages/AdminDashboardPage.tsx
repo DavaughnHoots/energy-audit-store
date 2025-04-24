@@ -288,9 +288,16 @@ const AdminDashboardPage: React.FC = () => {
             {/* Import RoadmapFeature component */}
             <React.Suspense fallback={<div className="p-4 border rounded-md">Loading roadmap builder...</div>}>
               {(() => {
-                const RoadmapFeature = React.lazy(() => import('../components/admin/RoadmapFeature'));
-                return <RoadmapFeature />;
-              })()}
+      // Using dynamic import with error handling
+      const RoadmapFeatureComponent = React.lazy(() => 
+        import('../components/admin/RoadmapFeature')
+          .catch(err => {
+            console.error('Error loading RoadmapFeature:', err);
+            return { default: () => <div>Error loading roadmap builder. Please refresh the page.</div> };
+          })
+      );
+      return <RoadmapFeatureComponent />;
+    })()}
             </React.Suspense>
           </div>
 
