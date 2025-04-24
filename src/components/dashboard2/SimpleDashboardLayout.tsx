@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from 'react';
 import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ReportsTab, PropertySettingsTab, BadgesTab, SurveyTab } from './index';
+import { ReportsTab, BadgesTab, SurveyTab } from './index';
 
 interface SimpleDashboardLayoutProps {
   children: ReactNode;
@@ -74,6 +74,16 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
             </button>
             <button
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'survey'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'bg-blue-50 border-transparent text-blue-700 hover:text-blue-800 hover:border-blue-300'
+              }`}
+              onClick={() => setActiveTab('survey')}
+            >
+              Survey
+            </button>
+            <button
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'reports'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -92,26 +102,6 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
             >
               Achievements
             </button>
-            <button
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'property-settings'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('property-settings')}
-            >
-              Property Settings
-            </button>
-            <button
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'survey'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'bg-blue-50 border-transparent text-blue-700 hover:text-blue-800 hover:border-blue-300'
-              }`}
-              onClick={() => setActiveTab('survey')}
-            >
-              Survey
-            </button>
           </div>
         </div>
         
@@ -125,14 +115,12 @@ const SimpleDashboardLayout: React.FC<SimpleDashboardLayoutProps> = ({
           <div className="space-y-6">
             {activeTab === 'overview' ? (
               children
+            ) : activeTab === 'survey' ? (
+              <SurveyTab />
             ) : activeTab === 'reports' ? (
               <ReportsTab />
             ) : activeTab === 'badges' ? (
               <BadgesTab />
-            ) : activeTab === 'property-settings' ? (
-              <PropertySettingsTab />
-            ) : activeTab === 'survey' ? (
-              <SurveyTab />
             ) : (
               children
             )}
