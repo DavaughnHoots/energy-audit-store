@@ -9,7 +9,7 @@ declare global {
 
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { isValidToken } from '../utils/tokenUtils';
-import { getCookie, setCookie, syncAuthTokens } from '../utils/cookieUtils';
+import { getCookie, setCookie, syncAuthTokens, getAccessToken } from '../utils/cookieUtils';
 
 /**
  * Enhanced apiClient with improved cross-domain support
@@ -73,29 +73,14 @@ axiosInstance.interceptors.request.use(
       console.error('Error syncing auth tokens:', error);
     }
     
-        // Get token with enhanced validation and fallbacks
-    let token = null;
+        // Get token with enhanced validation and fallbacks from any source
+    // This handles both naming conventions: 'accessToken' and 'token'
+    const token = getAccessToken();
     
-    // Try localStorage first
-    const lsToken = localStorage.getItem('accessToken');
-    if (lsToken && lsToken !== 'undefined' && lsToken.trim() !== '') {
-      token = lsToken;
-      console.log('Retrieved valid access token from localStorage');
+    if (token) {
+      console.log('Retrieved valid access token');
     } else {
-      // Fallback to cookies
-      try {
-        const cookieToken = getCookie('accessToken');
-        if (cookieToken && cookieToken !== 'undefined' && cookieToken.trim() !== '') {
-          token = cookieToken;
-          // Store valid cookie token in localStorage
-          localStorage.setItem('accessToken', token);
-          console.log('Retrieved access token from cookies and saved to localStorage');
-        } else {
-          console.log('No valid token found in cookies');
-        }
-      } catch (error) {
-        console.error('Error accessing cookies:', error);
-      }
+      console.log('No valid token found in any storage');
     }
     // Enhanced token validation - only add header for valid JWT tokens 
     // CRITICAL: We must not send "Bearer " with no valid token as this causes auth issues
@@ -158,10 +143,13 @@ axiosInstance.interceptors.response.use(
             return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
           };
           
+          // Get the access token from either token or accessToken field
+          const responseAccessToken = response.data?.accessToken || response.data?.token;
+          
           // If refresh successful, update tokens
-          if (response.data?.token && isValidToken(response.data.token)) {
+          if (responseAccessToken && isValidToken(responseAccessToken)) {
             // Update both localStorage and cookies
-            const newAccessToken = response.data.token;
+            const newAccessToken = responseAccessToken;
             localStorage.setItem('accessToken', newAccessToken);
             setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 }); // 15 minutes
             

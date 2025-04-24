@@ -40,6 +40,30 @@ export function getCookie(name) {
 /**
  * Check if a token value is valid
  */
+
+/**
+ * Get access token from any storage with fallbacks
+ * This handles the dual naming convention (accessToken vs token)
+ */
+export function getAccessToken() {
+  // Check localStorage first (most reliable)
+  const lsAccessToken = localStorage.getItem('accessToken');
+  if (isValidToken(lsAccessToken)) return lsAccessToken;
+  
+  // Fall back to alternative naming in localStorage
+  const lsToken = localStorage.getItem('token');
+  if (isValidToken(lsToken)) return lsToken;
+  
+  // Then try cookies
+  const cookieAccessToken = getCookie('accessToken');
+  if (isValidToken(cookieAccessToken)) return cookieAccessToken;
+  
+  // Finally check alternative naming in cookies
+  const cookieToken = getCookie('token');
+  if (isValidToken(cookieToken)) return cookieToken;
+  
+  return null;
+}
 export function isValidToken(token) {
   return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
 }

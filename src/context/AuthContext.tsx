@@ -418,12 +418,17 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     console.log('[debug] document.cookie →', document.cookie);
     console.log('[debug] LS access →', localStorage.getItem('accessToken'));
     
+    // Handle both token naming conventions (accessToken or token)
+    const actualAccessToken = userData.accessToken || userData.token;
+    console.log('[debug] actual token value:', actualAccessToken ? 'present' : 'missing', 
+      'source:', userData.accessToken ? 'accessToken' : (userData.token ? 'token' : 'none'));
+    
     // Use setTimeout to delay localStorage writes to bypass iOS ITP restrictions
     setTimeout(() => {
       try {
         console.log('[debug] Delayed localStorage write attempt');
-        if (userData.accessToken) {
-          localStorage.setItem('accessToken', userData.accessToken);
+        if (actualAccessToken) {
+          localStorage.setItem('accessToken', actualAccessToken);
           console.log('[debug] accessToken written to localStorage');
         }
         if (userData.refreshToken) {
