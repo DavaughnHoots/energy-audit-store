@@ -1,256 +1,90 @@
-# Energy Efficient Store Platform
+# Energy Audit Store - Admin Dashboard Analysis
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18.2.0-blue)](https://reactjs.org/)
-[![Node](https://img.shields.io/badge/Node-18.x-green)](https://nodejs.org/)
+This project contains utilities to help analyze and understand the admin dashboard of the Energy Audit Store application deployed on Heroku, specifically for adding a section on the admin dashboard that creates a website roadmap based on Most Used Features & Most Visited Pages.
 
-A marketplace platform that helps homeowners find energy-efficient products, perform DIY energy audits, and monitor their energy savings. The platform combines **product recommendations** with **__personalized__** energy analysis to provide a seamless experience for improving home energy efficiency.
+## Overview
 
-![Platform Preview](./src/assets/website%20logo.png)
+The Energy Audit Store has an admin dashboard at:
+https://energy-audit-store-e66479ed4f2b.herokuapp.com/admin/dashboard
 
-## 🌟 Features
+Our goal is to:
+1. Understand how the admin dashboard is implemented
+2. Add a section for building a website roadmap based on usage analytics
+3. Integrate with the existing analytics data
 
-- **Smart Product Discovery**
-  - Advanced search and filtering for energy-efficient products
-  - Detailed product specifications and energy ratings
-  - Price and savings comparisons
+## Available Utilities
 
-- **DIY Energy Audit Tools**
-  - Step-by-step home energy assessment
-  - Personalized efficiency recommendations
-  - Energy savings calculator
+This package includes several scripts to help you analyze and understand the existing codebase:
 
-- **User Dashboard**
-  - Track energy savings progress
-  - Manage property settings
-  - View personalized recommendations
+### 1. Web Inspector
 
-- **Community Features**
-  - Share energy-saving success stories
-  - Discussion forums
-  - Energy-saving tips and guides
-
-## 🚀 Tech Stack
-
-### Frontend
-- React 18 with TypeScript
-- Vite for build tooling
-- Tailwind CSS for styling
-- Recharts for data visualization
-- Lucide React for icons
-- ShadCN UI components
-
-### Backend
-- Node.js with Express
-- PostgreSQL database
-- JWT authentication
-- Winston for logging
-- Zod for validation
-
-## 📋 Prerequisites
-
-- Node.js 18.x or later
-- PostgreSQL 14.x or later
-- npm 9.x or later
-- Git
-
-## 🛠️ Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/energy-audit-store.git
-   cd energy-audit-store
-   ```
-
-2. **Set up the database**
-   ```bash
-   # Create PostgreSQL database
-   psql -U postgres
-   CREATE DATABASE energy_efficient_store;
-   \c energy_efficient_store
-   \i database_setup.sql
-   ```
-
-3. **Install frontend dependencies**
-   ```bash
-   npm install
-   ```
-
-4. **Install backend dependencies**
-   ```bash
-   cd backend
-   npm install
-   ```
-
-5. **Configure environment variables**
-
-   Create a `.env` file in the root directory:
-   ```env
-   VITE_API_URL=http://localhost:5000/api
-   ```
-
-   Create a `.env` file in the backend directory:
-   ```env
-   PORT=5000
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=postgres
-   DB_USER=postgres
-   DB_PASSWORD=
-   JWT_SECRET=your_secret_key
-   ```
-
-6. **Start development servers**
-
-   Frontend (root directory):
-   ```bash
-   npm run dev
-   ```
-
-   Backend (backend directory):
-   ```bash
-   npm run dev
-   ```
-
-## 📁 Project Structure
-
-```
-├── backend/                # Backend Express application
-│   ├── src/
-│   │   ├── config/        # Configuration files
-│   │   ├── middleware/    # Express middleware
-│   │   ├── routes/        # API routes
-│   │   ├── services/      # Business logic
-│   │   └── types/         # TypeScript types
-├── src/                   # Frontend React application
-│   ├── components/        # React components
-│   ├── pages/            # Page components
-│   ├── services/         # API services
-│   └── types/            # TypeScript types
-└── public/               # Static assets
-```
-
-## 🔨 Available Scripts
-
-### Frontend
+Analyzes the structure of the admin dashboard by making HTTP requests to the live site:
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
+npm run inspect
 ```
 
-### Backend
+This will:
+- Fetch the admin dashboard HTML
+- Extract and download JS and CSS files
+- Analyze files for admin dashboard related code
+- Save everything into an "app-analysis" directory
+
+### 2. Heroku Pull Script
+
+Attempts to download the app files using Heroku CLI:
 
 ```bash
-npm run dev          # Start development server
-npm start           # Start production server
-npm run build       # Build TypeScript files
-npm test            # Run tests
+npm run pull
 ```
 
-## 🧪 Running Tests
+### 3. Git-based Heroku Pull
+
+Attempts to clone the Heroku Git repository:
 
 ```bash
-# Frontend tests
-npm test
-
-# Backend tests
-cd backend
-npm test
+npm run git-pull
 ```
 
-## 🚀 Deploying to Heroku
+## Manual Examination
 
-The application is optimized for deployment to Heroku with the following features:
+If the automated tools don't work (perhaps due to authentication requirements), you can:
 
-1. **Production Mode**
-   - The `Procfile` sets `NODE_ENV=production` to enable production optimizations
-   - The build script automatically removes development dependencies and test files in production
+1. Visit the admin dashboard while logged in
+2. Use browser developer tools to inspect the page
+3. Look at the JavaScript files that are loaded
+4. Examine network requests made by the dashboard
 
-2. **Optimized Build Process**
-   - Development files are excluded from the production build
-   - Test files and documentation are not included in the deployed application
-   - Only necessary scripts are included in the production build
+See [direct-download-instructions.md](./direct-download-instructions.md) for detailed steps.
 
-3. **Deployment Steps**
+## Next Steps After Analysis
 
-   a. **Install the Heroku CLI**
-   ```bash
-   npm install -g heroku
-   ```
+Once you understand the structure of the admin dashboard:
 
-   b. **Login to Heroku**
-   ```bash
-   heroku login
-   ```
+1. Identify the relevant components:
+   - Admin dashboard main component
+   - Analytics data source
+   - Any existing roadmap-related features
 
-   c. **Create a new Heroku app**
-   ```bash
-   heroku create your-app-name
-   ```
+2. Create or modify the appropriate components:
+   - Create UI for displaying Most Used Features & Most Visited Pages
+   - Implement roadmap builder functionality
+   - Connect to analytics data
 
-   d. **Add PostgreSQL addon**
-   ```bash
-   heroku addons:create heroku-postgresql:hobby-dev
-   ```
+3. Test your changes
 
-   e. **Configure environment variables**
-   ```bash
-   heroku config:set JWT_SECRET=your_secret_key
-   heroku config:set NODE_ENV=production
-   ```
+4. Deploy the modified version
 
-   f. **Deploy the application**
-   ```bash
-   git push heroku main
-   ```
+## Important Files to Look For
 
-   g. **Run database migrations**
-   ```bash
-   heroku run bash
-   cd backend
-   node build/scripts/heroku_migration.js
-   ```
+When analyzing the code, focus on these likely important files:
 
-4. **Monitoring and Scaling**
-   - Use Heroku Dashboard to monitor application performance
-   - Scale dynos as needed based on traffic
-   - Monitor PostgreSQL connection limits and upgrade plan if necessary
+- `src/pages/AdminDashboardPage.tsx` - The main admin dashboard page
+- `src/components/admin/RoadmapFeature.tsx` - Existing roadmap feature (if any)
+- `src/components/admin/RoadmapBuilder.tsx` - Roadmap building component (if any)
+- `backend/src/routes/analytics.ts` - Backend API for analytics data
+- Any files containing "admin", "dashboard", "roadmap", or "analytics"
 
-5. **Troubleshooting**
-   - Check logs with `heroku logs --tail`
-   - Restart the application with `heroku restart`
-   - Verify environment variables with `heroku config`
+## Working with the Files
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-## 📚 API Documentation
-
-API documentation is available at `/api-docs` when running the development server. Please take a look at our [API Documentation](./backend/README.md) for detailed API specifications.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [React](https://reactjs.org/)
-- [Vite](https://vitejs.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [ShadCN UI](https://ui.shadcn.com/)
-- [Express](https://expressjs.com/)
-
-## 📧 Contact
-
-Project Link: [https://github.com/DavaughnHoots/energy-audit-store](https://github.com/DavaughnHoots/energy-audit-store)
+After you've retrieved the source code, you can modify the relevant files to add the new roadmap feature based on analytics data. The exact implementation will depend on the existing codebase structure, which you'll discover during analysis.
