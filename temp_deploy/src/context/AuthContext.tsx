@@ -134,18 +134,27 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       const data = await refreshResponse.json();
       console.log('Token refresh response structure:', Object.keys(data).join(', '));
       
-      // Handle access token - check if token field exists and is valid
+      // Handle access token - check if token or accessToken field exists and is valid
       let tokensStored = false;
-      if (data?.token && isValidToken(data.token)) {
-        const newAccessToken = data.token;
-        console.log('✅ Received valid access token, storing it');
+      const accessTokenValue = data?.accessToken || data?.token;
+      if (accessTokenValue && isValidToken(accessTokenValue)) {
+        console.log('Received valid access token, storing it');
         
         // Try to set the cookie - synchronous operation
-        const cookieSet = setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 });
+        const cookieSet = setCookie('accessToken', accessTokenValue, { maxAge: 15 * 60 });
         
         // Also store in localStorage as backup
         try {
-          localStorage.setItem('accessToken', newAccessToken);
+          localStorage.setItem('accessToken', accessTokenValue);
+          console.log('Access token stored in localStorage');
+          tokensStored = true;
+        } catch (e) {
+          console.error('Failed to store access token in localStorage:', e);
+        }
+      } else {
+        // Log what we received for debugging
+        console.warn('Invalid or missing token in refresh response');
+      }
           console.log('✅ Access token stored in localStorage');
           tokensStored = true;
         } catch (e) {
@@ -418,12 +427,17 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     console.log('[debug] document.cookie →', document.cookie);
     console.log('[debug] LS access →', localStorage.getItem('accessToken'));
     
+    // Handle both token naming conventions (accessToken or token)
+    const actualAccessToken = userData.accessToken || userData.token;
+    console.log('[debug] actual token value:', actualAccessToken ? 'present' : 'missing', 
+      'source:', userData.accessToken ? 'accessToken' : (userData.token ? 'token' : 'none'));
+    
     // Use setTimeout to delay localStorage writes to bypass iOS ITP restrictions
     setTimeout(() => {
       try {
         console.log('[debug] Delayed localStorage write attempt');
-        if (userData.accessToken) {
-          localStorage.setItem('accessToken', userData.accessToken);
+        if (actualAccessToken) {
+          localStorage.setItem('accessToken', actualAccessToken);
           console.log('[debug] accessToken written to localStorage');
         }
         if (userData.refreshToken) {

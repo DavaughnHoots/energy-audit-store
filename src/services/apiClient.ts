@@ -35,14 +35,36 @@ const determineApiUrl = (): string => {
         window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
       }
     }`;
-      console.log(`[auth] ✅ Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
+      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
+    } else {
+      // ALWAYS remove Authorization header in the invalid token case
+      delete config.headers.Authorization;
+      
+      // Track and log when we prevent a "Bearer" only header
+      if (token && token.trim() && token !== 'undefined' && token !== 'null') {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
     } else {
       // ALWAYS remove Authorization header in the invalid token case
       delete config.headers.Authorization;
       
       // Track and log when we prevent a "Bearer" only header
       if (token) {
-        console.warn(`[auth] ⛔ Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
+        console.warn(`[auth] Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
+        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
+      }
+    }`;
+      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
+    } else {
+      // ALWAYS remove Authorization header in the invalid token case
+      delete config.headers.Authorization;
+      
+      // Track and log when we prevent a "Bearer" only header
+      if (token) {
+        console.warn(`[auth] Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
+        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
+      }
+    }". Prevented Bearer-only header.`);
         window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
       }
     }

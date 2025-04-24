@@ -9,7 +9,7 @@ declare global {
 
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { isValidToken } from '../utils/tokenUtils';
-import { getCookie, setCookie, syncAuthTokens } from '../utils/cookieUtils';
+import { getCookie, setCookie, syncAuthTokens, getAccessToken } from '../utils/cookieUtils';
 
 /**
  * Enhanced apiClient with improved cross-domain support
@@ -22,93 +22,38 @@ import { getCookie, setCookie, syncAuthTokens } from '../utils/cookieUtils';
 // Determine the appropriate API URL based on the current environment
 const determineApiUrl = (): string => {
   // If URL is specified in environment variables, use that (highest priority)
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  // If running in browser, try to determine API URL based on current domain
-  if (typeof window !== 'undefined') {
-    const currentDomain = window.location.hostname;
-    
-    // Use relative URLs when on Heroku domain to avoid CORS issues
-    if (currentDomain === 'energy-audit-store-e66479ed4f2b.herokuapp.com') {
-      return '/api';
-    }
-    
-    // If running on localhost, default to local API
-    if (currentDomain === 'localhost') {
-      return 'http://localhost:5000/api';
-    }
-  }
-  
-  // Default fallback (lowest priority)
-  // Use the domain with the unique identifier
-  return 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/api';
-};
-
-// Get the API URL
-const API_URL = determineApiUrl();
-console.log(`Using API URL: ${API_URL}`);
-
-/**
- * Axios instance configured for API requests
- * This instance handles auth tokens and common headers
- */
-const axiosInstance = axios.create({
-  baseURL: API_URL,
-  timeout: 15000, // 15 seconds timeout
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, // Important for cookie/session auth
-});
-
-// Request interceptor to add auth token if available
-axiosInstance.interceptors.request.use(
-  (config) => {
-    try {
-      // Synchronize tokens between cookies and localStorage
-      syncAuthTokens();
-    } catch (error) {
-      console.error('Error syncing auth tokens:', error);
-    }
-    
-        // Get token with enhanced validation and fallbacks
-    let token = null;
-    
-    // Try localStorage first
-    const lsToken = localStorage.getItem('accessToken');
-    if (lsToken && lsToken !== 'undefined' && lsToken.trim() !== '') {
-      token = lsToken;
-      console.log('Retrieved valid access token from localStorage');
-    } else {
-      // Fallback to cookies
-      try {
-        const cookieToken = getCookie('accessToken');
-        if (cookieToken && cookieToken !== 'undefined' && cookieToken.trim() !== '') {
-          token = cookieToken;
-          // Store valid cookie token in localStorage
-          localStorage.setItem('accessToken', token);
-          console.log('Retrieved access token from cookies and saved to localStorage');
-        } else {
-          console.log('No valid token found in cookies');
-        }
-      } catch (error) {
-        console.error('Error accessing cookies:', error);
-      }
-    }
-    // Enhanced token validation - only add header for valid JWT tokens 
-    // CRITICAL: We must not send "Bearer " with no valid token as this causes auth issues
-    if (token && token.trim() && token !== 'undefined' && token !== 'null') {
+  if (token && token.trim() && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log(`[auth] ✅ Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
+      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
     } else {
       // ALWAYS remove Authorization header in the invalid token case
       delete config.headers.Authorization;
       
       // Track and log when we prevent a "Bearer" only header
       if (token) {
-        console.warn(`[auth] ⛔ Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
+        console.warn(`[auth] Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
+        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
+      }
+    }`;
+      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
+    } else {
+      // ALWAYS remove Authorization header in the invalid token case
+      delete config.headers.Authorization;
+      
+      // Track and log when we prevent a "Bearer" only header
+      if (token && token.trim() && token !== 'undefined' && token !== 'null') {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
+    } else {
+      // ALWAYS remove Authorization header in the invalid token case
+      delete config.headers.Authorization;
+      
+      // Track and log when we prevent a "Bearer" only header
+      if (token) {
+        console.warn(`[auth] Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
+        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
+      }
+    }". Prevented Bearer-only header.`);
         window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
       }
     }
@@ -158,10 +103,13 @@ axiosInstance.interceptors.response.use(
             return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
           };
           
+          // Get the access token from either token or accessToken field
+          const responseAccessToken = response.data?.accessToken || response.data?.token;
+          
           // If refresh successful, update tokens
-          if (response.data?.token && isValidToken(response.data.token)) {
+          if (responseAccessToken && isValidToken(responseAccessToken)) {
             // Update both localStorage and cookies
-            const newAccessToken = response.data.token;
+            const newAccessToken = responseAccessToken;
             localStorage.setItem('accessToken', newAccessToken);
             setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 }); // 15 minutes
             

@@ -40,6 +40,30 @@ export function getCookie(name) {
 /**
  * Check if a token value is valid
  */
+
+/**
+ * Get access token from any storage with fallbacks
+ * This handles the dual naming convention (accessToken vs token)
+ */
+export function getAccessToken() {
+  // Check localStorage first (most reliable)
+  const lsAccessToken = localStorage.getItem('accessToken');
+  if (isValidToken(lsAccessToken)) return lsAccessToken;
+  
+  // Fall back to alternative naming in localStorage
+  const lsToken = localStorage.getItem('token');
+  if (isValidToken(lsToken)) return lsToken;
+  
+  // Then try cookies
+  const cookieAccessToken = getCookie('accessToken');
+  if (isValidToken(cookieAccessToken)) return cookieAccessToken;
+  
+  // Finally check alternative naming in cookies
+  const cookieToken = getCookie('token');
+  if (isValidToken(cookieToken)) return cookieToken;
+  
+  return null;
+}
 export function isValidToken(token) {
   return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
 }
@@ -49,6 +73,85 @@ export function isValidToken(token) {
  */
 export function setCookie(name, value, opts = {}, retryCount = 0) {
   // Never set cookies to undefined or empty values
+  if (!value || value === 'undefined' || value === 'null') {
+    document.cookie = serialize(name, '', { ...opts, maxAge: -1, path: '/' });
+    console.log("Removed invalid cookie value for " + name);
+    return false;
+  }
+
+  // Check for mobile and adjust strategy
+  const isMobile = isMobileDevice();
+  
+  // On mobile, ALWAYS try localStorage first as primary storage
+  if (isMobile) {
+    try {
+      localStorage.setItem(name, value);
+      console.log("Mobile detected, stored " + name + " in localStorage");
+    } catch (lsError) {
+      console.error('Mobile localStorage storage failed:', lsError);
+    }
+  }
+  
+  // Detect iOS specifically (more restrictive than general mobile)
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+  // Set sameSite value based on device type - iOS REQUIRES 'none' with secure
+  const sameSiteValue = isIOS ? 'none' : (isMobile ? 'none' : 'lax');
+  // Always use secure flag for iOS and when sameSite is 'none'
+  const secureFlag = isIOS || sameSiteValue === 'none';
+  
+  console.log("Device is " + (isIOS ? 'iOS' : (isMobile ? 'mobile' : 'desktop')) + ", using SameSite=" + sameSiteValue + ", secure=" + secureFlag);
+
+  try {
+    document.cookie = serialize(name, value, {
+      path: '/',
+      sameSite: sameSiteValue,
+      secure: secureFlag || opts.secure,
+      ...opts,
+    });
+    
+    // Verify the cookie was actually set
+    const cookies = parseCookies();
+    if (cookies[name] === value) {
+      console.log("Cookie set successfully: " + name);
+      return true;
+    } else {
+      console.warn("Cookie verification failed for " + name);
+      
+      // For mobile, consider localStorage success as overall success
+      if (isMobile && localStorage.getItem(name) === value) {
+        console.log("Using localStorage fallback on mobile as primary");
+        return true;
+      }
+      
+      // Retry up to 2 times if setting failed
+      if (retryCount < 2) {
+        console.log("Retrying cookie set (attempt " + (retryCount + 1) + ")...");
+        // Wait a bit and retry
+        setTimeout(() => {
+          setCookie(name, value, opts, retryCount + 1);
+        }, 100);
+      } else {
+        console.error("Failed to set cookie " + name + " after " + retryCount + " retries");
+      }
+      return false;
+    }
+  } catch (error) {
+    console.error("Error setting cookie " + name + ":", error);
+    return false;
+  }
+}
+  document.cookie = serialize(name, value, { path: '/', ...opts });
+  return true;
+}// treat undefined/null/empty/"undefined"/"null" as **remove**
+  if (!value || value === 'undefined' || value === 'null') {
+    document.cookie = serialize(name, '', { ...opts, maxAge: -1, path: '/' });
+    console.log("Removed invalid cookie value for " + name);
+    return false;
+  }
+  document.cookie = serialize(name, value, { path: '/', ...opts });
+  return true;
+}// Never set cookies to undefined or empty values
   if (!isValidToken(value)) {
     console.warn("⚠️ Invalid cookie value for " + name + ", not setting");
     return false;
