@@ -3,6 +3,7 @@ import useAuth from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { getApiUrl } from '../config/api';
 import GranularAnalytics from '../components/analytics/GranularAnalytics';
+import NavigationAnalytics from '../components/analytics/NavigationAnalytics';
 
 // Types for the metrics returned from the API
 interface AnalyticsDashboardData {
@@ -293,6 +294,11 @@ const AdminDashboardPage: React.FC = () => {
 
           {/* Granular Analytics Section */}
           <GranularAnalytics startDate={startDate} endDate={endDate} />
+
+          {/* Website Navigation Analytics & Roadmap Section */}
+          <div className="mt-6">
+            <NavigationAnalytics startDate={startDate} endDate={endDate} />
+          </div>
         </div>
         
         {/* Pilot Study Survey Responses Section */}

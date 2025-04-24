@@ -45,6 +45,8 @@ import energyConsumptionRoutes from './routes/energyConsumption.js';
 // Using analytics routes
 import analyticsRoutes from './routes/analytics.js';
 import directAdminRoutes from './routes/direct-admin.js';
+// Import admin analytics routes for navigation data
+import adminAnalyticsRoutes from './routes/adminAnalytics.js';
 // Import enhanced badge routes
 import badgesRoutes from './routes/badges.enhanced.js';
 import userBadgesRoutes from './routes/user-badges.enhanced.js';
@@ -294,6 +296,8 @@ app.use('/api/products', productsRoutes);
 app.use('/api/visualization', visualizationRoutes);
 app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/admin', adminRoutes);
+// Register admin analytics routes under /api/admin/analytics path
+app.use('/api/admin/analytics', authenticate, requireRole(['admin']), adminAnalyticsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/direct-admin', authenticate, directAdminRoutes);
 // Apply survey routes
