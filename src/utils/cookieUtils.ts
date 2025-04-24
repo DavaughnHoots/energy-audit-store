@@ -111,10 +111,6 @@ export function setCookie(name, value, opts = {}, retryCount = 0) {
     console.error(`❌ Error setting cookie ${name}:`, error);
     return false;
   }
-} catch (error) {
-    console.error(`❌ Error setting cookie ${name}:`, error);
-    return false;
-  }
 }
 
 /**

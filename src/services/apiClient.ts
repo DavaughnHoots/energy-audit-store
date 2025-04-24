@@ -100,14 +100,6 @@ axiosInstance.interceptors.request.use(
         delete config.headers.Authorization;
         console.log('Removed invalid Authorization header');
       }
-    }`;
-      console.log(`Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
-    } else {
-      // Remove Authorization header if it exists
-      if (config.headers.Authorization) {
-        delete config.headers.Authorization;
-        console.log('Removed invalid Authorization header');
-      }
     }
     return config;
   },
