@@ -7,7 +7,7 @@ import { UserAuthService, AuthError } from '../services/userAuthService.js';
 import { AuthenticatedRequest, User } from '../types/auth.js';
 
 // Version identifier for logging
-const AUTH_MIDDLEWARE_VERSION = 'v1.1';
+const AUTH_MIDDLEWARE_VERSION = 'v1.2';
 
 const authService = new UserAuthService(pool);
 
@@ -23,12 +23,50 @@ const COOKIE_CONFIG = {
   domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
 };
 
+/**
+ * Robustly extracts an access token from either
+ *   – Authorization header (`Bearer <token>`)
+ *   – `accessToken` cookie (fallback)
+ */
+function getAccessToken(req: Request): string | null {
+  const rawHeader = req.headers.authorization?.trim();
+  console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Raw Auth Header: "${rawHeader || 'undefined'}"`);
+  
+  // Only accept Bearer token if it has a non-empty token part
+  if (rawHeader?.toLowerCase().startsWith('bearer ') && rawHeader.length > 7) {
+    const token = rawHeader.slice(7).trim();
+    if (token && token.length > 0) {
+      console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Token extracted from header (first 10 chars): ${token.substring(0, 10)}...`);
+      return token;
+    }
+    console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Bearer header had empty token`);
+  } else {
+    console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Auth header not in Bearer format or missing`);
+  }
+  
+  // Fallback to cookie if header gave nothing
+  if (req.cookies?.accessToken && req.cookies.accessToken !== 'undefined') {
+    const cookieToken = req.cookies.accessToken;
+    console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Using token from cookie (first 10 chars): ${cookieToken.substring(0, 10)}...`);
+    return cookieToken;
+  }
+  
+  console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] No valid token found in header or cookie`);
+  return null;
+}
+
 export const authenticate = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    // Skip auth for OPTIONS requests (CORS preflight)
+    if (req.method === 'OPTIONS') {
+      console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Skipping auth for OPTIONS request`);
+      return next();
+    }
+    
     // Check if route requires authentication
     const publicRoutes = ['/api/products', '/api/recommendations'];
     const isPublicRoute = publicRoutes.some(route => req.path.startsWith(route));
@@ -42,37 +80,9 @@ export const authenticate = async (
       host: req.headers.host
     });
 
-    // Parse the Authorization header only if it truly is "Bearer <token>"
-    let accessToken: string | undefined;
-    const authHeader = req.headers.authorization;
-    console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Raw Auth Header: ${authHeader || 'undefined'}`);
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const parts = authHeader.split(' ');
-      console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Auth header parts length: ${parts.length}`);
-      if (parts.length === 2 && parts[1] && parts[1].trim()) {
-        accessToken = parts[1].trim();
-        console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Extracted token from header (first 10 chars): ${accessToken.substring(0, 10)}...`);
-      } else {
-        console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Invalid auth header format or empty token. Parts: ${JSON.stringify(parts)}`);
-      }
-    }      console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Auth header not in Bearer format or missing`);
-    }
-
-    // Fallback to cookie if header gave nothing
-    if (!accessToken && req.cookies.accessToken) {
-      // Make sure we don't use the string "undefined" as a token
-      if (req.cookies.accessToken !== 'undefined') {
-        accessToken = req.cookies.accessToken;
-        console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Using token from cookie (first 10 chars): ${accessToken ? accessToken.substring(0, 10) : 'null'}...`);
-      } else {
-        console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Found literal "undefined" string in accessToken cookie, ignoring it`);
-        // Clear the invalid cookie
-        res.clearCookie('accessToken', COOKIE_CONFIG);
-      }
-    }
-    
-    const refreshToken = req.cookies.refreshToken;
+    // Try to get token from header or cookie
+    const accessToken = getAccessToken(req);
+    const refreshToken = req.cookies?.refreshToken;
 
     console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Access Token: ${accessToken ? 'Present' : 'Missing'}`);
     console.log(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Refresh Token: ${refreshToken ? 'Present' : 'Missing'}`);
@@ -156,13 +166,13 @@ export const authenticate = async (
         }
         return res.status(401).json({ error: error.message });
       }
-      throw error;
+      return next(error); // Pass error to Express error handler
     }
   } catch (error) {
     console.error(`[AUTH-FIX-${AUTH_MIDDLEWARE_VERSION}] Authentication error:`, error);
     res.clearCookie('accessToken', COOKIE_CONFIG);
     res.clearCookie('refreshToken', COOKIE_CONFIG);
-    res.status(500).json({ error: 'Authentication failed' });
+    return next(error); // Pass error to Express error handler
   }
 };
 
