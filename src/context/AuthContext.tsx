@@ -155,15 +155,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         // Log what we received for debugging
         console.warn('Invalid or missing token in refresh response');
       }
-          console.log('✅ Access token stored in localStorage');
-          tokensStored = true;
-        } catch (e) {
-          console.error('❌ Failed to store access token in localStorage:', e);
-        }
-      } else {
-        // Log what we received for debugging
-        console.warn('⚠️ Invalid or missing token in refresh response');
-      }
       
       // Handle refresh token - similarly with strict validation
       if (data?.refreshToken && isValidToken(data.refreshToken)) {
