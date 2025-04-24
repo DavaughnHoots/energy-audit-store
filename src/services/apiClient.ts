@@ -1,15 +1,16 @@
-let consecutive401 = 0;
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { isValidToken } from '../utils/tokenUtils';
+import { getCookie, setCookie, syncAuthTokens, getAccessToken } from '../utils/cookieUtils';
 
 // For tracking and diagnostics
 declare global {
   interface Window {
     __authBearerOnly?: number;
   }
-} // Counter to prevent infinite refresh loops
+}
 
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { isValidToken } from '../utils/tokenUtils';
-import { getCookie, setCookie, syncAuthTokens, getAccessToken } from '../utils/cookieUtils';
+// Counter to prevent infinite refresh loops
+let consecutive401 = 0;
 
 /**
  * Enhanced apiClient with improved cross-domain support
@@ -21,8 +22,31 @@ import { getCookie, setCookie, syncAuthTokens, getAccessToken } from '../utils/c
 
 // Determine the appropriate API URL based on the current environment
 const determineApiUrl = (): string => {
-  // If URL is specified in environment variables, use that (highest priority)
-  if (token && token.trim() && token !== 'undefined' && token !== 'null') {
+  // Default to production API if nothing else matches
+  return '/api';
+};
+
+// API base URL
+const API_URL = determineApiUrl();
+
+// Create axios instance with base configuration
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 30000, // 30 seconds
+  withCredentials: true, // Important for cookies/CORS
+});
+
+// Request interceptor to add authorization header
+axiosInstance.interceptors.request.use(
+  (config) => {
+    // Make sure headers object exists
+    config.headers = config.headers || {};
+    
+    // Get token from localStorage or cookie
+    const token = getAccessToken();
+    
+    // Only add Authorization header if token is valid
+    if (token && isValidToken(token)) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
     } else {
@@ -32,39 +56,6 @@ const determineApiUrl = (): string => {
       // Track and log when we prevent a "Bearer" only header
       if (token) {
         console.warn(`[auth] Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
-        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
-      }
-    }`;
-      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
-    } else {
-      // ALWAYS remove Authorization header in the invalid token case
-      delete config.headers.Authorization;
-      
-      // Track and log when we prevent a "Bearer" only header
-      if (token && token.trim() && token !== 'undefined' && token !== 'null') {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
-    } else {
-      // ALWAYS remove Authorization header in the invalid token case
-      delete config.headers.Authorization;
-      
-      // Track and log when we prevent a "Bearer" only header
-      if (token) {
-        console.warn(`[auth] Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
-        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
-      }
-    }`;
-      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
-    } else {
-      // ALWAYS remove Authorization header in the invalid token case
-      delete config.headers.Authorization;
-      
-      // Track and log when we prevent a "Bearer" only header
-      if (token) {
-        console.warn(`[auth] Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
-        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
-      }
-    }". Prevented Bearer-only header.`);
         window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
       }
     }
