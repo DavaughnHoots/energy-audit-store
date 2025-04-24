@@ -53,31 +53,15 @@ export function setCookie(name, value, opts = {}, retryCount = 0) {
     return false;
   }
 
-  // Check for mobile and adjust strategy
+  
+  // Check for mobile and adjust SameSite accordingly
   const isMobile = isMobileDevice();
-  
-  // On mobile, ALWAYS try localStorage first as primary storage
-  if (isMobile) {
-    try {
-      localStorage.setItem(name, value);
-      console.log(`📱 Mobile detected, stored ${name} in localStorage`);
-    } catch (lsError) {
-      console.error('📱 Mobile localStorage storage failed:', lsError);
-    }
-  }
-  
-  // Set sameSite value based on device type
-  const sameSiteValue = isMobile ? 'none' : 'lax';
-  // Add secure flag for 'none' SameSite
-  const secureFlag = sameSiteValue === 'none';
-  
-  console.log(`📱 Device is ${isMobile ? 'mobile' : 'desktop'}, using SameSite=${sameSiteValue}, secure=${secureFlag}`);
-
-  try {
+  const sameSiteValue = isMobile ? 'lax' : 'strict';
+  console.log(`📱 Device is ${isMobile ? 'mobile' : 'desktop'}, using SameSite=${sameSiteValue}`);
+try {
     document.cookie = serialize(name, value, {
       path: '/',
       sameSite: sameSiteValue,
-      secure: secureFlag || opts.secure,
       ...opts,
     });
     
@@ -89,12 +73,6 @@ export function setCookie(name, value, opts = {}, retryCount = 0) {
     } else {
       console.warn("⚠️ Cookie verification failed for " + name);
       
-      // For mobile, consider localStorage success as overall success
-      if (isMobile && localStorage.getItem(name) === value) {
-        console.log("📱 Using localStorage fallback on mobile as primary");
-        return true;
-      }
-      
       // Retry up to 2 times if setting failed
       if (retryCount < 2) {
         console.log(`🔄 Retrying cookie set (attempt ${retryCount + 1})...`);
@@ -104,14 +82,18 @@ export function setCookie(name, value, opts = {}, retryCount = 0) {
         }, 100);
       } else {
         console.error(`❌ Failed to set cookie ${name} after ${retryCount} retries`);
+        
+        // As a fallback, at least try to store in localStorage
+        try {
+          localStorage.setItem(name, value);
+          console.log(`📦 Stored ${name} in localStorage as fallback`);
+        } catch (lsError) {
+          console.error('localStorage fallback failed:', lsError);
+        }
       }
       return false;
     }
   } catch (error) {
-    console.error(`❌ Error setting cookie ${name}:`, error);
-    return false;
-  }
-} catch (error) {
     console.error(`❌ Error setting cookie ${name}:`, error);
     return false;
   }
@@ -140,7 +122,6 @@ export function syncAuthTokens(forceSync = false) {
     
     // Get tokens from all sources
     const cookies = parseCookies();
-    // Use item() to avoid exceptions
     const accessToken = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
     
@@ -166,7 +147,7 @@ export function syncAuthTokens(forceSync = false) {
       localStorage.removeItem('refreshToken');
     }
     
-    // Re-read values after cleanup
+    // Re-read cookies after cleanup
     const updatedCookies = parseCookies();
     const hasValidAccessTokenInCookies = updatedCookies.accessToken && isValidToken(updatedCookies.accessToken);
     const hasValidRefreshTokenInCookies = updatedCookies.refreshToken && isValidToken(updatedCookies.refreshToken);
@@ -177,32 +158,27 @@ export function syncAuthTokens(forceSync = false) {
     const hasValidAccessTokenInLS = updatedAccessToken && isValidToken(updatedAccessToken);
     const hasValidRefreshTokenInLS = updatedRefreshToken && isValidToken(updatedRefreshToken);
     
-    // Priority logic for mobile vs desktop
-    const isMobile = isMobileDevice();
+    // Priority logic for synchronization
     let finalAccessToken = null;
     let finalRefreshToken = null;
     
-    if (isMobile) {
-      // On mobile, prefer localStorage with cookie fallback
-      finalAccessToken = hasValidAccessTokenInLS ? updatedAccessToken : 
-                        (hasValidAccessTokenInCookies ? updatedCookies.accessToken : null);
-                        
-      finalRefreshToken = hasValidRefreshTokenInLS ? updatedRefreshToken : 
-                         (hasValidRefreshTokenInCookies ? updatedCookies.refreshToken : null);
-    } else {
-      // On desktop, prefer cookies with localStorage fallback
-      finalAccessToken = hasValidAccessTokenInCookies ? updatedCookies.accessToken : 
-                        (hasValidAccessTokenInLS ? updatedAccessToken : null);
-                        
-      finalRefreshToken = hasValidRefreshTokenInCookies ? updatedCookies.refreshToken : 
-                         (hasValidRefreshTokenInLS ? updatedRefreshToken : null);
+    // For each token type, choose the valid one with priority to localStorage
+    if (hasValidAccessTokenInLS) {
+      finalAccessToken = updatedAccessToken;
+    } else if (hasValidAccessTokenInCookies) {
+      finalAccessToken = updatedCookies.accessToken;
+    }
+    
+    if (hasValidRefreshTokenInLS) {
+      finalRefreshToken = updatedRefreshToken;
+    } else if (hasValidRefreshTokenInCookies) {
+      finalRefreshToken = updatedCookies.refreshToken;
     }
     
     // Apply the final tokens to both storage mechanisms
     console.log('🔄 Synchronizing with final token values:',
       finalAccessToken ? 'Access token present' : 'No valid access token',
-      finalRefreshToken ? 'Refresh token present' : 'No valid refresh token',
-      isMobile ? '(Mobile strategy)' : '(Desktop strategy)');
+      finalRefreshToken ? 'Refresh token present' : 'No valid refresh token');
     
     // Always set (or clear) both storage mechanisms when doing a force sync
     if (finalAccessToken) {
@@ -220,6 +196,19 @@ export function syncAuthTokens(forceSync = false) {
       localStorage.removeItem('refreshToken');
       removeCookie('refreshToken');
     }
+    
+    // Final verification
+    const finalCookies = parseCookies();
+    console.log('✅ Token sync complete. Final state:', {
+      cookies: {
+        accessToken: finalCookies.accessToken ? '(present)' : '(missing)',
+        refreshToken: finalCookies.refreshToken ? '(present)' : '(missing)'
+      },
+      localStorage: {
+        accessToken: localStorage.getItem('accessToken') ? '(present)' : '(missing)',
+        refreshToken: localStorage.getItem('refreshToken') ? '(present)' : '(missing)'
+      }
+    });
     
     return true;
   } catch (error) {
