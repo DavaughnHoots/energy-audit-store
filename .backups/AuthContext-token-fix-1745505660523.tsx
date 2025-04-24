@@ -134,27 +134,18 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       const data = await refreshResponse.json();
       console.log('Token refresh response structure:', Object.keys(data).join(', '));
       
-      // Handle access token - check if token or accessToken field exists and is valid
+      // Handle access token - check if token field exists and is valid
       let tokensStored = false;
-      const accessTokenValue = data?.accessToken || data?.token;
-      if (accessTokenValue && isValidToken(accessTokenValue)) {
-        console.log('Received valid access token, storing it');
+      if (data?.token && isValidToken(data.token)) {
+        const newAccessToken = data.token;
+        console.log('✅ Received valid access token, storing it');
         
         // Try to set the cookie - synchronous operation
-        const cookieSet = setCookie('accessToken', accessTokenValue, { maxAge: 15 * 60 });
+        const cookieSet = setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 });
         
         // Also store in localStorage as backup
         try {
-          localStorage.setItem('accessToken', accessTokenValue);
-          console.log('Access token stored in localStorage');
-          tokensStored = true;
-        } catch (e) {
-          console.error('Failed to store access token in localStorage:', e);
-        }
-      } else {
-        // Log what we received for debugging
-        console.warn('Invalid or missing token in refresh response');
-      }
+          localStorage.setItem('accessToken', newAccessToken);
           console.log('✅ Access token stored in localStorage');
           tokensStored = true;
         } catch (e) {

@@ -71,16 +71,8 @@ export function isValidToken(token) {
 /**
  * Set cookie with validation and retry mechanism
  */
-export function setCookie(name, value, opts = {}) {
-  // treat undefined/null/empty/"undefined"/"null" as **remove**
-  if (!value || value === 'undefined' || value === 'null') {
-    document.cookie = serialize(name, '', { ...opts, maxAge: -1, path: '/' });
-    console.log("Removed invalid cookie value for " + name);
-    return false;
-  }
-  document.cookie = serialize(name, value, { path: '/', ...opts });
-  return true;
-}// Never set cookies to undefined or empty values
+export function setCookie(name, value, opts = {}, retryCount = 0) {
+  // Never set cookies to undefined or empty values
   if (!isValidToken(value)) {
     console.warn("⚠️ Invalid cookie value for " + name + ", not setting");
     return false;
