@@ -8,6 +8,7 @@ export function isMobileDevice() {
   if (typeof window === 'undefined') return false;
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
+
 /**
  * Parse cookies from string
  */
@@ -38,10 +39,6 @@ export function getCookie(name) {
 }
 
 /**
- * Check if a token value is valid
- */
-
-/**
  * Get access token from any storage with fallbacks
  * This handles the dual naming convention (accessToken vs token)
  */
@@ -64,6 +61,10 @@ export function getAccessToken() {
   
   return null;
 }
+
+/**
+ * Check if a token value is valid
+ */
 export function isValidToken(token) {
   return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
 }
@@ -141,146 +142,6 @@ export function setCookie(name, value, opts = {}, retryCount = 0) {
     return false;
   }
 }
-  // Check for mobile and adjust strategy
-  const isMobile = isMobileDevice();
-  
-  // On mobile, ALWAYS try localStorage first as primary storage
-  if (isMobile) {
-    try {
-      localStorage.setItem(name, value);
-      console.log("Mobile detected, stored " + name + " in localStorage");
-    } catch (lsError) {
-      console.error('Mobile localStorage storage failed:', lsError);
-    }
-  }
-  
-  // Detect iOS specifically (more restrictive than general mobile)
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  
-  // Set sameSite value based on device type - iOS REQUIRES 'none' with secure
-  const sameSiteValue = isIOS ? 'none' : (isMobile ? 'none' : 'lax');
-  // Always use secure flag for iOS and when sameSite is 'none'
-  const secureFlag = isIOS || sameSiteValue === 'none';
-  
-  console.log("Device is " + (isIOS ? 'iOS' : (isMobile ? 'mobile' : 'desktop')) + ", using SameSite=" + sameSiteValue + ", secure=" + secureFlag);
-
-  try {
-    document.cookie = serialize(name, value, {
-      path: '/',
-      sameSite: sameSiteValue,
-      secure: secureFlag || opts.secure,
-      ...opts,
-    });
-    
-    // Verify the cookie was actually set
-    const cookies = parseCookies();
-    if (cookies[name] === value) {
-      console.log("Cookie set successfully: " + name);
-      return true;
-    } else {
-      console.warn("Cookie verification failed for " + name);
-      
-      // For mobile, consider localStorage success as overall success
-      if (isMobile && localStorage.getItem(name) === value) {
-        console.log("Using localStorage fallback on mobile as primary");
-        return true;
-      }
-      
-      // Retry up to 2 times if setting failed
-      if (retryCount < 2) {
-        console.log("Retrying cookie set (attempt " + (retryCount + 1) + ")...");
-        // Wait a bit and retry
-        setTimeout(() => {
-          setCookie(name, value, opts, retryCount + 1);
-        }, 100);
-      } else {
-        console.error("Failed to set cookie " + name + " after " + retryCount + " retries");
-      }
-      return false;
-    }
-  } catch (error) {
-    console.error("Error setting cookie " + name + ":", error);
-    return false;
-  }
-}
-  document.cookie = serialize(name, value, { path: '/', ...opts });
-  return true;
-}// treat undefined/null/empty/"undefined"/"null" as **remove**
-  if (!value || value === 'undefined' || value === 'null') {
-    document.cookie = serialize(name, '', { ...opts, maxAge: -1, path: '/' });
-    console.log("Removed invalid cookie value for " + name);
-    return false;
-  }
-  document.cookie = serialize(name, value, { path: '/', ...opts });
-  return true;
-}// Never set cookies to undefined or empty values
-  if (!isValidToken(value)) {
-    console.warn("⚠️ Invalid cookie value for " + name + ", not setting");
-    return false;
-  }
-
-  // Check for mobile and adjust strategy
-  const isMobile = isMobileDevice();
-  
-  // On mobile, ALWAYS try localStorage first as primary storage
-  if (isMobile) {
-    try {
-      localStorage.setItem(name, value);
-      console.log(`📱 Mobile detected, stored ${name} in localStorage`);
-    } catch (lsError) {
-      console.error('📱 Mobile localStorage storage failed:', lsError);
-    }
-  }
-  
-  // Detect iOS specifically (more restrictive than general mobile)
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  
-  // Set sameSite value based on device type - iOS REQUIRES 'none' with secure
-  const sameSiteValue = isIOS ? 'none' : (isMobile ? 'none' : 'lax');
-  // Always use secure flag for iOS and when sameSite is 'none'
-  const secureFlag = isIOS || sameSiteValue === 'none';
-  
-  console.log(`📱 Device is ${isIOS ? 'iOS' : (isMobile ? 'mobile' : 'desktop')}, using SameSite=${sameSiteValue}, secure=${secureFlag}`);
-
-  try {
-    document.cookie = serialize(name, value, {
-      path: '/',
-      sameSite: sameSiteValue,
-      secure: secureFlag || opts.secure,
-      ...opts,
-    });
-    
-    // Verify the cookie was actually set
-    const cookies = parseCookies();
-    if (cookies[name] === value) {
-      console.log("✅ Cookie set successfully: " + name);
-      return true;
-    } else {
-      console.warn("⚠️ Cookie verification failed for " + name);
-      
-      // For mobile, consider localStorage success as overall success
-      if (isMobile && localStorage.getItem(name) === value) {
-        console.log("📱 Using localStorage fallback on mobile as primary");
-        return true;
-      }
-      
-      // Retry up to 2 times if setting failed
-      if (retryCount < 2) {
-        console.log(`🔄 Retrying cookie set (attempt ${retryCount + 1})...`);
-        // Wait a bit and retry
-        setTimeout(() => {
-          setCookie(name, value, opts, retryCount + 1);
-        }, 100);
-      } else {
-        console.error(`❌ Failed to set cookie ${name} after ${retryCount} retries`);
-      }
-      return false;
-    }
-  } catch (error) {
-    console.error(`❌ Error setting cookie ${name}:`, error);
-    return false;
-  }
-}
 
 /**
  * Remove cookie
@@ -293,7 +154,7 @@ export function removeCookie(name, opts = {}) {
     ...opts,
   });
   
-  console.log("🗑️ Cookie removed: " + name);
+  console.log("Cookie removed: " + name);
 }
 
 /**
@@ -301,7 +162,7 @@ export function removeCookie(name, opts = {}) {
  */
 export function syncAuthTokens(forceSync = false) {
   try {
-    console.log(`🔄 Syncing auth tokens${forceSync ? ' (forced)' : ''}...`);
+    console.log(`Syncing auth tokens${forceSync ? ' (forced)' : ''}...`);
     
     // Get tokens from all sources
     const cookies = parseCookies();
@@ -311,23 +172,23 @@ export function syncAuthTokens(forceSync = false) {
     
     // Always check and clean cookie values first
     if (cookies.accessToken && !isValidToken(cookies.accessToken)) {
-      console.log('🧹 Removing invalid accessToken cookie:', cookies.accessToken);
+      console.log('Removing invalid accessToken cookie:', cookies.accessToken);
       removeCookie('accessToken');
     }
     
     if (cookies.refreshToken && !isValidToken(cookies.refreshToken)) {
-      console.log('🧹 Removing invalid refreshToken cookie:', cookies.refreshToken);
+      console.log('Removing invalid refreshToken cookie:', cookies.refreshToken);
       removeCookie('refreshToken');
     }
     
     // Then check localStorage values
     if (accessToken && !isValidToken(accessToken)) {
-      console.log('🧹 Removing invalid accessToken from localStorage:', accessToken);
+      console.log('Removing invalid accessToken from localStorage:', accessToken);
       localStorage.removeItem('accessToken');
     }
     
     if (refreshToken && !isValidToken(refreshToken)) {
-      console.log('🧹 Removing invalid refreshToken from localStorage:', refreshToken);
+      console.log('Removing invalid refreshToken from localStorage:', refreshToken);
       localStorage.removeItem('refreshToken');
     }
     
@@ -356,7 +217,7 @@ export function syncAuthTokens(forceSync = false) {
       finalRefreshToken = hasValidRefreshTokenInLS ? updatedRefreshToken : 
                         (hasValidRefreshTokenInCookies ? updatedCookies.refreshToken : null);
                         
-      console.log('📱 Mobile device - prioritizing localStorage tokens over cookies');
+      console.log('Mobile device - prioritizing localStorage tokens over cookies');
     } else {
       // On desktop, prefer cookies with localStorage fallback
       finalAccessToken = hasValidAccessTokenInCookies ? updatedCookies.accessToken : 
@@ -365,7 +226,7 @@ export function syncAuthTokens(forceSync = false) {
       finalRefreshToken = hasValidRefreshTokenInCookies ? updatedCookies.refreshToken : 
                         (hasValidRefreshTokenInLS ? updatedRefreshToken : null);
                         
-      console.log('🖥️ Desktop device - prioritizing cookie tokens over localStorage');
+      console.log('Desktop device - prioritizing cookie tokens over localStorage');
     }
     
     // Log token diagnostic info (helps with debugging)
@@ -376,7 +237,7 @@ export function syncAuthTokens(forceSync = false) {
     });
     
     // Apply the final tokens to both storage mechanisms
-    console.log('🔄 Synchronizing with final token values:',
+    console.log('Synchronizing with final token values:',
       finalAccessToken ? 'Access token present' : 'No valid access token',
       finalRefreshToken ? 'Refresh token present' : 'No valid refresh token',
       isMobile ? '(Mobile strategy)' : '(Desktop strategy)');
@@ -400,7 +261,7 @@ export function syncAuthTokens(forceSync = false) {
     
     return true;
   } catch (error) {
-    console.error('❌ Error syncing tokens:', error);
+    console.error('Error syncing tokens:', error);
     return false;
   }
 }
@@ -409,7 +270,7 @@ export function syncAuthTokens(forceSync = false) {
  * Authentication reset - clears all auth state
  */
 export function resetAuthState() {
-  console.log('🧹 Performing complete auth state reset...');
+  console.log('Performing complete auth state reset...');
   
   // Clear cookies
   removeCookie('accessToken');
@@ -421,6 +282,6 @@ export function resetAuthState() {
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('auth-state');
   
-  console.log('✅ Auth state reset complete');
+  console.log('Auth state reset complete');
   return true;
 }
