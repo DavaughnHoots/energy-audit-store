@@ -205,23 +205,7 @@ export function syncAuthTokens(forceSync = false) {
       Source: ['cookie', 'localStorage'],
       access: [!!updatedCookies.accessToken, !!updatedAccessToken],
       refresh: [!!updatedCookies.refreshToken, !!updatedRefreshToken]
-    }); = null;
-    
-    if (isMobile) {
-      // On mobile, prefer localStorage with cookie fallback
-      finalAccessToken = hasValidAccessTokenInLS ? updatedAccessToken : 
-                        (hasValidAccessTokenInCookies ? updatedCookies.accessToken : null);
-                        
-      finalRefreshToken = hasValidRefreshTokenInLS ? updatedRefreshToken : 
-                         (hasValidRefreshTokenInCookies ? updatedCookies.refreshToken : null);
-    } else {
-      // On desktop, prefer cookies with localStorage fallback
-      finalAccessToken = hasValidAccessTokenInCookies ? updatedCookies.accessToken : 
-                        (hasValidAccessTokenInLS ? updatedAccessToken : null);
-                        
-      finalRefreshToken = hasValidRefreshTokenInCookies ? updatedCookies.refreshToken : 
-                         (hasValidRefreshTokenInLS ? updatedRefreshToken : null);
-    }
+    });
     
     // Apply the final tokens to both storage mechanisms
     console.log('🔄 Synchronizing with final token values:',
