@@ -8,7 +8,8 @@
     "git-pull": "node git-pull-heroku.js",
     "inspect": "node web-inspect.js",
     "push-github": "node push-to-github.js",
-    "github-options": "node github-push-options.js"
+    "github-options": "node github-push-options.js",
+    "heroku-fix": "node heroku-dependency-fix.js"
   },
   "dependencies": {}
 }
