@@ -58,13 +58,13 @@ heroku config:set NPM_CONFIG_PRODUCTION=false -a energy-audit-store
 3. Deploy the fixes:
 
 ```bash
-# Run the deployment script created by the utility
-node scripts/heroku_deploy_dependency_fix.js
+# Run the fixed deployment script (Windows-compatible)
+npm run heroku-deploy
 
 # Or manually
 git add backend/package.json Procfile Aptfile package.json
 git commit -m "Fix Heroku dependency issues"
-git push heroku `git branch --show-current`:master -f
+git push heroku YOUR_BRANCH_NAME:master -f
 ```
 
 4. Monitor the deployment:
