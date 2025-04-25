@@ -14,6 +14,7 @@
     "heroku-deploy-final": "node scripts/heroku_deploy_final.js",
     "fix-dependencies": "node scripts/fix_missing_dependencies.js",
     "fix-typescript": "node scripts/fix_typescript_errors.js",
+    "deploy-typescript": "node deploy-typescript-fix.js",
     "heroku-config": "heroku config:set TS_NODE_TRANSPILE_ONLY=true -a energy-audit-store"
   },
   "dependencies": {},
