@@ -16,8 +16,10 @@
     "fix-typescript": "node scripts/fix_typescript_errors.js",
     "deploy-typescript": "node deploy-typescript-fix.js",
     "fix-frontend": "node fix-frontend-deployment.js",
+    "fix-backend": "node backend-fix.js",
     "deploy-all": "node deploy-all-fixes.js",
-    "heroku-config": "heroku config:set TS_NODE_TRANSPILE_ONLY=true -a energy-audit-store"
+    "heroku-config": "heroku config:set TS_NODE_TRANSPILE_ONLY=true -a energy-audit-store",
+    "postinstall": "cd backend && npm install"
   },
   "dependencies": {},
   "engines": {
