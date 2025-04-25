@@ -10,7 +10,8 @@
     "push-github": "node push-to-github.js",
     "github-options": "node github-push-options.js",
     "heroku-fix": "node heroku-dependency-fix.js",
-    "heroku-deploy": "node scripts/heroku_deploy_dependency_fix_fixed.js"
+    "heroku-deploy": "node scripts/heroku_deploy_dependency_fix_fixed.js",
+    "heroku-deploy-final": "node scripts/heroku_deploy_final.js"
   },
   "dependencies": {},
   "engines": {
