@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0.0",
+  "version": "1.0.0",
+  "lastUpdated": "2025-04-21",
+  "referenceData": {
+    "electricityRatesUSDPerkWh": {
+      "US-avg": 0.13,
+      "US-CA": 0.22,
+      "US-TX": 0.12
+    },
+    "iefThresholds": {
+      "dehumidifiers": {
+        "portable": {
+          "small": {
+            "standard": 1.2,
+            "energyStar": 1.8,
+            "mostEfficient": 2.5
+          },
+          "medium": {
+            "standard": 1.3,
+            "energyStar": 1.9,
+            "mostEfficient": 2.6
+          },
+          "large": {
+            "standard": 1.4,
+            "energyStar": 2.0,
+            "mostEfficient": 2.7
+          }
+        },
+        "wholehouse": {
+          "standard": 1.5,
+          "energyStar": 2.1,
+          "mostEfficient": 2.8
+        }
+      }
+    },
+    "confidenceThresholds": {
+      "medium": 0.5,
+      "high": 0.7
+    }
+  },
+  "dehumidifiers": {
+    "priceParameters": {
+      "basePrice": 249.99,
+      "capacityMultiplier": 2.5,
+      "energyStarPremium": 30,
+      "mostEfficientPremium": 50
+    },
+    "energyMetrics": {
+      "standardIEF": 1.3,
+      "energyStarIEF": 1.9,
+      "mostEfficientIEF": 2.6
+    },
+    "defaults": {
+      "annualRunDays": 180,
+      "dailyRunHours": 12
+    },
+    "efficiencyRatings": {
+      "standard": "Standard Efficiency",
+      "energyStar": "ENERGY STAR Certified",
+      "mostEfficient": "ENERGY STAR Most Efficient"
+    }
+  },
+  "refrigerators": {
+    "_placeholder": true
+  },
+  "hvac": {
+    "_placeholder": true
+  }
+}

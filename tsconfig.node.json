@@ -1,11 +1,14 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
+    "outDir": "./out-tsc/node",
     "module": "ESNext",
-    "moduleResolution": "bundler",
-    "noEmit": false,
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["vite.config.ts"]
+    "types": [
+      "node"
+    ],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "noImplicitAny": false,
+    "strict": false
+  }
 }

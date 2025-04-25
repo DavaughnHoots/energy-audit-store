@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Reset Tool - Energy Audit Store</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #065f46;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #065f46;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #064e3b;
+        }
+        button.secondary {
+            background-color: #6b7280;
+        }
+        button.secondary:hover {
+            background-color: #4b5563;
+        }
+        button.warning {
+            background-color: #dc2626;
+        }
+        button.warning:hover {
+            background-color: #b91c1c;
+        }
+        .token-display {
+            background-color: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 10px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-present {
+            background-color: #10b981;
+        }
+        .status-missing {
+            background-color: #ef4444;
+        }
+        .diagnostic-info {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .diagnostic-item {
+            margin-bottom: 8px;
+        }
+        .buttons-row {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Authentication Reset Tool</h1>
+    </div>
+
+    <div class="card">
+        <h2>Current Authentication State</h2>
+        <p>The table below shows your current authentication tokens stored in both cookies and localStorage.</p>
+        
+        <h3>Access Token</h3>
+        <div>
+            <p>
+                <span id="accessCookieStatus" class="status-indicator"></span> 
+                Cookie: <span id="accessCookieState">Checking...</span>
+            </p>
+            <p>
+                <span id="accessLocalStatus" class="status-indicator"></span>
+                LocalStorage: <span id="accessLocalState">Checking...</span>
+            </p>
+            <div id="accessTokenDisplay" class="token-display">Checking...</div>
+        </div>
+
+        <h3>Refresh Token</h3>
+        <div>
+            <p>
+                <span id="refreshCookieStatus" class="status-indicator"></span>
+                Cookie: <span id="refreshCookieState">Checking...</span>
+            </p>
+            <p>
+                <span id="refreshLocalStatus" class="status-indicator"></span>
+                LocalStorage: <span id="refreshLocalState">Checking...</span>
+            </p>
+            <div id="refreshTokenDisplay" class="token-display">Checking...</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Authentication Reset</h2>
+        <p>If you're experiencing login issues, you can use the button below to reset your authentication state. This will clear all authentication tokens and redirect you to the login page.</p>
+        
+        <div class="buttons-row">
+            <button id="refreshBtn" class="secondary">Refresh Status</button>
+            <button id="resetBtn" class="warning">Reset Authentication</button>
+            <button id="loginBtn">Go to Login</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Diagnostic Information</h2>
+        <div class="diagnostic-info">
+            <p class="diagnostic-item"><strong>User Agent:</strong> <span id="userAgent">Loading...</span></p>
+            <p class="diagnostic-item"><strong>Cookies Enabled:</strong> <span id="cookiesEnabled">Checking...</span></p>
+            <p class="diagnostic-item"><strong>LocalStorage Available:</strong> <span id="localStorageAvailable">Checking...</span></p>
+            <p class="diagnostic-item"><strong>Current URL:</strong> <span id="currentUrl">Loading...</span></p>
+            <p class="diagnostic-item"><strong>Timestamp:</strong> <span id="timestamp">Loading...</span></p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Energy Audit Store - Authentication Diagnostic Tool - v1.0</p>
+        <p>If you continue to experience issues, please contact support.</p>
+    </div>
+
+    <script>
+        // Parse cookies into an object
+        function parseCookies() {
+            return document.cookie
+                .split(';')
+                .map(v => v.trim())
+                .reduce((acc, current) => {
+                    const [name, ...value] = current.split('=');
+                    if (name) acc[name] = decodeURIComponent(value.join('='));
+                    return acc;
+                }, {});
+        }
+
+        // Check if a token is valid (not undefined, null, or empty)
+        function isValidToken(token) {
+            return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+        }
+
+        // Display token information
+        function updateTokenDisplay() {
+            const cookies = parseCookies();
+            const accessTokenCookie = cookies.accessToken;
+            const refreshTokenCookie = cookies.refreshToken;
+            const accessTokenLocal = localStorage.getItem('accessToken');
+            const refreshTokenLocal = localStorage.getItem('refreshToken');
+
+            // Update access token status
+            document.getElementById('accessCookieState').textContent = 
+                isValidToken(accessTokenCookie) ? 'Present' : 'Missing or Invalid';
+            document.getElementById('accessCookieStatus').className = 
+                `status-indicator ${isValidToken(accessTokenCookie) ? 'status-present' : 'status-missing'}`;
+            
+            document.getElementById('accessLocalState').textContent = 
+                isValidToken(accessTokenLocal) ? 'Present' : 'Missing or Invalid';
+            document.getElementById('accessLocalStatus').className = 
+                `status-indicator ${isValidToken(accessTokenLocal) ? 'status-present' : 'status-missing'}`;
+            
+            // Update refresh token status
+            document.getElementById('refreshCookieState').textContent = 
+                isValidToken(refreshTokenCookie) ? 'Present' : 'Missing or Invalid';
+            document.getElementById('refreshCookieStatus').className = 
+                `status-indicator ${isValidToken(refreshTokenCookie) ? 'status-present' : 'status-missing'}`;
+            
+            document.getElementById('refreshLocalState').textContent = 
+                isValidToken(refreshTokenLocal) ? 'Present' : 'Missing or Invalid';
+            document.getElementById('refreshLocalStatus').className = 
+                `status-indicator ${isValidToken(refreshTokenLocal) ? 'status-present' : 'status-missing'}`;
+            
+            // Show token details (masked for security)
+            const maskToken = token => {
+                if (!isValidToken(token)) return 'No valid token';
+                const parts = token.split('.');
+                if (parts.length === 3) { // Likely a JWT
+                    return `${parts[0].substring(0, 10)}...${parts[0].slice(-4)}.${parts[1].substring(0, 10)}...${parts[1].slice(-4)}.${parts[2].substring(0, 10)}...${parts[2].slice(-4)}`;
+                }
+                // Not a JWT, just mask most of it
+                return token.length > 20 ? 
+                    `${token.substring(0, 10)}...${token.slice(-4)}` : 
+                    '(token too short to mask)';
+            };
+
+            document.getElementById('accessTokenDisplay').textContent = isValidToken(accessTokenCookie) ? 
+                maskToken(accessTokenCookie) : 
+                (isValidToken(accessTokenLocal) ? maskToken(accessTokenLocal) : 'No valid access token found');
+
+            document.getElementById('refreshTokenDisplay').textContent = isValidToken(refreshTokenCookie) ? 
+                maskToken(refreshTokenCookie) : 
+                (isValidToken(refreshTokenLocal) ? maskToken(refreshTokenLocal) : 'No valid refresh token found');
+        }
+
+        // Update diagnostic information
+        function updateDiagnosticInfo() {
+            document.getElementById('userAgent').textContent = navigator.userAgent;
+            document.getElementById('cookiesEnabled').textContent = navigator.cookieEnabled ? 'Yes' : 'No';
+            document.getElementById('currentUrl').textContent = window.location.href;
+            document.getElementById('timestamp').textContent = new Date().toISOString();
+            
+            // Check if localStorage is available
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                document.getElementById('localStorageAvailable').textContent = 'Yes';
+            } catch (e) {
+                document.getElementById('localStorageAvailable').textContent = 'No - ' + e.message;
+            }
+        }
+
+        // Reset authentication
+        function resetAuth() {
+            // Clear cookies
+            document.cookie = 'accessToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.cookie = 'refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.cookie = 'XSRF-TOKEN=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            
+            // Clear localStorage
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('auth-state');
+            
+            alert('Authentication has been reset successfully. You will now be redirected to the login page.');
+            window.location.href = '/sign-in';
+        }
+
+        // Initialize page
+        function init() {
+            updateTokenDisplay();
+            updateDiagnosticInfo();
+            
+            // Event listeners
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                updateTokenDisplay();
+                updateDiagnosticInfo();
+            });
+            
+            document.getElementById('resetBtn').addEventListener('click', resetAuth);
+            
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                window.location.href = '/sign-in';
+            });
+        }
+
+        // Run initialization when page loads
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+import { DehumidifierEstimator } from '../estimators/DehumidifierEstimator';
+import { productEstimationsConfig } from './testConfig';
+
+// Mock configuration for testing
+const config = productEstimationsConfig.dehumidifiers;
+const testElectricityRate = 0.14; // US average rate
+
+describe('DehumidifierEstimator', () => {
+  const estimator = new DehumidifierEstimator(config, testElectricityRate);
+
+  describe.each([
+    // capacity, isEnergyStar, isMostEfficient, expectedPrice, expectedSavings, expectedRoi, expectedPayback, expectedConfidence
+    [35.57, true, false, 299, 70.56, 23.6, 4.2, 'high'],
+    [30, true, false, 285, 59.5, 20.9, 4.8, 'high'],
+    [50, true, false, 355, 99.7, 28.1, 3.6, 'high'],
+    [35.57, false, false, 269, 0, 0, Infinity, 'high'],
+    [35.57, true, true, 349, 96.7, 27.7, 3.6, 'high'],
+    [35.57, undefined, undefined, 269, 0, 0, Infinity, 'low'], // Missing attributes
+  ])(
+    'Dehumidifier with capacity %s pints, EnergyStar: %s, MostEfficient: %s',
+    (capacity, isEnergyStar, isMostEfficient, expectedPrice, expectedSavings, expectedRoi, expectedPayback, expectedConfidence) => {
+      const product = {
+        capacityPintsPerDay: capacity,
+        isEnergyStar,
+        isMostEfficient,
+      };
+
+      const result = estimator.estimate(product);
+
+      it('calculates correct price', () => {
+        expect(result.price).toBeCloseTo(expectedPrice, 0);
+      });
+
+      it('calculates correct annual savings', () => {
+        expect(result.annualSavings).toBeCloseTo(expectedSavings, 1);
+      });
+
+      it('calculates correct ROI', () => {
+        expect(result.roi).toBeCloseTo(expectedRoi, 1);
+      });
+
+      it('calculates correct payback period', () => {
+        if (expectedPayback === Infinity) {
+          expect(result.paybackPeriod).toBe(Infinity);
+        } else {
+          expect(result.paybackPeriod).toBeCloseTo(expectedPayback, 1);
+        }
+      });
+
+      it('has correct confidence level', () => {
+        expect(result.confidenceLevel).toBe(expectedConfidence);
+      });
+
+      it('provides formatted values', () => {
+        expect(result.formattedPrice).toBeDefined();
+        expect(result.formattedAnnualSavings).toBeDefined();
+        expect(result.formattedRoi).toBeDefined();
+        expect(result.formattedPaybackPeriod).toBeDefined();
+      });
+    }
+  );
+
+  describe('Edge cases', () => {
+    it('handles null capacity', () => {
+      const result = estimator.estimate({ isEnergyStar: true });
+      expect(result.price).toBeGreaterThan(0);
+      expect(result.confidenceLevel).toBe('medium');
+    });
+
+    it('handles very small capacity values', () => {
+      const result = estimator.estimate({ capacityPintsPerDay: 1, isEnergyStar: true });
+      expect(result.price).toBeGreaterThan(0);
+      expect(result.annualSavings).toBeGreaterThan(0);
+    });
+
+    it('handles very large capacity values', () => {
+      const result = estimator.estimate({ capacityPintsPerDay: 200, isEnergyStar: true });
+      expect(result.price).toBeGreaterThan(0);
+      expect(result.annualSavings).toBeGreaterThan(0);
+    });
+  });
+});

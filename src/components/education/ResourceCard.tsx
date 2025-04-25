@@ -8,6 +8,7 @@ import ProgressIndicator from './ProgressIndicator';
 import ResourceRatingAndReview from './ResourceRatingAndReview';
 import { educationService } from '@/services/educationService';
 
+
 interface ResourceCardProps {
   resource: EducationalResource;
   featured?: boolean;
@@ -50,6 +51,8 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+
 
   return (
     <div 
@@ -128,6 +131,8 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
             })}
           </div>
         </div>
+
+
         
         {/* Progress indicator */}
         {showProgress && resource.progress && (
@@ -143,6 +148,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         <div className="mt-4 pt-3 border-t border-gray-100">
           <ResourceRatingAndReview 
             resourceId={resource.id}
+            resourceUrl={resource.url}
             size="sm"
           />
         </div>

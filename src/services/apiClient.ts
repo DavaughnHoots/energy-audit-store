@@ -1,5 +1,16 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { getCookie, syncAuthTokens } from '../utils/cookieUtils';
+import { isValidToken } from '../utils/tokenUtils';
+import { getCookie, setCookie, syncAuthTokens, getAccessToken } from '../utils/cookieUtils';
+
+// For tracking and diagnostics
+declare global {
+  interface Window {
+    __authBearerOnly?: number;
+  }
+}
+
+// Counter to prevent infinite refresh loops
+let consecutive401 = 0;
 
 /**
  * Enhanced apiClient with improved cross-domain support
@@ -11,79 +22,43 @@ import { getCookie, syncAuthTokens } from '../utils/cookieUtils';
 
 // Determine the appropriate API URL based on the current environment
 const determineApiUrl = (): string => {
-  // If URL is specified in environment variables, use that (highest priority)
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  // If running in browser, try to determine API URL based on current domain
-  if (typeof window !== 'undefined') {
-    const currentDomain = window.location.hostname;
-    
-    // Use relative URLs when on Heroku domain to avoid CORS issues
-    if (currentDomain === 'energy-audit-store-e66479ed4f2b.herokuapp.com') {
-      return '/api';
-    }
-    
-    // If running on localhost, default to local API
-    if (currentDomain === 'localhost') {
-      return 'http://localhost:5000/api';
-    }
-  }
-  
-  // Default fallback (lowest priority)
-  // Use the domain with the unique identifier
-  return 'https://energy-audit-store-e66479ed4f2b.herokuapp.com/api';
+  // Default to production API if nothing else matches
+  return '/api';
 };
 
-// Get the API URL
+// API base URL
 const API_URL = determineApiUrl();
-console.log(`Using API URL: ${API_URL}`);
 
-/**
- * Axios instance configured for API requests
- * This instance handles auth tokens and common headers
- */
+// Create axios instance with base configuration
 const axiosInstance = axios.create({
   baseURL: API_URL,
-  timeout: 15000, // 15 seconds timeout
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, // Important for cookie/session auth
+  timeout: 30000, // 30 seconds
+  withCredentials: true, // Important for cookies/CORS
 });
 
-// Request interceptor to add auth token if available
+// Request interceptor to add authorization header
 axiosInstance.interceptors.request.use(
   (config) => {
-    try {
-      // Synchronize tokens between cookies and localStorage
-      syncAuthTokens();
-    } catch (error) {
-      console.error('Error syncing auth tokens:', error);
-    }
+    // Make sure headers object exists
+    config.headers = config.headers || {};
     
-    // Get token from localStorage if available
-    let token = localStorage.getItem('accessToken');
+    // Get token from localStorage or cookie
+    const token = getAccessToken();
     
-    // If no token in localStorage, try cookies
-    if (!token) {
-      try {
-        token = getCookie('accessToken');
-        if (token) {
-          localStorage.setItem('accessToken', token);
-          console.log('Retrieved access token from cookies and saved to localStorage');
-        }
-      } catch (error) {
-        console.error('Error accessing cookies:', error);
+    // Only add Authorization header if token is valid
+    if (token && isValidToken(token)) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[auth] Added Authorization header with valid token: Bearer ${token.substring(0, 10)}...`);
+    } else {
+      // ALWAYS remove Authorization header in the invalid token case
+      delete config.headers.Authorization;
+      
+      // Track and log when we prevent a "Bearer" only header
+      if (token) {
+        console.warn(`[auth] Invalid token value, header stripped: "${token}". Prevented Bearer-only header.`);
+        window.__authBearerOnly = (window.__authBearerOnly || 0) + 1;
       }
     }
-    
-    // Add authorization header if token exists
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
     return config;
   },
   (error) => Promise.reject(error)
@@ -125,17 +100,40 @@ axiosInstance.interceptors.response.use(
             refreshToken 
           });
           
+          // Helper function to check if token is valid
+          const isValidToken = (token) => {
+            return token && token !== 'undefined' && token !== 'null' && token.trim() !== '';
+          };
+          
+          // Get the access token from either token or accessToken field
+          const responseAccessToken = response.data?.accessToken || response.data?.token;
+          
           // If refresh successful, update tokens
-          if (response.data?.accessToken) {
-            localStorage.setItem('accessToken', response.data.accessToken);
+          if (responseAccessToken && isValidToken(responseAccessToken)) {
+            // Update both localStorage and cookies
+            const newAccessToken = responseAccessToken;
+            localStorage.setItem('accessToken', newAccessToken);
+            setCookie('accessToken', newAccessToken, { maxAge: 15 * 60 }); // 15 minutes
             
-            if (response.data.refreshToken) {
+            if (response.data.refreshToken && isValidToken(response.data.refreshToken)) {
               localStorage.setItem('refreshToken', response.data.refreshToken);
+              setCookie('refreshToken', response.data.refreshToken, { maxAge: 7 * 24 * 60 * 60 }); // 7 days
+            } else {
+              console.warn('Invalid or missing refreshToken in refresh response');
             }
             
-            // Update auth header with new token
-            axiosInstance.defaults.headers.common.Authorization = `Bearer ${response.data.accessToken}`;
-            originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
+            console.log('Updated tokens in both localStorage and cookies during refresh');
+            
+            // Double check that token is valid before setting header
+            if (isValidToken(newAccessToken)) {
+              // Update auth header with new token
+              axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            } else {
+              console.error('Token refresh resulted in invalid token');
+              delete axiosInstance.defaults.headers.common.Authorization;
+              delete originalRequest.headers.Authorization;
+            }
             
             // Retry the original request
             return axiosInstance(originalRequest);

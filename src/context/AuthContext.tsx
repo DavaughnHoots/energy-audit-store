@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getCookie, setCookie, removeCookie, syncAuthTokens, resetAuthState, isValidToken } from '@/utils/cookieUtils';
 
 // Add global window property for auth check locking
 declare global {
@@ -18,6 +19,7 @@ interface AuthContextType {
   user: User | null;
   login: (userData: User) => void;
   logout: () => void;
+  resetAuth: () => void; // New method for emergency auth reset
 }
 
 interface AuthState {
@@ -109,12 +111,13 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     throw lastError || new Error('Max retries exceeded');
   };
 
+  // Enhanced token refresh with better storage verification
   const refreshToken = async () => {
     if (isRefreshing) return false;
     isRefreshing = true;
 
     try {
-      console.log('Attempting token refresh');
+      console.log('🔄 Attempting token refresh');
       const refreshResponse = await fetchWithRetry(
         API_ENDPOINTS.AUTH.REFRESH,
         {
@@ -123,13 +126,74 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       );
 
       if (!refreshResponse.ok) {
-        throw new Error('Token refresh failed');
+        console.error(`❌ Token refresh failed with status ${refreshResponse.status}`);
+        throw new Error(`Token refresh failed with status ${refreshResponse.status}`);
       }
-
-      console.log('Token refresh successful');
-      return true;
+      
+      // Parse the response to get the new tokens
+      const data = await refreshResponse.json();
+      console.log('Token refresh response structure:', Object.keys(data).join(', '));
+      
+      // Handle access token - check if token or accessToken field exists and is valid
+      let tokensStored = false;
+      const accessTokenValue = data?.accessToken || data?.token;
+      if (accessTokenValue && isValidToken(accessTokenValue)) {
+        console.log('Received valid access token, storing it');
+        
+        // Try to set the cookie - synchronous operation
+        const cookieSet = setCookie('accessToken', accessTokenValue, { maxAge: 15 * 60 });
+        
+        // Also store in localStorage as backup
+        try {
+          localStorage.setItem('accessToken', accessTokenValue);
+          console.log('Access token stored in localStorage');
+          tokensStored = true;
+        } catch (e) {
+          console.error('Failed to store access token in localStorage:', e);
+        }
+      } else {
+        // Log what we received for debugging
+        console.warn('Invalid or missing token in refresh response');
+      }
+      
+      // Handle refresh token - similarly with strict validation
+      if (data?.refreshToken && isValidToken(data.refreshToken)) {
+        console.log('✅ Received valid refresh token, storing it');
+        const cookieSet = setCookie('refreshToken', data.refreshToken, { maxAge: 7 * 24 * 60 * 60 });
+        
+        // Also store in localStorage as backup
+        try {
+          localStorage.setItem('refreshToken', data.refreshToken);
+          console.log('✅ Refresh token stored in localStorage');
+          tokensStored = true;
+        } catch (e) {
+          console.error('❌ Failed to store refresh token in localStorage:', e);
+        }
+      } else {
+        console.warn('⚠️ Invalid or missing refreshToken in refresh response');
+      }
+      
+      // Force sync to ensure consistent state between cookies and localStorage
+      console.log('🔄 Forcing token synchronization...');
+      syncAuthTokens(true);
+      
+      // Verify we have valid tokens
+      const verifiedAccessToken = getCookie('accessToken');
+      const verifiedRefreshToken = getCookie('refreshToken');
+      
+      if (isValidToken(verifiedAccessToken) || isValidToken(verifiedRefreshToken)) {
+        console.log('✅ Token refresh and verification successful');
+        return true;
+      } else {
+        console.error('❌ Token refresh completed but no valid tokens available after sync');
+        if (tokensStored) {
+          console.log('🔄 Tokens exist in localStorage but not in cookies - possible cookie settings issue');
+          return true; // Still return true as localStorage tokens might work
+        }
+        return false;
+      }
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      console.error('❌ Token refresh failed:', error);
       return false;
     } finally {
       isRefreshing = false;
@@ -173,6 +237,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     console.log('Starting auth check');
 
     try {
+      // Always force a token sync before auth check
+      syncAuthTokens();
+      
       const response = await fetchWithRetry(
         API_ENDPOINTS.AUTH.PROFILE,
         {
@@ -321,6 +388,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     console.log('Initial auth check on mount');
     // Using a setTimeout to break potential render cycles
     setTimeout(() => {
+      // Ensure we have synced tokens before checking auth
+      syncAuthTokens(true);
       checkAuthStatus(true);
     }, 500); // Add significant delay to break render cycles
   }, []); // Intentionally empty to run only once on mount
@@ -340,8 +409,40 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     };
   }, [authState.initialCheckDone]);
 
+  // Enhanced login function that ensures token storage
   const login = async (userData: User) => {
     console.log('Login called with user data:', userData);
+    
+    // Debug logs for iOS Chrome issue
+    console.log('[debug] signin response JSON →', JSON.stringify(userData).slice(0, 120));
+    console.log('[debug] document.cookie →', document.cookie);
+    console.log('[debug] LS access →', localStorage.getItem('accessToken'));
+    
+    // Handle both token naming conventions (accessToken or token)
+    const actualAccessToken = userData.accessToken || userData.token;
+    console.log('[debug] actual token value:', actualAccessToken ? 'present' : 'missing', 
+      'source:', userData.accessToken ? 'accessToken' : (userData.token ? 'token' : 'none'));
+    
+    // Use setTimeout to delay localStorage writes to bypass iOS ITP restrictions
+    setTimeout(() => {
+      try {
+        console.log('[debug] Delayed localStorage write attempt');
+        if (actualAccessToken) {
+          localStorage.setItem('accessToken', actualAccessToken);
+          console.log('[debug] accessToken written to localStorage');
+        }
+        if (userData.refreshToken) {
+          localStorage.setItem('refreshToken', userData.refreshToken);
+          console.log('[debug] refreshToken written to localStorage');
+        }
+      } catch (error) {
+        console.error('[debug] Failed delayed localStorage write:', error);
+      }
+    }, 100);
+    
+    // Force token sync to ensure cookies and localStorage are in sync
+    syncAuthTokens(true);
+    
     setAuthState({
       isAuthenticated: true,
       isLoading: false,
@@ -374,6 +475,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
+      // Complete auth reset
+      resetAuthState();
+      
       setAuthState({
         isAuthenticated: false,
         isLoading: false,
@@ -384,6 +488,23 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       navigate('/sign-in');
     }
   };
+  
+  // Method to force complete auth reset - accessible to users
+  const performAuthReset = () => {
+    console.log('Performing emergency auth reset');
+    resetAuthState();
+    
+    setAuthState({
+      isAuthenticated: false,
+      isLoading: false,
+      lastVerified: null,
+      user: null,
+      initialCheckDone: true
+    });
+    
+    // Force page reload to clear any other state
+    window.location.href = '/sign-in';
+  };
 
   return (
     <AuthContext.Provider 
@@ -392,7 +513,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         isLoading: authState.isLoading,
         user: authState.user,
         login,
-        logout
+        logout,
+        resetAuth: performAuthReset
       }}
     >
       {children}

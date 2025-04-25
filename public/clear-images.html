@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Image Cache</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 30px;
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+    
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    
+    p {
+      line-height: 1.6;
+      color: #666;
+      margin-bottom: 25px;
+    }
+    
+    .button {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .button:hover {
+      background-color: #3367d6;
+    }
+    
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      display: none;
+    }
+    
+    .success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+    
+    .logo {
+      max-width: 200px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="assets/website%20logo-DG5UpPLJ.png" alt="Energy Audit Store Logo" class="logo">
+    <h1>Clear Image Cache</h1>
+    <p>
+      If you're seeing incorrect or outdated product images, clearing the image cache can help.
+      This will remove all stored image references from your browser's local storage and force
+      the application to load fresh images.
+    </p>
+    <button id="clearButton" class="button">Clear Image Cache</button>
+    <div id="result" class="result"></div>
+  </div>
+
+  <script src="clear_image_cache.js"></script>
+  <script>
+    document.getElementById('clearButton').addEventListener('click', function() {
+      const result = clearImageCache();
+      const resultElement = document.getElementById('result');
+      
+      resultElement.className = 'result ' + (result.success ? 'success' : 'error');
+      resultElement.innerHTML = `
+        <strong>${result.success ? 'Success!' : 'Error'}</strong><br>
+        ${result.message}
+      `;
+      resultElement.style.display = 'block';
+      
+      // After clearing, add a message about refreshing the main page
+      if (result.success) {
+        resultElement.innerHTML += '<br><br>Please return to the main application and reload the page to see updated images.';
+      }
+    });
+  </script>
+</body>
+</html>

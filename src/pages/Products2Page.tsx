@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { usePageTracking } from '../hooks/analytics/usePageTracking';
 import { AnalyticsArea } from '../context/AnalyticsContext';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, Info } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
 
-// Import implemented components
+// Import components
 import CategoryGallery from '../components/products/CategoryGallery';
-// Import components we'll create later
-// import SubCategoryGallery from '../components/products/SubCategoryGallery';
-// import ProductGallery from '../components/products/ProductGallery';
-// import GalleryBreadcrumb from '../components/products/GalleryBreadcrumb';
-// import SearchOverlay from '../components/products/SearchOverlay';
+import SubCategoryGallery from '../components/products/SubCategoryGallery';
+import ProductGallery from '../components/products/ProductGallery';
+import EnhancedProductGallery from '../components/products/EnhancedProductGallery';
+import ProductDetailModal from '../components/products/ProductDetailModal';
 
 enum ViewState {
   CATEGORIES = 'categories',
@@ -32,6 +31,10 @@ const Products2Page: React.FC = () => {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
+  // Product detail modal state
+  const [isProductDetailOpen, setIsProductDetailOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
+  
   // Handle category selection
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
@@ -42,6 +45,12 @@ const Products2Page: React.FC = () => {
   const handleSubCategorySelect = (subCategory: string) => {
     setSelectedSubCategory(subCategory);
     setViewState(ViewState.PRODUCTS);
+  };
+  
+  // Handle product selection for detail view
+  const handleProductSelect = (productId: string) => {
+    setSelectedProductId(productId);
+    setIsProductDetailOpen(true);
   };
   
   // Handle search
@@ -118,7 +127,7 @@ const Products2Page: React.FC = () => {
         </div>
       </div>
       
-      {/* Navigation - will be replaced with GalleryBreadcrumb component */}
+      {/* Navigation */}
       {viewState !== ViewState.CATEGORIES && (
         <div className="mb-4">
           <button 
@@ -144,28 +153,19 @@ const Products2Page: React.FC = () => {
       )}
       
       {viewState === ViewState.SUBCATEGORIES && selectedCategory && (
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
-          {categories.sub[selectedCategory]?.map((subCategory) => (
-            <button
-              key={subCategory}
-              onClick={() => handleSubCategorySelect(subCategory)}
-              className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-center"
-            >
-              {subCategory}
-            </button>
-          ))}
-        </div>
+        <SubCategoryGallery
+          mainCategory={selectedCategory}
+          subCategories={categories.sub[selectedCategory] || []}
+          onSubCategorySelect={handleSubCategorySelect}
+        />
       )}
       
       {viewState === ViewState.PRODUCTS && (
-        <div className="bg-gray-100 rounded-lg p-8 text-center">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            {`${selectedCategory} > ${selectedSubCategory}`}
-          </h2>
-          <p className="text-gray-500">
-            This is a placeholder for the Product Gallery that will be implemented in the next phase.
-          </p>
-        </div>
+        <EnhancedProductGallery 
+          category={selectedCategory} 
+          subcategory={selectedSubCategory}
+          onProductSelect={handleProductSelect}
+        />
       )}
       
       {viewState === ViewState.SEARCH && (
@@ -177,6 +177,15 @@ const Products2Page: React.FC = () => {
             This is a placeholder for the Search Results that will be implemented in the next phase.
           </p>
         </div>
+      )}
+      
+      {/* Product Detail Modal */}
+      {isProductDetailOpen && (
+        <ProductDetailModal
+          productId={selectedProductId}
+          isOpen={isProductDetailOpen}
+          onClose={() => setIsProductDetailOpen(false)}
+        />
       )}
     </div>
   );

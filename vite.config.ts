@@ -30,7 +30,7 @@ export default defineConfig({
         'nock',
         '@mapbox/node-pre-gyp',
         // Removed axios from external since we need it in the frontend
-      ],
+      , 'zod'],
     },
     minify: true,
     sourcemap: false,

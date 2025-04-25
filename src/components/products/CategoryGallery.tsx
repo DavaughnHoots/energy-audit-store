@@ -21,6 +21,9 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
   const [error, setError] = useState<string | null>(null);
   const [canRefresh, setCanRefresh] = useState(() => canRefreshCategoryImage(category));
   
+  // Default placeholder image as base64 - gray background with category text
+  const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI0NTAiIGZpbGw9IiNFQUVBRUEiLz48bGluZWFyR3JhZGllbnQgaWQ9InNoYWRvdyIgeDE9IjAiIHkxPSIyMjUiIHgyPSIwIiB5Mj0iNDUwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSJyZ2JhKDAsMCwwLDApIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSJyZ2JhKDAsMCwwLDAuNykiLz48L2xpbmVhckdyYWRpZW50PjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSJ1cmwoI3NoYWRvdykiLz48dGV4dCB4PSI0MDAiIHk9IjIyNSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSIjNzc3Nzc3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSI+Q2F0ZWdvcnkgSW1hZ2U8L3RleHQ+PC9zdmc+';
+  
   useEffect(() => {
     const fetchCategoryImage = async () => {
       try {
@@ -87,12 +90,15 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
         ) : (
           <>
             <img 
-              src={imageData?.url} 
+              src={imageData?.url || placeholderImage} 
               alt={`${category} category`}
               className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
               onError={(e) => {
                 console.error(`Image failed to load for ${category}`);
-                setError('Image failed to load');
+                // Use the placeholder image when external image fails
+                const target = e.target as HTMLImageElement;
+                target.onerror = null; // Prevent infinite error loops
+                target.src = placeholderImage;
               }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
@@ -116,7 +122,7 @@ const CategoryTile: React.FC<CategoryTileProps> = ({ category, onSelect }) => {
         </button>
         
         {/* Image attribution */}
-        {imageData && imageData.photographer && (
+        {imageData && imageData.photographer && !error && (
           <div className="absolute bottom-0 right-0 p-1 text-xs text-white/70 bg-black/30 rounded-tl-md">
             Photo: {imageData.photographer}
           </div>
