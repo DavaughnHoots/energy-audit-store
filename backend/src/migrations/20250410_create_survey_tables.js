@@ -1,106 +1,175 @@
-/**
- * Migration to create survey tables for storing pilot study feedback
- */
+// 20250410_create_survey_tables.js - Creates survey-related database tables
+// This file is imported by server.ts to run migrations on startup
 
-import { appLogger } from '../config/logger.js';
-import pool from '../config/database.js';
+import pkg from 'pg';
+const { Pool } = pkg;
 
-/**
- * SQL to create the survey_responses table
- */
-const createSurveyResponsesTable = `
-CREATE TABLE IF NOT EXISTS survey_responses (
-  id SERIAL PRIMARY KEY,
-  user_id VARCHAR(50) NULL, -- NULL for anonymous responses
-  submission_date TIMESTAMP NOT NULL DEFAULT NOW(),
-  user_agent VARCHAR(255) NULL, -- Browser info
-  ip_address VARCHAR(45) NULL, -- For demographics
-  completion_time_seconds INTEGER NULL -- How long it took to complete
-);
-`;
-
-/**
- * SQL to create the survey_response_answers table
- */
-const createSurveyResponseAnswersTable = `
-CREATE TABLE IF NOT EXISTS survey_response_answers (
-  id SERIAL PRIMARY KEY,
-  response_id INTEGER NOT NULL REFERENCES survey_responses(id) ON DELETE CASCADE,
-  question_id VARCHAR(50) NOT NULL, -- e.g., 'ui-intuitive', 'feature-improvements'
-  question_section VARCHAR(50) NOT NULL, -- e.g., 'usability', 'features', 'overall'
-  question_type VARCHAR(20) NOT NULL, -- 'likert', 'text', 'checkbox'
-  
-  -- Different types of answers (only one will be used per row, based on question_type)
-  likert_value INTEGER NULL, -- 1-5 scale value
-  text_value TEXT NULL, -- For text responses
-  checkbox_values JSONB NULL, -- For storing multiple selected options
-  
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  
-  -- Add index for quick lookups by response_id and question_id
-  CONSTRAINT unique_response_question UNIQUE (response_id, question_id)
-);
-`;
-
-/**
- * SQL to create indexes for efficient querying
- */
-const createIndexes = `
-CREATE INDEX IF NOT EXISTS idx_survey_responses_user_id ON survey_responses(user_id);
-CREATE INDEX IF NOT EXISTS idx_survey_responses_date ON survey_responses(submission_date);
-CREATE INDEX IF NOT EXISTS idx_survey_answers_question ON survey_response_answers(question_id, question_type);
-`;
-
-/**
- * Run the migration
- */
+// Function to run survey tables migration
 export async function runSurveyTablesMigration() {
-  let client;
+  console.log('Starting survey tables migration...');
+  
+  // Create a database connection
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  });
   
   try {
-    client = await pool.connect();
+    const client = await pool.connect();
     
-    // Start transaction
-    await client.query('BEGIN');
-    
-    // Create survey_responses table
-    appLogger.info('Creating survey_responses table...');
-    await client.query(createSurveyResponsesTable);
-    
-    // Create survey_response_answers table
-    appLogger.info('Creating survey_response_answers table...');
-    await client.query(createSurveyResponseAnswersTable);
-    
-    // Create indexes
-    appLogger.info('Creating indexes for survey tables...');
-    await client.query(createIndexes);
-    
-    // Commit transaction
-    await client.query('COMMIT');
-    
-    appLogger.info('Survey tables migration completed successfully');
-    
-    return { success: true, message: 'Survey tables created successfully' };
-  } catch (error) {
-    // Rollback transaction on error
-    if (client) {
+    try {
+      // Begin transaction
+      await client.query('BEGIN');
+      
+      // 1. Check if surveys table exists
+      const surveysExists = await client.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'surveys'
+        );
+      `);
+      
+      // 2. Create surveys table if it doesn't exist
+      if (!surveysExists.rows[0].exists) {
+        console.log('Creating surveys table...');
+        
+        await client.query(`
+          CREATE TABLE surveys (
+            id SERIAL PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            status TEXT NOT NULL DEFAULT 'draft',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            published_at TIMESTAMP,
+            closed_at TIMESTAMP,
+            created_by UUID REFERENCES users(id),
+            is_anonymous BOOLEAN DEFAULT FALSE,
+            max_responses INTEGER,
+            survey_type TEXT DEFAULT 'general',
+            target_audience TEXT[]
+          );
+        `);
+        
+        console.log('surveys table created successfully');
+      } else {
+        console.log('surveys table already exists, skipping creation');
+      }
+      
+      // 3. Check if survey_questions table exists
+      const questionsExists = await client.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'survey_questions'
+        );
+      `);
+      
+      // 4. Create survey_questions table if it doesn't exist
+      if (!questionsExists.rows[0].exists) {
+        console.log('Creating survey_questions table...');
+        
+        await client.query(`
+          CREATE TABLE survey_questions (
+            id SERIAL PRIMARY KEY,
+            survey_id INTEGER REFERENCES surveys(id) ON DELETE CASCADE,
+            question_text TEXT NOT NULL,
+            question_type TEXT NOT NULL,
+            is_required BOOLEAN DEFAULT FALSE,
+            options JSONB,
+            order_index INTEGER NOT NULL,
+            conditional_logic JSONB,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        `);
+        
+        console.log('survey_questions table created successfully');
+      } else {
+        console.log('survey_questions table already exists, skipping creation');
+      }
+      
+      // 5. Check if survey_responses table exists
+      const responsesExists = await client.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'survey_responses'
+        );
+      `);
+      
+      // 6. Create survey_responses table if it doesn't exist
+      if (!responsesExists.rows[0].exists) {
+        console.log('Creating survey_responses table...');
+        
+        await client.query(`
+          CREATE TABLE survey_responses (
+            id SERIAL PRIMARY KEY,
+            survey_id INTEGER REFERENCES surveys(id) ON DELETE CASCADE,
+            user_id UUID REFERENCES users(id),
+            completed BOOLEAN DEFAULT FALSE,
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            ip_address TEXT,
+            user_agent TEXT,
+            session_id TEXT
+          );
+        `);
+        
+        console.log('survey_responses table created successfully');
+      } else {
+        console.log('survey_responses table already exists, skipping creation');
+      }
+      
+      // 7. Check if survey_answers table exists
+      const answersExists = await client.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'survey_answers'
+        );
+      `);
+      
+      // 8. Create survey_answers table if it doesn't exist
+      if (!answersExists.rows[0].exists) {
+        console.log('Creating survey_answers table...');
+        
+        await client.query(`
+          CREATE TABLE survey_answers (
+            id SERIAL PRIMARY KEY,
+            response_id INTEGER REFERENCES survey_responses(id) ON DELETE CASCADE,
+            question_id INTEGER REFERENCES survey_questions(id) ON DELETE CASCADE,
+            answer_value TEXT,
+            answer_json JSONB,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(response_id, question_id)
+          );
+        `);
+        
+        console.log('survey_answers table created successfully');
+      } else {
+        console.log('survey_answers table already exists, skipping creation');
+      }
+      
+      // Commit transaction
+      await client.query('COMMIT');
+      console.log('Survey tables migration completed successfully');
+      
+      return { success: true, tablesCreated: !surveysExists.rows[0].exists };
+    } catch (error) {
+      // Rollback transaction on error
       await client.query('ROLLBACK');
-    }
-    
-    appLogger.error('Error during survey tables migration:', { error });
-    
-    return {
-      success: false,
-      message: 'Error creating survey tables',
-      error: error.message
-    };
-  } finally {
-    // Release client back to pool
-    if (client) {
+      console.error('Error in survey tables migration:', error);
+      throw error;
+    } finally {
+      // Release client back to pool
       client.release();
     }
+  } catch (error) {
+    console.error('Failed to connect to database:', error);
+    throw error;
+  } finally {
+    // Close pool
+    await pool.end();
   }
 }
 
-// Export for use in server.ts
-export default runSurveyTablesMigration;
+// Default export for compatibility
+export default { runSurveyTablesMigration };
