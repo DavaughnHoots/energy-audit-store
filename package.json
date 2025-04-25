@@ -11,5 +11,8 @@
     "github-options": "node github-push-options.js",
     "heroku-fix": "node heroku-dependency-fix.js"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "engines": {
+    "node": "18.x"
+  }
 }
