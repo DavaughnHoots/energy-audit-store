@@ -1,153 +1,256 @@
-# Energy Audit Store - Deployment & Feature Implementation
+# Energy Efficient Store Platform
 
-A comprehensive toolkit for fixing Heroku deployment issues and implementing new features on the Energy Audit Store admin dashboard.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.2.0-blue)](https://reactjs.org/)
+[![Node](https://img.shields.io/badge/Node-18.x-green)](https://nodejs.org/)
 
-## Quick Start
+A marketplace platform that helps homeowners find energy-efficient products, perform DIY energy audits, and monitor their energy savings. The platform combines **product recommendations** with **__personalized__** energy analysis to provide a seamless experience for improving home energy efficiency.
 
-Run the deployment script to fix all issues at once:
+![Platform Preview](./src/assets/website%20logo.png)
+
+## 🌟 Features
+
+- **Smart Product Discovery**
+  - Advanced search and filtering for energy-efficient products
+  - Detailed product specifications and energy ratings
+  - Price and savings comparisons
+
+- **DIY Energy Audit Tools**
+  - Step-by-step home energy assessment
+  - Personalized efficiency recommendations
+  - Energy savings calculator
+
+- **User Dashboard**
+  - Track energy savings progress
+  - Manage property settings
+  - View personalized recommendations
+
+- **Community Features**
+  - Share energy-saving success stories
+  - Discussion forums
+  - Energy-saving tips and guides
+
+## 🚀 Tech Stack
+
+### Frontend
+- React 18 with TypeScript
+- Vite for build tooling
+- Tailwind CSS for styling
+- Recharts for data visualization
+- Lucide React for icons
+- ShadCN UI components
+
+### Backend
+- Node.js with Express
+- PostgreSQL database
+- JWT authentication
+- Winston for logging
+- Zod for validation
+
+## 📋 Prerequisites
+
+- Node.js 18.x or later
+- PostgreSQL 14.x or later
+- npm 9.x or later
+- Git
+
+## 🛠️ Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/energy-audit-store.git
+   cd energy-audit-store
+   ```
+
+2. **Set up the database**
+   ```bash
+   # Create PostgreSQL database
+   psql -U postgres
+   CREATE DATABASE energy_efficient_store;
+   \c energy_efficient_store
+   \i database_setup.sql
+   ```
+
+3. **Install frontend dependencies**
+   ```bash
+   npm install
+   ```
+
+4. **Install backend dependencies**
+   ```bash
+   cd backend
+   npm install
+   ```
+
+5. **Configure environment variables**
+
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_URL=http://localhost:5000/api
+   ```
+
+   Create a `.env` file in the backend directory:
+   ```env
+   PORT=5000
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=postgres
+   DB_USER=postgres
+   DB_PASSWORD=
+   JWT_SECRET=your_secret_key
+   ```
+
+6. **Start development servers**
+
+   Frontend (root directory):
+   ```bash
+   npm run dev
+   ```
+
+   Backend (backend directory):
+   ```bash
+   npm run dev
+   ```
+
+## 📁 Project Structure
+
+```
+├── backend/                # Backend Express application
+│   ├── src/
+│   │   ├── config/        # Configuration files
+│   │   ├── middleware/    # Express middleware
+│   │   ├── routes/        # API routes
+│   │   ├── services/      # Business logic
+│   │   └── types/         # TypeScript types
+├── src/                   # Frontend React application
+│   ├── components/        # React components
+│   ├── pages/            # Page components
+│   ├── services/         # API services
+│   └── types/            # TypeScript types
+└── public/               # Static assets
+```
+
+## 🔨 Available Scripts
+
+### Frontend
 
 ```bash
-# Deploy all fixes to Heroku (TypeScript, dependencies, frontend)
-npm run deploy-all
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
 ```
 
-## Identified Issues & Fixes
-
-We've identified and fixed several deployment issues:
-
-1. **Missing Dependencies**: 
-   - `dotenv` missing in backend/server.js
-   - `papaparse` missing in productDataService.js
-
-2. **TypeScript Compilation Errors**:
-   - Multiple type errors in the codebase
-   - Strict typing causing deployment failures
-
-3. **Frontend Serving Configuration**:
-   - Missing index.html and static file configuration
-   - Server not properly configured to find frontend files
-
-## Available Tools
-
-### Dependency Fixes
+### Backend
 
 ```bash
-# Fix missing dependencies (dotenv, papaparse)
-npm run fix-dependencies
+npm run dev          # Start development server
+npm start           # Start production server
+npm run build       # Build TypeScript files
+npm test            # Run tests
 ```
 
-### TypeScript Fixes
+## 🧪 Running Tests
 
 ```bash
-# Fix TypeScript configuration and add relaxed tsconfig
-npm run fix-typescript
+# Frontend tests
+npm test
 
-# Deploy TypeScript fixes to Heroku
-npm run deploy-typescript
+# Backend tests
+cd backend
+npm test
 ```
 
-### Frontend Configuration Fixes
+## 🚀 Deploying to Heroku
 
-```bash
-# Create frontend configuration files (Procfile, static.json, etc.)
-npm run fix-frontend
-```
+The application is optimized for deployment to Heroku with the following features:
 
-### Deployment Tools
+1. **Production Mode**
+   - The `Procfile` sets `NODE_ENV=production` to enable production optimizations
+   - The build script automatically removes development dependencies and test files in production
 
-```bash
-# Deploy using the Windows-compatible script
-npm run heroku-deploy
+2. **Optimized Build Process**
+   - Development files are excluded from the production build
+   - Test files and documentation are not included in the deployed application
+   - Only necessary scripts are included in the production build
 
-# Deploy with enhanced error handling
-npm run heroku-deploy-final
+3. **Deployment Steps**
 
-# Deploy all fixes at once
-npm run deploy-all
-```
+   a. **Install the Heroku CLI**
+   ```bash
+   npm install -g heroku
+   ```
 
-### GitHub Management
+   b. **Login to Heroku**
+   ```bash
+   heroku login
+   ```
 
-```bash
-# Interactive GitHub pushing options
-npm run github-options
+   c. **Create a new Heroku app**
+   ```bash
+   heroku create your-app-name
+   ```
 
-# Simple GitHub push utility
-npm run push-github
-```
+   d. **Add PostgreSQL addon**
+   ```bash
+   heroku addons:create heroku-postgresql:hobby-dev
+   ```
 
-### Admin Dashboard Analysis
+   e. **Configure environment variables**
+   ```bash
+   heroku config:set JWT_SECRET=your_secret_key
+   heroku config:set NODE_ENV=production
+   ```
 
-```bash
-# Inspect the live admin dashboard
-npm run inspect
+   f. **Deploy the application**
+   ```bash
+   git push heroku main
+   ```
 
-# Pull Heroku app files
-npm run pull
+   g. **Run database migrations**
+   ```bash
+   heroku run bash
+   cd backend
+   node build/scripts/heroku_migration.js
+   ```
 
-# Pull from Heroku using Git
-npm run git-pull
-```
+4. **Monitoring and Scaling**
+   - Use Heroku Dashboard to monitor application performance
+   - Scale dynos as needed based on traffic
+   - Monitor PostgreSQL connection limits and upgrade plan if necessary
 
-## Admin Dashboard Roadmap Feature Implementation
+5. **Troubleshooting**
+   - Check logs with `heroku logs --tail`
+   - Restart the application with `heroku restart`
+   - Verify environment variables with `heroku config`
 
-After fixing the deployment issues, implement the requested feature:
+## 🤝 Contributing
 
-> Add a section on the admin dashboard that can create a website roadmap based on Most Used Features & Most Visited Pages.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### Implementation Steps
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-1. **Analyze Analytics Data Source**:
-   - Explore the existing analytics endpoints
-   - Find where usage data is stored and retrieved
+## 📚 API Documentation
 
-2. **Design the Roadmap Component**:
-   - Create a new React component for the dashboard
-   - Implement data visualization for most used features/pages
+API documentation is available at `/api-docs` when running the development server. Please take a look at our [API Documentation](./backend/README.md) for detailed API specifications.
 
-3. **Backend Integration**:
-   - Add API endpoints if needed for aggregated analytics data
-   - Implement data transformation for roadmap generation
+## 📄 License
 
-4. **Frontend Implementation**:
-   - Add UI controls for customizing the roadmap
-   - Implement responsive design for different screen sizes
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-5. **Testing & Deployment**:
-   - Test the roadmap feature locally
-   - Deploy to Heroku using our deployment tools
+## 🙏 Acknowledgments
 
-## Documentation
+- [React](https://reactjs.org/)
+- [Vite](https://vitejs.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [ShadCN UI](https://ui.shadcn.com/)
+- [Express](https://expressjs.com/)
 
-- [Heroku Fix Guide](./HEROKU_FIX_GUIDE.md) - Basic deployment fixes
-- [Updated Heroku Fix Guide](./HEROKU_FIX_GUIDE_UPDATED.md) - Comprehensive guide including TypeScript fixes
-- [GitHub Push Guide](./GITHUB_PUSH_GUIDE.md) - GitHub repository management
+## 📧 Contact
 
-## File Structure
-
-```
-├── backend/                      # Backend code
-│   ├── config/                   # Configuration files
-│   │   └── static-paths.js       # Static file paths configuration
-│   └── tsconfig.fix.json         # Relaxed TypeScript configuration
-├── public/                       # Public assets
-│   └── index.html                # Fallback index page
-├── scripts/                      # Utility scripts
-│   ├── fix_missing_dependencies.js  # Fix missing dependencies
-│   ├── fix_typescript_errors.js     # Fix TypeScript issues
-│   └── heroku_deploy_final.js       # Enhanced deployment script
-├── nginx/                        # Nginx configuration
-│   └── nginx.conf.erb            # Nginx template for Heroku
-├── Procfile                      # Heroku process file
-├── static.json                   # Static file configuration
-├── fix-dependencies.js           # Root wrapper for dependencies fix
-├── fix-typescript.js             # Root wrapper for TypeScript fix
-├── fix-frontend-deployment.js    # Frontend configuration utility
-├── deploy-typescript-fix.js      # TypeScript deployment utility
-├── deploy-all-fixes.js           # All-in-one deployment script
-└── heroku-deploy-final.js        # Enhanced deployment wrapper
-```
-
-## License
-
-Copyright © 2025 Energy Audit Store
+Project Link: [https://github.com/DavaughnHoots/energy-audit-store](https://github.com/DavaughnHoots/energy-audit-store)

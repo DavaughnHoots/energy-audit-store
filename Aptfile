@@ -1,8 +1,0 @@
-# Aptfile
-libcairo2-dev
-libjpeg-dev
-libpango1.0-dev
-libgif-dev
-librsvg2-dev
-build-essential
-python3
