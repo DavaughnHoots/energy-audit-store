@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.0.2",
+    "@mui/material": "^7.0.2",
     "@radix-ui/react-slot": "^1.1.2",
     "@types/cookie": "^0.6.0",
     "@types/papaparse": "^5.3.15",

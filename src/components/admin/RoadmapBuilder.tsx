@@ -1,37 +1,244 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../services/apiClient';
 
-// Import these components if MUI is installed, otherwise use plain HTML
-let Card: any, CardContent: any, Typography: any, Box: any, Button: any, Grid: any,
-    CircularProgress: any, Chip: any, Divider: any, Avatar: any, Alert: any,
-    TrendingUpIcon: any, TrafficIcon: any, BuildIcon: any, EmojiEventsIcon: any,
-    FormatListBulletedIcon: any;
-
-try {
-  // Dynamic imports to avoid TypeScript errors if packages aren't installed
-  const materialUI = require('@mui/material');
-  Card = materialUI.Card;
-  CardContent = materialUI.CardContent;
-  Typography = materialUI.Typography;
-  Box = materialUI.Box;
-  Button = materialUI.Button;
-  Grid = materialUI.Grid;
-  CircularProgress = materialUI.CircularProgress;
-  Chip = materialUI.Chip;
-  Divider = materialUI.Divider;
-  Avatar = materialUI.Avatar;
-  Alert = materialUI.Alert;
-  
-  TrendingUpIcon = require('@mui/icons-material/TrendingUp').default;
-  TrafficIcon = require('@mui/icons-material/Traffic').default;
-  BuildIcon = require('@mui/icons-material/Build').default;
-  EmojiEventsIcon = require('@mui/icons-material/EmojiEvents').default;
-  FormatListBulletedIcon = require('@mui/icons-material/FormatListBulleted').default;
-} catch (error) {
-  console.error('Material UI not installed:', error);
-  // Use fallback components if MUI isn't available
-  // This allows the component to compile even without MUI
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+  [key: string]: any;
 }
+
+const Card: React.FC<CardProps> = ({ children, className = '', ...props }) => (
+  <div className={`bg-white shadow rounded-lg overflow-hidden ${className}`} {...props}>
+    {children}
+  </div>
+);
+
+interface CardContentProps {
+  children: React.ReactNode;
+}
+
+const CardContent: React.FC<CardContentProps> = ({ children }) => (
+  <div className="p-4">{children}</div>
+);
+
+interface TypographyProps {
+  variant?: string;
+  component?: React.ElementType;
+  children: React.ReactNode;
+  className?: string;
+  [key: string]: any;
+}
+
+const Typography: React.FC<TypographyProps> = ({ variant, component, children, className = '', ...props }) => {
+  let baseClasses = '';
+  if (variant === 'h6') baseClasses = 'text-lg font-medium';
+  else if (variant === 'h5') baseClasses = 'text-xl font-bold';
+  else if (variant === 'body2') baseClasses = 'text-sm text-gray-600';
+  else if (variant === 'subtitle2') baseClasses = 'text-sm font-medium';
+  
+  const Component = component || 'div';
+  return <Component className={`${baseClasses} ${className}`} {...props}>{children}</Component>;
+};
+
+interface BoxProps {
+  children: React.ReactNode;
+  sx?: Record<string, any>;
+  className?: string;
+  [key: string]: any;
+}
+
+const Box: React.FC<BoxProps> = ({ children, sx = {}, className = '', ...props }) => {
+  // Convert some basic sx props to tailwind classes
+  let twClasses = '';
+  if (sx.display === 'flex') twClasses += ' flex';
+  if (sx.justifyContent === 'center') twClasses += ' justify-center';
+  if (sx.alignItems === 'center') twClasses += ' items-center';
+  if (sx.flexWrap === 'wrap') twClasses += ' flex-wrap';
+  if (sx.gap === 1) twClasses += ' gap-2';
+  if (sx.mb === 2) twClasses += ' mb-4';
+  if (sx.mb === 3) twClasses += ' mb-6';
+  if (sx.mt === 0.5) twClasses += ' mt-1';
+  if (sx.ml === 2) twClasses += ' ml-4';
+  if (sx.mr === 0.5) twClasses += ' mr-1';
+  if (sx.mr === 1) twClasses += ' mr-2';
+  if (sx.width === '100%') twClasses += ' w-full';
+  if (sx.height === '50vh') twClasses += ' h-[50vh]';
+  if (sx.height === '100%') twClasses += ' h-full';
+  
+  return (
+    <div className={`${twClasses} ${className}`} {...props}>
+      {children}
+    </div>
+  );
+};
+
+interface ButtonProps {
+  variant?: string;
+  color?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  startIcon?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  [key: string]: any;
+}
+
+const Button: React.FC<ButtonProps> = ({ 
+  variant, 
+  color, 
+  onClick, 
+  disabled, 
+  startIcon, 
+  children, 
+  className = '', 
+  ...props 
+}) => {
+  let btnClass = 'px-4 py-2 rounded text-sm font-medium transition-colors ';
+  
+  if (variant === 'outlined' && color === 'primary') {
+    btnClass += 'border border-blue-500 text-blue-500 hover:bg-blue-50 ';
+  }
+  
+  if (disabled) {
+    btnClass += 'opacity-50 cursor-not-allowed ';
+  }
+  
+  return (
+    <button 
+      className={`${btnClass} ${className}`} 
+      onClick={disabled ? undefined : onClick} 
+      disabled={disabled}
+      {...props}
+    >
+      {startIcon && <span className="inline-block mr-2">{startIcon}</span>}
+      {children}
+    </button>
+  );
+};
+
+interface GridProps {
+  container?: boolean;
+  item?: boolean;
+  spacing?: number;
+  xs?: number;
+  md?: number;
+  children: React.ReactNode;
+  className?: string;
+  [key: string]: any;
+}
+
+const Grid: React.FC<GridProps> = ({ 
+  container, 
+  item, 
+  spacing, 
+  xs, 
+  md, 
+  children, 
+  className = '', 
+  ...props 
+}) => {
+  let gridClass = '';
+  
+  if (container) {
+    gridClass += 'grid gap-4 ';
+    if (spacing === 3) gridClass += 'gap-6 ';
+  }
+  
+  if (item) {
+    if (xs === 12 && md === 6) {
+      gridClass += 'col-span-12 md:col-span-6 ';
+    } else if (xs === 12) {
+      gridClass += 'col-span-12 ';
+    }
+  }
+  
+  return (
+    <div className={`${gridClass} ${className}`} {...props}>
+      {children}
+    </div>
+  );
+};
+
+interface CircularProgressProps {
+  size?: number;
+}
+
+const CircularProgress: React.FC<CircularProgressProps> = ({ size }) => (
+  <div className={`animate-spin rounded-full border-t-2 border-blue-500 ${size ? `h-${size/4} w-${size/4}` : 'h-5 w-5'}`}></div>
+);
+
+interface ChipProps {
+  label: string;
+  size?: string;
+  color?: string;
+  icon?: React.ReactNode;
+  variant?: string;
+  className?: string;
+  [key: string]: any;
+}
+
+const Chip: React.FC<ChipProps> = ({ 
+  label, 
+  size, 
+  color, 
+  icon, 
+  variant, 
+  className = '', 
+  ...props 
+}) => {
+  let chipClass = 'inline-flex items-center px-2 py-1 rounded-full text-xs ';
+  
+  if (variant === 'outlined') {
+    chipClass += 'border ';
+    chipClass += 'border-gray-300 text-gray-700 ';
+  } else {
+    if (color === 'success') chipClass += 'bg-green-100 text-green-800 ';
+    else if (color === 'warning') chipClass += 'bg-yellow-100 text-yellow-800 ';
+    else if (color === 'error') chipClass += 'bg-red-100 text-red-800 ';
+    else if (color === 'info') chipClass += 'bg-blue-100 text-blue-800 ';
+    else chipClass += 'bg-gray-100 text-gray-800 ';
+  }
+  
+  if (size === 'small') {
+    chipClass += 'text-xs ';
+  }
+  
+  return (
+    <span className={`${chipClass} ${className}`} {...props}>
+      {icon && <span className="mr-1">{icon}</span>}
+      {label}
+    </span>
+  );
+};
+
+interface AlertProps {
+  severity?: string;
+  children: React.ReactNode;
+  className?: string;
+  [key: string]: any;
+}
+
+const Alert: React.FC<AlertProps> = ({ severity, children, className = '', ...props }) => {
+  let alertClass = 'p-4 mb-4 rounded ';
+  
+  if (severity === 'error') alertClass += 'bg-red-100 text-red-800 ';
+  else if (severity === 'warning') alertClass += 'bg-yellow-100 text-yellow-800 ';
+  else if (severity === 'info') alertClass += 'bg-blue-100 text-blue-800 ';
+  else if (severity === 'success') alertClass += 'bg-green-100 text-green-800 ';
+  
+  return (
+    <div className={`${alertClass} ${className}`} role="alert" {...props}>
+      {children}
+    </div>
+  );
+};
+
+// Simple icon placeholders
+const TrendingUpIcon = () => <span>📈</span>;
+const TrafficIcon = () => <span>🚦</span>;
+const BuildIcon = () => <span>🔧</span>;
+const EmojiEventsIcon = () => <span>🏆</span>;
+const FormatListBulletedIcon = () => <span>📋</span>;
 
 interface Feature {
   feature_name: string;
@@ -277,8 +484,8 @@ const RoadmapBuilder: React.FC = () => {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5" component="h2">
-          <BuildIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Website Roadmap Suggestions
+          <BuildIcon />
+          <span className="ml-2">Website Roadmap Suggestions</span>
         </Typography>
         <Button
           variant="outlined"
@@ -292,7 +499,7 @@ const RoadmapBuilder: React.FC = () => {
       </Box>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error">
           {error}
         </Alert>
       )}
@@ -305,17 +512,17 @@ const RoadmapBuilder: React.FC = () => {
         <Grid container spacing={3}>
           {suggestions.map((suggestion, index) => (
             <Grid item xs={12} md={6} key={index}>
-              <Card variant="outlined" sx={{ height: '100%' }}>
+              <Card className="h-full">
                 <CardContent>
-                  <Typography variant="h6" component="h3" gutterBottom>
+                  <Typography variant="h6" component="h3" className="mb-2">
                     {suggestion.title}
                   </Typography>
                   
-                  <Typography variant="body2" color="text.secondary" paragraph>
+                  <Typography variant="body2" className="mb-4">
                     {suggestion.description}
                   </Typography>
                   
-                  <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                  <Box className="flex gap-2 mb-4">
                     <Chip 
                       label={`Impact: ${suggestion.impact}`} 
                       size="small" 
@@ -332,11 +539,11 @@ const RoadmapBuilder: React.FC = () => {
                   
                   {suggestion.features.length > 0 && (
                     <>
-                      <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center' }}>
-                        <FormatListBulletedIcon fontSize="small" sx={{ mr: 0.5 }} />
-                        Related Features:
+                      <Typography variant="subtitle2" className="flex items-center">
+                        <FormatListBulletedIcon />
+                        <span className="ml-1">Related Features:</span>
                       </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5, mb: 1 }}>
+                      <Box className="flex flex-wrap gap-1 mt-1 mb-2">
                         {suggestion.features.map((feature, i) => (
                           <Chip 
                             key={i} 
@@ -351,11 +558,11 @@ const RoadmapBuilder: React.FC = () => {
                   
                   {suggestion.pages.length > 0 && (
                     <>
-                      <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center' }}>
-                        <TrafficIcon fontSize="small" sx={{ mr: 0.5 }} />
-                        Related Pages:
+                      <Typography variant="subtitle2" className="flex items-center">
+                        <TrafficIcon />
+                        <span className="ml-1">Related Pages:</span>
                       </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                      <Box className="flex flex-wrap gap-1 mt-1">
                         {suggestion.pages.map((page, i) => (
                           <Chip 
                             key={i} 
