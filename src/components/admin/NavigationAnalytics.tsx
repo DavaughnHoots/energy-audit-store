@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import { apiBaseUrl } from '../../config/constants';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import UserFlowDiagram from './UserFlowDiagram'; // Import the new component
 
 // Interface definitions
 interface NavigationFlow {
@@ -139,6 +140,9 @@ const NavigationAnalytics: React.FC = () => {
         case 5: // Session Timeline
           endpoint = `${apiBaseUrl}/admin/analytics/session-timeline`;
           break;
+        case 6: // User Flow Diagram - Handled by its own component
+          setLoading(false); // No separate loading needed here
+          return; // Data fetching is inside UserFlowDiagram component
         default:
           throw new Error('Invalid tab index');
       }
@@ -170,6 +174,7 @@ const NavigationAnalytics: React.FC = () => {
           case 5:
             setSessionTimeline(response.data.data);
             break;
+          // Case 6 (User Flow Diagram) data is handled within its component
         }
       } else {
         throw new Error('Failed to fetch data');
@@ -214,6 +219,7 @@ const NavigationAnalytics: React.FC = () => {
           <Tab label="Feature Correlations" />
           <Tab label="Navigation Flows" />
           <Tab label="Session Timeline" />
+          <Tab label="User Flow Diagram" /> {/* Add new tab */}
         </Tabs>
       </Box>
       
@@ -440,6 +446,14 @@ const NavigationAnalytics: React.FC = () => {
           </>
         )}
       </TabPanel>
+
+      {/* User Flow Diagram Tab */}
+      <TabPanel value={activeTab} index={6}>
+        {!loading && !error && (
+          <UserFlowDiagram />
+        )}
+      </TabPanel>
+
     </Paper>
   );
 };

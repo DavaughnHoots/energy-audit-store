@@ -4,7 +4,7 @@ const { Pool } = pkg;
 import dotenv from 'dotenv';
 
 // Import mock data for fallback when DB tables don't exist
-import { getMockFeatures, getMockPages, getMockCorrelations } from './admin-analytics-mock.js';
+import { getMockFeatures, getMockPages, getMockCorrelations, getMockUserFlow } from './admin-analytics-mock.js';
 
 dotenv.config();
 
@@ -246,6 +246,103 @@ router.get('/summary', async (req, res) => {
       message: 'Failed to fetch analytics summary',
       error: error.message || 'Unknown error'
     });
+  }
+});
+
+/**
+ * @route GET /api/admin/analytics/user-flow-diagram
+ * @desc Get data for the user flow diagram
+ * @access Private (Admin)
+ */
+router.get('/user-flow-diagram', async (req, res) => {
+  try {
+    // Query to get page transitions and counts
+    const query = `
+      WITH page_transitions AS (
+        SELECT
+          LAG(page_path) OVER (PARTITION BY session_id ORDER BY visited_at) AS from_page,
+          page_path AS to_page,
+          session_id
+        FROM page_visits
+        WHERE visited_at > NOW() - INTERVAL '30 days'
+      ),
+      transition_counts AS (
+        SELECT
+          from_page,
+          to_page,
+          COUNT(*) AS transition_count
+        FROM page_transitions
+        WHERE from_page IS NOT NULL AND from_page != to_page
+        GROUP BY from_page, to_page
+      ),
+      page_visits_counts AS (
+        SELECT
+          page_path,
+          COUNT(*) AS visit_count
+        FROM page_visits
+        WHERE visited_at > NOW() - INTERVAL '30 days'
+        GROUP BY page_path
+      )
+      SELECT
+        tc.from_page AS source,
+        tc.to_page AS target,
+        tc.transition_count AS value,
+        pvc_from.visit_count AS source_visits,
+        pvc_to.visit_count AS target_visits
+      FROM transition_counts tc
+      JOIN page_visits_counts pvc_from ON tc.from_page = pvc_from.page_path
+      JOIN page_visits_counts pvc_to ON tc.to_page = pvc_to.page_path
+      ORDER BY tc.transition_count DESC
+      LIMIT 100; -- Limit to top 100 transitions for performance
+    `;
+
+    const { rows: transitionRows, fromMock: transitionsFromMock } = await executeQueryWithMockFallback(
+      query,
+      [],
+      () => [] // Provide empty array if query fails, mock handled below
+    );
+
+    let nodes, links;
+
+    if (transitionsFromMock || transitionRows.length === 0) {
+      console.info('Using mock user flow data for admin analytics');
+      const mockData = getMockUserFlow();
+      nodes = mockData.nodes;
+      links = mockData.links;
+    } else {
+      // Process real data
+      const nodeMap = new Map();
+      links = transitionRows.map(row => {
+        // Add source node
+        if (!nodeMap.has(row.source)) {
+          nodeMap.set(row.source, { id: row.source, name: row.source, value: row.source_visits });
+        }
+        // Add target node
+        if (!nodeMap.has(row.target)) {
+          nodeMap.set(row.target, { id: row.target, name: row.target, value: row.target_visits });
+        }
+        return { source: row.source, target: row.target, value: parseInt(row.value, 10) };
+      });
+      nodes = Array.from(nodeMap.values());
+    }
+
+    res.json({ nodes, links });
+
+  } catch (error) {
+    console.error('Error fetching user flow diagram data:', error.message);
+    // Fallback to mock data on any unexpected error during processing
+    try {
+      console.warn('Falling back to mock user flow data due to processing error.');
+      const mockData = getMockUserFlow();
+      res.json(mockData);
+    } catch (mockError) {
+      console.error('Error fetching mock user flow data:', mockError.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch user flow diagram data',
+        error: error.message || 'Unknown error'
+      });
+    }
   }
 });
 

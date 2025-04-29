@@ -103,3 +103,37 @@ export const getMockCorrelations = (minScore: number = 0.3) => [
     confidence: 0.5
   }
 ].filter(item => item.correlation_score >= minScore);
+
+export const getMockUserFlow = () => {
+  // Define nodes (pages)
+  const nodes = [
+    { id: '/', name: 'Homepage', value: 150 },
+    { id: '/dashboard', name: 'Dashboard', value: 210 },
+    { id: '/energy-audit', name: 'Energy Audit', value: 180 },
+    { id: '/recommendations', name: 'Recommendations', value: 165 },
+    { id: '/comparisons', name: 'Comparisons', value: 120 },
+    { id: '/products', name: 'Products', value: 110 },
+    { id: '/sign-in', name: 'Sign In', value: 90 },
+    { id: '/sign-up', name: 'Sign Up', value: 70 }
+  ];
+
+  // Define links (transitions)
+  const links = [
+    { source: '/', target: '/sign-in', value: 40 },
+    { source: '/', target: '/sign-up', value: 30 },
+    { source: '/', target: '/dashboard', value: 50 }, // Direct to dashboard if logged in
+    { source: '/sign-in', target: '/dashboard', value: 80 },
+    { source: '/sign-up', target: '/dashboard', value: 60 },
+    { source: '/dashboard', target: '/energy-audit', value: 70 },
+    { source: '/dashboard', target: '/recommendations', value: 65 },
+    { source: '/dashboard', target: '/comparisons', value: 40 },
+    { source: '/energy-audit', target: '/recommendations', value: 90 },
+    { source: '/energy-audit', target: '/comparisons', value: 50 },
+    { source: '/recommendations', target: '/products', value: 75 },
+    { source: '/recommendations', target: '/comparisons', value: 30 },
+    { source: '/comparisons', target: '/dashboard', value: 20 }, // Back to dashboard
+    { source: '/products', target: '/recommendations', value: 15 } // Back to recommendations
+  ];
+
+  return { nodes, links };
+};
