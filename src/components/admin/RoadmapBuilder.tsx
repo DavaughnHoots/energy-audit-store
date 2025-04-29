@@ -406,15 +406,15 @@ const RoadmapBuilder: React.FC = () => {
     
     try {
       // Load top features
-      const featuresResponse = await apiClient.get('/api/admin/analytics/most-used-features');
+      const featuresResponse = await apiClient.get('/admin/analytics/most-used-features');
       setTopFeatures(featuresResponse.data as Feature[]);
       
       // Load top pages
-      const pagesResponse = await apiClient.get('/api/admin/analytics/most-visited');
+      const pagesResponse = await apiClient.get('/admin/analytics/most-visited');
       setTopPages(pagesResponse.data as Page[]);
       
       // Load feature correlations
-      const correlationsResponse = await apiClient.get('/api/admin/analytics/feature-correlations', {
+      const correlationsResponse = await apiClient.get('/admin/analytics/feature-correlations', {
         params: { minScore: 0.3 }
       });
       setCorrelations(correlationsResponse.data as FeatureCorrelation[]);
@@ -438,7 +438,7 @@ const RoadmapBuilder: React.FC = () => {
   const handleRefreshData = async () => {
     setRefreshing(true);
     try {
-      await apiClient.post('/api/admin/analytics/refresh');
+      await apiClient.post('/admin/analytics/refresh');
       await loadAnalyticsData();
     } catch (err) {
       console.error('Error refreshing analytics data:', err);
