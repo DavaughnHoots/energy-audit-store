@@ -104,6 +104,111 @@ export const getMockCorrelations = (minScore: number = 0.3) => [
   }
 ].filter(item => item.correlation_score >= minScore);
 
+export const getMockUserJourneys = () => [
+  {
+    sequence: ['/', '/sign-in', '/dashboard', '/energy-audit', '/recommendations'],
+    frequency: 120,
+    conversionRate: 0.68
+  },
+  {
+    sequence: ['/', '/dashboard', '/energy-audit', '/comparisons'],
+    frequency: 95,
+    conversionRate: 0.52
+  },
+  {
+    sequence: ['/', '/sign-up', '/dashboard', '/recommendations', '/products'],
+    frequency: 75,
+    conversionRate: 0.42
+  },
+  {
+    sequence: ['/dashboard', '/energy-audit', '/recommendations', '/products'],
+    frequency: 65,
+    conversionRate: 0.38
+  },
+  {
+    sequence: ['/dashboard', '/comparisons', '/recommendations'],
+    frequency: 55,
+    conversionRate: 0.30
+  }
+];
+
+export const getMockNavigationFlows = () => [
+  {
+    fromPage: '/dashboard',
+    toPage: '/energy-audit',
+    total_transitions: 145,
+    date_range_start: '2025-03-30',
+    date_range_end: '2025-04-30'
+  },
+  {
+    fromPage: '/energy-audit',
+    toPage: '/recommendations',
+    total_transitions: 120,
+    date_range_start: '2025-03-30',
+    date_range_end: '2025-04-30'
+  },
+  {
+    fromPage: '/dashboard',
+    toPage: '/recommendations',
+    total_transitions: 95,
+    date_range_start: '2025-03-30',
+    date_range_end: '2025-04-30'
+  },
+  {
+    fromPage: '/recommendations',
+    toPage: '/products',
+    total_transitions: 85,
+    date_range_start: '2025-03-30',
+    date_range_end: '2025-04-30'
+  },
+  {
+    fromPage: '/energy-audit',
+    toPage: '/comparisons',
+    total_transitions: 70,
+    date_range_start: '2025-03-30',
+    date_range_end: '2025-04-30'
+  }
+];
+
+export const getMockSessionTimeline = () => [
+  {
+    page: 'homepage',
+    session_position: 1,
+    percentage_of_sessions: 95,
+    bounce_rate: 0.20
+  },
+  {
+    page: 'login',
+    session_position: 2,
+    percentage_of_sessions: 65,
+    bounce_rate: 0.15
+  },
+  {
+    page: 'dashboard',
+    session_position: 3,
+    percentage_of_sessions: 55,
+    bounce_rate: 0.10
+  },
+  {
+    page: 'energy-audit',
+    session_position: 4,
+    percentage_of_sessions: 38,
+    bounce_rate: 0.12
+  },
+  {
+    page: 'recommendations',
+    session_position: 5,
+    percentage_of_sessions: 30,
+    bounce_rate: 0.18
+  },
+  {
+    page: 'products',
+    session_position: 6,
+    percentage_of_sessions: 22,
+    bounce_rate: 0.25
+  }
+];
+
 export const getMockUserFlow = () => {
   // Define nodes (pages)
   const nodes = [
