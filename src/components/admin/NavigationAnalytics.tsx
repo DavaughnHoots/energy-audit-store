@@ -148,29 +148,53 @@ const NavigationAnalytics: React.FC = () => {
       
       const response = await apiClient.get(endpoint);
       
-      if (response.data) {
+      if (response && response.data) {
+        // Handle different response structures
+        const responseData = response.data;
+        
+        // Check if it's a direct array or an object with a data property
+        const dataToUse = Array.isArray(responseData) ? responseData : 
+                         (responseData.data !== undefined ? responseData.data : responseData);
+                         
+        // Ensure we have data and it's not empty
+        if (!dataToUse) {
+          console.warn(`Empty or invalid data received for tab ${tabIndex}`);
+          // Use empty arrays instead of null/undefined to avoid 'length' errors
+          switch(tabIndex) {
+            case 0: setMostVisitedPages([]); break;
+            case 1: setMostUsedFeatures([]); break;
+            case 2: setUserJourneys([]); break;
+            case 3: setFeatureCorrelations([]); break;
+            case 4: setNavigationFlows([]); break;
+            case 5: setSessionTimeline([]); break;
+          }
+          return;
+        }
+        
+        // Set the data based on tab index
         switch(tabIndex) {
           case 0:
-            setMostVisitedPages(response.data.data);
+            setMostVisitedPages(Array.isArray(dataToUse) ? dataToUse : []);
             break;
           case 1:
-            setMostUsedFeatures(response.data.data);
+            setMostUsedFeatures(Array.isArray(dataToUse) ? dataToUse : []);
             break;
           case 2:
-            setUserJourneys(response.data.data);
+            setUserJourneys(Array.isArray(dataToUse) ? dataToUse : []);
             break;
           case 3:
-            setFeatureCorrelations(response.data.data);
+            setFeatureCorrelations(Array.isArray(dataToUse) ? dataToUse : []);
             break;
           case 4:
-            setNavigationFlows(response.data.data);
+            setNavigationFlows(Array.isArray(dataToUse) ? dataToUse : []);
             break;
           case 5:
-            setSessionTimeline(response.data.data);
+            setSessionTimeline(Array.isArray(dataToUse) ? dataToUse : []);
             break;
           // Case 6 (User Flow Diagram) data is handled within its component
         }
       } else {
+        console.error('No response data received');
         throw new Error('Failed to fetch data');
       }
     } catch (err) {
@@ -232,7 +256,7 @@ const NavigationAnalytics: React.FC = () => {
       
       {/* Most Visited Pages Tab */}
       <TabPanel value={activeTab} index={0}>
-        {!loading && !error && mostVisitedPages.length > 0 && (
+        {!loading && !error && mostVisitedPages && mostVisitedPages.length > 0 && (
           <>
             <Typography variant="h6" gutterBottom>Top Pages by Visit Count</Typography>
             <Typography variant="body2" paragraph>
@@ -263,7 +287,7 @@ const NavigationAnalytics: React.FC = () => {
       
       {/* Most Used Features Tab */}
       <TabPanel value={activeTab} index={1}>
-        {!loading && !error && mostUsedFeatures.length > 0 && (
+        {!loading && !error && mostUsedFeatures && mostUsedFeatures.length > 0 && (
           <>
             <Typography variant="h6" gutterBottom>Top Features by Usage</Typography>
             <Typography variant="body2" paragraph>
@@ -294,7 +318,7 @@ const NavigationAnalytics: React.FC = () => {
       
       {/* User Journeys Tab */}
       <TabPanel value={activeTab} index={2}>
-        {!loading && !error && userJourneys.length > 0 && (
+        {!loading && !error && userJourneys && userJourneys.length > 0 && (
           <>
             <Typography variant="h6" gutterBottom>Common User Journeys</Typography>
             <Typography variant="body2" paragraph>
@@ -332,7 +356,7 @@ const NavigationAnalytics: React.FC = () => {
       
       {/* Feature Correlations Tab */}
       <TabPanel value={activeTab} index={3}>
-        {!loading && !error && featureCorrelations.length > 0 && (
+        {!loading && !error && featureCorrelations && featureCorrelations.length > 0 && (
           <>
             <Typography variant="h6" gutterBottom>Feature Correlation Analysis</Typography>
             <Typography variant="body2" paragraph>
@@ -374,7 +398,7 @@ const NavigationAnalytics: React.FC = () => {
       
       {/* Navigation Flows Tab */}
       <TabPanel value={activeTab} index={4}>
-        {!loading && !error && navigationFlows.length > 0 && (
+        {!loading && !error && navigationFlows && navigationFlows.length > 0 && (
           <>
             <Typography variant="h6" gutterBottom>Page Transition Flows</Typography>
             <Typography variant="body2" paragraph>
@@ -412,7 +436,7 @@ const NavigationAnalytics: React.FC = () => {
       
       {/* Session Timeline Tab */}
       <TabPanel value={activeTab} index={5}>
-        {!loading && !error && sessionTimeline.length > 0 && (
+        {!loading && !error && sessionTimeline && sessionTimeline.length > 0 && (
           <>
             <Typography variant="h6" gutterBottom>Session Timeline Analysis</Typography>
             <Typography variant="body2" paragraph>

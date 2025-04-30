@@ -29,9 +29,26 @@ const UserFlowDiagram: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get<UserFlowData>('/admin/analytics/user-flow-diagram');
+      const response = await apiClient.get('/admin/analytics/user-flow-diagram');
       
-      setGraphData(response.data);
+      // Check if the response is in the expected format
+      const responseData = response.data;
+      let flowData: UserFlowData;
+      
+      // Handle different response structures
+      if (responseData?.nodes && responseData?.links) {
+        // Direct format: { nodes: [...], links: [...] }
+        flowData = responseData as UserFlowData;
+      } else if (responseData?.data?.nodes && responseData?.data?.links) {
+        // Nested format: { data: { nodes: [...], links: [...] } }
+        flowData = responseData.data as UserFlowData;
+      } else {
+        // No valid data structure found
+        console.error('Unexpected API response format:', responseData);
+        throw new Error('Invalid data format received from the server');
+      }
+      
+      setGraphData(flowData);
     } catch (err) {
       console.error('Error fetching user flow data:', err);
       setError('Failed to load user flow data. Please try again later.');
@@ -120,10 +137,12 @@ const UserFlowDiagram: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {graphData.links.slice(0, 10).map((link, index) => {
+            {graphData.links && graphData.links.slice(0, 10).map((link, index) => {
               // Find the node names for better display
-              const sourceNode = graphData.nodes.find(node => node.id === link.source) || { name: link.source };
-              const targetNode = graphData.nodes.find(node => node.id === link.target) || { name: link.target };
+              const sourceId = typeof link.source === 'string' ? link.source : (link.source as any)?.id || '';
+              const targetId = typeof link.target === 'string' ? link.target : (link.target as any)?.id || '';
+              const sourceNode = graphData.nodes?.find(node => node.id === sourceId) || { name: sourceId };
+              const targetNode = graphData.nodes?.find(node => node.id === targetId) || { name: targetId };
               
               return (
                 <TableRow key={index}>
