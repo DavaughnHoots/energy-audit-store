@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import axios from 'axios';
+import apiClient from '../../services/apiClient';
 
 interface FlowNode {
   id: string;
@@ -29,12 +29,7 @@ const UserFlowDiagram: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get<UserFlowData>('/api/admin/analytics/user-flow-diagram', {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await apiClient.get<UserFlowData>('/admin/analytics/user-flow-diagram');
       
       setGraphData(response.data);
     } catch (err) {

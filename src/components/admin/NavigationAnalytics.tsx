@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, Tab, Box, Typography, Paper, CircularProgress, Alert } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import axios from 'axios';
-import { API_BASE_URL } from '../../config/api'; // Using correct export name
+import apiClient from '../../services/apiClient';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import UserFlowDiagram from './UserFlowDiagram'; // Import the new component
 
@@ -123,22 +122,22 @@ const NavigationAnalytics: React.FC = () => {
       
       switch(tabIndex) {
         case 0: // Most Visited Pages
-          endpoint = `${API_BASE_URL}/api/admin/analytics/most-visited`;
+          endpoint = '/admin/analytics/most-visited';
           break;
         case 1: // Most Used Features
-          endpoint = `${API_BASE_URL}/api/admin/analytics/most-used-features`;
+          endpoint = '/admin/analytics/most-used-features';
           break;
         case 2: // User Journeys
-          endpoint = `${API_BASE_URL}/api/admin/analytics/user-journeys`;
+          endpoint = '/admin/analytics/user-journeys';
           break;
         case 3: // Feature Correlations
-          endpoint = `${API_BASE_URL}/api/admin/analytics/feature-correlations`;
+          endpoint = '/admin/analytics/feature-correlations';
           break;
         case 4: // Navigation Flows
-          endpoint = `${API_BASE_URL}/api/admin/analytics/navigation-flows?startDate=${startDate}&endDate=${endDate}`;
+          endpoint = `/admin/analytics/navigation-flows?startDate=${startDate}&endDate=${endDate}`;
           break;
         case 5: // Session Timeline
-          endpoint = `${API_BASE_URL}/api/admin/analytics/session-timeline`;
+          endpoint = '/admin/analytics/session-timeline';
           break;
         case 6: // User Flow Diagram - Handled by its own component
           setLoading(false); // No separate loading needed here
@@ -147,14 +146,9 @@ const NavigationAnalytics: React.FC = () => {
           throw new Error('Invalid tab index');
       }
       
-      const response = await axios.get(endpoint, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await apiClient.get(endpoint);
       
-      if (response.data && response.data.success) {
+      if (response.data) {
         switch(tabIndex) {
           case 0:
             setMostVisitedPages(response.data.data);
