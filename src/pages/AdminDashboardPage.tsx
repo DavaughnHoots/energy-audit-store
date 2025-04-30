@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RoadmapBuilder from '../components/admin/RoadmapBuilder';
+import NavigationAnalytics from '../components/admin/NavigationAnalytics'; // Import the analytics component
 
 const AdminDashboardPage: React.FC = () => {
   // Navigation state for different dashboard sections
@@ -70,10 +71,7 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
               )}
               {activeSection === 'analytics' && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-6">User Analytics</h2>
-                  <p className="text-gray-500">Analytics dashboard is under development.</p>
-                </div>
+                <NavigationAnalytics /> // Render the NavigationAnalytics component
               )}
               {activeSection === 'users' && (
                 <div>

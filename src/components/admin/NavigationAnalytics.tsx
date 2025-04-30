@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, Tab, Box, Typography, Paper, CircularProgress, Alert } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
-import { apiBaseUrl } from '../../config/constants';
+import { API_BASE_URL } from '../../config/api'; // Using correct export name
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import UserFlowDiagram from './UserFlowDiagram'; // Import the new component
 
@@ -123,22 +123,22 @@ const NavigationAnalytics: React.FC = () => {
       
       switch(tabIndex) {
         case 0: // Most Visited Pages
-          endpoint = `${apiBaseUrl}/admin/analytics/most-visited`;
+          endpoint = `${API_BASE_URL}/api/admin/analytics/most-visited`;
           break;
         case 1: // Most Used Features
-          endpoint = `${apiBaseUrl}/admin/analytics/most-used-features`;
+          endpoint = `${API_BASE_URL}/api/admin/analytics/most-used-features`;
           break;
         case 2: // User Journeys
-          endpoint = `${apiBaseUrl}/admin/analytics/user-journeys`;
+          endpoint = `${API_BASE_URL}/api/admin/analytics/user-journeys`;
           break;
         case 3: // Feature Correlations
-          endpoint = `${apiBaseUrl}/admin/analytics/feature-correlations`;
+          endpoint = `${API_BASE_URL}/api/admin/analytics/feature-correlations`;
           break;
         case 4: // Navigation Flows
-          endpoint = `${apiBaseUrl}/admin/analytics/navigation-flows?startDate=${startDate}&endDate=${endDate}`;
+          endpoint = `${API_BASE_URL}/api/admin/analytics/navigation-flows?startDate=${startDate}&endDate=${endDate}`;
           break;
         case 5: // Session Timeline
-          endpoint = `${apiBaseUrl}/admin/analytics/session-timeline`;
+          endpoint = `${API_BASE_URL}/api/admin/analytics/session-timeline`;
           break;
         case 6: // User Flow Diagram - Handled by its own component
           setLoading(false); // No separate loading needed here
