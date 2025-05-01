@@ -52,6 +52,8 @@ const UserFlowDiagram: React.FC = () => {
   const [slowMotion, setSlowMotion] = useState<boolean>(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const [animationRunning, setAnimationRunning] = useState<boolean>(true);
   
   // Function to fetch data
   const loadUserFlowData = async () => {
@@ -441,7 +443,15 @@ const UserFlowDiagram: React.FC = () => {
         });
 
         // Update flow indicators (moving dots) with robust error handling
-        flowDots.each(function(d: any) {
+        // Create persistent animation function
+    const animateParticles = () => {
+      if (!svgRef.current || !animationRunning) return;
+      
+      try {
+        // Calculate time factor based on slow motion setting
+        const timeScale = slowMotion ? 0.3 : 1.0;
+        
+        flowDots.each(function(d) {
           try {
             // Skip animation if source or target is undefined
             if (!d.source || !d.target || !d.sourceId || !d.targetId) return;
@@ -454,8 +464,9 @@ const UserFlowDiagram: React.FC = () => {
               try {
                 const pathLength = path.getTotalLength() || 0;
                 if (pathLength > 0) {
-                  // Calculate position based on current time
-                  const t = (Date.now() % 3000) / 3000; // 3 second animation cycle
+                  // Calculate position based on current time and speed
+                  const speed = 1.0 / (3000 / timeScale); // Adjust speed factor
+                  const t = ((Date.now() * speed) % 1000) / 1000;
                   const point = path.getPointAtLength(pathLength * t);
                   if (point && typeof point.x === 'number' && typeof point.y === 'number') {
                     d3.select(this)
@@ -464,13 +475,25 @@ const UserFlowDiagram: React.FC = () => {
                   }
                 }
               } catch (e) {
-                // Silently handle errors with path animation
+                // Silent error handling for animation
               }
             }
           } catch (e) {
-            // Silently handle any errors that might occur during animation
+            // Silent error handling for animation
           }
         });
+        
+        // Continue animation loop
+        animationRef.current = requestAnimationFrame(animateParticles);
+      } catch (e) {
+        console.warn('Animation error:', e);
+        // Continue animation despite errors
+        animationRef.current = requestAnimationFrame(animateParticles);
+      }
+    };
+    
+    // Start the persistent animation
+    animationRef.current = requestAnimationFrame(animateParticles);
 
         // Update node positions with validation
         node.attr('transform', (d: any) => {
@@ -518,9 +541,16 @@ const UserFlowDiagram: React.FC = () => {
 
     // Return a cleanup function
     return () => {
+      // Stop simulation
       simulation.stop();
+      
+      // Cancel any ongoing animation
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
     };
-  }, [graphData, viewMode, layoutType]);
+  }, [graphData, viewMode, layoutType, slowMotion, animationRunning]);
 
   const handleLayoutChange = (event: SelectChangeEvent) => {
     setLayoutType(event.target.value as LayoutType);
