@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Tooltip, Stack, Switch, FormControlLabel } from '@mui/material';
 import apiClient from '../../services/apiClient';
 import * as d3 from 'd3';
 
@@ -45,7 +45,12 @@ const UserFlowDiagram: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'graph' | 'table'>('table');
   const [layoutType, setLayoutType] = useState<LayoutType>('hierarchical');
-  const [highlightedLink, setHighlightedLink] = useState<string | null>(null);
+  const [highlightedNode, setHighlightedNode] = useState<string | null>(null);
+  const [particleDensity, setParticleDensity] = useState<'low' | 'medium' | 'high'>('medium');
+  const [showArrows, setShowArrows] = useState<boolean>(true);
+  const [focusMode, setFocusMode] = useState<boolean>(false);
+  const [slowMotion, setSlowMotion] = useState<boolean>(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   
   // Function to fetch data
@@ -85,6 +90,23 @@ const UserFlowDiagram: React.FC = () => {
   useEffect(() => {
     loadUserFlowData();
   }, []);
+
+  
+  // Helper function to normalize values for visualization scaling
+  const normalizeValues = (values: number[], minOutput = 1, maxOutput = 10) => {
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    
+    // If all values are the same, return the mid-value
+    if (min === max) return values.map(() => (minOutput + maxOutput) / 2);
+    
+    return values.map(v => {
+      // Normalize to 0-1 range
+      const normalized = (v - min) / (max - min);
+      // Scale to output range
+      return minOutput + normalized * (maxOutput - minOutput);
+    });
+  };
 
   // Create D3 visualization
   useEffect(() => {
@@ -549,6 +571,33 @@ const UserFlowDiagram: React.FC = () => {
               </Select>
             </FormControl>
           )}
+          
+          {viewMode === 'graph' && (
+            <Stack direction="row" spacing={2} sx={{ mr: 2 }}>
+              <FormControlLabel
+                control={<Switch checked={focusMode} onChange={(e) => setFocusMode(e.target.checked)} />}
+                label="Focus Mode"
+                sx={{ mr: 2 }}
+              />
+              <FormControlLabel
+                control={<Switch checked={slowMotion} onChange={(e) => setSlowMotion(e.target.checked)} />}
+                label="Slow Motion"
+              />
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Particles</InputLabel>
+                <Select
+                  value={particleDensity}
+                  label="Particles"
+                  onChange={(e) => setParticleDensity(e.target.value as 'low' | 'medium' | 'high')}
+                >
+                  <MenuItem value="low">Low</MenuItem>
+                  <MenuItem value="medium">Medium</MenuItem>
+                  <MenuItem value="high">High</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          )}
+          
           <Button 
             variant={viewMode === 'table' ? 'contained' : 'outlined'} 
             onClick={() => setViewMode('table')}
