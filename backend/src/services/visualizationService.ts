@@ -32,9 +32,9 @@ export interface VisualizationData {
  * Service for generating and storing visualization data
  */
 export class VisualizationService {
-  private pool: typeof Pool;
+  private pool: Pool;
 
-  constructor(pool: typeof Pool) {
+  constructor(pool: Pool) {
     this.pool = pool;
   }
 
