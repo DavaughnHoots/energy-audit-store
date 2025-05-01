@@ -22,6 +22,15 @@ interface UserFlowData {
 
 type LayoutType = 'force-directed' | 'hierarchical' | 'radial';
 
+// Helper function to sanitize IDs for use in CSS selectors
+const sanitizeIdForCSS = (id: string | any): string => {
+  if (id === undefined || id === null) return 'unknown';
+  // Convert to string if it's not already
+  const idStr = id.toString();
+  // Replace any characters that aren't valid in CSS selectors with underscores
+  return idStr.replace(/[^\w\-]/g, '_');
+};
+
 const UserFlowDiagram: React.FC = () => {
   const [graphData, setGraphData] = useState<UserFlowData>({ nodes: [], links: [] });
   const [loading, setLoading] = useState<boolean>(true);
@@ -86,11 +95,18 @@ const UserFlowDiagram: React.FC = () => {
     const links = graphData.links.map(link => {
       const source = nodes.find(node => node.id === link.source) || { id: link.source };
       const target = nodes.find(node => node.id === link.target) || { id: link.target };
+      
+      // Create sanitized IDs for the link
+      const sourceId = sanitizeIdForCSS(source.id);
+      const targetId = sanitizeIdForCSS(target.id);
+      
       return {
         source,
         target,
         value: link.value,
-        id: `${source.id}-${target.id}`  // Unique ID for the link
+        id: `${sourceId}-${targetId}`,  // Sanitized ID for the link
+        sourceId,
+        targetId
       };
     });
 
@@ -280,15 +296,17 @@ const UserFlowDiagram: React.FC = () => {
       .selectAll('path')
       .data(links)
       .enter().append('path')
-      .attr('id', (d: any) => `link-${d.source.id}-${d.target.id}`)
+      .attr('id', (d: any) => `link-${d.sourceId}-${d.targetId}`) // Use sanitized IDs
       .attr('stroke-width', (d: any) => linkWidth(d.value))
       .attr('marker-end', 'url(#end-arrow)')
       .attr('fill', 'none')
       .attr('stroke', (d: any) => {
-        // Create a gradient for each link
+        // Create a gradient with sanitized IDs
+        const gradientId = `link-gradient-${d.sourceId}-${d.targetId}`;
+        
         const linkGradient = svg.append('defs')
           .append('linearGradient')
-          .attr('id', `link-gradient-${d.source.id}-${d.target.id}`)
+          .attr('id', gradientId)
           .attr('gradientUnits', 'userSpaceOnUse');
           
         linkGradient.append('stop')
@@ -299,7 +317,7 @@ const UserFlowDiagram: React.FC = () => {
           .attr('offset', '100%')
           .attr('stop-color', color(d.target.id));
           
-        return `url(#link-gradient-${d.source.id}-${d.target.id})`;
+        return `url(#${gradientId})`;
       })
       .style('stroke-opacity', 0.7);
 
@@ -373,15 +391,23 @@ const UserFlowDiagram: React.FC = () => {
 
       // Update flow indicators (moving dots)
       flowDots.each(function(d: any) {
-        const path = d3.select(`#link-${d.source.id}-${d.target.id}`).node() as SVGPathElement;
-        if (path) {
-          const pathLength = path.getTotalLength();
-          // Calculate position based on current time
-          const t = (Date.now() % 3000) / 3000; // 3 second animation cycle
-          const point = path.getPointAtLength(pathLength * t);
-          d3.select(this)
-            .attr('cx', point.x)
-            .attr('cy', point.y);
+        try {
+          // Use sanitized IDs for selecting elements
+          const pathId = `link-${d.sourceId}-${d.targetId}`;
+          const path = document.getElementById(pathId) as SVGPathElement;
+          
+          if (path) {
+            const pathLength = path.getTotalLength();
+            // Calculate position based on current time
+            const t = (Date.now() % 3000) / 3000; // 3 second animation cycle
+            const point = path.getPointAtLength(pathLength * t);
+            d3.select(this)
+              .attr('cx', point.x)
+              .attr('cy', point.y);
+          }
+        } catch (e) {
+          // Silently handle any errors that might occur during animation
+          console.debug('Animation error:', e);
         }
       });
 
