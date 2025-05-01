@@ -31,6 +31,14 @@ const sanitizeIdForCSS = (id: string | any): string => {
   return idStr.replace(/[^\w\-]/g, '_');
 };
 
+// Helper function to ensure coordinates are valid numbers
+const ensureValidCoordinate = (value: any): number => {
+  if (value === undefined || value === null || isNaN(value)) {
+    return 0; // Default to 0 if not a valid number
+  }
+  return Number(value);
+};
+
 const UserFlowDiagram: React.FC = () => {
   const [graphData, setGraphData] = useState<UserFlowData>({ nodes: [], links: [] });
   const [loading, setLoading] = useState<boolean>(true);
@@ -88,13 +96,17 @@ const UserFlowDiagram: React.FC = () => {
     const width = 800;
     const height = 600;
 
-    // Prepare data for D3 - Convert string IDs to objects
-    const nodes = graphData.nodes.map(node => ({ ...node }));
+    // Prepare data for D3 - Convert string IDs to objects and ensure all nodes have valid coordinates
+    const nodes = graphData.nodes.map(node => ({
+      ...node,
+      x: Math.random() * width,  // Initialize with random position
+      y: Math.random() * height  // Initialize with random position
+    }));
     
     // Create links with proper source/target references to node objects
     const links = graphData.links.map(link => {
-      const source = nodes.find(node => node.id === link.source) || { id: link.source };
-      const target = nodes.find(node => node.id === link.target) || { id: link.target };
+      const source = nodes.find(node => node.id === link.source) || { id: link.source, x: width/2, y: height/2 };
+      const target = nodes.find(node => node.id === link.target) || { id: link.target, x: width/2, y: height/2 };
       
       // Create sanitized IDs for the link
       const sourceId = sanitizeIdForCSS(source.id);
@@ -103,7 +115,7 @@ const UserFlowDiagram: React.FC = () => {
       return {
         source,
         target,
-        value: link.value,
+        value: link.value || 1, // Ensure value exists
         id: `${sourceId}-${targetId}`,  // Sanitized ID for the link
         sourceId,
         targetId
@@ -141,7 +153,7 @@ const UserFlowDiagram: React.FC = () => {
         });
         
         currentLevelNodes = nodes.filter(node => 
-          nodeConnections[node.id].outgoing > nodeConnections[node.id].incoming);
+          nodeConnections[node.id]?.outgoing > nodeConnections[node.id]?.incoming);
           
         // If still no clear starting nodes, just pick the first one
         if (currentLevelNodes.length === 0 && nodes.length > 0) {
@@ -214,8 +226,8 @@ const UserFlowDiagram: React.FC = () => {
       // For force-directed, just add initial positions
       positionedNodes = nodes.map(node => ({
         ...node,
-        x: Math.random() * width,
-        y: Math.random() * height
+        x: node.x || Math.random() * width,
+        y: node.y || Math.random() * height
       }));
     }
 
@@ -365,74 +377,120 @@ const UserFlowDiagram: React.FC = () => {
 
     // Handle simulation ticks - this updates positions of all elements
     simulation.on('tick', () => {
-      // Constrain nodes to the visualization area
-      positionedNodes.forEach((d: any) => {
-        const r = nodeSize(d.value);
-        d.x = Math.max(r, Math.min(width - r, d.x));
-        d.y = Math.max(r, Math.min(height - r, d.y));
-      });
+      try {
+        // Constrain nodes to the visualization area
+        positionedNodes.forEach((d: any) => {
+          const r = nodeSize(d.value) || 10; // Fallback node size
+          // Ensure valid coordinates
+          d.x = ensureValidCoordinate(d.x);
+          d.y = ensureValidCoordinate(d.y);
+          // Keep within bounds
+          d.x = Math.max(r, Math.min(width - r, d.x));
+          d.y = Math.max(r, Math.min(height - r, d.y));
+        });
 
-      // Update link paths with improved path styling
-      link.attr('d', (d: any) => {
-        const sourceX = d.source.x;
-        const sourceY = d.source.y;
-        const targetX = d.target.x;
-        const targetY = d.target.y;
+        // Update link paths with improved path styling and validation
+        link.attr('d', (d: any) => {
+          try {
+            // Get coordinates with validation
+            const sourceX = ensureValidCoordinate(d.source?.x);
+            const sourceY = ensureValidCoordinate(d.source?.y);
+            const targetX = ensureValidCoordinate(d.target?.x);
+            const targetY = ensureValidCoordinate(d.target?.y);
 
-        if (layoutType === 'hierarchical') {
-          // For hierarchical layout, use angled paths
-          const midY = (sourceY + targetY) / 2;
-          return `M${sourceX},${sourceY} C${sourceX},${midY} ${targetX},${midY} ${targetX},${targetY}`;
-        } else {
-          // For other layouts, use curved paths
-          return `M${sourceX},${sourceY} Q${(sourceX + targetX) / 2 + (targetY - sourceY) / 8},${(sourceY + targetY) / 2 + (sourceX - targetX) / 8} ${targetX},${targetY}`;
-        }
-      });
+            // If any coordinate isn't valid, return a simple path
+            if ([sourceX, sourceY, targetX, targetY].some(coord => coord === 0)) {
+              return "M0,0 L0,0";
+            }
 
-      // Update flow indicators (moving dots)
-      flowDots.each(function(d: any) {
-        try {
-          // Use sanitized IDs for selecting elements
-          const pathId = `link-${d.sourceId}-${d.targetId}`;
-          const path = document.getElementById(pathId) as SVGPathElement;
-          
-          if (path) {
-            const pathLength = path.getTotalLength();
-            // Calculate position based on current time
-            const t = (Date.now() % 3000) / 3000; // 3 second animation cycle
-            const point = path.getPointAtLength(pathLength * t);
-            d3.select(this)
-              .attr('cx', point.x)
-              .attr('cy', point.y);
+            if (layoutType === 'hierarchical') {
+              // For hierarchical layout, use angled paths
+              const midY = (sourceY + targetY) / 2;
+              return `M${sourceX},${sourceY} C${sourceX},${midY} ${targetX},${midY} ${targetX},${targetY}`;
+            } else {
+              // For other layouts, use curved paths
+              return `M${sourceX},${sourceY} Q${(sourceX + targetX) / 2 + (targetY - sourceY) / 8},${(sourceY + targetY) / 2 + (sourceX - targetX) / 8} ${targetX},${targetY}`;
+            }
+          } catch (e) {
+            // Fallback in case of error
+            console.warn("Error creating path:", e);
+            return "M0,0 L0,0"; // Return a minimal valid path
           }
-        } catch (e) {
-          // Silently handle any errors that might occur during animation
-          console.debug('Animation error:', e);
-        }
-      });
+        });
 
-      // Update node positions
-      node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
+        // Update flow indicators (moving dots) with robust error handling
+        flowDots.each(function(d: any) {
+          try {
+            // Skip animation if source or target is undefined
+            if (!d.source || !d.target || !d.sourceId || !d.targetId) return;
+
+            // Use sanitized IDs for selecting elements
+            const pathId = `link-${d.sourceId}-${d.targetId}`;
+            const path = document.getElementById(pathId) as SVGPathElement;
+            
+            if (path) {
+              try {
+                const pathLength = path.getTotalLength() || 0;
+                if (pathLength > 0) {
+                  // Calculate position based on current time
+                  const t = (Date.now() % 3000) / 3000; // 3 second animation cycle
+                  const point = path.getPointAtLength(pathLength * t);
+                  if (point && typeof point.x === 'number' && typeof point.y === 'number') {
+                    d3.select(this)
+                      .attr('cx', point.x)
+                      .attr('cy', point.y);
+                  }
+                }
+              } catch (e) {
+                // Silently handle errors with path animation
+              }
+            }
+          } catch (e) {
+            // Silently handle any errors that might occur during animation
+          }
+        });
+
+        // Update node positions with validation
+        node.attr('transform', (d: any) => {
+          const x = ensureValidCoordinate(d.x);
+          const y = ensureValidCoordinate(d.y);
+          return `translate(${x},${y})`;
+        });
+      } catch (e) {
+        console.warn("Simulation tick error:", e);
+      }
     });
 
-    // Drag functions
+    // Drag functions with improved error handling
     function dragstarted(event: any, d: any) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
+      try {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = ensureValidCoordinate(d.x);
+        d.fy = ensureValidCoordinate(d.y);
+      } catch (e) {
+        console.warn("Drag start error:", e);
+      }
     }
 
     function dragged(event: any, d: any) {
-      d.fx = event.x;
-      d.fy = event.y;
+      try {
+        d.fx = ensureValidCoordinate(event.x);
+        d.fy = ensureValidCoordinate(event.y);
+      } catch (e) {
+        console.warn("Drag error:", e);
+      }
     }
 
     function dragended(event: any, d: any) {
-      if (!event.active) simulation.alphaTarget(0);
-      // In hierarchical layout, keep nodes pinned where user placed them
-      if (layoutType !== 'hierarchical') {
-        d.fx = null;
-        d.fy = null;
+      try {
+        if (!event.active) simulation.alphaTarget(0);
+        // In hierarchical layout, keep nodes pinned where user placed them
+        if (layoutType !== 'hierarchical') {
+          d.fx = null;
+          d.fy = null;
+        }
+      } catch (e) {
+        console.warn("Drag end error:", e);
       }
     }
 
