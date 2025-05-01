@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Analytics Fix</title>
+  <script>
+    // Check if we're on the admin dashboard page
+    if (window.location.href.includes('/admin/dashboard')) {
+      // Create and load the script element
+      const script = document.createElement('script');
+      script.src = '/admin-analytics-mock.js';
+      document.head.appendChild(script);
+      console.log('Admin Analytics Mock Data Injector loaded');
+    }
+  </script>
+</head>
+<body>
+  <h1>Admin Analytics Fix</h1>
+  <p>This page helps load the admin analytics fix. You can close it now.</p>
+</body>
+</html>

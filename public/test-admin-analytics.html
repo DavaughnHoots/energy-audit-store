@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Analytics Endpoint Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .endpoint-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            overflow: auto;
+            white-space: pre-wrap;
+            max-height: 300px;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .status {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .token-inputs {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+        .token-inputs input {
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 100%;
+            font-family: monospace;
+        }
+        .token-inputs button {
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Analytics Endpoint Tester</h1>
+        
+        <div class="token-inputs">
+            <h2>Authentication</h2>
+            <label for="accessToken">Access Token:</label>
+            <input type="text" id="accessToken" placeholder="Enter your access token" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1MTMyNGIyYi0zOWQ2LTQ4NmQtODc1Yi0wNGQwZjEwM2M0OWEiLCJlbWFpbCI6Imhvb3RzZDFAbW9udGNsYWlyLmVkdSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc0NjEyODU4MSwiZXhwIjoxNzQ2MjE0OTgxfQ.wuECC4eSvPYZ_bC1D6uTunPOCO0AgtBseFUCLjHKF3M">
+            
+            <label for="refreshToken">Refresh Token:</label>
+            <input type="text" id="refreshToken" placeholder="Enter your refresh token" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1MTMyNGIyYi0zOWQ2LTQ4NmQtODc1Yi0wNGQwZjEwM2M0OWEiLCJ0b2tlblR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzQ2MTI4NTgxLCJleHAiOjE3NDY3MzMzODF9.0OE4CbVjw3TjnVdZ4QBANYE0XrqU1UcWYCmJpcgqG7Y">
+            
+            <button onclick="saveTokens()">Save Tokens</button>
+        </div>
+
+        <h2>Test All Endpoints</h2>
+        <button onclick="testAllEndpoints()">Test All Endpoints</button>
+        
+        <h2>Individual Endpoints</h2>
+        
+        <div class="endpoint-group">
+            <h3>Most Visited Pages</h3>
+            <button onclick="testEndpoint('/api/admin/analytics/most-visited')">Test Most Visited</button>
+            <div id="most-visited-result" class="result"></div>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>Most Used Features</h3>
+            <button onclick="testEndpoint('/api/admin/analytics/most-used-features')">Test Most Used Features</button>
+            <div id="most-used-features-result" class="result"></div>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>User Journeys</h3>
+            <button onclick="testEndpoint('/api/admin/analytics/user-journeys')">Test User Journeys</button>
+            <div id="user-journeys-result" class="result"></div>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>Feature Correlations</h3>
+            <button onclick="testEndpoint('/api/admin/analytics/feature-correlations')">Test Feature Correlations</button>
+            <div id="feature-correlations-result" class="result"></div>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>Navigation Flows</h3>
+            <button onclick="testEndpoint('/api/admin/analytics/navigation-flows')">Test Navigation Flows</button>
+            <div id="navigation-flows-result" class="result"></div>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>Session Timeline</h3>
+            <button onclick="testEndpoint('/api/admin/analytics/session-timeline')">Test Session Timeline</button>
+            <div id="session-timeline-result" class="result"></div>
+        </div>
+        
+        <div class="endpoint-group">
+            <h3>User Flow Diagram</h3>
+            <button onclick="testEndpoint('/api/admin/analytics/user-flow-diagram')">Test User Flow Diagram</button>
+            <div id="user-flow-diagram-result" class="result"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Save tokens to localStorage
+        function saveTokens() {
+            const accessToken = document.getElementById('accessToken').value;
+            const refreshToken = document.getElementById('refreshToken').value;
+            
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+            
+            if (accessToken && refreshToken) {
+                setCookies();
+                alert('Tokens saved successfully!');
+            } else {
+                alert('Please provide both access and refresh tokens');
+            }
+        }
+        
+        // Set cookies for authentication
+        function setCookies() {
+            const accessToken = localStorage.getItem('accessToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            if (accessToken) {
+                document.cookie = `accessToken=${accessToken}; path=/; max-age=${60 * 15}`; // 15 minutes
+            }
+            
+            if (refreshToken) {
+                document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+            }
+        }
+        
+        // Test specific endpoint
+        async function testEndpoint(endpoint) {
+            setCookies(); // Set cookies before each request
+            
+            const accessToken = localStorage.getItem('accessToken');
+            const resultElement = document.getElementById(endpoint.split('/').pop() + '-result');
+            
+            resultElement.innerHTML = 'Testing... Please wait.';
+            resultElement.className = 'result';
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    credentials: 'include', // Include cookies
+                });
+                
+                const statusElement = document.createElement('div');
+                statusElement.className = 'status';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    statusElement.innerHTML = `✅ Success (${response.status})`;
+                    statusElement.classList.add('success');
+                    
+                    resultElement.innerHTML = '';
+                    resultElement.appendChild(statusElement);
+                    resultElement.innerHTML += JSON.stringify(data, null, 2);
+                } else {
+                    statusElement.innerHTML = `❌ Error (${response.status}): ${response.statusText}`;
+                    statusElement.classList.add('error');
+                    
+                    resultElement.innerHTML = '';
+                    resultElement.appendChild(statusElement);
+                    
+                    try {
+                        const errorData = await response.json();
+                        resultElement.innerHTML += JSON.stringify(errorData, null, 2);
+                    } catch (e) {
+                        resultElement.innerHTML += `Could not parse error response (${e.message})`;
+                    }
+                }
+                
+            } catch (error) {
+                resultElement.innerHTML = `❌ Request failed: ${error.message}`;
+                resultElement.classList.add('error');
+            }
+        }
+        
+        // Test all endpoints
+        function testAllEndpoints() {
+            const endpoints = [
+                '/api/admin/analytics/most-visited',
+                '/api/admin/analytics/most-used-features',
+                '/api/admin/analytics/user-journeys',
+                '/api/admin/analytics/feature-correlations',
+                '/api/admin/analytics/navigation-flows',
+                '/api/admin/analytics/session-timeline',
+                '/api/admin/analytics/user-flow-diagram'
+            ];
+            
+            endpoints.forEach(endpoint => {
+                testEndpoint(endpoint);
+            });
+        }
+        
+        // Load tokens from localStorage on page load
+        window.onload = function() {
+            const accessToken = localStorage.getItem('accessToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            if (accessToken) {
+                document.getElementById('accessToken').value = accessToken;
+            }
+            
+            if (refreshToken) {
+                document.getElementById('refreshToken').value = refreshToken;
+            }
+        };
+    </script>
+</body>
+</html>
