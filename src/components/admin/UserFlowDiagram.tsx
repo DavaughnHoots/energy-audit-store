@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import apiClient from '../../services/apiClient';
 import * as d3 from 'd3';
 
@@ -20,11 +20,15 @@ interface UserFlowData {
   links: FlowLink[];
 }
 
+type LayoutType = 'force-directed' | 'hierarchical' | 'radial';
+
 const UserFlowDiagram: React.FC = () => {
   const [graphData, setGraphData] = useState<UserFlowData>({ nodes: [], links: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'graph' | 'table'>('table');
+  const [layoutType, setLayoutType] = useState<LayoutType>('hierarchical');
+  const [highlightedLink, setHighlightedLink] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   
   // Function to fetch data
@@ -74,7 +78,6 @@ const UserFlowDiagram: React.FC = () => {
 
     const width = 800;
     const height = 600;
-    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
 
     // Prepare data for D3 - Convert string IDs to objects
     const nodes = graphData.nodes.map(node => ({ ...node }));
@@ -86,19 +89,129 @@ const UserFlowDiagram: React.FC = () => {
       return {
         source,
         target,
-        value: link.value
+        value: link.value,
+        id: `${source.id}-${target.id}`  // Unique ID for the link
       };
     });
+
+    // Pre-calculate node positions based on layout type
+    let positionedNodes = nodes;
+    
+    if (layoutType === 'hierarchical') {
+      // Create a simple top-to-bottom hierarchical layout
+      const levels = {};
+      const visited = new Set();
+      
+      // Find starting nodes (no incoming links)
+      const hasIncoming = new Set();
+      links.forEach(link => {
+        hasIncoming.add(link.target.id);
+      });
+      
+      // Assign levels starting with source nodes
+      let currentLevel = 0;
+      let currentLevelNodes = nodes.filter(node => !hasIncoming.has(node.id));
+      
+      // If no clear starting nodes, use nodes with more outgoing than incoming connections
+      if (currentLevelNodes.length === 0) {
+        const nodeConnections = {};
+        nodes.forEach(node => {
+          nodeConnections[node.id] = { incoming: 0, outgoing: 0 };
+        });
+        
+        links.forEach(link => {
+          nodeConnections[link.source.id].outgoing += 1;
+          nodeConnections[link.target.id].incoming += 1;
+        });
+        
+        currentLevelNodes = nodes.filter(node => 
+          nodeConnections[node.id].outgoing > nodeConnections[node.id].incoming);
+          
+        // If still no clear starting nodes, just pick the first one
+        if (currentLevelNodes.length === 0 && nodes.length > 0) {
+          currentLevelNodes = [nodes[0]];
+        }
+      }
+      
+      // Perform a simplified hierarchical layout
+      while (currentLevelNodes.length > 0 && currentLevel < 10) { // Prevent infinite loops
+        const levelWidth = width * 0.8;
+        const levelX = width * 0.1;
+        const nodeSpacing = levelWidth / (currentLevelNodes.length + 1);
+        
+        currentLevelNodes.forEach((node, i) => {
+          visited.add(node.id);
+          node.x = levelX + (i + 1) * nodeSpacing;
+          node.y = 80 + currentLevel * 120; // 120px between levels
+        });
+        
+        // Find nodes for the next level
+        const nextLevelNodes = [];
+        currentLevelNodes.forEach(sourceNode => {
+          const targets = links
+            .filter(link => link.source.id === sourceNode.id)
+            .map(link => nodes.find(n => n.id === link.target.id))
+            .filter(Boolean);
+          
+          targets.forEach(target => {
+            if (!visited.has(target.id) && !nextLevelNodes.includes(target)) {
+              nextLevelNodes.push(target);
+            }
+          });
+        });
+        
+        currentLevelNodes = nextLevelNodes;
+        currentLevel++;
+      }
+      
+      // Position any nodes not yet placed
+      const unvisitedNodes = nodes.filter(node => !visited.has(node.id));
+      if (unvisitedNodes.length > 0) {
+        const levelWidth = width * 0.8;
+        const levelX = width * 0.1;
+        const nodeSpacing = levelWidth / (unvisitedNodes.length + 1);
+        
+        unvisitedNodes.forEach((node, i) => {
+          node.x = levelX + (i + 1) * nodeSpacing;
+          node.y = 80 + currentLevel * 120;
+        });
+      }
+      
+      positionedNodes = nodes;
+    } 
+    else if (layoutType === 'radial') {
+      // Create a radial layout
+      const center = { x: width / 2, y: height / 2 };
+      const radius = Math.min(width, height) * 0.35;
+      
+      // Position nodes in a circle
+      positionedNodes = nodes.map((node, i) => {
+        const angle = (i / nodes.length) * 2 * Math.PI;
+        return {
+          ...node,
+          x: center.x + radius * Math.cos(angle),
+          y: center.y + radius * Math.sin(angle)
+        };
+      });
+    } 
+    else {
+      // For force-directed, just add initial positions
+      positionedNodes = nodes.map(node => ({
+        ...node,
+        x: Math.random() * width,
+        y: Math.random() * height
+      }));
+    }
 
     // Calculate node sizes based on value (visit count)
     const nodeSize = d3.scaleLinear()
       .domain([0, d3.max(nodes, d => d.value) || 100])
-      .range([5, 25]);
+      .range([10, 30]);
 
     // Calculate link stroke width based on value (transition count)
     const linkWidth = d3.scaleLinear()
       .domain([0, d3.max(links, d => d.value) || 50])
-      .range([1, 10]);
+      .range([2, 10]);
 
     // Create color scale for nodes
     const color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -115,14 +228,14 @@ const UserFlowDiagram: React.FC = () => {
       .enter().append('marker')
       .attr('id', d => d)
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 23)
+      .attr('refX', 35) // Increased to position away from the node
       .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('markerWidth', 8)  // Increased size
+      .attr('markerHeight', 8) // Increased size
       .attr('orient', 'auto')
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', '#999');
+      .attr('fill', '#333'); // Darker arrow
 
     // Create a group for the graph
     const graph = svg.append('g');
@@ -136,31 +249,76 @@ const UserFlowDiagram: React.FC = () => {
 
     svg.call(zoom);
 
-    // Create the simulation
-    const simulation = d3.forceSimulation(nodes as any)
-      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('x', d3.forceX(width / 2).strength(0.1))
-      .force('y', d3.forceY(height / 2).strength(0.1));
+    // Create simulation - how we handle positions
+    const simulation = d3.forceSimulation(positionedNodes as any);
 
-    // Create links
+    // Apply forces based on layout type
+    if (layoutType === 'force-directed') {
+      simulation
+        .force('link', d3.forceLink(links).id((d: any) => d.id).distance(100))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(width / 2, height / 2));
+    } 
+    else if (layoutType === 'hierarchical') {
+      // For hierarchical, use weak forces to keep pre-calculated positions
+      simulation
+        .force('link', d3.forceLink(links).id((d: any) => d.id).distance(120).strength(0.1))
+        .force('x', d3.forceX().x((d: any) => d.x).strength(0.5))
+        .force('y', d3.forceY().y((d: any) => d.y).strength(0.5));
+    } 
+    else if (layoutType === 'radial') {
+      simulation
+        .force('link', d3.forceLink(links).id((d: any) => d.id).distance(80))
+        .force('charge', d3.forceManyBody().strength(-200))
+        .force('x', d3.forceX().x((d: any) => d.x).strength(0.3))
+        .force('y', d3.forceY().y((d: any) => d.y).strength(0.3));
+    }
+
+    // Create links with improved styling
     const link = graph.append('g')
       .attr('class', 'links')
       .selectAll('path')
       .data(links)
       .enter().append('path')
-      .attr('stroke', '#999')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', d => linkWidth(d.value))
+      .attr('id', (d: any) => `link-${d.source.id}-${d.target.id}`)
+      .attr('stroke-width', (d: any) => linkWidth(d.value))
       .attr('marker-end', 'url(#end-arrow)')
-      .attr('fill', 'none');
+      .attr('fill', 'none')
+      .attr('stroke', (d: any) => {
+        // Create a gradient for each link
+        const linkGradient = svg.append('defs')
+          .append('linearGradient')
+          .attr('id', `link-gradient-${d.source.id}-${d.target.id}`)
+          .attr('gradientUnits', 'userSpaceOnUse');
+          
+        linkGradient.append('stop')
+          .attr('offset', '0%')
+          .attr('stop-color', color(d.source.id));
+          
+        linkGradient.append('stop')
+          .attr('offset', '100%')
+          .attr('stop-color', color(d.target.id));
+          
+        return `url(#link-gradient-${d.source.id}-${d.target.id})`;
+      })
+      .style('stroke-opacity', 0.7);
+
+    // Create animated flow indicators on paths
+    const flowDots = graph.append('g')
+      .attr('class', 'flow-indicators')
+      .selectAll('circle')
+      .data(links)
+      .enter()
+      .append('circle')
+      .attr('r', 3)
+      .attr('fill', '#4285f4')
+      .style('opacity', 0.7);
 
     // Create node containers
     const node = graph.append('g')
       .attr('class', 'nodes')
       .selectAll('g')
-      .data(nodes)
+      .data(positionedNodes)
       .enter().append('g')
       .call(d3.drag()
         .on('start', dragstarted)
@@ -169,41 +327,62 @@ const UserFlowDiagram: React.FC = () => {
 
     // Add circle for each node
     node.append('circle')
-      .attr('r', d => nodeSize(d.value))
-      .attr('fill', d => color(d.id))
+      .attr('r', (d: any) => nodeSize(d.value))
+      .attr('fill', (d: any) => color(d.id))
+      .style('stroke', '#fff')
+      .style('stroke-width', 2)
       .append('title')
-      .text(d => `${d.name}\nVisits: ${d.value}`);
+      .text((d: any) => `${d.name}\nVisits: ${d.value}`);
 
     // Add text label
     node.append('text')
-      .attr('dy', 4)
-      .attr('dx', d => nodeSize(d.value) + 5)
-      .text(d => d.name)
+      .attr('dy', (d: any) => -nodeSize(d.value) - 5)
+      .attr('text-anchor', 'middle')
+      .text((d: any) => d.name)
       .style('font-size', '12px')
-      .style('pointer-events', 'none');
+      .style('font-weight', 'bold')
+      .style('pointer-events', 'none')
+      .style('fill', '#333')
+      .style('text-shadow', '0 0 3px white, 0 0 3px white, 0 0 3px white');
 
-    // Handle simulation ticks
+    // Handle simulation ticks - this updates positions of all elements
     simulation.on('tick', () => {
       // Constrain nodes to the visualization area
-      nodes.forEach((d: any) => {
-        d.x = Math.max(nodeSize(d.value), Math.min(width - nodeSize(d.value), d.x));
-        d.y = Math.max(nodeSize(d.value), Math.min(height - nodeSize(d.value), d.y));
+      positionedNodes.forEach((d: any) => {
+        const r = nodeSize(d.value);
+        d.x = Math.max(r, Math.min(width - r, d.x));
+        d.y = Math.max(r, Math.min(height - r, d.y));
       });
 
-      // Update link positions
+      // Update link paths with improved path styling
       link.attr('d', (d: any) => {
         const sourceX = d.source.x;
         const sourceY = d.source.y;
         const targetX = d.target.x;
         const targetY = d.target.y;
 
-        // Calculate the angle for the arc
-        const dx = targetX - sourceX;
-        const dy = targetY - sourceY;
-        const dr = Math.sqrt(dx * dx + dy * dy) * 1.2;
+        if (layoutType === 'hierarchical') {
+          // For hierarchical layout, use angled paths
+          const midY = (sourceY + targetY) / 2;
+          return `M${sourceX},${sourceY} C${sourceX},${midY} ${targetX},${midY} ${targetX},${targetY}`;
+        } else {
+          // For other layouts, use curved paths
+          return `M${sourceX},${sourceY} Q${(sourceX + targetX) / 2 + (targetY - sourceY) / 8},${(sourceY + targetY) / 2 + (sourceX - targetX) / 8} ${targetX},${targetY}`;
+        }
+      });
 
-        // Draw a curved path
-        return `M${sourceX},${sourceY}A${dr},${dr} 0 0,1 ${targetX},${targetY}`;
+      // Update flow indicators (moving dots)
+      flowDots.each(function(d: any) {
+        const path = d3.select(`#link-${d.source.id}-${d.target.id}`).node() as SVGPathElement;
+        if (path) {
+          const pathLength = path.getTotalLength();
+          // Calculate position based on current time
+          const t = (Date.now() % 3000) / 3000; // 3 second animation cycle
+          const point = path.getPointAtLength(pathLength * t);
+          d3.select(this)
+            .attr('cx', point.x)
+            .attr('cy', point.y);
+        }
       });
 
       // Update node positions
@@ -224,15 +403,22 @@ const UserFlowDiagram: React.FC = () => {
 
     function dragended(event: any, d: any) {
       if (!event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
+      // In hierarchical layout, keep nodes pinned where user placed them
+      if (layoutType !== 'hierarchical') {
+        d.fx = null;
+        d.fy = null;
+      }
     }
 
     // Return a cleanup function
     return () => {
       simulation.stop();
     };
-  }, [graphData, viewMode]);
+  }, [graphData, viewMode, layoutType]);
+
+  const handleLayoutChange = (event: SelectChangeEvent) => {
+    setLayoutType(event.target.value as LayoutType);
+  };
 
   if (loading) {
     return (
@@ -263,10 +449,24 @@ const UserFlowDiagram: React.FC = () => {
     <Box sx={{ p: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">User Flow Diagram</Typography>
-        <Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {viewMode === 'graph' && (
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel id="layout-select-label">Layout</InputLabel>
+              <Select
+                labelId="layout-select-label"
+                value={layoutType}
+                label="Layout"
+                onChange={handleLayoutChange}
+              >
+                <MenuItem value="hierarchical">Hierarchical</MenuItem>
+                <MenuItem value="radial">Radial</MenuItem>
+                <MenuItem value="force-directed">Force-Directed</MenuItem>
+              </Select>
+            </FormControl>
+          )}
           <Button 
             variant={viewMode === 'table' ? 'contained' : 'outlined'} 
-            sx={{ mr: 1 }}
             onClick={() => setViewMode('table')}
           >
             Table View
@@ -282,7 +482,7 @@ const UserFlowDiagram: React.FC = () => {
       
       <Typography variant="body2" paragraph>
         This visualization shows the flow of users between different pages on your site.
-        {viewMode === 'graph' && ' You can drag nodes to rearrange, zoom with the mouse wheel, and hover for more details.'}
+        {viewMode === 'graph' && ' The animated blue dots show direction of flow. You can drag nodes to rearrange, zoom with the mouse wheel, and hover for details.'}
       </Typography>
       
       {viewMode === 'graph' ? (
@@ -292,7 +492,8 @@ const UserFlowDiagram: React.FC = () => {
           borderRadius: 1, 
           height: '600px',
           overflow: 'hidden',
-          backgroundColor: '#f9f9f9'
+          backgroundColor: '#f9f9f9',
+          position: 'relative'
         }}>
           <svg ref={svgRef} width="100%" height="100%"></svg>
         </Box>
