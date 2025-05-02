@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePageTracking } from '../hooks/analytics/usePageTracking';
 import { AnalyticsArea } from '../context/AnalyticsContext';
 import { ArrowLeft, Search, Info } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
+// Import from backend to match useProducts hook's expected types
+import { Product, ProductFilters } from '../../backend/src/types/product';
+import { debounce } from '../utils/debounce';
 
 // Import components
 import CategoryGallery from '../components/products/CategoryGallery';
@@ -10,6 +13,9 @@ import SubCategoryGallery from '../components/products/SubCategoryGallery';
 import ProductGallery from '../components/products/ProductGallery';
 import EnhancedProductGallery from '../components/products/EnhancedProductGallery';
 import ProductDetailModal from '../components/products/ProductDetailModal';
+import SearchBar from '../components/products/SearchBar';
+import ProductFilter from '../components/products/ProductFilter';
+import SearchResults from '../components/products/SearchResults';
 
 enum ViewState {
   CATEGORIES = 'categories',
@@ -23,7 +29,7 @@ const Products2Page: React.FC = () => {
   usePageTracking('products2' as AnalyticsArea, {});
   
   // Get product data
-  const { isLoading, error, categories } = useProducts();
+  const { isLoading: initialLoading, error, categories, getFilteredProducts } = useProducts();
   
   // Navigation state
   const [viewState, setViewState] = useState<ViewState>(ViewState.CATEGORIES);
@@ -34,6 +40,29 @@ const Products2Page: React.FC = () => {
   // Product detail modal state
   const [isProductDetailOpen, setIsProductDetailOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
+  
+  // Search and filter state
+  const [filters, setFilters] = useState<ProductFilters>({
+    mainCategory: '',
+    subCategory: '',
+    search: ''
+  });
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const productsPerPage = 20;
+  
+  // Debounced filter change function
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedFilterChange = useCallback(
+    debounce((filterName: string, value: string) => {
+      setFilters(prev => ({ ...prev, [filterName]: value }));
+      setCurrentPage(1); // Reset to first page when filters change
+    }, 500),
+    []
+  );
   
   // Handle category selection
   const handleCategorySelect = (category: string) => {
@@ -56,12 +85,38 @@ const Products2Page: React.FC = () => {
   // Handle search
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    debouncedFilterChange('search', query);
+    
     if (query) {
       setViewState(ViewState.SEARCH);
     } else {
       // If search is cleared, go back to previous view
       setViewState(viewState === ViewState.SEARCH ? ViewState.CATEGORIES : viewState);
     }
+  };
+  
+  // Handle filter changes
+  const handleFilterChange = (filterName: string, value: string) => {
+    if (filterName === 'mainCategory') {
+      // Update immediately without debounce
+      setFilters(prev => ({ 
+        ...prev, 
+        [filterName]: value,
+        // Reset subCategory when mainCategory changes
+        subCategory: '' 
+      }));
+      setCurrentPage(1);
+    } else {
+      // Use debounce for other filters
+      debouncedFilterChange(filterName, value);
+    }
+  };
+  
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo(0, 0);
   };
   
   // Handle navigation back
@@ -77,13 +132,42 @@ const Products2Page: React.FC = () => {
         break;
       case ViewState.SEARCH:
         setSearchQuery('');
+        setFilters(prev => ({ ...prev, search: '' }));
         setViewState(ViewState.CATEGORIES);
         break;
     }
   };
   
+  // Load search results
+  useEffect(() => {
+    const loadSearchResults = async () => {
+      if (viewState !== ViewState.SEARCH) return;
+      
+      setIsSearching(true);
+      try {
+        const result = await getFilteredProducts(filters, currentPage, productsPerPage);
+        
+        setSearchResults(result.items || []);
+        setTotalProducts(result.total || 0);
+        setTotalPages(result.totalPages || 1);
+      } catch (err) {
+        console.error('Error loading search results:', err);
+        setSearchResults([]);
+        setTotalProducts(0);
+        setTotalPages(1);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+    
+    loadSearchResults();
+  }, [filters, currentPage, getFilteredProducts, productsPerPage, viewState]);
+  
+  // Combined loading state
+  const isLoading = initialLoading || (isSearching && viewState === ViewState.SEARCH);
+  
   // Loading state
-  if (isLoading) {
+  if (initialLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
@@ -169,13 +253,38 @@ const Products2Page: React.FC = () => {
       )}
       
       {viewState === ViewState.SEARCH && (
-        <div className="bg-gray-100 rounded-lg p-8 text-center">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            {`Search: ${searchQuery}`}
-          </h2>
-          <p className="text-gray-500">
-            This is a placeholder for the Search Results that will be implemented in the next phase.
-          </p>
+        <div>
+          <div className="mb-6">
+            <SearchBar 
+              initialValue={searchQuery} 
+              onSearch={handleSearch} 
+              placeholder="Search for energy efficient products..."
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Left sidebar with filters */}
+            <div className="md:col-span-1">
+              <ProductFilter 
+                categories={categories}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+              />
+            </div>
+            
+            {/* Main content area with results */}
+            <div className="md:col-span-3">
+              <SearchResults 
+                products={searchResults}
+                isSearching={isSearching}
+                totalProducts={totalProducts}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                onProductSelect={handleProductSelect}
+              />
+            </div>
+          </div>
         </div>
       )}
       
