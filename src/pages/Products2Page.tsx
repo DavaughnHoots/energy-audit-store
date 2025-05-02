@@ -7,15 +7,15 @@ import { useProducts } from '../hooks/useProducts';
 import { Product, ProductFilters } from '../../backend/src/types/product';
 import { debounce } from '../utils/debounce';
 
-// Import components
-import CategoryGallery from '../components/products/CategoryGallery';
-import SubCategoryGallery from '../components/products/SubCategoryGallery';
-import ProductGallery from '../components/products/ProductGallery';
-import EnhancedProductGallery from '../components/products/EnhancedProductGallery';
-import ProductDetailModal from '../components/products/ProductDetailModal';
-import SearchBar from '../components/products/SearchBar';
-import ProductFilter from '../components/products/ProductFilter';
-import SearchResults from '../components/products/SearchResults';
+// Import components (using path aliases for better build compatibility)
+import CategoryGallery from '@products/CategoryGallery';
+import SubCategoryGallery from '@products/SubCategoryGallery';
+import ProductGallery from '@products/ProductGallery';
+import EnhancedProductGallery from '@products/EnhancedProductGallery';
+import ProductDetailModal from '@products/ProductDetailModal';
+import SearchBar from '@products/SearchBar';
+import ProductFilter from '@products/ProductFilter';
+import SearchResults from '@products/SearchResults';
 
 enum ViewState {
   CATEGORIES = 'categories',

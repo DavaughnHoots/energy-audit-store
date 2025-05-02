@@ -17,6 +17,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@products': path.resolve(__dirname, './src/components/products'),
     },
     mainFields: ['browser', 'module', 'main']
   },
@@ -29,8 +31,9 @@ export default defineConfig({
         'mock-aws-s3',
         'nock',
         '@mapbox/node-pre-gyp',
+        'zod'
         // Removed axios from external since we need it in the frontend
-      , 'zod'],
+      ],
     },
     minify: true,
     sourcemap: false,

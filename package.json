@@ -6,8 +6,9 @@
     "test-efficiency": "node test-efficiency-calculation.js",
     "test-pdf": "node test-pdf-generation.js",
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "tsc --skipLibCheck && vite build",
+    "preview": "vite preview",
+    "heroku_prebuild": "node scripts/fix_product_search_components.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

@@ -9,6 +9,12 @@
     "module": "CommonJS",
     "esModuleInterop": true,
     "strict": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@products/*": ["src/components/products/*"]
+    }
   }
 }
