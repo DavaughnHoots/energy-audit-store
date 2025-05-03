@@ -10,6 +10,7 @@ Welcome to the Energy Audit Store documentation. This collection of guides will 
 | [Quick Setup Guide](QUICK_SETUP_GUIDE.md) | Condensed checklist-style guide for quick reference |
 | [Troubleshooting Guide](TROUBLESHOOTING_GUIDE.md) | Solutions for common issues and problems |
 | [Product Search Deployment Guide](PRODUCT_SEARCH_DEPLOYMENT_GUIDE.md) | Specific guidance for deploying the product search feature |
+| [Database Backup Guide](DATABASE_BACKUP_GUIDE.md) | Instructions for backing up and downloading the Heroku PostgreSQL database |
 
 ## Important Deployment Notes
 
