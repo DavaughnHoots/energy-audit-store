@@ -97,7 +97,7 @@ const Home: React.FC = () => {
               <p className="text-sm text-gray-500">{feature.description}</p>
               <Link
                 to={
-                  feature.title === 'Product Catalog' ? '/products' :
+                  feature.title === 'Product Catalog' ? '/products2' :
                   feature.title === 'DIY Energy Audit' ? '/energy-audit' :
                   feature.title === 'Community' ? '/community' : '/'
                 }
@@ -156,7 +156,7 @@ const App: React.FC = () => {
               <ContentWrapper>
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products" element={<Navigate to="/products2" replace />} />
                   <Route path="/products2" element={<Products2Page />} />
                   <Route path="/products/:id" element={<ProductDetailPage />} />
                   <Route path="/energy-audit" element={<EnergyAuditPage />} />
